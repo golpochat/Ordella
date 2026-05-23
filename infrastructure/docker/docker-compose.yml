@@ -1,0 +1,459 @@
+# Ordella — local development stack
+# Infra: PostgreSQL, Redis, RabbitMQ, MinIO, Mailhog
+# Placeholders: API gateway + domain microservices (architecture blueprint §2.2)
+#
+# Usage (from repo root):
+#   docker compose up -d
+#   docker compose ps
+#
+# Usage (from this directory):
+#   docker compose -f docker-compose.yml up -d
+
+name: ordella
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-health-interval: &health-interval
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 15s
+
+x-microservice-env: &microservice-env
+  NODE_ENV: development
+  LOG_LEVEL: debug
+  # PostgreSQL
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: ${POSTGRES_USER:-ordella}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ordella}
+  POSTGRES_DB: ${POSTGRES_DB:-ordella}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-ordella}:${POSTGRES_PASSWORD:-ordella}@postgres:5432/${POSTGRES_DB:-ordella}
+  # Redis
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_URL: redis://redis:6379
+  # RabbitMQ
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: 5672
+  RABBITMQ_USER: ${RABBITMQ_USER:-ordella}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-ordella}
+  RABBITMQ_VHOST: ${RABBITMQ_VHOST:-ordella}
+  RABBITMQ_URL: amqp://${RABBITMQ_USER:-ordella}:${RABBITMQ_PASSWORD:-ordella}@rabbitmq:5672/${RABBITMQ_VHOST:-ordella}
+  # MinIO (S3-compatible)
+  S3_ENDPOINT: http://minio:9000
+  S3_PUBLIC_ENDPOINT: http://localhost:9000
+  S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+  S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+  S3_BUCKET: ${MINIO_BUCKET:-ordella-assets}
+  S3_REGION: us-east-1
+  S3_FORCE_PATH_STYLE: "true"
+  # Mail (Mailhog)
+  SMTP_HOST: mailhog
+  SMTP_PORT: 1025
+  SMTP_SECURE: "false"
+  SMTP_FROM: noreply@ordella.local
+  # API gateway (internal)
+  API_GATEWAY_URL: http://api-gateway:80
+
+x-microservice-base: &microservice-base
+  image: traefik/whoami:v1.10.7
+  restart: unless-stopped
+  networks:
+    - ordella
+  logging: *default-logging
+  # whoami is a scratch image (no shell) — health via HTTP from host: curl localhost:<port>/
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+    minio:
+      condition: service_started
+    minio-init:
+      condition: service_completed_successfully
+
+services:
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ordella-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ordella}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ordella}
+      POSTGRES_DB: ${POSTGRES_DB:-ordella}
+    ports:
+      # Host 5433 avoids conflict with a local PostgreSQL install on 5432
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - ordella
+    logging: *default-logging
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-ordella} -d ${POSTGRES_DB:-ordella}",
+        ]
+      <<: *health-interval
+
+  redis:
+    image: redis:7-alpine
+    container_name: ordella-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ordella
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      <<: *health-interval
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: ordella-rabbitmq
+    restart: unless-stopped
+    hostname: ordella-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ordella}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-ordella}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-ordella}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    networks:
+      - ordella
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      <<: *health-interval
+
+  minio:
+    image: minio/minio:RELEASE.2024-12-18T13-15-44Z
+    container_name: ordella-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - ordella
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/live || wget -qO- http://127.0.0.1:9000/minio/health/live"]
+      <<: *health-interval
+
+  minio-init:
+    image: minio/mc:RELEASE.2024-11-17T19-35-30Z
+    container_name: ordella-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} 2>/dev/null; do
+        echo 'Waiting for MinIO...';
+        sleep 2;
+      done &&
+      mc mb --ignore-existing local/$${MINIO_BUCKET} &&
+      mc anonymous set download local/$${MINIO_BUCKET}/public || true &&
+      echo 'MinIO bucket ready: '$${MINIO_BUCKET}
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-ordella-assets}
+    networks:
+      - ordella
+    restart: "no"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: ordella-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - ordella
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8025/"]
+      <<: *health-interval
+
+  # ---------------------------------------------------------------------------
+  # API gateway (public entry — replace with NestJS / reverse proxy later)
+  # ---------------------------------------------------------------------------
+
+  api-gateway:
+    <<: *microservice-base
+    container_name: ordella-api-gateway
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: api-gateway
+      SERVICE_NAME: api-gateway
+    ports:
+      - "3000:80"
+    labels:
+      ordella.service: api-gateway
+      ordella.layer: gateway
+
+  # ---------------------------------------------------------------------------
+  # Domain microservices (architecture blueprint §2.2) — placeholders
+  # Replace image/build when real service images are available.
+  # ---------------------------------------------------------------------------
+
+  auth-service:
+    <<: *microservice-base
+    container_name: ordella-auth-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: auth-service
+      SERVICE_NAME: auth-service
+    ports:
+      - "3010:80"
+    labels:
+      ordella.service: auth
+
+  catalog-service:
+    <<: *microservice-base
+    container_name: ordella-catalog-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: catalog-service
+      SERVICE_NAME: catalog-service
+    ports:
+      - "3011:80"
+    labels:
+      ordella.service: catalog
+
+  orders-service:
+    <<: *microservice-base
+    container_name: ordella-orders-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: orders-service
+      SERVICE_NAME: orders-service
+    ports:
+      - "3012:80"
+    labels:
+      ordella.service: orders
+
+  payments-service:
+    <<: *microservice-base
+    container_name: ordella-payments-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: payments-service
+      SERVICE_NAME: payments-service
+    ports:
+      - "3013:80"
+    labels:
+      ordella.service: payments
+
+  delivery-service:
+    <<: *microservice-base
+    container_name: ordella-delivery-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: delivery-service
+      SERVICE_NAME: delivery-service
+    ports:
+      - "3014:80"
+    labels:
+      ordella.service: delivery
+
+  customers-service:
+    <<: *microservice-base
+    container_name: ordella-customers-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: customers-service
+      SERVICE_NAME: customers-service
+    ports:
+      - "3015:80"
+    labels:
+      ordella.service: customers
+
+  notifications-service:
+    <<: *microservice-base
+    container_name: ordella-notifications-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: notifications-service
+      SERVICE_NAME: notifications-service
+    ports:
+      - "3016:80"
+    labels:
+      ordella.service: notifications
+
+  reports-service:
+    <<: *microservice-base
+    container_name: ordella-reports-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: reports-service
+      SERVICE_NAME: reports-service
+    ports:
+      - "3017:80"
+    labels:
+      ordella.service: reports
+
+  integrations-service:
+    <<: *microservice-base
+    container_name: ordella-integrations-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: integrations-service
+      SERVICE_NAME: integrations-service
+    ports:
+      - "3018:80"
+    labels:
+      ordella.service: integrations
+
+  # ---------------------------------------------------------------------------
+  # Supporting domain services (modular monolith modules / future splits)
+  # ---------------------------------------------------------------------------
+
+  tenants-service:
+    <<: *microservice-base
+    container_name: ordella-tenants-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: tenants-service
+      SERVICE_NAME: tenants-service
+    ports:
+      - "3019:80"
+    labels:
+      ordella.service: tenants
+
+  locations-service:
+    <<: *microservice-base
+    container_name: ordella-locations-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: locations-service
+      SERVICE_NAME: locations-service
+    ports:
+      - "3020:80"
+    labels:
+      ordella.service: locations
+
+  promotions-service:
+    <<: *microservice-base
+    container_name: ordella-promotions-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: promotions-service
+      SERVICE_NAME: promotions-service
+    ports:
+      - "3021:80"
+    labels:
+      ordella.service: promotions
+
+  audit-service:
+    <<: *microservice-base
+    container_name: ordella-audit-service
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: audit-service
+      SERVICE_NAME: audit-service
+    ports:
+      - "3022:80"
+    labels:
+      ordella.service: audit
+
+  # ---------------------------------------------------------------------------
+  # Frontend app placeholders (Next.js — replace with build targets later)
+  # ---------------------------------------------------------------------------
+
+  admin-app:
+    <<: *microservice-base
+    container_name: ordella-admin-app
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: admin-app
+      SERVICE_NAME: admin-app
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3001:80"
+    labels:
+      ordella.service: admin
+
+  pos-app:
+    <<: *microservice-base
+    container_name: ordella-pos-app
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: pos-app
+      SERVICE_NAME: pos-app
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3002:80"
+    labels:
+      ordella.service: pos
+
+  customer-app:
+    <<: *microservice-base
+    container_name: ordella-customer-app
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: customer-app
+      SERVICE_NAME: customer-app
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3003:80"
+    labels:
+      ordella.service: customer
+
+  driver-app:
+    <<: *microservice-base
+    container_name: ordella-driver-app
+    environment:
+      <<: *microservice-env
+      WHOAMI_NAME: driver-app
+      SERVICE_NAME: driver-app
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    ports:
+      - "3004:80"
+    labels:
+      ordella.service: driver
+
+networks:
+  ordella:
+    name: ordella-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: ordella-postgres-data
+  redis_data:
+    name: ordella-redis-data
+  rabbitmq_data:
+    name: ordella-rabbitmq-data
+  minio_data:
+    name: ordella-minio-data

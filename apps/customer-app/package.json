@@ -1,0 +1,6 @@
+{
+  "name": "@ordella/customer-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Ordella Customer App — Next.js"
+}
