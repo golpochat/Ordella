@@ -5,6 +5,7 @@ import { CategoryEntity } from '../../catalog/entities/category.entity';
 import { ProductEntity } from '../../catalog/entities/product.entity';
 import { ModifierEntity } from '../../catalog/entities/modifier.entity';
 import { ModifierOptionEntity } from '../../catalog/entities/modifier-option.entity';
+import { ProductModifierEntity } from '../../catalog/entities/product-modifier.entity';
 import { VariantEntity } from '../../catalog/entities/variant.entity';
 import { ProductStatus } from '../../catalog/enums/product-status.enum';
 import { StockItemEntity } from '../../inventory/entities/stock-item.entity';
@@ -30,18 +31,21 @@ export class MenuQueryRepository {
     private readonly modifierOptionRepository: Repository<ModifierOptionEntity>,
     @InjectRepository(VariantEntity)
     private readonly variantRepository: Repository<VariantEntity>,
+    @InjectRepository(ProductModifierEntity)
+    private readonly productModifierRepository: Repository<ProductModifierEntity>,
     @InjectRepository(StockItemEntity)
     private readonly stockItemRepository: Repository<StockItemEntity>,
   ) {}
 
   async findCategoriesForTenant(tenantId: string): Promise<OnlineCategoryView[]> {
     const rows = await this.categoryRepository.find({
-      where: { tenantId },
+      where: { tenantId, isActive: true },
       order: { sortOrder: 'ASC', name: 'ASC' },
     });
     return rows.map((row) => ({
       id: row.id,
       name: row.name,
+      description: row.description,
       sortOrder: row.sortOrder,
     }));
   }
@@ -61,6 +65,26 @@ export class MenuQueryRepository {
     });
 
     return products.filter((product) => isOnlineChannelVisible(product.channelVisibility));
+  }
+
+  async findModifierIdsForProduct(productId: string): Promise<string[]> {
+    const rows = await this.productModifierRepository.find({ where: { productId } });
+    return rows.map((row) => row.modifierId);
+  }
+
+  async findVariantsForProducts(productIds: string[]): Promise<Map<string, VariantEntity[]>> {
+    if (!productIds.length) return new Map();
+    const variants = await this.variantRepository.find({
+      where: { productId: In(productIds) },
+      order: { name: 'ASC' },
+    });
+    const map = new Map<string, VariantEntity[]>();
+    for (const variant of variants) {
+      const list = map.get(variant.productId) ?? [];
+      list.push(variant);
+      map.set(variant.productId, list);
+    }
+    return map;
   }
 
   async findModifiersForTenant(tenantId: string): Promise<OnlineModifierView[]> {
@@ -95,6 +119,16 @@ export class MenuQueryRepository {
         priceDelta: option.priceDelta,
       })),
     }));
+  }
+
+  async findModifiersForProduct(
+    tenantId: string,
+    productId: string,
+  ): Promise<OnlineModifierView[]> {
+    const modifierIds = await this.findModifierIdsForProduct(productId);
+    if (!modifierIds.length) return [];
+    const all = await this.findModifiersForTenant(tenantId);
+    return all.filter((modifier) => modifierIds.includes(modifier.id));
   }
 
   async findStockByProductIds(

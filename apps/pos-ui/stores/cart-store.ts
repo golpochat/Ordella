@@ -6,6 +6,7 @@ import { createOrPatchCart, type PosCart } from '@/lib/api';
 
 export type CartItem = {
   productId: string;
+  variantId?: string;
   quantity: number;
   modifierOptionIds?: string[];
 };
@@ -16,7 +17,10 @@ type CartState = {
   syncing: boolean;
   error?: string;
   setFromServer: (cart: PosCart) => void;
-  addItem: (product: Product, modifierOptionIds?: string[]) => Promise<void>;
+  addItem: (
+    product: Product,
+    options?: { variantId?: string; modifierOptionIds?: string[] },
+  ) => Promise<void>;
   updateQuantity: (productId: string, quantity: number) => Promise<void>;
   removeItem: (productId: string) => Promise<void>;
   clearCart: () => void;
@@ -40,24 +44,30 @@ export const useCartStore = create<CartState>((set, get) => ({
     });
   },
 
-  addItem: async (product, modifierOptionIds) => {
+  addItem: async (product, options) => {
     if (product.status !== 'active') {
-      set({ error: 'Inactive product cannot be ordered' });
+      set({ error: 'Inactive item cannot be ordered' });
       return;
     }
 
     set({ syncing: true, error: undefined });
     try {
       const current = get();
+      const line = {
+        productId: product.id,
+        quantity: 1,
+        variantId: options?.variantId,
+        modifierOptionIds: options?.modifierOptionIds,
+      };
       const cart = await createOrPatchCart(
         current.cartId
           ? {
               cartId: current.cartId,
               action: 'add',
-              item: { productId: product.id, quantity: 1, modifierOptionIds },
+              item: line,
             }
           : {
-              item: { productId: product.id, quantity: 1, modifierOptionIds },
+              item: line,
             },
       );
       get().setFromServer(cart);

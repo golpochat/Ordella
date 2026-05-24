@@ -5,7 +5,11 @@ import { KdsLineStatus } from '../enums/kds-line-status.enum';
 export interface KdsLineItemView {
   id: string;
   productId: string;
+  itemName: string;
   variantId: string | null;
+  variantName: string | null;
+  sku: string | null;
+  modifiers: string[];
   quantity: number;
   notes: string | null;
   kdsStatus: KdsLineStatus;

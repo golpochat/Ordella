@@ -37,6 +37,21 @@ export class ProductEntity extends BaseTenantScopedEntity {
   @Column({ name: 'channel_visibility', type: 'jsonb', default: {} })
   channelVisibility!: Record<string, boolean>;
 
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  sku!: string | null;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  barcode!: string | null;
+
+  @Column({ name: 'image_url', type: 'varchar', length: 2048, nullable: true })
+  imageUrl!: string | null;
+
+  @Column({ name: 'inventory_tracking_enabled', type: 'boolean', default: false })
+  inventoryTrackingEnabled!: boolean;
+
+  @Column({ name: 'stock_level', type: 'int', nullable: true })
+  stockLevel!: number | null;
+
   @OneToMany(() => VariantEntity, (variant) => variant.product)
   variants!: VariantEntity[];
 }

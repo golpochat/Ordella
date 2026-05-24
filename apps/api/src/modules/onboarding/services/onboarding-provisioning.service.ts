@@ -184,7 +184,9 @@ export class OnboardingProvisioningService {
         this.categories.create({
           tenantId: tenant.tenantId,
           name: row.name,
+          description: row.description,
           sortOrder: categoryByName.size,
+          isActive: true,
         }),
       );
       categoryByName.set(row.name, saved.id);
@@ -198,9 +200,10 @@ export class OnboardingProvisioningService {
           name: product.name,
           categoryId: categoryId ?? null,
           price: product.price,
+          sku: product.sku,
           status: ProductStatus.ACTIVE,
           sortOrder: 0,
-          channelVisibility: {},
+          channelVisibility: { pos: true, online: true },
         }),
       );
     }

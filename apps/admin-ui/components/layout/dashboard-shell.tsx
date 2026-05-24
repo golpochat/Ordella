@@ -24,7 +24,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
         brand={
-          <Link href="/dashboard" className="inline-flex">
+          <Link href="/catalog" className="inline-flex">
             <Logo variant="full" size="sm" color="auto" />
           </Link>
         }

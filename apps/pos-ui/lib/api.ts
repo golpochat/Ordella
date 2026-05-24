@@ -81,6 +81,61 @@ export async function listProducts() {
   return z.array(productSchema).parse(data);
 }
 
+const catalogVariantSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  priceDelta: z.string(),
+  sku: z.string().nullable().optional(),
+});
+
+const catalogModifierOptionSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  priceDelta: z.string(),
+});
+
+const catalogModifierSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  type: z.string(),
+  required: z.boolean(),
+  options: z.array(catalogModifierOptionSchema),
+});
+
+export const posCatalogItemSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  categoryId: z.string().uuid().nullable(),
+  price: z.string(),
+  sku: z.string().nullable().optional(),
+  isActive: z.boolean(),
+  inventoryTrackingEnabled: z.boolean(),
+  stockLevel: z.number().int().nullable().optional(),
+  variants: z.array(catalogVariantSchema).default([]),
+  modifiers: z.array(catalogModifierSchema).default([]),
+});
+
+export const posCatalogCategorySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  sortOrder: z.number().int(),
+});
+
+export type PosCatalogItem = z.infer<typeof posCatalogItemSchema>;
+export type PosCatalogCategory = z.infer<typeof posCatalogCategorySchema>;
+
+export async function listPosCatalog() {
+  const [categories, items] = await Promise.all([
+    api.getData<unknown[]>('catalog/categories'),
+    api.getData<unknown[]>('catalog/items', { params: { channel: 'pos' } }),
+  ]);
+  return {
+    categories: z.array(posCatalogCategorySchema).parse(categories),
+    items: z.array(posCatalogItemSchema).parse(items),
+  };
+}
+
 export async function createOrPatchCart(
   body:
     | { cartId?: string; item: { productId: string; quantity: number; modifierOptionIds?: string[] } }

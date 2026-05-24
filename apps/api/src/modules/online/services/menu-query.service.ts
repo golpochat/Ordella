@@ -7,6 +7,7 @@ import {
   OnlineModifierView,
   OnlineProductView,
   OnlinePublicMenuView,
+  OnlineVariantView,
 } from '../types';
 
 @Injectable()
@@ -28,20 +29,32 @@ export class MenuQueryService {
     locationId: string,
     categoryId?: string,
   ): Promise<OnlineProductView[]> {
-    const [products, modifiers] = await Promise.all([
-      this.menuRepository.findActiveProductsForTenant(tenantId, locationId, categoryId),
-      this.menuRepository.findModifiersForTenant(tenantId),
-    ]);
-
-    const stockMap = await this.menuRepository.findStockByProductIds(
+    const products = await this.menuRepository.findActiveProductsForTenant(
       tenantId,
       locationId,
-      products.map((product) => product.id),
+      categoryId,
     );
 
-    return products
-      .map((product) => this.mapProduct(product, modifiers, stockMap.get(product.id)))
-      .filter((product) => product.availableQuantity === null || product.availableQuantity > 0);
+    const productIds = products.map((p) => p.id);
+    const [variantsMap, stockMap] = await Promise.all([
+      this.menuRepository.findVariantsForProducts(productIds),
+      this.menuRepository.findStockByProductIds(tenantId, locationId, productIds),
+    ]);
+
+    const views: OnlineProductView[] = [];
+    for (const product of products) {
+      const modifiers = await this.menuRepository.findModifiersForProduct(tenantId, product.id);
+      const view = this.mapProduct(
+        product,
+        modifiers,
+        variantsMap.get(product.id) ?? [],
+        stockMap.get(product.id),
+      );
+      if (this.isOrderable(view)) {
+        views.push(view);
+      }
+    }
+    return views;
   }
 
   async getProductsForCategory(
@@ -65,10 +78,26 @@ export class MenuQueryService {
       price: string;
       sortOrder: number;
       status: ProductStatus;
+      sku: string | null;
+      imageUrl: string | null;
+      inventoryTrackingEnabled: boolean;
+      stockLevel: number | null;
     },
     modifiers: OnlineModifierView[],
-    availableQuantity?: number,
+    variants: Array<{ id: string; name: string; priceDelta: string; sku: string | null }>,
+    locationStock?: number,
   ): OnlineProductView {
+    let availableQuantity: number | null = null;
+    if (product.inventoryTrackingEnabled) {
+      if (product.stockLevel !== null && product.stockLevel !== undefined) {
+        availableQuantity = product.stockLevel;
+      } else if (locationStock !== undefined) {
+        availableQuantity = locationStock;
+      }
+    } else if (locationStock !== undefined) {
+      availableQuantity = locationStock;
+    }
+
     return {
       id: product.id,
       name: product.name,
@@ -76,8 +105,26 @@ export class MenuQueryService {
       categoryId: product.categoryId,
       price: product.price,
       sortOrder: product.sortOrder,
-      availableQuantity: availableQuantity ?? null,
+      sku: product.sku,
+      imageUrl: product.imageUrl,
+      availableQuantity,
+      inventoryTrackingEnabled: product.inventoryTrackingEnabled,
+      variants: variants.map(
+        (v): OnlineVariantView => ({
+          id: v.id,
+          name: v.name,
+          priceDelta: v.priceDelta,
+          sku: v.sku,
+        }),
+      ),
       modifiers,
     };
+  }
+
+  private isOrderable(product: OnlineProductView): boolean {
+    if (!product.inventoryTrackingEnabled) {
+      return product.availableQuantity === null || product.availableQuantity > 0;
+    }
+    return product.availableQuantity !== null && product.availableQuantity > 0;
   }
 }

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared-ui';
 
 const LINKS = [
-  { href: '/products/new', label: 'Add your first item', description: 'Create products in your catalog' },
+  { href: '/catalog', label: 'Add your first item', description: 'Build your catalog with categories and items' },
   { href: '/settings', label: 'Add staff', description: 'Invite team members and assign roles' },
   { href: '/settings', label: 'Configure fulfillment', description: 'Pickup, delivery, and location hours' },
   { href: '/settings', label: 'Customize storefront', description: 'Branding, theme, and business info' },

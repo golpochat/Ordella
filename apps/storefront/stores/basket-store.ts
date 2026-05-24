@@ -21,7 +21,10 @@ type BasketState = {
   syncing: boolean;
   error?: string;
   setFromServer: (basket: OnlineBasket) => void;
-  addItem: (product: OnlineProduct, modifierOptionIds?: string[]) => Promise<void>;
+  addItem: (
+    product: OnlineProduct,
+    options?: { variantId?: string; modifierOptionIds?: string[] },
+  ) => Promise<void>;
   updateQuantity: (lineId: string, quantity: number) => Promise<void>;
   removeItem: (lineId: string) => Promise<void>;
   clearBasket: () => void;
@@ -46,7 +49,7 @@ export const useBasketStore = create<BasketState>((set, get) => ({
     });
   },
 
-  addItem: async (product, modifierOptionIds) => {
+  addItem: async (product, options) => {
     if (!isProductOrderable(product)) {
       set({ error: 'This item is out of stock' });
       return;
@@ -55,15 +58,21 @@ export const useBasketStore = create<BasketState>((set, get) => ({
     set({ syncing: true, error: undefined });
     try {
       const current = get();
+      const line = {
+        productId: product.id,
+        quantity: 1,
+        variantId: options?.variantId,
+        modifierOptionIds: options?.modifierOptionIds,
+      };
       const basket = await createOrPatchBasket(
         current.sessionId
           ? {
               sessionId: current.sessionId,
               action: 'add',
-              item: { productId: product.id, quantity: 1, modifierOptionIds },
+              item: line,
             }
           : {
-              item: { productId: product.id, quantity: 1, modifierOptionIds },
+              item: line,
             },
       );
       get().setFromServer(basket);

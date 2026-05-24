@@ -5,6 +5,8 @@ import { ProductEntity } from '../catalog/entities/product.entity';
 import { CategoryEntity } from '../catalog/entities/category.entity';
 import { ModifierEntity } from '../catalog/entities/modifier.entity';
 import { ModifierOptionEntity } from '../catalog/entities/modifier-option.entity';
+import { ProductModifierEntity } from '../catalog/entities/product-modifier.entity';
+import { VariantEntity } from '../catalog/entities/variant.entity';
 import { OrderEntity } from '../orders/entities/order.entity';
 import { StockItemEntity } from '../inventory/entities/stock-item.entity';
 import { StockMovementEntity } from '../inventory/entities/stock-movement.entity';
@@ -24,6 +26,7 @@ import {
   AdminPromotionsController,
   AdminReportsController,
   AdminSettingsController,
+  CatalogBuilderController,
 } from './controllers';
 import {
   InventoryAdminService,
@@ -32,7 +35,9 @@ import {
   PromotionsAdminService,
   ReportsAdminService,
   TenantSettingsService,
+  CatalogBuilderService,
 } from './services';
+import { CatalogBuilderRepository } from './repositories/catalog-builder.repository';
 import { AdminProductRepository } from './repositories/admin-product.repository';
 import { AdminCatalogRepository } from './repositories/admin-catalog.repository';
 import { AdminOrderQueryRepository } from './repositories/admin-order-query.repository';
@@ -56,6 +61,8 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
       CategoryEntity,
       ModifierEntity,
       ModifierOptionEntity,
+      ProductModifierEntity,
+      VariantEntity,
       OrderEntity,
       StockItemEntity,
       StockMovementEntity,
@@ -72,6 +79,7 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
   ],
   controllers: [
     AdminProductsController,
+    CatalogBuilderController,
     AdminInventoryController,
     AdminOrdersController,
     AdminPromotionsController,
@@ -81,11 +89,13 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
   providers: [
     AdminProductRepository,
     AdminCatalogRepository,
+    CatalogBuilderRepository,
     AdminOrderQueryRepository,
     AdminPromotionRepository,
     AdminInventoryRepository,
     AdminSettingsRepository,
     ProductAdminService,
+    CatalogBuilderService,
     InventoryAdminService,
     OrdersAdminService,
     PromotionsAdminService,

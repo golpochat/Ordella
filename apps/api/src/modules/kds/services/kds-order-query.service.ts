@@ -8,12 +8,14 @@ import { KdsOrderItemStateRepository } from '../repositories/kds-order-item-stat
 import { mapKdsOrderDetail, mapKdsOrderSummary } from '../mappers/kds-order.mapper';
 import { throwKdsOrderNotFound } from '../domain/kds-domain.errors';
 import { KdsOrderDetailView, KdsOrderSummaryView } from '../types/kds-order.views';
+import { KdsCatalogLookupService } from './kds-catalog-lookup.service';
 
 @Injectable()
 export class KdsOrderQueryService {
   constructor(
     private readonly orderQueryRepository: KdsOrderQueryRepository,
     private readonly itemStateRepository: KdsOrderItemStateRepository,
+    private readonly catalogLookup: KdsCatalogLookupService,
   ) {}
 
   async getActiveOrders(
@@ -28,14 +30,16 @@ export class KdsOrderQueryService {
       station,
     );
 
+    const catalog = await this.catalogLookup.buildLookupForOrders(tenantId, orders);
     const views: KdsOrderSummaryView[] = [];
+
     for (const order of orders) {
       const states = await this.itemStateRepository.ensurePendingForItems(
         tenantId,
         order.id,
         (order.items ?? []).map((item) => item.id),
       );
-      views.push(mapKdsOrderSummary(order, states));
+      views.push(mapKdsOrderSummary(order, states, catalog));
     }
 
     return views;
@@ -53,6 +57,7 @@ export class KdsOrderQueryService {
       (order.items ?? []).map((item) => item.id),
     );
 
-    return mapKdsOrderDetail(order, states);
+    const catalog = await this.catalogLookup.buildLookupForOrders(tenantId, [order]);
+    return mapKdsOrderDetail(order, states, catalog);
   }
 }

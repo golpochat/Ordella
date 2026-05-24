@@ -5,6 +5,7 @@ import { ProductEntity } from '../catalog/entities/product.entity';
 import { ModifierEntity } from '../catalog/entities/modifier.entity';
 import { ModifierOptionEntity } from '../catalog/entities/modifier-option.entity';
 import { VariantEntity } from '../catalog/entities/variant.entity';
+import { ProductModifierEntity } from '../catalog/entities/product-modifier.entity';
 import { StockItemEntity } from '../inventory/entities/stock-item.entity';
 import { OrdersFeatureModule } from '../orders/modules/orders/orders-feature.module';
 import { PaymentsModule } from '../payments/payments.module';
@@ -38,6 +39,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
       ModifierEntity,
       ModifierOptionEntity,
       VariantEntity,
+      ProductModifierEntity,
       StockItemEntity,
     ]),
     OrdersFeatureModule,

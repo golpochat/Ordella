@@ -12,6 +12,11 @@ export const productSchema = z.object({
   status: productStatusSchema,
   sortOrder: z.number().int(),
   channelVisibility: z.record(z.boolean()).optional(),
+  sku: z.string().nullable().optional(),
+  barcode: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
+  inventoryTrackingEnabled: z.boolean().optional(),
+  stockLevel: z.number().int().nullable().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().nullable().optional(),
 });

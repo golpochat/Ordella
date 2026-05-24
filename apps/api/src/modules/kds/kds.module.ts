@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { OrderEntity } from '../orders/entities/order.entity';
 import { ProductEntity } from '../catalog/entities/product.entity';
+import { VariantEntity } from '../catalog/entities/variant.entity';
 import { OrdersFeatureModule } from '../orders/modules/orders/orders-feature.module';
 import { ReportsModule } from '../reports/reports.module';
 import { KDS_ENTITIES, KdsOrderItemStateEntity } from './entities';
@@ -13,6 +14,7 @@ import {
   KdsOrderQueryService,
   KdsUpdateService,
 } from './services';
+import { KdsCatalogLookupService } from './services/kds-catalog-lookup.service';
 import { KdsOrderQueryRepository } from './repositories/kds-order-query.repository';
 import { KdsOrderItemStateRepository } from './repositories/kds-order-item-state.repository';
 import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrations';
@@ -31,7 +33,7 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
 @Module({
   imports: [
     AuthModule,
-    TypeOrmModule.forFeature([...KDS_ENTITIES, OrderEntity, ProductEntity]),
+    TypeOrmModule.forFeature([...KDS_ENTITIES, OrderEntity, ProductEntity, VariantEntity]),
     OrdersFeatureModule,
     ReportsModule,
   ],
@@ -41,6 +43,7 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
     KdsBroadcastService,
     KdsOrderQueryRepository,
     KdsOrderItemStateRepository,
+    KdsCatalogLookupService,
     KdsOrderQueryService,
     KdsUpdateService,
     KdsNotificationsIntegration,

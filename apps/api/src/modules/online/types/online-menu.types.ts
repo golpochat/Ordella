@@ -1,6 +1,7 @@
 export interface OnlineCategoryView {
   id: string;
   name: string;
+  description?: string | null;
   sortOrder: number;
 }
 
@@ -18,6 +19,13 @@ export interface OnlineModifierView {
   options: OnlineModifierOptionView[];
 }
 
+export interface OnlineVariantView {
+  id: string;
+  name: string;
+  priceDelta: string;
+  sku: string | null;
+}
+
 export interface OnlineProductView {
   id: string;
   name: string;
@@ -25,7 +33,11 @@ export interface OnlineProductView {
   categoryId: string | null;
   price: string;
   sortOrder: number;
+  sku: string | null;
+  imageUrl: string | null;
   availableQuantity: number | null;
+  inventoryTrackingEnabled: boolean;
+  variants: OnlineVariantView[];
   modifiers: OnlineModifierView[];
 }
 

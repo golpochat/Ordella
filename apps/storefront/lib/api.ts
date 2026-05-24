@@ -22,6 +22,13 @@ const modifierSchema = z.object({
   options: z.array(modifierOptionSchema),
 });
 
+const onlineVariantSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  priceDelta: z.string(),
+  sku: z.string().nullable().optional(),
+});
+
 export const onlineProductSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -29,7 +36,11 @@ export const onlineProductSchema = z.object({
   categoryId: z.string().uuid().nullable(),
   price: z.string(),
   sortOrder: z.number().int(),
+  sku: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
   availableQuantity: z.number().nullable(),
+  inventoryTrackingEnabled: z.boolean().optional(),
+  variants: z.array(onlineVariantSchema).default([]),
   modifiers: z.array(modifierSchema),
 });
 
@@ -197,6 +208,9 @@ export async function fetchOrderStatus(orderId: string) {
 }
 
 export function isProductOrderable(product: OnlineProduct): boolean {
+  if (product.inventoryTrackingEnabled) {
+    return product.availableQuantity !== null && product.availableQuantity > 0;
+  }
   if (product.availableQuantity !== null && product.availableQuantity <= 0) {
     return false;
   }

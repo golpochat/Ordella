@@ -18,7 +18,8 @@ export type NavItem = {
 
 export const DASHBOARD_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { id: 'products', label: 'Products', href: '/products', icon: Package },
+  { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },
+  { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
   { id: 'orders', label: 'Orders', href: '/orders', icon: ShoppingCart },
   { id: 'promotions', label: 'Promotions', href: '/promotions', icon: Percent },

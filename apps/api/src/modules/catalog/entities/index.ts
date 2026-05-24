@@ -2,6 +2,7 @@ import { AddonEntity } from './addon.entity';
 import { CategoryEntity } from './category.entity';
 import { ModifierOptionEntity } from './modifier-option.entity';
 import { ModifierEntity } from './modifier.entity';
+import { ProductModifierEntity } from './product-modifier.entity';
 import { ProductEntity } from './product.entity';
 import { VariantEntity } from './variant.entity';
 
@@ -12,6 +13,7 @@ export { CategoryEntity } from './category.entity';
 export { ModifierOptionEntity } from './modifier-option.entity';
 export { ModifierEntity } from './modifier.entity';
 export { ProductEntity } from './product.entity';
+export { ProductModifierEntity } from './product-modifier.entity';
 export { VariantEntity } from './variant.entity';
 
 export const CATALOG_ENTITIES = [
@@ -19,6 +21,7 @@ export const CATALOG_ENTITIES = [
   CategoryEntity,
   ModifierOptionEntity,
   ModifierEntity,
+  ProductModifierEntity,
   ProductEntity,
   VariantEntity,
 ];

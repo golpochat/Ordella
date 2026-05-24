@@ -66,3 +66,10 @@ export function isOnlineChannelVisible(channelVisibility: Record<string, boolean
   }
   return channelVisibility.online !== false;
 }
+
+export function isPosChannelVisible(channelVisibility: Record<string, boolean>): boolean {
+  if (!channelVisibility || Object.keys(channelVisibility).length === 0) {
+    return true;
+  }
+  return channelVisibility.pos !== false;
+}
