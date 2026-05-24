@@ -14,3 +14,15 @@ export const inventoryItemSchema = z.object({
 });
 
 export type InventoryItem = z.infer<typeof inventoryItemSchema>;
+
+export const stockMovementSchema = z.object({
+  id: z.string().uuid(),
+  stockItemId: z.string().uuid(),
+  locationId: z.string().uuid(),
+  kind: z.string(),
+  quantityDelta: z.string(),
+  reason: z.string().nullable().optional(),
+  createdAt: z.coerce.date().optional(),
+});
+
+export type StockMovement = z.infer<typeof stockMovementSchema>;
