@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { SessionResponseDto } from '../dto';
 import { FilterPaginationDto } from '../dto';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
+import { TenantContext } from '../../../common/interfaces';
+import { AuthenticatedUser } from '../../../common/interfaces';
 
 @Injectable()
 export class SessionsService {

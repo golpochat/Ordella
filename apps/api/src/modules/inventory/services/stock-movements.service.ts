@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto';
+import { TenantContext } from '../../../common/interfaces';
+import { FilterPaginationDto } from '../../../common/dto';
 import { CreateStockMovementDto } from '../dto';
 import { StockMovementResponseDto } from '../dto';
 

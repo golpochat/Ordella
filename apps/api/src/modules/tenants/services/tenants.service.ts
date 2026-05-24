@@ -2,7 +2,7 @@ import { Injectable, NotImplementedException } from '@nestjs/common';
 import { CreateTenantDto } from '../dto';
 import { UpdateTenantDto } from '../dto';
 import { TenantResponseDto } from '../dto';
-import { FilterPaginationDto } from '../../auth/dto';
+import { FilterPaginationDto } from '../../../common/dto';
 
 @Injectable()
 export class TenantsService {

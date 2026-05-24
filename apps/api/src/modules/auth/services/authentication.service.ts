@@ -5,7 +5,7 @@ import { CreateRefreshTokenDto } from '../dto';
 import { CreateLogoutDto } from '../dto';
 import { CreateMfaVerifyDto } from '../dto';
 import { CreatePinLoginDto } from '../dto';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
+import { TenantContext } from '../../../common/interfaces';
 
 @Injectable()
 export class AuthenticationService {

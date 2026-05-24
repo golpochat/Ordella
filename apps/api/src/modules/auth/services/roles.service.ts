@@ -3,7 +3,7 @@ import { CreateRoleDto } from '../dto';
 import { UpdateRolePermissionsDto } from '../dto';
 import { RoleResponseDto } from '../dto';
 import { FilterPaginationDto } from '../dto';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
+import { TenantContext } from '../../../common/interfaces';
 
 @Injectable()
 export class RolesService {

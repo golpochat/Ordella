@@ -8,13 +8,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiSuccessResponse } from '../../../common/interfaces/api-response.interface';
-import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { TenantGuard } from '../../../common/guards/tenant.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { RbacGuard } from '../guards/rbac.guard';
-import { RequirePermissions } from '../decorators/require-permissions.decorator';
+import { ApiSuccessResponse } from '../../../common/interfaces';
+import { CurrentTenant } from '../../../common/decorators';
+import { TenantContext } from '../../../common/interfaces';
+import { TenantGuard } from '../../../common/guards';
+import { JwtAuthGuard } from '../guards';
+import { RbacGuard } from '../guards';
+import { RequirePermissions } from '../decorators';
 import { CreateRoleDto } from '../dto';
 import { UpdateRolePermissionsDto } from '../dto';
 import { RoleResponseDto } from '../dto';

@@ -10,11 +10,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiSuccessResponse } from '../../../common/interfaces/api-response.interface';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RbacGuard } from '../../auth/guards/rbac.guard';
-import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto';
+import { ApiSuccessResponse } from '../../../common/interfaces';
+import { JwtAuthGuard } from '../../auth';
+import { RbacGuard } from '../../auth';
+import { RequirePermissions } from '../../auth';
+import { FilterPaginationDto } from '../../../common/dto';
 import { CreateTenantDto } from '../dto';
 import { UpdateTenantDto } from '../dto';
 import { TenantResponseDto } from '../dto';

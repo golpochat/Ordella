@@ -1,5 +1,5 @@
 import { IsOptional, IsUUID } from 'class-validator';
-import { FilterPaginationDto } from '../../../auth/dto';
+import { FilterPaginationDto } from '../../../../common/dto';
 
 export class FilterDeliveryAssignmentDto extends FilterPaginationDto {
   @IsOptional()

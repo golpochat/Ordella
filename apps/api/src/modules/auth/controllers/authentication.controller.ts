@@ -1,8 +1,8 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
-import { ApiSuccessResponse } from '../../../common/interfaces/api-response.interface';
-import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { Public } from '../decorators/public.decorator';
+import { ApiSuccessResponse } from '../../../common/interfaces';
+import { CurrentTenant } from '../../../common/decorators';
+import { TenantContext } from '../../../common/interfaces';
+import { Public } from '../decorators';
 import { CreateLoginDto } from '../dto';
 import { LoginResponseDto } from '../dto';
 import { CreateRefreshTokenDto } from '../dto';
@@ -10,9 +10,9 @@ import { CreateLogoutDto } from '../dto';
 import { CreateMfaVerifyDto } from '../dto';
 import { CreatePinLoginDto } from '../dto';
 import { AuthenticationService } from '../services';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { CurrentUser } from '../../../common/decorators';
+import { AuthenticatedUser } from '../../../common/interfaces';
+import { JwtAuthGuard } from '../guards';
 
 @Controller('auth')
 export class AuthenticationController {

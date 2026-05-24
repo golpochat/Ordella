@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
+import { TenantContext } from '../../../common/interfaces';
 import { CreateStoreDto } from '../dto';
 import { UpdateStoreDto } from '../dto';
 import { StoreResponseDto } from '../dto';
-import { FilterPaginationDto } from '../../auth/dto';
+import { FilterPaginationDto } from '../../../common/dto';
 
 @Injectable()
 export class StoresService {

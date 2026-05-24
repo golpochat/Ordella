@@ -1,8 +1,8 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiSuccessResponse } from '../../../common/interfaces/api-response.interface';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { RbacGuard } from '../guards/rbac.guard';
-import { RequirePermissions } from '../decorators/require-permissions.decorator';
+import { ApiSuccessResponse } from '../../../common/interfaces';
+import { JwtAuthGuard } from '../guards';
+import { RbacGuard } from '../guards';
+import { RequirePermissions } from '../decorators';
 import { PermissionResponseDto } from '../dto';
 import { FilterPaginationDto } from '../dto';
 import { PermissionsService } from '../services';

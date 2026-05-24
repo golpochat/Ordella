@@ -6,7 +6,7 @@ export * from './authentication/create-mfa-verify.dto';
 export * from './authentication/create-pin-login.dto';
 export * from './authentication/create-refresh-token.dto';
 export * from './authentication/login-response.dto';
-export * from './filter-pagination.dto';
+export { FilterPaginationDto } from '../../../common/dto';
 export * from './permissions/permission-response.dto';
 export * from './roles/create-role.dto';
 export * from './roles/role-response.dto';

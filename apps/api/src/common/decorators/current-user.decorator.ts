@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { AuthenticatedUser } from '../../modules/auth/interfaces/authenticated-user.interface';
+import { AuthenticatedUser } from '../interfaces';
 
 export const CURRENT_USER_KEY = 'user';
 

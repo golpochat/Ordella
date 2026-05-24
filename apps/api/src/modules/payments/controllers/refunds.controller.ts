@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
-import { ApiSuccessResponse } from '../../../common/interfaces/api-response.interface';
-import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { TenantGuard } from '../../../common/guards/tenant.guard';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RbacGuard } from '../../auth/guards/rbac.guard';
-import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
+import { ApiSuccessResponse } from '../../../common/interfaces';
+import { CurrentTenant } from '../../../common/decorators';
+import { TenantContext } from '../../../common/interfaces';
+import { TenantGuard } from '../../../common/guards';
+import { JwtAuthGuard } from '../../auth';
+import { RbacGuard } from '../../auth';
+import { RequirePermissions } from '../../auth';
 import { PaymentsPermissionKeys } from '../constants/permission-keys';
 import { CreateRefundDto } from '../dto';
 import { RefundResponseDto } from '../dto';

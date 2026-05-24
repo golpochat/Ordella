@@ -9,16 +9,16 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiSuccessResponse } from '../../../common/interfaces/api-response.interface';
-import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator';
-import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { TenantGuard } from '../../../common/guards/tenant.guard';
-import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { ApiSuccessResponse } from '../../../common/interfaces';
+import { CurrentTenant } from '../../../common/decorators';
+import { CurrentUser } from '../../../common/decorators';
+import { TenantContext } from '../../../common/interfaces';
+import { TenantGuard } from '../../../common/guards';
+import { JwtAuthGuard } from '../guards';
 import { SessionResponseDto } from '../dto';
 import { FilterPaginationDto } from '../dto';
 import { SessionsService } from '../services';
-import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
+import { AuthenticatedUser } from '../../../common/interfaces';
 
 /** API Spec §1.8 Sessions API */
 @Controller('sessions')

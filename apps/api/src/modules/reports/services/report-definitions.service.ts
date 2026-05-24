@@ -1,5 +1,5 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { FilterPaginationDto } from '../../auth/dto';
+import { FilterPaginationDto } from '../../../common/dto';
 import { CreateReportDefinitionDto } from '../dto';
 import { ReportDefinitionResponseDto } from '../dto';
 import { UpdateReportDefinitionDto } from '../dto';

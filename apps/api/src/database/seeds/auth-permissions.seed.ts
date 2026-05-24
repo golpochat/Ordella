@@ -1,4 +1,4 @@
-import { PermissionKeys } from '../../modules/auth/constants/permission-keys';
+import { PermissionKeys } from '../../modules/auth/constants';
 
 /**
  * Placeholder seed data for the global permissions catalog.

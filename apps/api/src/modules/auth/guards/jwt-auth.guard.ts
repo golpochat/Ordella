@@ -1,6 +1,6 @@
 import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { CURRENT_USER_KEY } from '../../../common/decorators/current-user.decorator';
+import { CURRENT_USER_KEY } from '../../../common/decorators';
 
 /**
  * JWT authentication guard (placeholder).

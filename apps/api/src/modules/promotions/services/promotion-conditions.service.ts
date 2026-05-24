@@ -1,5 +1,5 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
+import { TenantContext } from '../../../common/interfaces';
 import { CreatePromotionConditionDto } from '../dto';
 import { FilterPromotionConditionDto } from '../dto';
 import { PromotionConditionResponseDto } from '../dto';

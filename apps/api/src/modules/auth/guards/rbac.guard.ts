@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY } from '../decorators/require-permissions.decorator';
-import { CURRENT_USER_KEY } from '../../../common/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
+import { PERMISSIONS_KEY } from '../decorators';
+import { CURRENT_USER_KEY } from '../../../common/decorators';
+import { AuthenticatedUser } from '../../../common/interfaces';
 
 /**
  * RBAC guard — checks @RequirePermissions() metadata against user.permissions.
