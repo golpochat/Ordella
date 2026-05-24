@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { OrderEntity } from '../entities/order.entity';
+import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderRepository } from '../repositories/order.repository';
 import { OrderItemRepository } from '../repositories/order-item.repository';
 import { OrderPricingService } from './order-pricing.service';
-import { CalculatedLineItem } from '../types/draft-order.types';
+import { CalculatedLineItem, mapDraftTotalsToOrderColumns } from '../types/draft-order.types';
+import { parseMoney } from '../domain/order-totals.util';
 
 @Injectable()
 export class OrderTotalsService {
@@ -25,20 +27,44 @@ export class OrderTotalsService {
     }
 
     const items = await this.orderItemRepository.findByOrderId(orderId, manager);
-    const lines: CalculatedLineItem[] = items.map((item) => ({
+    const lines = this.mapItemsToCalculatedLines(items);
+
+    const context = this.orderPricingService.buildPricingContext(
+      { tenantId, source: 'jwt' },
+      order.locationId,
+      order.orderType,
+    );
+
+    const draftTotals = this.orderPricingService.calculateOrderTotals(lines, context);
+    const finalTotals = await this.orderPricingService.applyPromotionsAndRecalculate(
+      context,
+      draftTotals,
+      lines,
+      items,
+      order,
+    );
+
+    const columns = mapDraftTotalsToOrderColumns(finalTotals);
+    order.subtotal = columns.subtotal;
+    order.tax = columns.tax;
+    order.total = columns.total;
+
+    return this.orderRepository.save(order, manager);
+  }
+
+  private mapItemsToCalculatedLines(items: OrderItemEntity[]): CalculatedLineItem[] {
+    return items.map((item) => ({
       productId: item.productId,
       variantId: item.variantId,
       quantity: item.quantity,
       unitPrice: item.price,
-      lineSubtotal: (Number(item.price) * item.quantity).toFixed(2),
+      modifierTotal: '0.00',
+      unitPriceWithModifiers: item.price,
+      lineSubtotal: (parseMoney(item.price) * item.quantity).toFixed(2),
+      lineTax: '0.00',
+      lineDiscount: '0.00',
       notes: item.notes,
+      modifiers: [],
     }));
-
-    const totals = this.orderPricingService.calculateOrderTotals(lines);
-    order.subtotal = totals.subtotal;
-    order.tax = totals.tax;
-    order.total = totals.total;
-
-    return this.orderRepository.save(order, manager);
   }
 }

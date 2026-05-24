@@ -12,8 +12,11 @@ import { OrderRepository } from '../repositories/order.repository';
 import { OrderItemRepository } from '../repositories/order-item.repository';
 import { OrderPricingService } from './order-pricing.service';
 import { OrderLifecycleService } from './order-lifecycle.service';
-import { PromotionsService } from '../integrations/promotions.service';
-import { CalculatedLineItem } from '../types/draft-order.types';
+import {
+  CalculatedLineItem,
+  DraftOrderTotals,
+  mapDraftTotalsToOrderColumns,
+} from '../types/draft-order.types';
 import { OrderTransitionContext } from '../types/order-transition.context';
 
 @Injectable()
@@ -23,7 +26,6 @@ export class OrderCreationService {
     private readonly orderRepository: OrderRepository,
     private readonly orderItemRepository: OrderItemRepository,
     private readonly orderPricingService: OrderPricingService,
-    private readonly promotionsService: PromotionsService,
     private readonly orderLifecycleService: OrderLifecycleService,
   ) {}
 
@@ -32,12 +34,24 @@ export class OrderCreationService {
     dto: CreateOrderDto,
     user?: AuthenticatedUser,
   ): Promise<OrderResponseDto> {
-    const lines = await this.orderPricingService.calculateLineItemsFromDto(tenant, dto.items);
-    const draftTotals = this.orderPricingService.calculateOrderTotals(lines);
+    const pricingContext = this.orderPricingService.buildPricingContext(
+      tenant,
+      dto.locationId,
+      dto.orderType,
+    );
+
+    const lines = await this.orderPricingService.calculateLineItemsFromDto(
+      tenant,
+      dto.items,
+      pricingContext,
+    );
+
+    const draftTotals = this.orderPricingService.calculateOrderTotals(lines, pricingContext);
 
     const saved = await this.dataSource.transaction(async (manager) => {
       const ctx: OrderTransitionContext = { changedBy: user?.id ?? null, manager };
 
+      const columns = mapDraftTotalsToOrderColumns(draftTotals);
       const order = this.orderRepository.create(
         {
           tenantId: tenant.tenantId,
@@ -45,9 +59,9 @@ export class OrderCreationService {
           customerId: dto.customerId ?? null,
           orderType: dto.orderType,
           status: OrderStatus.PENDING,
-          subtotal: draftTotals.subtotal,
-          tax: draftTotals.tax,
-          total: draftTotals.total,
+          subtotal: columns.subtotal,
+          tax: columns.tax,
+          total: columns.total,
           orderNumber: generateOrderNumber(),
         },
         manager,
@@ -56,7 +70,15 @@ export class OrderCreationService {
       const items = await this.persistLineItems(persistedOrder.id, lines, manager);
       persistedOrder.items = items;
 
-      await this.applyPromotionsAndPersistTotals(tenant, persistedOrder, items, lines, manager);
+      await this.applyPromotionsAndUpdateOrder(
+        pricingContext,
+        persistedOrder,
+        items,
+        lines,
+        draftTotals,
+        manager,
+      );
+
       await this.orderLifecycleService.onOrderCreated(tenant, persistedOrder, items, ctx);
 
       return persistedOrder;
@@ -66,32 +88,29 @@ export class OrderCreationService {
     return toOrderResponseDto(withItems!, true);
   }
 
-  private async applyPromotionsAndPersistTotals(
-    tenant: TenantContext,
+  private async applyPromotionsAndUpdateOrder(
+    pricingContext: ReturnType<OrderPricingService['buildPricingContext']>,
     order: OrderEntity,
     items: OrderItemEntity[],
     lines: CalculatedLineItem[],
+    draftTotals: DraftOrderTotals,
     manager: EntityManager,
-  ): Promise<void> {
-    const draftTotals = this.orderPricingService.calculateOrderTotals(lines);
-    const promotionResult = await this.promotionsService.applyPromotions({
-      tenant,
-      order,
+  ): Promise<DraftOrderTotals> {
+    const finalTotals = await this.orderPricingService.applyPromotionsAndRecalculate(
+      pricingContext,
+      draftTotals,
+      lines,
       items,
-      draftTotals,
-      action: 'apply',
-    });
-
-    const finalTotals = this.orderPricingService.applyDiscountToDraft(
-      draftTotals,
-      promotionResult.discountAmount,
-      promotionResult.promotionIds,
+      order,
     );
 
-    order.subtotal = finalTotals.subtotal;
-    order.tax = finalTotals.tax;
-    order.total = finalTotals.total;
+    const columns = mapDraftTotalsToOrderColumns(finalTotals);
+    order.subtotal = columns.subtotal;
+    order.tax = columns.tax;
+    order.total = columns.total;
     await this.orderRepository.save(order, manager);
+
+    return finalTotals;
   }
 
   private async persistLineItems(
@@ -108,7 +127,7 @@ export class OrderCreationService {
           productId: line.productId,
           variantId: line.variantId,
           quantity: line.quantity,
-          price: line.unitPrice,
+          price: line.unitPriceWithModifiers,
           notes: line.notes,
         },
         manager,

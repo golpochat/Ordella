@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductEntity } from '../../../catalog/entities/product.entity';
 import { VariantEntity } from '../../../catalog/entities/variant.entity';
+import { ModifierOptionEntity } from '../../../catalog/entities/modifier-option.entity';
 import { OrderEntity } from '../../entities';
 import { OrderItemEntity } from '../../entities';
 import { OrderItemsController } from '../../controllers';
@@ -10,6 +11,7 @@ import { OrderItemRepository } from '../../repositories/order-item.repository';
 import { OrderRepository } from '../../repositories/order.repository';
 import { OrderPricingService } from '../../services/order-pricing.service';
 import { OrderTotalsService } from '../../services/order-totals.service';
+import { OrderFeeCalculatorService } from '../../pricing/order-fee-calculator.service';
 import { PromotionsService } from '../../integrations';
 
 @Module({
@@ -19,6 +21,7 @@ import { PromotionsService } from '../../integrations';
       OrderEntity,
       ProductEntity,
       VariantEntity,
+      ModifierOptionEntity,
     ]),
   ],
   controllers: [OrderItemsController],
@@ -28,6 +31,7 @@ import { PromotionsService } from '../../integrations';
     OrderRepository,
     OrderPricingService,
     OrderTotalsService,
+    OrderFeeCalculatorService,
     PromotionsService,
   ],
   exports: [],

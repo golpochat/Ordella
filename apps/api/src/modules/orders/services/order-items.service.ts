@@ -10,7 +10,6 @@ import { OrderRepository } from '../repositories/order.repository';
 import { OrderItemRepository } from '../repositories/order-item.repository';
 import { OrderPricingService } from './order-pricing.service';
 import { OrderTotalsService } from './order-totals.service';
-import { PromotionsService } from '../integrations/promotions.service';
 
 @Injectable()
 export class OrderItemsService {
@@ -20,17 +19,26 @@ export class OrderItemsService {
     private readonly orderItemRepository: OrderItemRepository,
     private readonly orderPricingService: OrderPricingService,
     private readonly orderTotalsService: OrderTotalsService,
-    private readonly promotionsService: PromotionsService,
   ) {}
 
   async create(tenant: TenantContext, dto: CreateOrderItemDto): Promise<OrderItemResponseDto> {
     const order = await this.requireEditableOrder(tenant.tenantId, dto.orderId);
+    const pricingContext = this.orderPricingService.buildPricingContext(
+      tenant,
+      order.locationId,
+      order.orderType,
+    );
+
     const line = await this.orderPricingService.calculateLineItem(
       tenant,
-      dto.productId,
-      dto.quantity,
-      dto.variantId,
-      dto.notes,
+      {
+        productId: dto.productId,
+        quantity: dto.quantity,
+        variantId: dto.variantId,
+        modifierOptionIds: dto.modifierOptionIds,
+        notes: dto.notes,
+      },
+      pricingContext,
     );
 
     const item = await this.dataSource.transaction(async (manager) => {
@@ -40,43 +48,13 @@ export class OrderItemsService {
           productId: line.productId,
           variantId: line.variantId,
           quantity: line.quantity,
-          price: line.unitPrice,
+          price: line.unitPriceWithModifiers,
           notes: line.notes,
         },
         manager,
       );
       const saved = await this.orderItemRepository.save(created, manager);
-      const updatedOrder = await this.orderTotalsService.recalculateForOrder(
-        tenant.tenantId,
-        order.id,
-        manager,
-      );
-      const items = await this.orderItemRepository.findByOrderId(order.id, manager);
-      const draftTotals = this.orderPricingService.calculateOrderTotals(
-        items.map((row) => ({
-          productId: row.productId,
-          variantId: row.variantId,
-          quantity: row.quantity,
-          unitPrice: row.price,
-          lineSubtotal: (Number(row.price) * row.quantity).toFixed(2),
-          notes: row.notes,
-        })),
-      );
-      const promotionResult = await this.promotionsService.applyPromotions({
-        tenant,
-        order: updatedOrder,
-        items,
-        draftTotals,
-      });
-      const finalTotals = this.orderPricingService.applyDiscountToDraft(
-        draftTotals,
-        promotionResult.discountAmount,
-        promotionResult.promotionIds,
-      );
-      updatedOrder.subtotal = finalTotals.subtotal;
-      updatedOrder.tax = finalTotals.tax;
-      updatedOrder.total = finalTotals.total;
-      await this.orderRepository.save(updatedOrder, manager);
+      await this.orderTotalsService.recalculateForOrder(tenant.tenantId, order.id, manager);
       return saved;
     });
 

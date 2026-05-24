@@ -1,4 +1,12 @@
-import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 export class CreateOrderNestedItemDto {
   @IsUUID()
@@ -11,6 +19,12 @@ export class CreateOrderNestedItemDto {
   @IsInt()
   @Min(1)
   quantity!: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  modifierOptionIds?: string[];
 
   @IsOptional()
   @IsString()

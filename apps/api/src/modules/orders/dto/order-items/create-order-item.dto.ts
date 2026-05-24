@@ -1,4 +1,12 @@
-import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 /** API Spec §5.2 POST /api/v1/order-items */
 export class CreateOrderItemDto {
@@ -15,6 +23,12 @@ export class CreateOrderItemDto {
   @IsInt()
   @Min(1)
   quantity!: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  modifierOptionIds?: string[];
 
   @IsOptional()
   @IsString()

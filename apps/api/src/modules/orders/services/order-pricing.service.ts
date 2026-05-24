@@ -1,21 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
 import { ProductEntity } from '../../catalog/entities/product.entity';
 import { VariantEntity } from '../../catalog/entities/variant.entity';
-import { DEFAULT_ORDER_TAX_RATE } from '../constants/order-tax.constants';
+import { ModifierOptionEntity } from '../../catalog/entities/modifier-option.entity';
 import {
-  calculateOrderTotals as computeTotalsFromLines,
+  calculateGrandTotal,
   formatMoney,
-  OrderTotals,
+  parseMoney,
+  sumMoney,
 } from '../domain/order-totals.util';
-import { CalculatedLineItem, DraftOrderTotals } from '../types/draft-order.types';
+import {
+  CalculatedLineItem,
+  DraftOrderTotals,
+  LineItemModifierSelection,
+} from '../types/draft-order.types';
+import { OrderPricingContext } from '../types/order-pricing.context';
 import { CreateOrderNestedItemDto } from '../dto/orders/create-order-nested-item.dto';
+import { OrderFeeCalculatorService } from '../pricing/order-fee-calculator.service';
+import { PromotionsService, ApplyPromotionsResult } from '../integrations/promotions.service';
+import { OrderEntity } from '../entities/order.entity';
+import { OrderItemEntity } from '../entities/order-item.entity';
 
-export interface CalculateOrderTotalsOptions {
-  taxRate?: number;
-  discountAmount?: string;
+export interface CalculateLineItemInput {
+  productId: string;
+  quantity: number;
+  variantId?: string | null;
+  modifierOptionIds?: string[];
+  notes?: string | null;
 }
 
 @Injectable()
@@ -25,40 +38,65 @@ export class OrderPricingService {
     private readonly productRepository: Repository<ProductEntity>,
     @InjectRepository(VariantEntity)
     private readonly variantRepository: Repository<VariantEntity>,
+    @InjectRepository(ModifierOptionEntity)
+    private readonly modifierOptionRepository: Repository<ModifierOptionEntity>,
+    private readonly feeCalculator: OrderFeeCalculatorService,
+    private readonly promotionsService: PromotionsService,
   ) {}
 
   async calculateLineItem(
     tenant: TenantContext,
-    productId: string,
-    quantity: number,
-    variantId?: string | null,
-    notes?: string | null,
+    input: CalculateLineItemInput,
+    pricingContext: OrderPricingContext,
   ): Promise<CalculatedLineItem> {
+    const { productId, quantity, variantId, modifierOptionIds = [], notes } = input;
+
     const unitPrice = await this.resolveUnitPrice(tenant, productId, variantId);
-    const lineSubtotal = formatMoney(Number(unitPrice) * quantity);
+    const modifiers = await this.resolveModifierSelections(modifierOptionIds);
+    const modifierTotal = formatMoney(sumMoney(modifiers.map((m) => m.priceDelta)));
+    const unitPriceWithModifiers = formatMoney(
+      parseMoney(unitPrice) + parseMoney(modifierTotal),
+    );
+    const lineSubtotal = formatMoney(parseMoney(unitPriceWithModifiers) * quantity);
+
+    const lineTax = this.feeCalculator.calculateLineTax(
+      parseMoney(lineSubtotal),
+      pricingContext,
+    );
+    const lineDiscount = formatMoney(0);
 
     return {
       productId,
       variantId: variantId ?? null,
       quantity,
       unitPrice,
+      modifierTotal,
+      unitPriceWithModifiers,
       lineSubtotal,
+      lineTax,
+      lineDiscount,
       notes: notes ?? null,
+      modifiers,
     };
   }
 
   async calculateLineItemsFromDto(
     tenant: TenantContext,
     items: CreateOrderNestedItemDto[],
+    pricingContext: OrderPricingContext,
   ): Promise<CalculatedLineItem[]> {
     return Promise.all(
       items.map((item) =>
         this.calculateLineItem(
           tenant,
-          item.productId,
-          item.quantity,
-          item.variantId,
-          item.notes,
+          {
+            productId: item.productId,
+            quantity: item.quantity,
+            variantId: item.variantId,
+            modifierOptionIds: item.modifierOptionIds,
+            notes: item.notes,
+          },
+          pricingContext,
         ),
       ),
     );
@@ -66,37 +104,140 @@ export class OrderPricingService {
 
   calculateOrderTotals(
     lines: CalculatedLineItem[],
-    options: CalculateOrderTotalsOptions = {},
+    context: OrderPricingContext,
+    options: { discountTotal?: string } = {},
   ): DraftOrderTotals {
-    const taxRate = options.taxRate ?? DEFAULT_ORDER_TAX_RATE;
-    const base: OrderTotals = computeTotalsFromLines(
-      lines.map((line) => ({ quantity: line.quantity, price: line.unitPrice })),
-      taxRate,
+    const subtotal = formatMoney(sumMoney(lines.map((line) => line.lineSubtotal)));
+    const lineDiscountTotal = sumMoney(lines.map((line) => line.lineDiscount));
+    const discountTotal = formatMoney(
+      parseMoney(options.discountTotal ?? '0.00') + lineDiscountTotal,
     );
-    const discountAmount = options.discountAmount ?? '0.00';
-    const adjustedTotal = Math.max(0, Number(base.total) - Number(discountAmount));
+
+    const taxableSubtotal = Math.max(0, parseMoney(subtotal) - parseMoney(discountTotal));
+    const taxTotal = this.feeCalculator.calculateTax({
+      taxableSubtotal,
+      context,
+    });
+    const serviceChargeTotal = this.feeCalculator.calculateServiceCharge({
+      subtotal: parseMoney(subtotal),
+      context,
+    });
+    const deliveryFee = this.feeCalculator.calculateDeliveryFee({ context });
+
+    const grandTotal = calculateGrandTotal({
+      subtotal: parseMoney(subtotal),
+      discountTotal: parseMoney(discountTotal),
+      taxTotal: parseMoney(taxTotal),
+      serviceChargeTotal: parseMoney(serviceChargeTotal),
+      deliveryFee: parseMoney(deliveryFee),
+    });
 
     return {
-      ...base,
-      discountAmount,
+      subtotal,
+      discountTotal,
+      taxTotal,
+      serviceChargeTotal,
+      deliveryFee,
+      grandTotal,
       promotionIds: [],
-      total: formatMoney(adjustedTotal),
+      appliedPromotions: [],
     };
   }
 
-  applyDiscountToDraft(
+  /**
+   * Applies promotions to a draft and recalculates tax + grand total.
+   */
+  async applyPromotionsAndRecalculate(
+    context: OrderPricingContext,
     draft: DraftOrderTotals,
-    discountAmount: string,
-    promotionIds: string[],
+    lines: CalculatedLineItem[],
+    items: OrderItemEntity[],
+    order?: OrderEntity,
+  ): Promise<DraftOrderTotals> {
+    const promotionResult = await this.promotionsService.applyPromotions({
+      tenant: context.tenant,
+      order,
+      items,
+      lines,
+      draftTotals: draft,
+      action: 'apply',
+    });
+
+    return this.mergePromotionResult(draft, promotionResult, context, lines);
+  }
+
+  mergePromotionResult(
+    draft: DraftOrderTotals,
+    promotionResult: ApplyPromotionsResult,
+    context: OrderPricingContext,
+    lines: CalculatedLineItem[],
   ): DraftOrderTotals {
-    const adjustedTotal = Math.max(0, Number(draft.total) - Number(discountAmount));
+    const lineDiscountTotal = sumMoney(lines.map((line) => line.lineDiscount));
+    const discountTotal = formatMoney(
+      parseMoney(promotionResult.discountTotal) + lineDiscountTotal,
+    );
+
+    const taxableSubtotal = Math.max(
+      0,
+      parseMoney(draft.subtotal) - parseMoney(discountTotal),
+    );
+    const taxTotal = this.feeCalculator.calculateTax({
+      taxableSubtotal,
+      context,
+    });
+
+    const grandTotal = calculateGrandTotal({
+      subtotal: parseMoney(draft.subtotal),
+      discountTotal: parseMoney(discountTotal),
+      taxTotal: parseMoney(taxTotal),
+      serviceChargeTotal: parseMoney(draft.serviceChargeTotal),
+      deliveryFee: parseMoney(draft.deliveryFee),
+    });
+
     return {
       subtotal: draft.subtotal,
-      tax: draft.tax,
-      total: formatMoney(adjustedTotal),
-      discountAmount,
-      promotionIds,
+      discountTotal,
+      taxTotal,
+      serviceChargeTotal: draft.serviceChargeTotal,
+      deliveryFee: draft.deliveryFee,
+      grandTotal,
+      promotionIds: promotionResult.promotionIds,
+      appliedPromotions: promotionResult.appliedPromotions,
     };
+  }
+
+  buildPricingContext(
+    tenant: TenantContext,
+    locationId: string,
+    orderType: OrderPricingContext['orderType'],
+  ): OrderPricingContext {
+    return { tenant, locationId, orderType };
+  }
+
+  private async resolveModifierSelections(
+    modifierOptionIds: string[],
+  ): Promise<LineItemModifierSelection[]> {
+    if (modifierOptionIds.length === 0) {
+      return [];
+    }
+
+    const options = await this.modifierOptionRepository.find({
+      where: { id: In(modifierOptionIds) },
+    });
+
+    if (options.length !== modifierOptionIds.length) {
+      const found = new Set(options.map((o) => o.id));
+      const missing = modifierOptionIds.filter((id) => !found.has(id));
+      throw new NotFoundException(
+        `Modifier option(s) not found: ${missing.join(', ')}`,
+      );
+    }
+
+    return options.map((option) => ({
+      modifierOptionId: option.id,
+      name: option.name,
+      priceDelta: formatMoney(parseMoney(option.priceDelta)),
+    }));
   }
 
   private async resolveUnitPrice(
@@ -111,7 +252,7 @@ export class OrderPricingService {
       throw new NotFoundException(`Product ${productId} not found`);
     }
 
-    let unitAmount = Number(product.price);
+    let unitAmount = parseMoney(product.price);
 
     if (variantId) {
       const variant = await this.variantRepository.findOne({
@@ -120,7 +261,7 @@ export class OrderPricingService {
       if (!variant) {
         throw new NotFoundException(`Variant ${variantId} not found for product`);
       }
-      unitAmount += Number(variant.priceDelta);
+      unitAmount += parseMoney(variant.priceDelta);
     }
 
     return formatMoney(unitAmount);

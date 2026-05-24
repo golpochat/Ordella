@@ -28,7 +28,8 @@ Order lifecycle per **SRS** and **API Spec §5** (blueprint Orders Service).
 Terminal: `cancelled`, `failed`
 
 Lifecycle rules live in `domain/order-lifecycle.transitions.ts`.  
-`OrderCreationService.createOrder()` handles pricing, draft totals, and promotions.  
+`OrderCreationService.createOrder()` handles line pricing, draft totals, promotions, and persistence.  
+`OrderPricingService` + `OrderFeeCalculatorService` compute subtotal, discounts, tax, service charge, delivery fee, and grand total.  
 `OrderLifecycleService.transition()` records status history and runs step integrations.  
 Placeholder integrations (no external APIs) live under `integrations/`.
 

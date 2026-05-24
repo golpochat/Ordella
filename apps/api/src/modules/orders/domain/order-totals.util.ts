@@ -1,32 +1,28 @@
-export interface OrderLineForTotals {
-  quantity: number;
-  price: string;
-}
-
-export interface OrderTotals {
-  subtotal: string;
-  tax: string;
-  total: string;
-}
-
 export function formatMoney(amount: number): string {
   return amount.toFixed(2);
 }
 
-export function calculateOrderTotals(
-  lines: OrderLineForTotals[],
-  taxRate: number = 0,
-): OrderTotals {
-  const subtotalAmount = lines.reduce(
-    (sum, line) => sum + Number(line.price) * line.quantity,
-    0,
-  );
-  const taxAmount = subtotalAmount * taxRate;
-  const totalAmount = subtotalAmount + taxAmount;
+export function parseMoney(value: string): number {
+  return Number(value);
+}
 
-  return {
-    subtotal: formatMoney(subtotalAmount),
-    tax: formatMoney(taxAmount),
-    total: formatMoney(totalAmount),
-  };
+export function sumMoney(values: string[]): number {
+  return values.reduce((sum, value) => sum + parseMoney(value), 0);
+}
+
+export interface GrandTotalComponents {
+  subtotal: number;
+  discountTotal: number;
+  taxTotal: number;
+  serviceChargeTotal: number;
+  deliveryFee: number;
+}
+
+export function calculateGrandTotalAmount(components: GrandTotalComponents): number {
+  const { subtotal, discountTotal, taxTotal, serviceChargeTotal, deliveryFee } = components;
+  return Math.max(0, subtotal - discountTotal + taxTotal + serviceChargeTotal + deliveryFee);
+}
+
+export function calculateGrandTotal(components: GrandTotalComponents): string {
+  return formatMoney(calculateGrandTotalAmount(components));
 }
