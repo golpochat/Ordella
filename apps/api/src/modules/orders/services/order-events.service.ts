@@ -3,16 +3,22 @@ import { TenantContext } from '../../../common/interfaces';
 import { FilterPaginationDto } from '../../../common/dto';
 import { OrderEventResponseDto } from '../dto';
 import { OrderEntity } from '../entities/order.entity';
+import { OrderReportingEventType } from '../enums/order-reporting-event-type.enum';
 import { OrderEventRepository } from '../repositories/order-event.repository';
 import { toOrderEventResponseDto } from '../mappers/order.mapper';
 import { OrdersDomainEvents } from '../events/orders.events';
+import { ReportingService } from '../integrations/reporting.service';
 import { OrderTransitionContext } from '../types/order-transition.context';
+import { OrderReportingContext } from '../types/order-reporting.context';
 
 @Injectable()
 export class OrderEventsService {
   private readonly logger = new Logger(OrderEventsService.name);
 
-  constructor(private readonly repository: OrderEventRepository) {}
+  constructor(
+    private readonly repository: OrderEventRepository,
+    private readonly reportingService: ReportingService,
+  ) {}
 
   async findByOrderId(
     tenant: TenantContext,
@@ -24,8 +30,7 @@ export class OrderEventsService {
   }
 
   /**
-   * Persists an order event and logs a placeholder bus publish.
-   * Use for lifecycle steps and domain notifications.
+   * Persists an order event to `order_events` and logs a placeholder domain bus publish.
    */
   async emit(
     tenant: TenantContext,
@@ -47,6 +52,17 @@ export class OrderEventsService {
         `[placeholder] OrderEventsService.emit persisted=${eventType} orderId=${orderId} tenant=${tenant.tenantId}`,
       );
     }
+  }
+
+  /**
+   * Reporting/analytics placeholder — does not persist; forwards to ReportsModule stub.
+   */
+  emitReporting(
+    context: OrderReportingContext,
+    eventType: OrderReportingEventType,
+    payload: Record<string, unknown>,
+  ): void {
+    this.reportingService.emit(context, eventType, payload);
   }
 
   async emitDomainStatusChange(

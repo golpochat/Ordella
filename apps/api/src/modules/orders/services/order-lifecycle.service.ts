@@ -17,6 +17,9 @@ import { OrderStatusHistoryService } from './order-status-history.service';
 import { OrderPaymentService } from './order-payment.service';
 import { OrderDeliveryService } from './order-delivery.service';
 import { OrderNotificationService } from './order-notification.service';
+import { OrderReportingService } from './order-reporting.service';
+import { OrderReportingEventType } from '../enums/order-reporting-event-type.enum';
+import { buildOrderReportingPayload } from '../domain/order-reporting-payload.util';
 import { OrderTransitionContext } from '../types/order-transition.context';
 import { OrderInventoryContext } from '../types/order-inventory.context';
 import { OrderPaymentContext } from '../types/order-payment.context';
@@ -35,6 +38,7 @@ export class OrderLifecycleService {
     private readonly orderPaymentService: OrderPaymentService,
     private readonly orderDeliveryService: OrderDeliveryService,
     private readonly orderNotificationService: OrderNotificationService,
+    private readonly orderReportingService: OrderReportingService,
   ) {}
 
   assertCanTransition(from: OrderStatus, to: OrderStatus): void {
@@ -79,6 +83,19 @@ export class OrderLifecycleService {
         OrderNotificationType.ORDER_CREATED,
       ),
       OrderNotificationType.ORDER_CREATED,
+    );
+
+    this.orderReportingService.emit(
+      this.orderReportingService.buildContext(
+        tenant,
+        order,
+        items,
+        null,
+        OrderStatus.PENDING,
+        OrderReportingEventType.ORDER_CREATED,
+      ),
+      OrderReportingEventType.ORDER_CREATED,
+      buildOrderReportingPayload(order, items, null, OrderStatus.PENDING),
     );
   }
 
@@ -135,6 +152,8 @@ export class OrderLifecycleService {
       fromStatus,
       toStatus,
     );
+
+    this.orderReportingService.emitForStatus(tenant, order, items, fromStatus, toStatus);
 
     return order;
   }

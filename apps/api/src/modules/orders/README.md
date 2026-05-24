@@ -33,7 +33,7 @@ Payment placeholders: `authorizeOrCapture` on `accepted` (CONFIRMED), `refund` o
 
 Delivery placeholders: on `ready` (delivery orders) → `createTask` + `assignDriver`; `out_for_delivery` → `markOutForDelivery`; `completed` → `markDelivered`. Create delivery orders with `deliveryDetails` (fee via `OrderFeeCalculatorService`).
 
-Notifications fire last (after inventory, payment, delivery): `ORDER_CREATED`, `ORDER_CONFIRMED`, `ORDER_PREPARING`, `ORDER_READY`, `ORDER_OUT_FOR_DELIVERY`, `ORDER_COMPLETED`, `ORDER_CANCELLED`, `ORDER_REFUNDED`.
+Notifications fire after inventory, payment, and delivery hooks. Reporting events emit last via `OrderEventsService.emitReporting` (same event names, no analytics pipeline).
 
 Lifecycle rules live in `domain/order-lifecycle.transitions.ts`.  
 `OrderCreationService.createOrder()` handles line pricing, draft totals, promotions, and persistence.  

@@ -19,6 +19,7 @@ import { OrderPricingService } from '../../services/order-pricing.service';
 import { OrderPaymentService } from '../../services/order-payment.service';
 import { OrderDeliveryService } from '../../services/order-delivery.service';
 import { OrderNotificationService } from '../../services/order-notification.service';
+import { OrderReportingService } from '../../services/order-reporting.service';
 import { OrderTotalsService } from '../../services/order-totals.service';
 import { OrderFeeCalculatorService } from '../../pricing/order-fee-calculator.service';
 import {
@@ -27,6 +28,7 @@ import {
   NotificationsService,
   PaymentsService,
   PromotionsService,
+  ReportingService,
 } from '../../integrations';
 
 @Module({
@@ -54,6 +56,7 @@ import {
     OrderPaymentService,
     OrderDeliveryService,
     OrderNotificationService,
+    OrderReportingService,
     OrderTotalsService,
     OrderFeeCalculatorService,
     PromotionsService,
@@ -61,6 +64,7 @@ import {
     PaymentsService,
     DeliveryService,
     NotificationsService,
+    ReportingService,
   ],
   exports: [OrderRepository, OrderPricingService, PromotionsService],
 })
