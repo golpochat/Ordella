@@ -2,5 +2,19 @@
   "name": "@ordella/admin",
   "version": "0.0.0",
   "private": true,
-  "description": "Ordella Admin Dashboard — Next.js"
+  "description": "Ordella Admin Dashboard — Next.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "lint": "node -e \"process.exit(0)\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@ordella/shared-ui": "*",
+    "@ordella/shared-utils": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "typescript": "^5.7.2"
+  }
 }
