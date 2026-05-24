@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { updateDeliverySettings } from '@/lib/api/admin/settings';
 import { getErrorMessage } from '@/lib/utils';
@@ -50,7 +50,9 @@ export function DeliverySettingsPanel() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="delivery-location">Location ID</Label>
+          <label htmlFor="delivery-location" className="text-sm font-medium">
+            Location ID
+          </label>
           <Input
             id="delivery-location"
             value={locationId}
@@ -59,7 +61,9 @@ export function DeliverySettingsPanel() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="delivery-radius">Delivery radius (km)</Label>
+          <label htmlFor="delivery-radius" className="text-sm font-medium">
+            Delivery radius (km)
+          </label>
           <Input
             id="delivery-radius"
             type="number"
@@ -69,7 +73,9 @@ export function DeliverySettingsPanel() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="delivery-fee">Delivery fee</Label>
+          <label htmlFor="delivery-fee" className="text-sm font-medium">
+            Delivery fee
+          </label>
           <Input
             id="delivery-fee"
             type="number"
@@ -80,7 +86,9 @@ export function DeliverySettingsPanel() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="free-threshold">Free delivery threshold (optional)</Label>
+          <label htmlFor="free-threshold" className="text-sm font-medium">
+            Free delivery threshold (optional)
+          </label>
           <Input
             id="free-threshold"
             type="number"
@@ -91,7 +99,9 @@ export function DeliverySettingsPanel() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="max-active">Max active deliveries per driver</Label>
+          <label htmlFor="max-active" className="text-sm font-medium">
+            Max active deliveries per driver
+          </label>
           <Input
             id="max-active"
             type="number"

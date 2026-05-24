@@ -34,7 +34,7 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
 
   return (
     <>
-      <PageHeader title="Daily sales" description="Revenue and order totals by day" />
+      <PageHeader title="Daily sales" description="Business revenue and order totals by day" />
       <SubNav items={REPORTS_SUBNAV} />
       <Suspense fallback={null}>
         <ReportDateFilter />

@@ -7,7 +7,7 @@ This guide describes how to run the **Ordella** monorepo on your machine using t
 | Workspace | Folder | Local URL | Role |
 |-----------|--------|-----------|------|
 | `@ordella/api` | `apps/api` | http://localhost:3000 | NestJS API (`/api/v1`) |
-| `@ordella/admin-ui` | `apps/admin-ui` | http://localhost:3001 | Admin dashboard |
+| `@ordella/admin-ui` | `apps/admin-ui` | http://localhost:3001 | Admin dashboard & analytics |
 | `@ordella/pos-ui` | `apps/pos-ui` | http://localhost:3002 | Point of sale UI |
 | `@ordella/storefront` | `apps/storefront` | http://localhost:3003 | Online ordering storefront |
 | `@ordella/driver-app` | `apps/driver-app` | http://localhost:3004 | Driver delivery app |

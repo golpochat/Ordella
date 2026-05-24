@@ -11,6 +11,7 @@ export * from './admin-update-order-status.dto';
 export * from './admin-create-promotion.dto';
 export * from './admin-update-promotion.dto';
 export * from './admin-reports-query.dto';
+export * from './admin-analytics-query.dto';
 export * from './admin-update-business-info.dto';
 export * from './admin-update-opening-hours.dto';
 export * from './admin-update-delivery-zones.dto';

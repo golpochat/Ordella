@@ -17,7 +17,7 @@ export type NavItem = {
 };
 
 export const DASHBOARD_NAV: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { id: 'dashboard', label: 'Analytics', href: '/dashboard', icon: LayoutDashboard },
   { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
@@ -39,6 +39,7 @@ export const INVENTORY_SUBNAV = [
 ];
 
 export const REPORTS_SUBNAV = [
+  { label: 'Analytics home', href: '/dashboard' },
   { label: 'Daily sales', href: '/reports/sales' },
   { label: 'Inventory', href: '/reports/inventory' },
   { label: 'Delivery', href: '/reports/delivery' },

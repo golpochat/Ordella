@@ -8,6 +8,9 @@ import { ModifierOptionEntity } from '../catalog/entities/modifier-option.entity
 import { ProductModifierEntity } from '../catalog/entities/product-modifier.entity';
 import { VariantEntity } from '../catalog/entities/variant.entity';
 import { OrderEntity } from '../orders/entities/order.entity';
+import { OrderItemEntity } from '../orders/entities/order-item.entity';
+import { OrderStatusHistoryEntity } from '../orders/entities/order-status-history.entity';
+import { DeliveryTaskEntity } from '../deliveries/entities/delivery-task.entity';
 import { StockItemEntity } from '../inventory/entities/stock-item.entity';
 import { StockMovementEntity } from '../inventory/entities/stock-movement.entity';
 import { PromotionEntity } from '../promotions/entities/promotion.entity';
@@ -25,6 +28,7 @@ import {
   AdminProductsController,
   AdminPromotionsController,
   AdminReportsController,
+  AdminAnalyticsController,
   AdminSettingsController,
   CatalogBuilderController,
 } from './controllers';
@@ -34,6 +38,7 @@ import {
   ProductAdminService,
   PromotionsAdminService,
   ReportsAdminService,
+  AnalyticsAdminService,
   TenantSettingsService,
   CatalogBuilderService,
 } from './services';
@@ -43,6 +48,7 @@ import { AdminCatalogRepository } from './repositories/admin-catalog.repository'
 import { AdminOrderQueryRepository } from './repositories/admin-order-query.repository';
 import { AdminPromotionRepository } from './repositories/admin-promotion.repository';
 import { AdminInventoryRepository } from './repositories/admin-inventory.repository';
+import { AnalyticsQueryRepository } from './repositories/analytics-query.repository';
 import { AdminSettingsCoreModule } from './admin-settings-core.module';
 import { AdminNotificationsIntegration } from './integrations/admin-notifications.integration';
 
@@ -65,10 +71,14 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
       ProductModifierEntity,
       VariantEntity,
       OrderEntity,
+      OrderItemEntity,
+      OrderStatusHistoryEntity,
+      DeliveryTaskEntity,
       StockItemEntity,
       StockMovementEntity,
       PromotionEntity,
       PromotionApplicationEntity,
+      LocationEntity,
     ]),
     forwardRef(() => OrdersFeatureModule),
     InventoryModule,
@@ -81,6 +91,7 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
     AdminOrdersController,
     AdminPromotionsController,
     AdminReportsController,
+    AdminAnalyticsController,
     AdminSettingsController,
   ],
   providers: [
@@ -90,12 +101,14 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
     AdminOrderQueryRepository,
     AdminPromotionRepository,
     AdminInventoryRepository,
+    AnalyticsQueryRepository,
     ProductAdminService,
     CatalogBuilderService,
     InventoryAdminService,
     OrdersAdminService,
     PromotionsAdminService,
     ReportsAdminService,
+    AnalyticsAdminService,
     TenantSettingsService,
     AdminNotificationsIntegration,
   ],

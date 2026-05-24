@@ -1,13 +1,19 @@
+import { Suspense } from 'react';
 import { createServerApiClient } from '@/lib/api/server';
 import { getOnboardingProgress, getSetupStatus } from '@/lib/api/onboarding';
 import { PageHeader } from '@/components/ui/page-header';
 import { GettingStartedPanel } from '@/components/dashboard/getting-started-panel';
+import { AnalyticsDashboardPanel } from '@/components/analytics/analytics-dashboard-panel';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { getErrorMessage } from '@/lib/utils';
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: { from?: string; to?: string; locationId?: string };
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   let showGettingStarted = false;
-  let error: string | null = null;
+  let setupError: string | null = null;
 
   try {
     const client = createServerApiClient();
@@ -18,22 +24,20 @@ export default async function DashboardPage() {
     showGettingStarted =
       progress.isComplete && (!status.hasCatalog || !status.hasOrders);
   } catch (err) {
-    error = getErrorMessage(err);
+    setupError = getErrorMessage(err);
   }
 
   return (
     <>
       <PageHeader
-        title="Dashboard"
-        description="Overview of your business on Ordella"
+        title="Analytics"
+        description="Business sales, orders, catalog performance, and inventory insights"
       />
-      {error ? <ApiErrorBanner message={error} /> : null}
+      {setupError ? <ApiErrorBanner message={setupError} /> : null}
       {showGettingStarted ? <GettingStartedPanel /> : null}
-      {!showGettingStarted && !error ? (
-        <p className="text-sm text-muted-foreground">
-          Use the sidebar to manage catalog, orders, inventory, and reports.
-        </p>
-      ) : null}
+      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading analytics…</p>}>
+        <AnalyticsDashboardPanel searchParams={searchParams} />
+      </Suspense>
     </>
   );
 }
