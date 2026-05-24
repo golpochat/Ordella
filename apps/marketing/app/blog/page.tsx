@@ -6,7 +6,8 @@ import { createMetadata } from '@/lib/metadata';
 
 export const metadata = createMetadata({
   title: 'Blog',
-  description: 'Restaurant technology, POS, online ordering, delivery, and multi-location operations.',
+  description:
+    'Retail and food business technology — POS, online ordering, fulfillment, delivery, and multi-location operations.',
   path: '/blog',
 });
 
@@ -20,8 +21,8 @@ export default function BlogIndexPage() {
     <Section className="pt-6 sm:pt-10" size="sm">
       <PageHero
         eyebrow="Blog"
-        title="Insights for modern restaurant operators"
-        description="Guides and ideas for unifying in-store, online, and delivery without vendor sprawl."
+        title="Insights for modern retail and food operators"
+        description="Guides on catalogs, fulfillment workflows, and unifying in-store, pickup, and delivery without vendor sprawl."
       />
 
       {featured.length > 0 ? (

@@ -91,7 +91,7 @@ export function ScreenshotFrame({
   const isDevice = frame === 'device';
   const aspect = isDevice ? 'aspect-[4/5] max-w-sm mx-auto' : 'aspect-[4/3] sm:aspect-video';
 
-  const chromeLabel = 'Bella Kitchen · demo';
+  const chromeLabel = 'Bella Market · demo';
 
   return (
     <figure className={cn('w-full', className)}>

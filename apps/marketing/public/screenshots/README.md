@@ -1,18 +1,18 @@
 # Marketing screenshots
 
-Product UI captures for the Ordella marketing site (Bella Kitchen demo tenant).
+Product UI captures for the Ordella marketing site (Bella Market demo tenant).
 
-| File | Surface |
-|------|---------|
-| `admin-dashboard.png` | Admin — sales overview / reports |
-| `admin-products.png` | Admin — menu catalog |
-| `admin-branding.png` | Admin — branding & theme preview |
-| `admin-billing.png` | Admin — plan & usage |
-| `pos-orders.png` | POS — menu & cart |
-| `storefront-menu.png` | Storefront — mobile menu |
-| `driver-delivery.png` | Driver — active deliveries |
-| `customer-orders.png` | Customer — order history |
-| `kds-kitchen.png` | KDS — station tickets |
-| `architecture-overview.png` | Platform diagram |
+| File | Label |
+| --- | --- |
+| `admin-dashboard.png` | Admin — sales overview |
+| `admin-products.png` | Admin — catalog overview |
+| `admin-branding.png` | Admin — branding settings |
+| `admin-billing.png` | Admin — billing & plans |
+| `pos-orders.png` | POS — catalog & cart |
+| `storefront-menu.png` | Storefront — mobile catalog |
+| `driver-delivery.png` | Driver app — deliveries |
+| `customer-orders.png` | Customer app — order history |
+| `kds-kitchen.png` | Fulfillment display — station tickets |
+| `architecture-overview.png` | Multi-channel architecture |
 
-Regenerate: `npm run capture:screenshots --workspace=@ordella/marketing`
+Regenerate with `npm run capture:screenshots --workspace=@ordella/marketing`.

@@ -1,5 +1,7 @@
 export { BlogCard } from './blog-card';
 export { PostNavigation } from './blog/post-navigation';
+export { SocialProof } from './social-proof';
+export { CurrencySwitcher } from './currency-switcher';
 export { ComparisonTable } from './comparison-table';
 export { Container } from './container';
 export { CtaSection } from './cta-section';

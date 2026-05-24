@@ -106,7 +106,7 @@ export function Footer() {
           <p className="text-caption">
             © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
           </p>
-          <p className="text-caption">Built for modern restaurant operators.</p>
+          <p className="text-caption">Built for modern multi-channel retail operators.</p>
         </Container>
       </div>
     </footer>

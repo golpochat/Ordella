@@ -36,7 +36,7 @@ export function PricingCard({ plan, currency = DEFAULT_CURRENCY }: PricingCardPr
           ) : null}
         </div>
         <p className="mt-2 text-caption">
-          {plan.locations} location{plan.locations !== '1' && plan.locations !== 'Unlimited' ? 's' : ''}{' '}
+          {plan.locations} business location{plan.locations !== '1' && plan.locations !== 'Unlimited' ? 's' : ''}{' '}
           · {plan.ordersPerMonth} orders/mo
         </p>
       </header>

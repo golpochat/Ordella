@@ -22,12 +22,14 @@ export function ScreenshotGallery({ screens, className }: ScreenshotGalleryProps
       )}
     >
       {screens.map((screen) => (
-        <ScreenshotFrame
-          key={screen.image}
-          image={screen.image}
-          title={screen.label}
-          caption={screen.caption}
-        />
+        <div key={screen.image} className="flex min-h-0 flex-col">
+          <ScreenshotFrame
+            image={screen.image}
+            title={screen.label}
+            caption={screen.caption}
+            className="h-full"
+          />
+        </div>
       ))}
     </div>
   );

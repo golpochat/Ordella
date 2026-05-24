@@ -33,7 +33,7 @@ export const SCREENSHOTS: Record<ScreenshotId, ScreenshotMeta> = {
   'admin-dashboard': {
     id: 'admin-dashboard',
     src: '/screenshots/admin-dashboard.png',
-    alt: 'Ordella admin dashboard showing sales overview and recent orders for Bella Kitchen',
+    alt: 'Ordella admin dashboard showing sales overview and recent orders for Bella Market',
     frame: 'browser',
     width: 1200,
     height: 750,
@@ -41,7 +41,7 @@ export const SCREENSHOTS: Record<ScreenshotId, ScreenshotMeta> = {
   'admin-products': {
     id: 'admin-products',
     src: '/screenshots/admin-products.png',
-    alt: 'Ordella admin products list with menu categories and pricing',
+    alt: 'Ordella admin catalog overview with categories and pricing',
     frame: 'browser',
     width: 1200,
     height: 750,
@@ -65,7 +65,7 @@ export const SCREENSHOTS: Record<ScreenshotId, ScreenshotMeta> = {
   'pos-orders': {
     id: 'pos-orders',
     src: '/screenshots/pos-orders.png',
-    alt: 'Ordella POS menu grid and checkout cart during in-store order taking',
+    alt: 'Ordella POS catalog grid and checkout cart during in-store order taking',
     frame: 'browser',
     width: 1200,
     height: 750,
@@ -73,7 +73,7 @@ export const SCREENSHOTS: Record<ScreenshotId, ScreenshotMeta> = {
   'storefront-menu': {
     id: 'storefront-menu',
     src: '/screenshots/storefront-menu.png',
-    alt: 'Bella Kitchen mobile storefront menu with categories and add to cart',
+    alt: 'Bella Market mobile storefront catalog with categories and add to cart',
     frame: 'device',
     width: 390,
     height: 780,
@@ -97,7 +97,7 @@ export const SCREENSHOTS: Record<ScreenshotId, ScreenshotMeta> = {
   'kds-kitchen': {
     id: 'kds-kitchen',
     src: '/screenshots/kds-kitchen.png',
-    alt: 'Ordella kitchen display with grill, salad, and expo ticket columns',
+    alt: 'Ordella fulfillment display with station columns and active tickets',
     frame: 'browser',
     width: 1200,
     height: 750,
@@ -105,7 +105,7 @@ export const SCREENSHOTS: Record<ScreenshotId, ScreenshotMeta> = {
   'architecture-overview': {
     id: 'architecture-overview',
     src: '/screenshots/architecture-overview.png',
-    alt: 'Diagram of Ordella connecting storefront, POS, API, KDS, admin, and driver apps',
+    alt: 'Diagram of Ordella connecting storefront, POS, API, fulfillment display, admin, and driver apps',
     frame: 'browser',
     width: 1200,
     height: 750,

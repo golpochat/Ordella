@@ -24,7 +24,7 @@ const variantClasses = {
 };
 
 const sizeClasses = {
-  sm: 'py-section sm:py-16',
+  sm: 'py-section-sm md:py-section',
   default: 'py-section lg:py-section-lg',
   lg: 'py-section-lg lg:py-30',
 };

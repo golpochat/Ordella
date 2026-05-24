@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: 'Ordella',
-  tagline: 'Run every order channel from one platform.',
+  tagline: 'Run every retail order channel from one platform.',
   description:
-    'Ordella unifies in-store POS, online ordering, kitchen displays, delivery, and customer apps for multi-location restaurants.',
+    'POS, online ordering, inventory, fulfillment, delivery, and multi-location management for restaurants, cafés, takeaways, grocery, butchers, and retail businesses.',
   url: process.env.NEXT_PUBLIC_MARKETING_URL ?? 'http://localhost:3006',
   ogImage: '/og-default.svg',
   themeColor: '#3A6DFF',

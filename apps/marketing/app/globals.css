@@ -4,12 +4,23 @@
 
 @layer base {
   :root {
-    --brand-primary: #3a6dff;
-    --brand-secondary: #1f3fcc;
-    --brand-bg: #f4f6f8;
-    --brand-text: #0f1a2a;
-    --brand-accent: #3a6dff;
+    /* Brand palette */
+    --color-primary: #3a6dff;
+    --color-primary-dark: #1f3fcc;
+    --color-navy: #0f1a2a;
+    --color-gray-light: #f4f6f8;
+    --color-slate: #6b7280;
+    --color-success: #2ecc71;
+    --color-warning: #ffb020;
+    --color-danger: #ff6b6b;
 
+    --brand-primary: var(--color-primary);
+    --brand-secondary: var(--color-primary-dark);
+    --brand-bg: var(--color-gray-light);
+    --brand-text: var(--color-navy);
+    --brand-accent: var(--color-primary);
+
+    /* Semantic UI (HSL for Tailwind alpha) */
     --background: 0 0% 100%;
     --foreground: 213 47% 11%;
     --card: 0 0% 100%;
@@ -25,6 +36,15 @@
     --ring: 224 100% 61%;
     --radius: 0.75rem;
 
+    /* Spacing rhythm */
+    --space-section-y: 5rem;
+    --space-section-y-lg: 7.5rem;
+    --space-section-y-sm: 4rem;
+    --space-header-after: 2.5rem;
+    --space-stack: 1rem;
+    --space-stack-lg: 1.5rem;
+
+    /* Shadows */
     --shadow-brand: 0 4px 20px rgb(58 109 255 / 0.18);
     --shadow-soft: 0 1px 2px rgb(15 26 42 / 0.04), 0 8px 24px rgb(15 26 42 / 0.06);
     --shadow-card: 0 1px 3px rgb(15 26 42 / 0.06), 0 12px 32px rgb(15 26 42 / 0.08);
@@ -83,6 +103,34 @@
 
   .marketing-container {
     @apply mx-auto w-full max-w-marketing px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-header-block {
+    margin-bottom: var(--space-header-after);
+  }
+
+  @media (min-width: 768px) {
+    .section-header-block {
+      margin-bottom: 3rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-header-block {
+      margin-bottom: 3.5rem;
+    }
+  }
+
+  .hero-cta-group {
+    @apply mt-8 flex flex-col gap-3 xs:flex-row xs:flex-wrap;
+  }
+
+  .hero-copy-stack > * + * {
+    margin-top: var(--space-stack);
+  }
+
+  .hero-copy-stack > .text-body-lg {
+    margin-top: 1.25rem;
   }
 
   .docs-mdx,

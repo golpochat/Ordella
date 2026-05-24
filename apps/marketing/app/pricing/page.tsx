@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import { ComparisonTable } from '@/components/comparison-table';
 import { CtaSection } from '@/components/cta-section';
+import { CurrencySwitcher } from '@/components/currency-switcher';
 import { Faq } from '@/components/faq';
 import { PageHero } from '@/components/page-hero';
 import { PricingGrid } from '@/components/pricing-grid';
@@ -10,7 +12,8 @@ import { getComparisonRows, plans, pricingFaqs, type PlanId } from '@/lib/plans'
 
 export const metadata = createMetadata({
   title: 'Pricing',
-  description: 'Ordella plans for single-location pilots to multi-location brands. Free, Starter, Pro, and Enterprise.',
+  description:
+    'Ordella plans for single-location pilots to multi-location retail brands. Works for restaurants, cafés, takeaways, grocery, butchers, retail shops, and more.',
   path: '/pricing',
 });
 
@@ -29,9 +32,13 @@ export default function PricingPage({ searchParams }: PricingPageProps) {
       <Section size="sm" className="pt-6 sm:pt-10">
         <PageHero
           eyebrow="Pricing"
-          title="Plans that scale with your restaurants"
-          description="Start free with one location. Upgrade when you add channels, locations, or order volume."
-        />
+          title="Plans that scale with your business"
+          description="Start free with one business location. Upgrade when you add channels, locations, or order volume. Works for restaurants, cafés, takeaways, grocery, butchers, retail shops, and more."
+        >
+          <Suspense fallback={null}>
+            <CurrencySwitcher active={currency} />
+          </Suspense>
+        </PageHero>
       </Section>
 
       <Section variant="muted">
@@ -50,7 +57,7 @@ export default function PricingPage({ searchParams }: PricingPageProps) {
         />
       </Section>
 
-      <Section>
+      <Section size="sm">
         <CtaSection
           variant="default"
           align="center"

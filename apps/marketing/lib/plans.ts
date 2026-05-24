@@ -28,18 +28,19 @@ export const plans: Plan[] = [
     name: 'Free',
     priceAmount: PLAN_MONTHLY_AMOUNTS.free,
     priceDetail: 'forever',
-    description: 'Pilot a single location and prove the workflow.',
+    description: 'Pilot a single business location and prove the workflow.',
     locations: '1',
     ordersPerMonth: '100',
     cta: 'Start free',
-    features: ['Admin dashboard', 'POS & KDS', 'Branded storefront', 'Subdomain'],
+    features: ['Admin dashboard', 'POS & fulfillment display', 'Branded storefront', 'Subdomain'],
   },
   {
     id: 'starter',
     name: 'Starter',
     priceAmount: PLAN_MONTHLY_AMOUNTS.starter,
     priceDetail: '/ month',
-    description: 'Independent restaurants ready to grow online and in-store.',
+    description:
+      'Growing businesses ready to scale online and in-store. Works for restaurants, cafés, takeaways, grocery, butchers, retail shops, and more.',
     locations: '3',
     ordersPerMonth: '1,000',
     cta: 'Start 14-day trial',
@@ -51,7 +52,7 @@ export const plans: Plan[] = [
     name: 'Pro',
     priceAmount: PLAN_MONTHLY_AMOUNTS.pro,
     priceDetail: '/ month',
-    description: 'Busy brands with unlimited locations and high order volume.',
+    description: 'Busy brands with unlimited business locations and high order volume.',
     locations: 'Unlimited',
     ordersPerMonth: '10,000',
     cta: 'Start 14-day trial',
@@ -62,7 +63,7 @@ export const plans: Plan[] = [
     name: 'Enterprise',
     priceAmount: PLAN_MONTHLY_AMOUNTS.enterprise,
     priceDetail: 'contact sales',
-    description: 'Franchises and groups that need SLAs and tailored limits.',
+    description: 'Multi-location groups that need SLAs and tailored limits.',
     locations: 'Custom',
     ordersPerMonth: 'Custom',
     cta: 'Contact sales',
@@ -86,9 +87,9 @@ export function formatPlanMonthlyPrice(planId: PlanId, currency: CurrencyCode): 
 }
 
 const featureComparisonRows: { label: string; values: Record<PlanId, string | boolean> }[] = [
-  { label: 'Locations', values: { free: '1', starter: '3', pro: 'Unlimited', enterprise: 'Custom' } },
+  { label: 'Business locations', values: { free: '1', starter: '3', pro: 'Unlimited', enterprise: 'Custom' } },
   { label: 'Orders / month', values: { free: '100', starter: '1,000', pro: '10,000', enterprise: 'Custom' } },
-  { label: 'POS & KDS', values: { free: true, starter: true, pro: true, enterprise: true } },
+  { label: 'POS & fulfillment display', values: { free: true, starter: true, pro: true, enterprise: true } },
   { label: 'Online storefront', values: { free: true, starter: true, pro: true, enterprise: true } },
   { label: 'Custom domain', values: { free: false, starter: true, pro: true, enterprise: true } },
   { label: 'Delivery & driver app', values: { free: false, starter: true, pro: true, enterprise: true } },
@@ -114,7 +115,7 @@ export function getComparisonRows(currency: CurrencyCode = 'EUR') {
 export const pricingFaqs = [
   {
     q: 'Is the Free plan really free?',
-    a: 'Yes. You get one location and up to 100 orders per month. Upgrade anytime from Admin → Billing.',
+    a: 'Yes. You get one business location and up to 100 orders per month. Upgrade anytime from Admin → Billing.',
   },
   {
     q: 'What counts as an order?',
@@ -131,5 +132,9 @@ export const pricingFaqs = [
   {
     q: 'Do you offer a trial?',
     a: 'Starter and Pro include a 14-day trial when billing is connected to Stripe.',
+  },
+  {
+    q: 'Which industries does Ordella support?',
+    a: 'Restaurants, cafés, takeaways, grocery, butchers, retail shops, and other formats—any business that sells items across in-store, pickup, and delivery channels.',
   },
 ];

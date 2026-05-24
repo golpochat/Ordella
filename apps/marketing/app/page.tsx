@@ -10,6 +10,7 @@ import { PricingGrid } from '@/components/pricing-grid';
 import { ScreenshotFrame } from '@/components/screenshot-frame';
 import { ScreenshotGallery } from '@/components/screenshot-gallery';
 import { Section } from '@/components/section';
+import { SocialProof } from '@/components/social-proof';
 import { DEFAULT_CURRENCY, resolveCurrency } from '@/lib/currency';
 import { featureGridItems, valuePillars } from '@/lib/features-data';
 import { plans, pricingFaqs } from '@/lib/plans';
@@ -17,8 +18,8 @@ import { plans, pricingFaqs } from '@/lib/plans';
 const steps = [
   {
     step: '1',
-    title: 'Create your restaurant',
-    copy: 'Sign up, add locations, and build or import your menu.',
+    title: 'Create your business',
+    copy: 'Sign up, add locations, and build or import your catalog.',
     image: 'admin-products' as const,
     label: 'Onboarding wizard',
   },
@@ -42,12 +43,12 @@ const productScreens = [
   { label: 'Admin dashboard', image: 'admin-dashboard' as const },
   { label: 'POS checkout', image: 'pos-orders' as const },
   { label: 'Online storefront', image: 'storefront-menu' as const },
-  { label: 'Kitchen display', image: 'kds-kitchen' as const },
+  { label: 'Fulfillment display', image: 'kds-kitchen' as const },
   { label: 'Driver app', image: 'driver-delivery' as const },
   { label: 'Customer app', image: 'customer-orders' as const },
 ];
 
-const trustedBrands = ['Bella Kitchen', 'Harbor Bistro', 'Urban Plate', 'Field & Fire'];
+const trustedBrands = ['Bella Market', 'Harbor Café', 'Urban Grocery', 'Field & Fashion'];
 
 type HomePageProps = {
   searchParams?: { currency?: string | string[] };
@@ -59,62 +60,59 @@ export default function HomePage({ searchParams }: HomePageProps) {
 
   return (
     <>
-      <Section size="lg" className="pt-6 sm:pt-10">
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-          <div className="max-w-xl lg:max-w-none">
-            <p className="text-eyebrow">Multi-tenant restaurant platform</p>
-            <h1 className="text-display mt-4">Run every order channel from one platform.</h1>
-            <p className="text-body-lg mt-5">
-              Ordella unifies in-store POS, online ordering, kitchen displays, delivery, and customer
-              apps—built for multi-location restaurants with your brand on every screen.
+      <Section size="lg" className="pt-6 sm:pt-10 lg:pt-12">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-x-16 lg:gap-y-10">
+          <div className="hero-copy-stack max-w-xl lg:max-w-none">
+            <p className="text-eyebrow">Multi-channel retail platform for modern businesses</p>
+            <h1 className="text-display">Run every retail order channel from one platform.</h1>
+            <p className="text-body-lg">
+              Ordella unifies POS, online ordering, inventory, fulfillment, delivery, and customer
+              experiences—built for restaurants, cafés, takeaways, grocery, butchers, retail shops, and
+              multi-location businesses.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="hero-cta-group">
               <CtaButton size="lg" utmCampaign="landing" utmContent="hero">
                 Start free trial
               </CtaButton>
-              <Button asChild variant="outline" size="lg">
+              <Button asChild variant="outline" size="lg" className="w-full xs:w-auto">
                 <Link href={pricingHref}>See pricing</Link>
               </Button>
             </div>
-            <p className="text-caption mt-4">Free plan · No credit card · 1 location included</p>
+            <p className="text-caption">Free plan · No credit card · 1 location included</p>
           </div>
-          <ScreenshotFrame
-            image="admin-dashboard"
-            title="Ordella admin and channel overview"
-            caption="Admin, storefront, and kitchen—connected in real time"
-            priority
-          />
+          <div className="w-full lg:justify-self-end">
+            <ScreenshotFrame
+              image="admin-dashboard"
+              title="Ordella admin and channel overview"
+              caption="Admin, storefront, and fulfillment—connected in real time"
+              priority
+            />
+          </div>
         </div>
       </Section>
 
       <Section variant="muted" size="sm" align="center">
-        <p className="text-caption mb-6 sm:mb-8">Trusted by growing restaurant brands</p>
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-12">
-          {trustedBrands.map((name) => (
-            <span key={name} className="text-base font-semibold tracking-tight text-slate sm:text-lg">
-              {name}
-            </span>
-          ))}
-        </div>
+        <p className="text-eyebrow mb-4 sm:mb-6">Trusted by growing retail and food businesses</p>
+        <SocialProof brands={trustedBrands} />
       </Section>
 
       <Section
         title="One platform, every channel"
-        subtitle="Orders flow from guests to kitchen to admin—without switching tools."
+        subtitle="Orders flow from customers to fulfillment to admin—without switching tools."
         align="center"
       >
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto w-full max-w-4xl">
           <ScreenshotFrame
             image="architecture-overview"
             title="Ordella architecture across channels"
-            caption="Storefront, POS, KDS, and delivery share one API and one menu"
+            caption="Storefront, POS, KDS, and delivery share one API and one catalog"
           />
         </div>
       </Section>
 
       <Section
         variant="muted"
-        title="Built for how restaurants actually operate"
+        title="Built for how retail businesses actually operate"
         subtitle="Three pillars that replace a patchwork of vendors."
         align="center"
       >
@@ -136,7 +134,7 @@ export default function HomePage({ searchParams }: HomePageProps) {
         align="center"
       >
         <HowItWorks steps={steps} />
-        <div className="mt-12 text-center">
+        <div className="mt-10 text-center sm:mt-12">
           <CtaButton size="lg" utmCampaign="landing" utmContent="how_it_works">
             Start free trial
           </CtaButton>
@@ -145,7 +143,7 @@ export default function HomePage({ searchParams }: HomePageProps) {
 
       <Section
         title="See the product"
-        subtitle="Admin, POS, storefront, KDS, driver, and customer experiences."
+        subtitle="Admin, POS, storefront, fulfillment display, driver, and customer experiences."
         align="center"
       >
         <ScreenshotGallery screens={productScreens} />
@@ -164,12 +162,12 @@ export default function HomePage({ searchParams }: HomePageProps) {
         <Faq items={pricingFaqs.slice(0, 4)} title="Questions" />
       </Section>
 
-      <Section size="sm">
+      <Section size="sm" className="pb-section lg:pb-section-lg">
         <CtaSection
           variant="brand"
           align="center"
-          title="Ready to unify your restaurant?"
-          subtitle="Join operators who run POS, online ordering, and delivery on Ordella."
+          title="Ready to unify your retail channels?"
+          subtitle="Join operators who run POS, online ordering, fulfillment, and delivery on Ordella."
           utmCampaign="landing"
           utmContent="final_cta"
         />

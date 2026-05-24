@@ -22,11 +22,11 @@ type HowItWorksProps = {
 
 export function HowItWorks({ steps, className }: HowItWorksProps) {
   return (
-    <ol className={cn('grid gap-10 md:grid-cols-3 md:gap-8 lg:gap-10', className)}>
+    <ol className={cn('grid auto-rows-fr gap-10 md:grid-cols-3 md:gap-8 lg:gap-10', className)}>
       {steps.map((s, index) => {
         const Icon = s.icon ?? defaultIcons[index] ?? Building2;
         return (
-          <li key={s.step} className="flex flex-col">
+          <li key={s.step} className="flex min-h-0 flex-col">
             <div className="flex items-center gap-3">
               <span
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"

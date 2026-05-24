@@ -15,11 +15,28 @@ const inter = Inter({
   display: 'swap',
 });
 
-export const metadata: Metadata = createMetadata({
-  title: siteConfig.name,
-  description: siteConfig.description,
-  path: '/',
-});
+const homeDescription =
+  'POS, online ordering, inventory, fulfillment, delivery, and multi-location management for restaurants, cafés, takeaways, grocery, butchers, and retail businesses.';
+
+export const metadata: Metadata = {
+  ...createMetadata({
+    title: siteConfig.name,
+    description: homeDescription,
+    path: '/',
+  }),
+  title: 'Ordella — Multi-channel retail platform',
+  description: homeDescription,
+  openGraph: {
+    ...createMetadata({ title: siteConfig.name, description: homeDescription, path: '/' }).openGraph,
+    title: 'Ordella — Multi-channel retail platform',
+    description: homeDescription,
+  },
+  twitter: {
+    ...createMetadata({ title: siteConfig.name, description: homeDescription, path: '/' }).twitter,
+    title: 'Ordella — Multi-channel retail platform',
+    description: homeDescription,
+  },
+};
 
 export const viewport: Viewport = {
   themeColor: [

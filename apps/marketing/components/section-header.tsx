@@ -22,7 +22,7 @@ export function SectionHeader({
   return (
     <header
       className={cn(
-        'mb-10 md:mb-12 lg:mb-14',
+        'section-header-block',
         align === 'center' && 'mx-auto max-w-3xl text-center',
         className,
       )}
