@@ -1,7 +1,42 @@
 {
-  "extends": "../../packages/config/tsconfig.frontend.json",
+  "extends": "../../packages/config/tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "baseUrl": ".",
+    "noEmit": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@shared-ui": [
+        "../shared-ui/src/index.ts"
+      ],
+      "@shared-ui/*": [
+        "../shared-ui/src/*"
+      ],
+      "@shared-utils": [
+        "../shared-utils/src/index.ts"
+      ],
+      "@shared-utils/*": [
+        "../shared-utils/src/*"
+      ]
+    },
+    "allowJs": true,
+    "incremental": true,
+    "jsx": "preserve"
   },
-  "include": ["src"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src"
+  ]
 }
