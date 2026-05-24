@@ -18,8 +18,12 @@ export class StockItemEntity extends BaseTenantScopedEntity {
   unit!: string;
 
   /** Current on-hand quantity snapshot — updated atomically via movements (SRS §4.4) */
-  @Column({ type: 'decimal', precision: 14, scale: 4, default: 0 })
+  @Column({ name: 'quantity_on_hand', type: 'decimal', precision: 14, scale: 4, default: 0 })
   quantityOnHand!: string;
+
+  /** Soft-held quantity for pending orders (InventoryItem.quantityReserved) */
+  @Column({ name: 'quantity_reserved', type: 'decimal', precision: 14, scale: 4, default: 0 })
+  quantityReserved!: string;
 
   @Column({ name: 'product_id', type: 'uuid', nullable: true })
   productId!: string | null;

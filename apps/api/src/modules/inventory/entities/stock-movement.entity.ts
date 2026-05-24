@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { StockMovementType } from '../enums/stock-movement-type.enum';
+import { StockMovementSource } from '../enums/stock-movement-source.enum';
 import { StockReferenceType } from '../enums/stock-reference-type.enum';
 import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { StockItemEntity } from './stock-item.entity';
@@ -20,6 +21,9 @@ export class StockMovementEntity extends BaseTenantScopedEntity {
 
   @Column({ type: 'decimal', precision: 14, scale: 4 })
   quantity!: string;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  source!: StockMovementSource | null;
 
   @Column({ name: 'reference_type', type: 'varchar', length: 32, nullable: true })
   referenceType!: StockReferenceType | null;

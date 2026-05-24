@@ -1,3 +1,4 @@
+export * from './inventory.service';
 export * from './stock-adjustments.service';
 export * from './stock-items.service';
 export * from './stock-movements.service';

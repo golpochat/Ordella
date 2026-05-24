@@ -1,4 +1,5 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { StockAdjustmentType } from '../enums/stock-adjustment-type.enum';
 import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { StockItemEntity } from './stock-item.entity';
 
@@ -15,6 +16,9 @@ export class StockAdjustmentEntity extends BaseTenantScopedEntity {
 
   @Column({ name: 'location_id', type: 'uuid' })
   locationId!: string;
+
+  @Column({ type: 'varchar', length: 32, default: StockAdjustmentType.MANUAL })
+  type!: StockAdjustmentType;
 
   @Column({ name: 'quantity_delta', type: 'decimal', precision: 14, scale: 4 })
   quantityDelta!: string;
