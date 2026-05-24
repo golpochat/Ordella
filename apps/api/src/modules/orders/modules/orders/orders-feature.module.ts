@@ -72,6 +72,6 @@ import {
     NotificationsService,
     ReportingService,
   ],
-  exports: [OrderRepository, OrderPricingService, PromotionsService],
+  exports: [OrdersService, OrderRepository, OrderPricingService, PromotionsService],
 })
 export class OrdersFeatureModule {}
