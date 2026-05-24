@@ -17,11 +17,9 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
-import {
-  CreateStockReservationDto,
-  StockReservationResponseDto,
-} from '../dto/stock-reservations/stock-reservation.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { CreateStockReservationDto } from '../dto/stock-reservations/create-stock-reservation.dto';
+import { StockReservationResponseDto } from '../dto/stock-reservations/stock-reservation-response.dto';
 import { StockReservationsService } from '../services/stock-reservations.service';
 
 /** SRS §4.3 — reserve stock on checkout */
@@ -34,7 +32,7 @@ export class StockReservationsController {
   @RequirePermissions('stock-reservations:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<StockReservationResponseDto[]>> {
     const data = await this.stockReservationsService.findAll(tenant, query);
     return { success: true, data };

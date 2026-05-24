@@ -1,18 +1,18 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
-import { ConnectIntegrationAppDto } from '../dto/integrations/connect-integration-app.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { CreateIntegrationAppDto } from '../dto/integrations/create-integration-app.dto';
 import { IntegrationAppResponseDto } from '../dto/integrations/integration-app-response.dto';
-import { IntegrationWebhookDto } from '../dto/integrations/integration-webhook.dto';
+import { CreateIntegrationWebhookDto } from '../dto/integrations/create-integration-webhook.dto';
 import { UpdateIntegrationDto } from '../dto/integrations/update-integration.dto';
 
 @Injectable()
 export class IntegrationsAppsService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<IntegrationAppResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<IntegrationAppResponseDto[]> {
     throw new NotImplementedException('findAll integration apps');
   }
 
-  connect(_tenant: TenantContext, _dto: ConnectIntegrationAppDto): Promise<IntegrationAppResponseDto> {
+  connect(_tenant: TenantContext, _dto: CreateIntegrationAppDto): Promise<IntegrationAppResponseDto> {
     throw new NotImplementedException('connect integration app');
   }
 
@@ -37,21 +37,21 @@ export class IntegrationsAppsService {
 export class IntegrationsWebhooksService {
   receiveDeliveryWebhook(
     _tenant: TenantContext,
-    _dto: IntegrationWebhookDto,
+    _dto: CreateIntegrationWebhookDto,
   ): Promise<{ received: boolean }> {
     throw new NotImplementedException('receive delivery partner webhook');
   }
 
   receivePaymentsWebhook(
     _tenant: TenantContext,
-    _dto: IntegrationWebhookDto,
+    _dto: CreateIntegrationWebhookDto,
   ): Promise<{ received: boolean }> {
     throw new NotImplementedException('receive payment provider webhook');
   }
 
   receivePosWebhook(
     _tenant: TenantContext,
-    _dto: IntegrationWebhookDto,
+    _dto: CreateIntegrationWebhookDto,
   ): Promise<{ received: boolean }> {
     throw new NotImplementedException('receive POS webhook');
   }

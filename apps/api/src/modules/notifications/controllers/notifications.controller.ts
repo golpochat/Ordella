@@ -15,7 +15,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { NotificationsPermissionKeys } from '../constants/permission-keys';
 import { CreateNotificationDto } from '../dto/notifications/create-notification.dto';
 import { NotificationResponseDto } from '../dto/notifications/notification-response.dto';
@@ -31,7 +31,7 @@ export class NotificationsController {
   @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<NotificationResponseDto[]>> {
     const data = await this.notificationsService.findAll(tenant, query);
     return { success: true, data };

@@ -20,7 +20,7 @@ import { RbacGuard } from '../guards/rbac.guard';
 import { RequirePermissions } from '../decorators/require-permissions.decorator';
 import { CreateApiKeyDto } from '../dto/api-keys/create-api-key.dto';
 import { ApiKeyResponseDto } from '../dto/api-keys/api-key-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { ApiKeysService } from '../services/api-keys.service';
 
 /** API Spec §13.5 API Keys */
@@ -33,7 +33,7 @@ export class ApiKeysController {
   @RequirePermissions('api-keys:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<ApiKeyResponseDto[]>> {
     const data = await this.apiKeysService.findAll(tenant, query);
     return { success: true, data };

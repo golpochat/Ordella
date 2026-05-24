@@ -1,14 +1,14 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 import { CreatePromotionApplicationDto } from '../dto/promotion-applications/create-promotion-application.dto';
-import { PromotionApplicationQueryDto } from '../dto/promotion-applications/promotion-application-query.dto';
+import { FilterPromotionApplicationDto } from '../dto/promotion-applications/filter-promotion-application.dto';
 import { PromotionApplicationResponseDto } from '../dto/promotion-applications/promotion-application-response.dto';
 
 @Injectable()
 export class PromotionApplicationsService {
   findAll(
     _tenant: TenantContext,
-    _query: PromotionApplicationQueryDto,
+    _query: FilterPromotionApplicationDto,
   ): Promise<PromotionApplicationResponseDto[]> {
     throw new NotImplementedException('findAll promotion applications');
   }

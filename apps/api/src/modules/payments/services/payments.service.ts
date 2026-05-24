@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreatePaymentDto } from '../dto/payments/create-payment.dto';
 import { PaymentProviderResponseDto } from '../dto/payments/payment-provider-response.dto';
 import { PaymentResponseDto } from '../dto/payments/payment-response.dto';
@@ -8,7 +8,7 @@ import { UpdatePaymentDto } from '../dto/payments/update-payment.dto';
 
 @Injectable()
 export class PaymentsService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<PaymentResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<PaymentResponseDto[]> {
     throw new NotImplementedException('findAll payments');
   }
 

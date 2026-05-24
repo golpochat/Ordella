@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { PromotionsPermissionKeys } from '../constants/permission-keys';
 import { CreatePromotionDto } from '../dto/promotions/create-promotion.dto';
 import { PromotionResponseDto } from '../dto/promotions/promotion-response.dto';
@@ -34,7 +34,7 @@ export class PromotionsController {
   @RequirePermissions(PromotionsPermissionKeys.PROMOTIONS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<PromotionResponseDto[]>> {
     const data = await this.promotionsService.findAll(tenant, query);
     return { success: true, data };

@@ -3,12 +3,12 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 import { Public } from '../decorators/public.decorator';
-import { LoginDto } from '../dto/authentication/login.dto';
+import { CreateLoginDto } from '../dto/authentication/create-login.dto';
 import { LoginResponseDto } from '../dto/authentication/login-response.dto';
-import { RefreshTokenDto } from '../dto/authentication/refresh-token.dto';
-import { LogoutDto } from '../dto/authentication/logout.dto';
-import { MfaVerifyDto } from '../dto/authentication/mfa-verify.dto';
-import { PinLoginDto } from '../dto/authentication/pin-login.dto';
+import { CreateRefreshTokenDto } from '../dto/authentication/create-refresh-token.dto';
+import { CreateLogoutDto } from '../dto/authentication/create-logout.dto';
+import { CreateMfaVerifyDto } from '../dto/authentication/create-mfa-verify.dto';
+import { CreatePinLoginDto } from '../dto/authentication/create-pin-login.dto';
 import { AuthenticationService } from '../services/authentication.service';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
@@ -24,7 +24,7 @@ export class AuthenticationController {
   @HttpCode(HttpStatus.OK)
   async login(
     @CurrentTenant() tenant: TenantContext | undefined,
-    @Body() dto: LoginDto,
+    @Body() dto: CreateLoginDto,
   ): Promise<ApiSuccessResponse<LoginResponseDto>> {
     const data = await this.authenticationService.login(tenant, dto);
     return { success: true, data };
@@ -36,7 +36,7 @@ export class AuthenticationController {
   @HttpCode(HttpStatus.OK)
   async pinLogin(
     @CurrentTenant() tenant: TenantContext | undefined,
-    @Body() dto: PinLoginDto,
+    @Body() dto: CreatePinLoginDto,
   ): Promise<ApiSuccessResponse<LoginResponseDto>> {
     const data = await this.authenticationService.pinLogin(tenant, dto);
     return { success: true, data };
@@ -46,7 +46,7 @@ export class AuthenticationController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body() dto: RefreshTokenDto): Promise<ApiSuccessResponse<LoginResponseDto>> {
+  async refresh(@Body() dto: CreateRefreshTokenDto): Promise<ApiSuccessResponse<LoginResponseDto>> {
     const data = await this.authenticationService.refresh(dto);
     return { success: true, data };
   }
@@ -57,7 +57,7 @@ export class AuthenticationController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
     @CurrentUser() user: AuthenticatedUser | undefined,
-    @Body() dto: LogoutDto,
+    @Body() dto: CreateLogoutDto,
   ): Promise<void> {
     await this.authenticationService.logout(user?.id, dto);
   }
@@ -66,7 +66,7 @@ export class AuthenticationController {
   @Public()
   @Post('mfa/verify')
   @HttpCode(HttpStatus.OK)
-  async verifyMfa(@Body() dto: MfaVerifyDto): Promise<ApiSuccessResponse<LoginResponseDto>> {
+  async verifyMfa(@Body() dto: CreateMfaVerifyDto): Promise<ApiSuccessResponse<LoginResponseDto>> {
     const data = await this.authenticationService.verifyMfa(dto);
     return { success: true, data };
   }

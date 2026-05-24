@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateNotificationChannelDto } from '../dto/notification-channels/create-notification-channel.dto';
 import { NotificationChannelResponseDto } from '../dto/notification-channels/notification-channel-response.dto';
 import { UpdateNotificationChannelDto } from '../dto/notification-channels/update-notification-channel.dto';
@@ -9,7 +9,7 @@ import { UpdateNotificationChannelDto } from '../dto/notification-channels/updat
 export class NotificationChannelsService {
   findAll(
     _tenant: TenantContext,
-    _query: PaginationQueryDto,
+    _query: FilterPaginationDto,
   ): Promise<NotificationChannelResponseDto[]> {
     throw new NotImplementedException('findAll notification channels');
   }

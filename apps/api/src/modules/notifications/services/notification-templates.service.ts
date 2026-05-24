@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateNotificationTemplateDto } from '../dto/notification-templates/create-notification-template.dto';
 import { NotificationTemplateResponseDto } from '../dto/notification-templates/notification-template-response.dto';
 import { UpdateNotificationTemplateDto } from '../dto/notification-templates/update-notification-template.dto';
@@ -9,7 +9,7 @@ import { UpdateNotificationTemplateDto } from '../dto/notification-templates/upd
 export class NotificationTemplatesService {
   findAll(
     _tenant: TenantContext,
-    _query: PaginationQueryDto,
+    _query: FilterPaginationDto,
   ): Promise<NotificationTemplateResponseDto[]> {
     throw new NotImplementedException('findAll notification templates');
   }

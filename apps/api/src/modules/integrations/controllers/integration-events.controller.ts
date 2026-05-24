@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { IntegrationEventQueryDto } from '../dto/integration-events/integration-event-query.dto';
+import { FilterIntegrationEventDto } from '../dto/integration-events/filter-integration-event.dto';
 import { IntegrationEventResponseDto } from '../dto/integration-events/integration-event-response.dto';
 import { IntegrationEventsService } from '../services/integration-events.service';
 
@@ -20,7 +20,7 @@ export class IntegrationEventsController {
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATION_EVENTS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: IntegrationEventQueryDto,
+    @Query() query: FilterIntegrationEventDto,
   ): Promise<ApiSuccessResponse<IntegrationEventResponseDto[]>> {
     const data = await this.integrationEventsService.findAll(tenant, query);
     return { success: true, data };

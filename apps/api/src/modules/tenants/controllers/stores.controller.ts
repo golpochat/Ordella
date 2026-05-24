@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateStoreDto } from '../dto/stores/create-store.dto';
 import { UpdateStoreDto } from '../dto/stores/update-store.dto';
 import { StoreResponseDto } from '../dto/stores/store-response.dto';
@@ -33,7 +33,7 @@ export class StoresController {
   @RequirePermissions('stores:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<StoreResponseDto[]>> {
     const data = await this.storesService.findAll(tenant, query);
     return { success: true, data };

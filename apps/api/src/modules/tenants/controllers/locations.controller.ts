@@ -17,19 +17,15 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateLocationDto } from '../dto/locations/create-location.dto';
 import { UpdateLocationDto } from '../dto/locations/update-location.dto';
 import { UpdateLocationStatusDto } from '../dto/locations/update-location-status.dto';
 import { LocationResponseDto } from '../dto/locations/location-response.dto';
-import {
-  LocationSettingsResponseDto,
-  UpdateLocationSettingsDto,
-} from '../dto/locations/location-settings.dto';
-import {
-  LocationOpeningHoursResponseDto,
-  UpdateLocationOpeningHoursDto,
-} from '../dto/locations/location-opening-hours.dto';
+import { UpdateLocationSettingsDto } from '../dto/locations/update-location-settings.dto';
+import { LocationSettingsResponseDto } from '../dto/locations/location-settings-response.dto';
+import { UpdateLocationOpeningHoursDto } from '../dto/locations/update-location-opening-hours.dto';
+import { LocationOpeningHoursResponseDto } from '../dto/locations/location-opening-hours-response.dto';
 import { LocationsService } from '../services/locations.service';
 
 /** API Spec §2.2–§2.5 — locations */
@@ -42,7 +38,7 @@ export class LocationsController {
   @RequirePermissions('locations:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<LocationResponseDto[]>> {
     const data = await this.locationsService.findAll(tenant, query);
     return { success: true, data };

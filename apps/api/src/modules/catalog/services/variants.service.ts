@@ -1,13 +1,13 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateVariantDto } from '../dto/variants/create-variant.dto';
 import { UpdateVariantDto } from '../dto/variants/update-variant.dto';
 import { VariantResponseDto } from '../dto/variants/variant-response.dto';
 
 @Injectable()
 export class VariantsService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<VariantResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<VariantResponseDto[]> {
     throw new NotImplementedException('findAll variants');
   }
 

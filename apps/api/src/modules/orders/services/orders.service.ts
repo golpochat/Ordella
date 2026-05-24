@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateOrderDto } from '../dto/orders/create-order.dto';
 import { UpdateOrderDto } from '../dto/orders/update-order.dto';
 import { OrderResponseDto } from '../dto/orders/order-response.dto';
@@ -9,7 +9,7 @@ import { OrderEventResponseDto } from '../dto/order-events/order-event-response.
 
 @Injectable()
 export class OrdersService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<OrderResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<OrderResponseDto[]> {
     throw new NotImplementedException('findAll orders');
   }
 
@@ -32,7 +32,7 @@ export class OrdersService {
   getStatusHistory(
     _tenant: TenantContext,
     _orderId: string,
-    _query: PaginationQueryDto,
+    _query: FilterPaginationDto,
   ): Promise<OrderStatusHistoryResponseDto[]> {
     throw new NotImplementedException('get order status history');
   }
@@ -40,7 +40,7 @@ export class OrdersService {
   getEvents(
     _tenant: TenantContext,
     _orderId: string,
-    _query: PaginationQueryDto,
+    _query: FilterPaginationDto,
   ): Promise<OrderEventResponseDto[]> {
     throw new NotImplementedException('get order events');
   }

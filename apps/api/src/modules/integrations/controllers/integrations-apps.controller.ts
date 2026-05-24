@@ -17,9 +17,9 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { ConnectIntegrationAppDto } from '../dto/integrations/connect-integration-app.dto';
+import { CreateIntegrationAppDto } from '../dto/integrations/create-integration-app.dto';
 import { IntegrationAppResponseDto } from '../dto/integrations/integration-app-response.dto';
 import { UpdateIntegrationDto } from '../dto/integrations/update-integration.dto';
 import { IntegrationsAppsService } from '../services/integrations.service';
@@ -34,7 +34,7 @@ export class IntegrationsAppsController {
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATIONS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<IntegrationAppResponseDto[]>> {
     const data = await this.integrationsAppsService.findAll(tenant, query);
     return { success: true, data };
@@ -44,7 +44,7 @@ export class IntegrationsAppsController {
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATIONS_CREATE)
   async connect(
     @CurrentTenant() tenant: TenantContext,
-    @Body() dto: ConnectIntegrationAppDto,
+    @Body() dto: CreateIntegrationAppDto,
   ): Promise<ApiSuccessResponse<IntegrationAppResponseDto>> {
     const data = await this.integrationsAppsService.connect(tenant, dto);
     return { success: true, data };

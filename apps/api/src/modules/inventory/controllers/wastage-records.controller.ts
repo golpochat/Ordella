@@ -15,11 +15,9 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
-import {
-  CreateWastageRecordDto,
-  WastageRecordResponseDto,
-} from '../dto/wastage/wastage-record.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { CreateWastageRecordDto } from '../dto/wastage/create-wastage-record.dto';
+import { WastageRecordResponseDto } from '../dto/wastage/wastage-record-response.dto';
 import { WastageRecordsService } from '../services/wastage-records.service';
 
 /** SRS §4.3 — wastage logging */
@@ -32,7 +30,7 @@ export class WastageRecordsController {
   @RequirePermissions('wastage-records:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<WastageRecordResponseDto[]>> {
     const data = await this.wastageRecordsService.findAll(tenant, query);
     return { success: true, data };

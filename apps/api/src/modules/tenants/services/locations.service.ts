@@ -4,19 +4,15 @@ import { CreateLocationDto } from '../dto/locations/create-location.dto';
 import { UpdateLocationDto } from '../dto/locations/update-location.dto';
 import { UpdateLocationStatusDto } from '../dto/locations/update-location-status.dto';
 import { LocationResponseDto } from '../dto/locations/location-response.dto';
-import {
-  LocationSettingsResponseDto,
-  UpdateLocationSettingsDto,
-} from '../dto/locations/location-settings.dto';
-import {
-  LocationOpeningHoursResponseDto,
-  UpdateLocationOpeningHoursDto,
-} from '../dto/locations/location-opening-hours.dto';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { UpdateLocationSettingsDto } from '../dto/locations/update-location-settings.dto';
+import { LocationSettingsResponseDto } from '../dto/locations/location-settings-response.dto';
+import { UpdateLocationOpeningHoursDto } from '../dto/locations/update-location-opening-hours.dto';
+import { LocationOpeningHoursResponseDto } from '../dto/locations/location-opening-hours-response.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 
 @Injectable()
 export class LocationsService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<LocationResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<LocationResponseDto[]> {
     throw new NotImplementedException('findAll locations');
   }
 

@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateOrderDto } from '../dto/orders/create-order.dto';
 import { UpdateOrderDto } from '../dto/orders/update-order.dto';
 import { OrderResponseDto } from '../dto/orders/order-response.dto';
@@ -35,7 +35,7 @@ export class OrdersController {
   @RequirePermissions('orders:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<OrderResponseDto[]>> {
     const data = await this.ordersService.findAll(tenant, query);
     return { success: true, data };
@@ -87,7 +87,7 @@ export class OrdersController {
   async getStatusHistory(
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<OrderStatusHistoryResponseDto[]>> {
     const data = await this.ordersService.getStatusHistory(tenant, id, query);
     return { success: true, data };
@@ -98,7 +98,7 @@ export class OrdersController {
   async getEvents(
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<OrderEventResponseDto[]>> {
     const data = await this.ordersService.getEvents(tenant, id, query);
     return { success: true, data };

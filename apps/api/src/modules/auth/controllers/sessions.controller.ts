@@ -16,7 +16,7 @@ import { TenantContext } from '../../../common/interfaces/tenant-context.interfa
 import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { SessionResponseDto } from '../dto/sessions/session-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { SessionsService } from '../services/sessions.service';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 
@@ -30,7 +30,7 @@ export class SessionsController {
   async findAll(
     @CurrentTenant() tenant: TenantContext,
     @CurrentUser() user: AuthenticatedUser,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<SessionResponseDto[]>> {
     const data = await this.sessionsService.findAll(tenant, user, query);
     return { success: true, data };

@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { PaymentsPermissionKeys } from '../constants/permission-keys';
-import { PaymentAttemptQueryDto } from '../dto/payment-attempts/payment-attempt-query.dto';
+import { FilterPaymentAttemptDto } from '../dto/payment-attempts/filter-payment-attempt.dto';
 import { PaymentAttemptResponseDto } from '../dto/payment-attempts/payment-attempt-response.dto';
 import { PaymentAttemptsService } from '../services/payment-attempts.service';
 
@@ -21,7 +21,7 @@ export class PaymentAttemptsController {
   @RequirePermissions(PaymentsPermissionKeys.PAYMENT_ATTEMPTS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaymentAttemptQueryDto,
+    @Query() query: FilterPaymentAttemptDto,
   ): Promise<ApiSuccessResponse<PaymentAttemptResponseDto[]>> {
     const data = await this.paymentAttemptsService.findAll(tenant, query);
     return { success: true, data };

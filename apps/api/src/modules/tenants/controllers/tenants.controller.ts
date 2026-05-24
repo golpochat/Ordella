@@ -14,7 +14,7 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateTenantDto } from '../dto/tenants/create-tenant.dto';
 import { UpdateTenantDto } from '../dto/tenants/update-tenant.dto';
 import { TenantResponseDto } from '../dto/tenants/tenant-response.dto';
@@ -28,7 +28,7 @@ export class TenantsController {
 
   @Get()
   @RequirePermissions('tenants:read')
-  async findAll(@Query() query: PaginationQueryDto): Promise<ApiSuccessResponse<TenantResponseDto[]>> {
+  async findAll(@Query() query: FilterPaginationDto): Promise<ApiSuccessResponse<TenantResponseDto[]>> {
     const data = await this.tenantsService.findAll(query);
     return { success: true, data };
   }

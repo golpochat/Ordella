@@ -1,12 +1,12 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { CreateApiKeyDto } from '../dto/api-keys/create-api-key.dto';
 import { ApiKeyResponseDto } from '../dto/api-keys/api-key-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 
 @Injectable()
 export class ApiKeysService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<ApiKeyResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<ApiKeyResponseDto[]> {
     throw new NotImplementedException('findAll api-keys');
   }
 

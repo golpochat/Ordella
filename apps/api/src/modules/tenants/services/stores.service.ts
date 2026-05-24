@@ -3,11 +3,11 @@ import { TenantContext } from '../../../common/interfaces/tenant-context.interfa
 import { CreateStoreDto } from '../dto/stores/create-store.dto';
 import { UpdateStoreDto } from '../dto/stores/update-store.dto';
 import { StoreResponseDto } from '../dto/stores/store-response.dto';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 
 @Injectable()
 export class StoresService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<StoreResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<StoreResponseDto[]> {
     throw new NotImplementedException('findAll stores');
   }
 

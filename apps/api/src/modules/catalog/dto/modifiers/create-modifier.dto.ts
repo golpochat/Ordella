@@ -10,16 +10,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ModifierType } from '../../enums/modifier-type.enum';
-
-export class ModifierOptionInputDto {
-  @IsString()
-  @MinLength(1)
-  name!: string;
-
-  @IsOptional()
-  @IsNumber()
-  priceDelta?: number;
-}
+import { CreateModifierOptionDto } from './create-modifier-option.dto';
 
 /** API Spec §3.3 POST /api/v1/modifiers */
 export class CreateModifierDto {
@@ -37,6 +28,6 @@ export class CreateModifierDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ModifierOptionInputDto)
-  options?: ModifierOptionInputDto[];
+  @Type(() => CreateModifierOptionDto)
+  options?: CreateModifierOptionDto[];
 }

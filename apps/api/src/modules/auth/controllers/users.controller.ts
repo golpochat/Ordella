@@ -20,7 +20,7 @@ import { RequirePermissions } from '../decorators/require-permissions.decorator'
 import { CreateUserDto } from '../dto/users/create-user.dto';
 import { UpdateUserDto } from '../dto/users/update-user.dto';
 import { UserResponseDto } from '../dto/users/user-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { UsersService } from '../services/users.service';
 
 @Controller('users')
@@ -32,7 +32,7 @@ export class UsersController {
   @RequirePermissions('users:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<UserResponseDto[]>> {
     const data = await this.usersService.findAll(tenant, query);
     return { success: true, data };

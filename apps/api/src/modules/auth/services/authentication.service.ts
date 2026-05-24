@@ -1,35 +1,35 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { LoginDto } from '../dto/authentication/login.dto';
+import { CreateLoginDto } from '../dto/authentication/create-login.dto';
 import { LoginResponseDto } from '../dto/authentication/login-response.dto';
-import { RefreshTokenDto } from '../dto/authentication/refresh-token.dto';
-import { LogoutDto } from '../dto/authentication/logout.dto';
-import { MfaVerifyDto } from '../dto/authentication/mfa-verify.dto';
-import { PinLoginDto } from '../dto/authentication/pin-login.dto';
+import { CreateRefreshTokenDto } from '../dto/authentication/create-refresh-token.dto';
+import { CreateLogoutDto } from '../dto/authentication/create-logout.dto';
+import { CreateMfaVerifyDto } from '../dto/authentication/create-mfa-verify.dto';
+import { CreatePinLoginDto } from '../dto/authentication/create-pin-login.dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 
 @Injectable()
 export class AuthenticationService {
-  login(_tenant: TenantContext | undefined, _dto: LoginDto): Promise<LoginResponseDto> {
+  login(_tenant: TenantContext | undefined, _dto: CreateLoginDto): Promise<LoginResponseDto> {
     // TODO: validate credentials, create session, issue JWT + refresh token
     throw new NotImplementedException('login');
   }
 
-  pinLogin(_tenant: TenantContext | undefined, _dto: PinLoginDto): Promise<LoginResponseDto> {
+  pinLogin(_tenant: TenantContext | undefined, _dto: CreatePinLoginDto): Promise<LoginResponseDto> {
     // TODO: POS PIN login with terminal binding
     throw new NotImplementedException('pinLogin');
   }
 
-  refresh(_dto: RefreshTokenDto): Promise<LoginResponseDto> {
+  refresh(_dto: CreateRefreshTokenDto): Promise<LoginResponseDto> {
     // TODO: validate refresh token, rotate session
     throw new NotImplementedException('refresh');
   }
 
-  logout(_userId: string | undefined, _dto: LogoutDto): Promise<void> {
+  logout(_userId: string | undefined, _dto: CreateLogoutDto): Promise<void> {
     // TODO: revoke session / refresh token
     throw new NotImplementedException('logout');
   }
 
-  verifyMfa(_dto: MfaVerifyDto): Promise<LoginResponseDto> {
+  verifyMfa(_dto: CreateMfaVerifyDto): Promise<LoginResponseDto> {
     // TODO: verify MFA code and complete login
     throw new NotImplementedException('verifyMfa');
   }

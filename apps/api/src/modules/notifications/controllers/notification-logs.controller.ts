@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { NotificationsPermissionKeys } from '../constants/permission-keys';
-import { NotificationLogQueryDto } from '../dto/notification-logs/notification-log-query.dto';
+import { FilterNotificationLogDto } from '../dto/notification-logs/filter-notification-log.dto';
 import { NotificationLogResponseDto } from '../dto/notification-logs/notification-log-response.dto';
 import { NotificationLogsService } from '../services/notification-logs.service';
 
@@ -21,7 +21,7 @@ export class NotificationLogsController {
   @RequirePermissions(NotificationsPermissionKeys.NOTIFICATION_LOGS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: NotificationLogQueryDto,
+    @Query() query: FilterNotificationLogDto,
   ): Promise<ApiSuccessResponse<NotificationLogResponseDto[]>> {
     const data = await this.notificationLogsService.findAll(tenant, query);
     return { success: true, data };

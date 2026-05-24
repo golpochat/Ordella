@@ -13,7 +13,7 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { ReportsPermissionKeys } from '../constants/permission-keys';
 import { CreateReportDefinitionDto } from '../dto/report-definitions/create-report-definition.dto';
 import { ReportDefinitionResponseDto } from '../dto/report-definitions/report-definition-response.dto';
@@ -28,7 +28,7 @@ export class ReportDefinitionsController {
   @Get()
   @RequirePermissions(ReportsPermissionKeys.REPORT_DEFINITIONS_READ)
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<ReportDefinitionResponseDto[]>> {
     const data = await this.reportDefinitionsService.findAll(query);
     return { success: true, data };

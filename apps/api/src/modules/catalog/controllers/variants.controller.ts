@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateVariantDto } from '../dto/variants/create-variant.dto';
 import { UpdateVariantDto } from '../dto/variants/update-variant.dto';
 import { VariantResponseDto } from '../dto/variants/variant-response.dto';
@@ -33,7 +33,7 @@ export class VariantsController {
   @RequirePermissions('variants:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<VariantResponseDto[]>> {
     const data = await this.variantsService.findAll(tenant, query);
     return { success: true, data };

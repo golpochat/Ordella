@@ -13,7 +13,7 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
 import { CreateIntegrationProviderDto } from '../dto/integration-providers/create-integration-provider.dto';
 import { IntegrationProviderResponseDto } from '../dto/integration-providers/integration-provider-response.dto';
@@ -29,7 +29,7 @@ export class IntegrationProvidersController {
   @Get()
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATION_PROVIDERS_READ)
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<IntegrationProviderResponseDto[]>> {
     const data = await this.integrationProvidersService.findAll(query);
     return { success: true, data };

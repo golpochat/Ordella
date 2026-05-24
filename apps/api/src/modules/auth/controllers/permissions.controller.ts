@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RbacGuard } from '../guards/rbac.guard';
 import { RequirePermissions } from '../decorators/require-permissions.decorator';
 import { PermissionResponseDto } from '../dto/permissions/permission-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { PermissionsService } from '../services/permissions.service';
 
 @Controller('permissions')
@@ -15,7 +15,7 @@ export class PermissionsController {
   @Get()
   @RequirePermissions('permissions:read')
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<PermissionResponseDto[]>> {
     const data = await this.permissionsService.findAll(query);
     return { success: true, data };

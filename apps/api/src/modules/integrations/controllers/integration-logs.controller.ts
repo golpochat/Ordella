@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { IntegrationLogQueryDto } from '../dto/integration-logs/integration-log-query.dto';
+import { FilterIntegrationLogDto } from '../dto/integration-logs/filter-integration-log.dto';
 import { IntegrationLogResponseDto } from '../dto/integration-logs/integration-log-response.dto';
 import { IntegrationLogsService } from '../services/integration-logs.service';
 
@@ -20,7 +20,7 @@ export class IntegrationLogsController {
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATION_LOGS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: IntegrationLogQueryDto,
+    @Query() query: FilterIntegrationLogDto,
   ): Promise<ApiSuccessResponse<IntegrationLogResponseDto[]>> {
     const data = await this.integrationLogsService.findAll(tenant, query);
     return { success: true, data };

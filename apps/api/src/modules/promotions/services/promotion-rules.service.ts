@@ -1,7 +1,7 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 import { CreatePromotionRuleDto } from '../dto/promotion-rules/create-promotion-rule.dto';
-import { PromotionRuleQueryDto } from '../dto/promotion-rules/promotion-rule-query.dto';
+import { FilterPromotionRuleDto } from '../dto/promotion-rules/filter-promotion-rule.dto';
 import { PromotionRuleResponseDto } from '../dto/promotion-rules/promotion-rule-response.dto';
 import { UpdatePromotionRuleDto } from '../dto/promotion-rules/update-promotion-rule.dto';
 
@@ -9,7 +9,7 @@ import { UpdatePromotionRuleDto } from '../dto/promotion-rules/update-promotion-
 export class PromotionRulesService {
   findAll(
     _tenant: TenantContext,
-    _query: PromotionRuleQueryDto,
+    _query: FilterPromotionRuleDto,
   ): Promise<PromotionRuleResponseDto[]> {
     throw new NotImplementedException('findAll promotion rules');
   }

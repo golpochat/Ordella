@@ -15,7 +15,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateStockMovementDto } from '../dto/stock-movements/create-stock-movement.dto';
 import { StockMovementResponseDto } from '../dto/stock-movements/stock-movement-response.dto';
 import { StockMovementsService } from '../services/stock-movements.service';
@@ -30,7 +30,7 @@ export class StockMovementsController {
   @RequirePermissions('stock-movements:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<StockMovementResponseDto[]>> {
     const data = await this.stockMovementsService.findAll(tenant, query);
     return { success: true, data };

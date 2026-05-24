@@ -16,9 +16,9 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RbacGuard } from '../guards/rbac.guard';
 import { RequirePermissions } from '../decorators/require-permissions.decorator';
 import { CreateRoleDto } from '../dto/roles/create-role.dto';
-import { AssignPermissionsDto } from '../dto/roles/assign-permissions.dto';
+import { UpdateRolePermissionsDto } from '../dto/roles/update-role-permissions.dto';
 import { RoleResponseDto } from '../dto/roles/role-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { RolesService } from '../services/roles.service';
 
 @Controller('roles')
@@ -30,7 +30,7 @@ export class RolesController {
   @RequirePermissions('roles:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<RoleResponseDto[]>> {
     const data = await this.rolesService.findAll(tenant, query);
     return { success: true, data };
@@ -51,7 +51,7 @@ export class RolesController {
   async assignPermissions(
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AssignPermissionsDto,
+    @Body() dto: UpdateRolePermissionsDto,
   ): Promise<ApiSuccessResponse<null>> {
     await this.rolesService.assignPermissions(tenant, id, dto);
     return { success: true, data: null };

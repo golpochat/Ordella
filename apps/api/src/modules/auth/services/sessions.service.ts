@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { SessionResponseDto } from '../dto/sessions/session-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 
@@ -9,7 +9,7 @@ export class SessionsService {
   findAll(
     _tenant: TenantContext,
     _user: AuthenticatedUser,
-    _query: PaginationQueryDto,
+    _query: FilterPaginationDto,
   ): Promise<SessionResponseDto[]> {
     throw new NotImplementedException('findAll sessions');
   }

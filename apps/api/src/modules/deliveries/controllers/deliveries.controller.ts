@@ -16,11 +16,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { DeliveryPermissionKeys } from '../constants/permission-keys';
 import { CreateDeliveryDto } from '../dto/deliveries/create-delivery.dto';
 import { DeliveryResponseDto } from '../dto/deliveries/delivery-response.dto';
-import { DeliveryTrackingPointDto } from '../dto/deliveries/delivery-tracking-point.dto';
+import { DeliveryTrackingPointResponseDto } from '../dto/deliveries/delivery-tracking-point-response.dto';
 import { UpdateDeliveryDto } from '../dto/deliveries/update-delivery.dto';
 import { DeliveryStatusHistoryResponseDto } from '../dto/delivery-status-history/delivery-status-history-response.dto';
 import { DeliveriesService } from '../services/deliveries.service';
@@ -35,7 +35,7 @@ export class DeliveriesController {
   @RequirePermissions(DeliveryPermissionKeys.DELIVERIES_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<DeliveryResponseDto[]>> {
     const data = await this.deliveriesService.findAll(tenant, query);
     return { success: true, data };
@@ -77,8 +77,8 @@ export class DeliveriesController {
   async getTracking(
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: PaginationQueryDto,
-  ): Promise<ApiSuccessResponse<DeliveryTrackingPointDto[]>> {
+    @Query() query: FilterPaginationDto,
+  ): Promise<ApiSuccessResponse<DeliveryTrackingPointResponseDto[]>> {
     const data = await this.deliveriesService.getTracking(tenant, id, query);
     return { success: true, data };
   }
@@ -88,7 +88,7 @@ export class DeliveriesController {
   async getStatusHistory(
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<DeliveryStatusHistoryResponseDto[]>> {
     const data = await this.deliveriesService.getStatusHistory(tenant, id, query);
     return { success: true, data };

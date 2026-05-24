@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ModifierType } from '../../enums/modifier-type.enum';
-import { ModifierOptionInputDto } from './create-modifier.dto';
+import { CreateModifierOptionDto } from './create-modifier-option.dto';
 
 export class UpdateModifierDto {
   @IsOptional()
@@ -28,6 +28,6 @@ export class UpdateModifierDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ModifierOptionInputDto)
-  options?: ModifierOptionInputDto[];
+  @Type(() => CreateModifierOptionDto)
+  options?: CreateModifierOptionDto[];
 }

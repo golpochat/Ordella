@@ -2,11 +2,11 @@ import { Injectable, NotImplementedException } from '@nestjs/common';
 import { CreateTenantDto } from '../dto/tenants/create-tenant.dto';
 import { UpdateTenantDto } from '../dto/tenants/update-tenant.dto';
 import { TenantResponseDto } from '../dto/tenants/tenant-response.dto';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 
 @Injectable()
 export class TenantsService {
-  findAll(_query: PaginationQueryDto): Promise<TenantResponseDto[]> {
+  findAll(_query: FilterPaginationDto): Promise<TenantResponseDto[]> {
     throw new NotImplementedException('findAll tenants');
   }
 

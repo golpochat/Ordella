@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { ReportsPermissionKeys } from '../constants/permission-keys';
-import { ReportJobQueryDto } from '../dto/report-jobs/report-job-query.dto';
+import { FilterReportJobDto } from '../dto/report-jobs/filter-report-job.dto';
 import { ReportJobResponseDto } from '../dto/report-jobs/report-job-response.dto';
 import { ReportJobsService } from '../services/report-jobs.service';
 
@@ -20,7 +20,7 @@ export class ReportJobsController {
   @RequirePermissions(ReportsPermissionKeys.REPORT_JOBS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: ReportJobQueryDto,
+    @Query() query: FilterReportJobDto,
   ): Promise<ApiSuccessResponse<ReportJobResponseDto[]>> {
     const data = await this.reportJobsService.findAll(tenant, query);
     return { success: true, data };

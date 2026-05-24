@@ -1,13 +1,13 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateCategoryDto } from '../dto/categories/create-category.dto';
 import { UpdateCategoryDto } from '../dto/categories/update-category.dto';
 import { CategoryResponseDto } from '../dto/categories/category-response.dto';
 
 @Injectable()
 export class CategoriesService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<CategoryResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<CategoryResponseDto[]> {
     throw new NotImplementedException('findAll categories');
   }
 

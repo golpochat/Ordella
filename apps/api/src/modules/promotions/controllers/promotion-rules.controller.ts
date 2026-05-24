@@ -19,7 +19,7 @@ import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { PromotionsPermissionKeys } from '../constants/permission-keys';
 import { CreatePromotionRuleDto } from '../dto/promotion-rules/create-promotion-rule.dto';
-import { PromotionRuleQueryDto } from '../dto/promotion-rules/promotion-rule-query.dto';
+import { FilterPromotionRuleDto } from '../dto/promotion-rules/filter-promotion-rule.dto';
 import { PromotionRuleResponseDto } from '../dto/promotion-rules/promotion-rule-response.dto';
 import { UpdatePromotionRuleDto } from '../dto/promotion-rules/update-promotion-rule.dto';
 import { PromotionRulesService } from '../services/promotion-rules.service';
@@ -34,7 +34,7 @@ export class PromotionRulesController {
   @RequirePermissions(PromotionsPermissionKeys.PROMOTION_RULES_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PromotionRuleQueryDto,
+    @Query() query: FilterPromotionRuleDto,
   ): Promise<ApiSuccessResponse<PromotionRuleResponseDto[]>> {
     const data = await this.promotionRulesService.findAll(tenant, query);
     return { success: true, data };

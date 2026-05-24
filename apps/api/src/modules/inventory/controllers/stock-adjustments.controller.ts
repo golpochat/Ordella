@@ -15,11 +15,9 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
-import {
-  CreateStockAdjustmentDto,
-  StockAdjustmentResponseDto,
-} from '../dto/stock-adjustments/stock-adjustment.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { CreateStockAdjustmentDto } from '../dto/stock-adjustments/create-stock-adjustment.dto';
+import { StockAdjustmentResponseDto } from '../dto/stock-adjustments/stock-adjustment-response.dto';
 import { StockAdjustmentsService } from '../services/stock-adjustments.service';
 
 /** SRS §4.3 — manual adjustments */
@@ -32,7 +30,7 @@ export class StockAdjustmentsController {
   @RequirePermissions('stock-adjustments:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<StockAdjustmentResponseDto[]>> {
     const data = await this.stockAdjustmentsService.findAll(tenant, query);
     return { success: true, data };

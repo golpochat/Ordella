@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateModifierDto } from '../dto/modifiers/create-modifier.dto';
 import { UpdateModifierDto } from '../dto/modifiers/update-modifier.dto';
 import { ModifierResponseDto } from '../dto/modifiers/modifier-response.dto';
@@ -33,7 +33,7 @@ export class ModifiersController {
   @RequirePermissions('modifiers:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<ModifierResponseDto[]>> {
     const data = await this.modifiersService.findAll(tenant, query);
     return { success: true, data };

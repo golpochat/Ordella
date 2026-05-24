@@ -1,12 +1,12 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateIntegrationProviderDto } from '../dto/integration-providers/create-integration-provider.dto';
 import { IntegrationProviderResponseDto } from '../dto/integration-providers/integration-provider-response.dto';
 import { UpdateIntegrationProviderDto } from '../dto/integration-providers/update-integration-provider.dto';
 
 @Injectable()
 export class IntegrationProvidersService {
-  findAll(_query: PaginationQueryDto): Promise<IntegrationProviderResponseDto[]> {
+  findAll(_query: FilterPaginationDto): Promise<IntegrationProviderResponseDto[]> {
     throw new NotImplementedException('findAll integration providers');
   }
 

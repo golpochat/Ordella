@@ -16,12 +16,10 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
-import {
-  CreateStockTransferDto,
-  StockTransferResponseDto,
-  UpdateStockTransferDto,
-} from '../dto/stock-transfers/stock-transfer.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { CreateStockTransferDto } from '../dto/stock-transfers/create-stock-transfer.dto';
+import { UpdateStockTransferDto } from '../dto/stock-transfers/update-stock-transfer.dto';
+import { StockTransferResponseDto } from '../dto/stock-transfers/stock-transfer-response.dto';
 import { StockTransfersService } from '../services/stock-transfers.service';
 
 /** API Spec §4.3 */
@@ -34,7 +32,7 @@ export class StockTransfersController {
   @RequirePermissions('stock-transfers:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<StockTransferResponseDto[]>> {
     const data = await this.stockTransfersService.findAll(tenant, query);
     return { success: true, data };

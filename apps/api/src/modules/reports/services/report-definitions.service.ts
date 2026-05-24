@@ -1,12 +1,12 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateReportDefinitionDto } from '../dto/report-definitions/create-report-definition.dto';
 import { ReportDefinitionResponseDto } from '../dto/report-definitions/report-definition-response.dto';
 import { UpdateReportDefinitionDto } from '../dto/report-definitions/update-report-definition.dto';
 
 @Injectable()
 export class ReportDefinitionsService {
-  findAll(_query: PaginationQueryDto): Promise<ReportDefinitionResponseDto[]> {
+  findAll(_query: FilterPaginationDto): Promise<ReportDefinitionResponseDto[]> {
     throw new NotImplementedException('findAll report definitions');
   }
 

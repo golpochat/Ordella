@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateCategoryDto } from '../dto/categories/create-category.dto';
 import { UpdateCategoryDto } from '../dto/categories/update-category.dto';
 import { CategoryResponseDto } from '../dto/categories/category-response.dto';
@@ -33,7 +33,7 @@ export class CategoriesController {
   @RequirePermissions('categories:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<CategoryResponseDto[]>> {
     const data = await this.categoriesService.findAll(tenant, query);
     return { success: true, data };

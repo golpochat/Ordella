@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { PaymentsPermissionKeys } from '../constants/permission-keys';
 import { CreatePaymentMethodDto } from '../dto/payment-methods/create-payment-method.dto';
 import { PaymentMethodResponseDto } from '../dto/payment-methods/payment-method-response.dto';
@@ -34,7 +34,7 @@ export class PaymentMethodsController {
   @RequirePermissions(PaymentsPermissionKeys.PAYMENT_METHODS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<PaymentMethodResponseDto[]>> {
     const data = await this.paymentMethodsService.findAll(tenant, query);
     return { success: true, data };

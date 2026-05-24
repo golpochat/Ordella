@@ -1,13 +1,13 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { CreateRoleDto } from '../dto/roles/create-role.dto';
-import { AssignPermissionsDto } from '../dto/roles/assign-permissions.dto';
+import { UpdateRolePermissionsDto } from '../dto/roles/update-role-permissions.dto';
 import { RoleResponseDto } from '../dto/roles/role-response.dto';
-import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { FilterPaginationDto } from '../dto/filter-pagination.dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 
 @Injectable()
 export class RolesService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<RoleResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<RoleResponseDto[]> {
     throw new NotImplementedException('findAll roles');
   }
 
@@ -18,7 +18,7 @@ export class RolesService {
   assignPermissions(
     _tenant: TenantContext,
     _roleId: string,
-    _dto: AssignPermissionsDto,
+    _dto: UpdateRolePermissionsDto,
   ): Promise<void> {
     throw new NotImplementedException('assignPermissions');
   }

@@ -1,15 +1,15 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateDeliveryDto } from '../dto/deliveries/create-delivery.dto';
 import { DeliveryResponseDto } from '../dto/deliveries/delivery-response.dto';
-import { DeliveryTrackingPointDto } from '../dto/deliveries/delivery-tracking-point.dto';
+import { DeliveryTrackingPointResponseDto } from '../dto/deliveries/delivery-tracking-point-response.dto';
 import { UpdateDeliveryDto } from '../dto/deliveries/update-delivery.dto';
 import { DeliveryStatusHistoryResponseDto } from '../dto/delivery-status-history/delivery-status-history-response.dto';
 
 @Injectable()
 export class DeliveriesService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<DeliveryResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<DeliveryResponseDto[]> {
     throw new NotImplementedException('findAll deliveries');
   }
 
@@ -32,8 +32,8 @@ export class DeliveriesService {
   getTracking(
     _tenant: TenantContext,
     _deliveryTaskId: string,
-    _query: PaginationQueryDto,
-  ): Promise<DeliveryTrackingPointDto[]> {
+    _query: FilterPaginationDto,
+  ): Promise<DeliveryTrackingPointResponseDto[]> {
     throw new NotImplementedException('get delivery tracking');
   }
 
@@ -44,7 +44,7 @@ export class DeliveriesService {
   getStatusHistory(
     _tenant: TenantContext,
     _deliveryTaskId: string,
-    _query: PaginationQueryDto,
+    _query: FilterPaginationDto,
   ): Promise<DeliveryStatusHistoryResponseDto[]> {
     throw new NotImplementedException('get delivery status history');
   }

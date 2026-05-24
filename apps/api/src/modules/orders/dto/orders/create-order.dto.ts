@@ -8,7 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { OrderType } from '../../enums/order-type.enum';
-import { CreateOrderItemInputDto } from './create-order-item-input.dto';
+import { CreateOrderNestedItemDto } from './create-order-nested-item.dto';
 
 /** API Spec §5.1 POST /api/v1/orders */
 export class CreateOrderDto {
@@ -25,6 +25,6 @@ export class CreateOrderDto {
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
-  @Type(() => CreateOrderItemInputDto)
-  items!: CreateOrderItemInputDto[];
+  @Type(() => CreateOrderNestedItemDto)
+  items!: CreateOrderNestedItemDto[];
 }

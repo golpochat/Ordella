@@ -1,15 +1,13 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
-import {
-  CreateStockTransferDto,
-  StockTransferResponseDto,
-  UpdateStockTransferDto,
-} from '../dto/stock-transfers/stock-transfer.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { CreateStockTransferDto } from '../dto/stock-transfers/create-stock-transfer.dto';
+import { UpdateStockTransferDto } from '../dto/stock-transfers/update-stock-transfer.dto';
+import { StockTransferResponseDto } from '../dto/stock-transfers/stock-transfer-response.dto';
 
 @Injectable()
 export class StockTransfersService {
-  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<StockTransferResponseDto[]> {
+  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<StockTransferResponseDto[]> {
     throw new NotImplementedException('findAll stock-transfers');
   }
 

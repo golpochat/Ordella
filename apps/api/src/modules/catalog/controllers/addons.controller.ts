@@ -17,7 +17,7 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { CreateAddonDto } from '../dto/addons/create-addon.dto';
 import { UpdateAddonDto } from '../dto/addons/update-addon.dto';
 import { AddonResponseDto } from '../dto/addons/addon-response.dto';
@@ -33,7 +33,7 @@ export class AddonsController {
   @RequirePermissions('addons:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<AddonResponseDto[]>> {
     const data = await this.addonsService.findAll(tenant, query);
     return { success: true, data };

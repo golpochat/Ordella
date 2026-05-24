@@ -6,15 +6,15 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
 import { ReportsPermissionKeys } from '../constants/permission-keys';
 import { CreateReportDto } from '../dto/reports/create-report.dto';
 import { CustomersReportResponseDto } from '../dto/reports/customers-report-response.dto';
-import { ExportReportDto } from '../dto/reports/export-report.dto';
+import { CreateExportReportDto } from '../dto/reports/create-export-report.dto';
 import { ExportReportResponseDto } from '../dto/reports/export-report-response.dto';
 import { InventoryReportResponseDto } from '../dto/reports/inventory-report-response.dto';
 import { OrdersReportResponseDto } from '../dto/reports/orders-report-response.dto';
-import { ReportDateRangeQueryDto } from '../dto/reports/report-date-range-query.dto';
+import { FilterReportDateRangeDto } from '../dto/reports/filter-report-date-range.dto';
 import { ReportResponseDto } from '../dto/reports/report-response.dto';
 import { SalesReportResponseDto } from '../dto/reports/sales-report-response.dto';
 import { ReportsAnalyticsService, ReportsService } from '../services/reports.service';
@@ -32,7 +32,7 @@ export class ReportsController {
   @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
   async getSales(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: ReportDateRangeQueryDto,
+    @Query() query: FilterReportDateRangeDto,
   ): Promise<ApiSuccessResponse<SalesReportResponseDto>> {
     const data = await this.reportsAnalyticsService.getSalesReport(tenant, query);
     return { success: true, data };
@@ -42,7 +42,7 @@ export class ReportsController {
   @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
   async getOrders(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: ReportDateRangeQueryDto,
+    @Query() query: FilterReportDateRangeDto,
   ): Promise<ApiSuccessResponse<OrdersReportResponseDto>> {
     const data = await this.reportsAnalyticsService.getOrdersReport(tenant, query);
     return { success: true, data };
@@ -52,7 +52,7 @@ export class ReportsController {
   @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
   async getCustomers(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: ReportDateRangeQueryDto,
+    @Query() query: FilterReportDateRangeDto,
   ): Promise<ApiSuccessResponse<CustomersReportResponseDto>> {
     const data = await this.reportsAnalyticsService.getCustomersReport(tenant, query);
     return { success: true, data };
@@ -62,7 +62,7 @@ export class ReportsController {
   @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
   async getInventory(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: ReportDateRangeQueryDto,
+    @Query() query: FilterReportDateRangeDto,
   ): Promise<ApiSuccessResponse<InventoryReportResponseDto>> {
     const data = await this.reportsAnalyticsService.getInventoryReport(tenant, query);
     return { success: true, data };
@@ -72,7 +72,7 @@ export class ReportsController {
   @RequirePermissions(ReportsPermissionKeys.REPORTS_EXPORT)
   async export(
     @CurrentTenant() tenant: TenantContext,
-    @Body() dto: ExportReportDto,
+    @Body() dto: CreateExportReportDto,
   ): Promise<ApiSuccessResponse<ExportReportResponseDto>> {
     const data = await this.reportsAnalyticsService.exportReport(tenant, dto);
     return { success: true, data };
@@ -82,7 +82,7 @@ export class ReportsController {
   @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
   async findAll(
     @CurrentTenant() tenant: TenantContext,
-    @Query() query: PaginationQueryDto,
+    @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<ReportResponseDto[]>> {
     const data = await this.reportsService.findAll(tenant, query);
     return { success: true, data };

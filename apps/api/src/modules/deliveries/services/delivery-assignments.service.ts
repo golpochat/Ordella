@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { DeliveryAssignmentQueryDto } from '../dto/delivery-assignments/delivery-assignment-query.dto';
+import { FilterDeliveryAssignmentDto } from '../dto/delivery-assignments/filter-delivery-assignment.dto';
 import { DeliveryAssignmentResponseDto } from '../dto/delivery-assignments/delivery-assignment-response.dto';
 import { CreateDeliveryAssignmentDto } from '../dto/delivery-assignments/create-delivery-assignment.dto';
 import { UpdateDeliveryAssignmentDto } from '../dto/delivery-assignments/update-delivery-assignment.dto';
@@ -9,7 +9,7 @@ import { UpdateDeliveryAssignmentDto } from '../dto/delivery-assignments/update-
 export class DeliveryAssignmentsService {
   findAll(
     _tenant: TenantContext,
-    _query: DeliveryAssignmentQueryDto,
+    _query: FilterDeliveryAssignmentDto,
   ): Promise<DeliveryAssignmentResponseDto[]> {
     throw new NotImplementedException('findAll delivery assignments');
   }

@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { IntegrationWebhookDto } from '../dto/integrations/integration-webhook.dto';
+import { CreateIntegrationWebhookDto } from '../dto/integrations/create-integration-webhook.dto';
 import { IntegrationsWebhooksService } from '../services/integrations.service';
 
 /** API Spec §13.1–§13.3 */
@@ -20,7 +20,7 @@ export class IntegrationsWebhooksController {
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATION_WEBHOOKS_RECEIVE)
   async deliveryWebhook(
     @CurrentTenant() tenant: TenantContext,
-    @Body() dto: IntegrationWebhookDto,
+    @Body() dto: CreateIntegrationWebhookDto,
   ): Promise<ApiSuccessResponse<{ received: boolean }>> {
     const data = await this.integrationsWebhooksService.receiveDeliveryWebhook(tenant, dto);
     return { success: true, data };
@@ -30,7 +30,7 @@ export class IntegrationsWebhooksController {
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATION_WEBHOOKS_RECEIVE)
   async paymentsWebhook(
     @CurrentTenant() tenant: TenantContext,
-    @Body() dto: IntegrationWebhookDto,
+    @Body() dto: CreateIntegrationWebhookDto,
   ): Promise<ApiSuccessResponse<{ received: boolean }>> {
     const data = await this.integrationsWebhooksService.receivePaymentsWebhook(tenant, dto);
     return { success: true, data };
@@ -40,7 +40,7 @@ export class IntegrationsWebhooksController {
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATION_WEBHOOKS_RECEIVE)
   async posWebhook(
     @CurrentTenant() tenant: TenantContext,
-    @Body() dto: IntegrationWebhookDto,
+    @Body() dto: CreateIntegrationWebhookDto,
   ): Promise<ApiSuccessResponse<{ received: boolean }>> {
     const data = await this.integrationsWebhooksService.receivePosWebhook(tenant, dto);
     return { success: true, data };
