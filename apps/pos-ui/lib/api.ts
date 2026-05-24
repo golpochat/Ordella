@@ -109,6 +109,7 @@ export const posCatalogItemSchema = z.object({
   categoryId: z.string().uuid().nullable(),
   price: z.string(),
   sku: z.string().nullable().optional(),
+  barcode: z.string().nullable().optional(),
   isActive: z.boolean(),
   inventoryTrackingEnabled: z.boolean(),
   stockLevel: z.number().int().nullable().optional(),
@@ -125,24 +126,32 @@ export const posCatalogCategorySchema = z.object({
 export type PosCatalogItem = z.infer<typeof posCatalogItemSchema>;
 export type PosCatalogCategory = z.infer<typeof posCatalogCategorySchema>;
 
+const posCatalogBundleSchema = z.object({
+  categories: z.array(posCatalogCategorySchema),
+  items: z.array(posCatalogItemSchema),
+});
+
 export async function listPosCatalog() {
-  const [categories, items] = await Promise.all([
-    api.getData<unknown[]>('catalog/categories'),
-    api.getData<unknown[]>('catalog/items', { params: { channel: 'pos' } }),
-  ]);
-  return {
-    categories: z.array(posCatalogCategorySchema).parse(categories),
-    items: z.array(posCatalogItemSchema).parse(items),
-  };
+  const data = await api.getData<unknown>('pos/catalog');
+  const parsed = posCatalogBundleSchema.parse(data);
+  return parsed;
 }
+
+type CartLinePayload = {
+  productId: string;
+  quantity: number;
+  variantId?: string;
+  modifierOptionIds?: string[];
+  notes?: string;
+};
 
 export async function createOrPatchCart(
   body:
-    | { cartId?: string; item: { productId: string; quantity: number; modifierOptionIds?: string[] } }
+    | { cartId?: string; item: CartLinePayload }
     | {
         cartId: string;
         action: 'add' | 'update' | 'remove';
-        item: { productId: string; quantity: number; modifierOptionIds?: string[] };
+        item: CartLinePayload;
       },
 ) {
   const session = getSession();
@@ -170,4 +179,25 @@ export async function payOrder(orderId: string, method: 'cash' | 'card' | 'pos')
 export async function getReceipt(orderId: string) {
   const data = await api.getData<unknown>(`pos/receipt/${orderId}`);
   return receiptSchema.parse(data);
+}
+
+const completeSaleSchema = paymentSchema.extend({
+  orderNumber: z.string().nullable(),
+  subtotal: z.string(),
+  tax: z.string(),
+  total: z.string(),
+});
+
+export type PosCompleteSale = z.infer<typeof completeSaleSchema>;
+
+export async function completeSale(body: {
+  cartId: string;
+  orderType: 'pos' | 'pickup' | 'delivery';
+  paymentMethod: 'cash' | 'card' | 'pos' | 'external';
+  orderNotes?: string;
+  customer?: { name?: string; phone?: string; customerId?: string };
+}) {
+  const session = getSession();
+  const data = await api.postData<unknown>('pos/complete-sale', { ...session, ...body });
+  return completeSaleSchema.parse(data);
 }

@@ -20,11 +20,13 @@ import {
   PosCartResponseDto,
   PosCheckoutDto,
   PosCheckoutResponseDto,
+  PosCompleteSaleDto,
   PosPaymentDto,
   PosPaymentResponseDto,
   PosReceiptResponseDto,
 } from '../dto';
 import { PosCartFacade } from '../services/pos-cart.facade';
+import { PosCatalogService } from '../services/pos-catalog.service';
 import { PosOrderService } from '../services/pos-order.service';
 
 @Controller('pos')
@@ -33,7 +35,17 @@ export class PosController {
   constructor(
     private readonly posCartFacade: PosCartFacade,
     private readonly posOrderService: PosOrderService,
+    private readonly posCatalogService: PosCatalogService,
   ) {}
+
+  @Get('catalog')
+  @RequirePermissions(PosPermissionKeys.POS_CATALOG)
+  async catalog(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<{ categories: unknown[]; items: unknown[] }>> {
+    const data = await this.posCatalogService.getCatalog(tenant.tenantId);
+    return { success: true, data };
+  }
 
   @Post('cart')
   @RequirePermissions(PosPermissionKeys.POS_CART)
@@ -74,6 +86,26 @@ export class PosController {
     @CurrentUser() user?: AuthenticatedUser,
   ): Promise<ApiSuccessResponse<PosPaymentResponseDto>> {
     const data = await this.posOrderService.pay(tenant, dto, user);
+    return { success: true, data };
+  }
+
+  @Post('complete-sale')
+  @RequirePermissions(PosPermissionKeys.POS_CHECKOUT)
+  async completeSale(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: PosCompleteSaleDto,
+    @CurrentUser() user?: AuthenticatedUser,
+  ): Promise<
+    ApiSuccessResponse<
+      PosPaymentResponseDto & {
+        orderNumber: string | null;
+        subtotal: string;
+        tax: string;
+        total: string;
+      }
+    >
+  > {
+    const data = await this.posOrderService.completeSale(tenant, dto, user);
     return { success: true, data };
   }
 

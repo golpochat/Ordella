@@ -18,12 +18,15 @@ import {
   PosReceiptResponseDto,
 } from '../dto';
 import { PosPaymentMethod } from '../enums/pos-payment-method.enum';
+import { PosCompleteSaleDto } from '../dto/pos-complete-sale.dto';
 import {
   throwPosCartAlreadyCheckedOut,
   throwPosContextMismatch,
   throwPosOrderNotFound,
   throwPosPaymentFailed,
 } from '../domain/pos-domain.errors';
+import { PosFulfillmentService } from './pos-fulfillment.service';
+import { PosProductStockService } from './pos-product-stock.service';
 
 const DEFAULT_CURRENCY = 'USD';
 
@@ -39,6 +42,8 @@ export class PosOrderService {
     private readonly ordersService: OrdersService,
     private readonly paymentsService: PaymentsService,
     private readonly inventoryService: InventoryService,
+    private readonly fulfillmentService: PosFulfillmentService,
+    private readonly productStockService: PosProductStockService,
   ) {}
 
   async checkout(
@@ -55,7 +60,7 @@ export class PosOrderService {
 
     const createDto: CreateOrderDto = {
       locationId: cart.locationId,
-      orderType: OrderType.POS,
+      orderType: dto.orderType ?? OrderType.POS,
       customerId: dto.customerId,
       items: cart.items.map((line) => ({
         productId: line.productId,
@@ -85,6 +90,55 @@ export class PosOrderService {
       subtotal: order.subtotal,
       tax: order.tax,
       total: order.total,
+    };
+  }
+
+  async completeSale(
+    tenant: TenantContext,
+    dto: PosCompleteSaleDto,
+    user?: AuthenticatedUser,
+  ): Promise<PosPaymentResponseDto & { orderNumber: string | null; subtotal: string; tax: string; total: string }> {
+    const checkout = await this.checkout(
+      tenant,
+      {
+        cartId: dto.cartId,
+        terminalId: dto.terminalId,
+        cashierId: dto.cashierId,
+        shiftId: dto.shiftId,
+        customerId: dto.customer?.customerId,
+        orderType: dto.orderType,
+        orderNotes: dto.orderNotes,
+      },
+      user,
+    );
+
+    const payment = await this.pay(
+      tenant,
+      {
+        orderId: checkout.orderId,
+        terminalId: dto.terminalId,
+        cashierId: dto.cashierId,
+        shiftId: dto.shiftId,
+        method: dto.paymentMethod,
+      },
+      user,
+    );
+
+    const order = await this.ordersService.findOne(tenant, checkout.orderId);
+    await this.productStockService.decrementForOrder(
+      tenant.tenantId,
+      (order.items ?? []).map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    );
+
+    return {
+      ...payment,
+      orderNumber: checkout.orderNumber,
+      subtotal: checkout.subtotal,
+      tax: checkout.tax,
+      total: checkout.total,
     };
   }
 
@@ -136,6 +190,8 @@ export class PosOrderService {
     if (linkedCart) {
       this.cartService.deleteCart(tenant.tenantId, linkedCart.id);
     }
+
+    await this.fulfillmentService.routeOrderToFulfillment(tenant.tenantId, order.id);
 
     return {
       orderId: updated.id,

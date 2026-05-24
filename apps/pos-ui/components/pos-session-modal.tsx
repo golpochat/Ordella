@@ -36,11 +36,11 @@ export function PosSessionModal() {
   return (
     <Modal open={open} onOpenChange={setOpen}>
       <ModalTrigger asChild>
-        <Button variant="outline" className="h-11">Session</Button>
+        <Button variant="outline" className="h-11">Settings</Button>
       </ModalTrigger>
       <ModalContent>
         <ModalHeader>
-          <ModalTitle>POS session</ModalTitle>
+          <ModalTitle>Register settings</ModalTitle>
         </ModalHeader>
         <div className="grid gap-3 py-3">
           <Input

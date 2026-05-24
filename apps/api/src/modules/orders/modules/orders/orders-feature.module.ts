@@ -8,7 +8,8 @@ import { OrderItemEntity } from '../../entities';
 import { OrderStatusHistoryEntity } from '../../entities';
 import { OrderEventEntity } from '../../entities';
 import { OrderItemRepository } from '../../repositories/order-item.repository';
-import { OrdersController } from '../../controllers';
+import { OrdersController, OrdersPosController } from '../../controllers';
+import { KdsModule } from '../../../kds/kds.module';
 import { OrdersService } from '../../services';
 import { OrderRepository } from '../../repositories/order.repository';
 import { OrderStatusHistoryRepository } from '../../repositories/order-status-history.repository';
@@ -38,6 +39,7 @@ import {
 
 @Module({
   imports: [
+    KdsModule,
     TypeOrmModule.forFeature([
       OrderEntity,
       OrderItemEntity,
@@ -48,7 +50,7 @@ import {
       ModifierOptionEntity,
     ]),
   ],
-  controllers: [OrdersController],
+  controllers: [OrdersPosController, OrdersController],
   providers: [
     OrdersService,
     OrderCreationService,

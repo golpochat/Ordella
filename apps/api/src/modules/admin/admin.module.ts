@@ -105,6 +105,7 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
   ],
   exports: [
     ProductAdminService,
+    CatalogBuilderService,
     InventoryAdminService,
     OrdersAdminService,
     PromotionsAdminService,

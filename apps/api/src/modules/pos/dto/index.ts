@@ -8,3 +8,4 @@ export * from './pos-cart-response.dto';
 export * from './pos-checkout-response.dto';
 export * from './pos-payment-response.dto';
 export * from './pos-receipt-response.dto';
+export * from './pos-complete-sale.dto';
