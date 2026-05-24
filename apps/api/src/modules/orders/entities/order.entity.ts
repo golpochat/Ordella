@@ -1,6 +1,8 @@
 import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { OrderStatus } from '../enums/order-status.enum';
 import { OrderType } from '../enums/order-type.enum';
+import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
+import { OrderPaymentMethod } from '../enums/order-payment-method.enum';
 import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { OrderItemEntity } from './order-item.entity';
 import { OrderStatusHistoryEntity } from './order-status-history.entity';
@@ -22,6 +24,17 @@ export class OrderEntity extends BaseTenantScopedEntity {
 
   @Column({ type: 'varchar', length: 32, default: OrderStatus.PENDING })
   status!: OrderStatus;
+
+  @Column({
+    name: 'payment_status',
+    type: 'varchar',
+    length: 32,
+    default: OrderPaymentStatus.UNPAID,
+  })
+  paymentStatus!: OrderPaymentStatus;
+
+  @Column({ name: 'payment_method', type: 'varchar', length: 32, nullable: true })
+  paymentMethod!: OrderPaymentMethod | null;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   subtotal!: string;

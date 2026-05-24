@@ -29,6 +29,8 @@ Terminal: `delivered`, `refunded`, `cancelled`, `failed`
 
 Inventory placeholders (`integrations/inventory.service.ts`): soft `reserve` on create, `deduct` on `accepted`, `releaseOrRestore` on `cancelled`/`failed`, `restoreForRefund` on `refunded`.
 
+Payment placeholders: `authorizeOrCapture` on `accepted` (CONFIRMED), `refund` on `refunded`. Order `paymentStatus`: `unpaid` → `paid` → `refunded`. CASH/POS on create auto-transitions to `accepted`.
+
 Lifecycle rules live in `domain/order-lifecycle.transitions.ts`.  
 `OrderCreationService.createOrder()` handles line pricing, draft totals, promotions, and persistence.  
 `OrderPricingService` + `OrderFeeCalculatorService` compute subtotal, discounts, tax, service charge, delivery fee, and grand total.  

@@ -4,7 +4,9 @@ import { TenantContext, AuthenticatedUser } from '../../../common/interfaces';
 import { CreateOrderDto } from '../dto';
 import { OrderResponseDto } from '../dto';
 import { OrderStatus } from '../enums/order-status.enum';
+import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
 import { generateOrderNumber } from '../domain/order-number.util';
+import { isImmediatePaymentMethod } from '../domain/order-payment.util';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { toOrderResponseDto } from '../mappers/order.mapper';
@@ -18,6 +20,9 @@ import {
   mapDraftTotalsToOrderColumns,
 } from '../types/draft-order.types';
 import { OrderTransitionContext } from '../types/order-transition.context';
+
+/** CONFIRMED maps to accepted in the order status enum. */
+const CONFIRMED_STATUS = OrderStatus.ACCEPTED;
 
 @Injectable()
 export class OrderCreationService {
@@ -59,6 +64,8 @@ export class OrderCreationService {
           customerId: dto.customerId ?? null,
           orderType: dto.orderType,
           status: OrderStatus.PENDING,
+          paymentStatus: OrderPaymentStatus.UNPAID,
+          paymentMethod: dto.paymentMethod ?? null,
           subtotal: columns.subtotal,
           tax: columns.tax,
           total: columns.total,
@@ -80,6 +87,17 @@ export class OrderCreationService {
       );
 
       await this.orderLifecycleService.onOrderCreated(tenant, persistedOrder, items, ctx);
+
+      if (isImmediatePaymentMethod(dto.paymentMethod)) {
+        await this.orderLifecycleService.transition(
+          tenant,
+          persistedOrder,
+          items,
+          CONFIRMED_STATUS,
+          ctx,
+        );
+        await this.orderRepository.save(persistedOrder, manager);
+      }
 
       return persistedOrder;
     });

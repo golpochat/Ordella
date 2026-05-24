@@ -32,6 +32,8 @@ export function toOrderResponseDto(
     customerId: entity.customerId,
     orderType: entity.orderType,
     status: entity.status,
+    paymentStatus: entity.paymentStatus,
+    paymentMethod: entity.paymentMethod,
     subtotal: entity.subtotal,
     tax: entity.tax,
     total: entity.total,

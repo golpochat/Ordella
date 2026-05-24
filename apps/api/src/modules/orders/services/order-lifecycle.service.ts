@@ -4,6 +4,7 @@ import { OrderEntity } from '../entities/order.entity';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderStatus } from '../enums/order-status.enum';
 import { OrderType } from '../enums/order-type.enum';
+import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
 import {
   canTransitionOrderStatus,
   isTerminalOrderStatus,
@@ -14,15 +15,16 @@ import {
   DeliveryService,
   InventoryService,
   NotificationsService,
-  PaymentsService,
   PromotionsService,
 } from '../integrations';
 import { OrderEventsService } from './order-events.service';
 import { OrderStatusHistoryService } from './order-status-history.service';
+import { OrderPaymentService } from './order-payment.service';
 import { OrderTransitionContext } from '../types/order-transition.context';
 import { OrderInventoryContext } from '../types/order-inventory.context';
+import { OrderPaymentContext } from '../types/order-payment.context';
 
-/** Business "confirmed" step — inventory deduct runs on this status. */
+/** Business "confirmed" step — inventory deduct and payment capture run on this status. */
 const CONFIRMED_STATUS = OrderStatus.ACCEPTED;
 
 @Injectable()
@@ -32,7 +34,7 @@ export class OrderLifecycleService {
     private readonly orderEventsService: OrderEventsService,
     private readonly promotionsService: PromotionsService,
     private readonly inventoryService: InventoryService,
-    private readonly paymentsService: PaymentsService,
+    private readonly orderPaymentService: OrderPaymentService,
     private readonly deliveryService: DeliveryService,
     private readonly notificationsService: NotificationsService,
   ) {}
@@ -51,6 +53,8 @@ export class OrderLifecycleService {
     items: OrderItemEntity[],
     ctx: OrderTransitionContext = {},
   ): Promise<void> {
+    order.paymentStatus = OrderPaymentStatus.UNPAID;
+
     await this.recordStatusChange(tenant, order.id, null, OrderStatus.PENDING, ctx);
 
     await this.orderEventsService.emit(
@@ -93,6 +97,11 @@ export class OrderLifecycleService {
     }
 
     this.assertCanTransition(fromStatus, toStatus);
+
+    if (toStatus === CONFIRMED_STATUS) {
+      await this.runPaymentForTransition(tenant, order, items, fromStatus, toStatus);
+    }
+
     order.status = toStatus;
 
     await this.recordStatusChange(tenant, order.id, fromStatus, toStatus, ctx);
@@ -108,6 +117,11 @@ export class OrderLifecycleService {
     );
 
     await this.runInventoryForTransition(tenant, order, items, fromStatus, toStatus);
+
+    if (toStatus === OrderStatus.REFUNDED) {
+      await this.runPaymentForTransition(tenant, order, items, fromStatus, toStatus);
+    }
+
     await this.runNonInventoryIntegrations(tenant, order, items, fromStatus, toStatus);
 
     await this.notificationsService.sendOrderNotification(
@@ -128,6 +142,44 @@ export class OrderLifecycleService {
     toStatus: OrderStatus,
   ): OrderInventoryContext {
     return { tenant, order, items, fromStatus, toStatus };
+  }
+
+  private buildPaymentContext(
+    tenant: TenantContext,
+    order: OrderEntity,
+    items: OrderItemEntity[],
+    fromStatus: OrderStatus | null,
+    toStatus: OrderStatus,
+    reason?: string,
+  ): OrderPaymentContext {
+    return {
+      tenant,
+      order,
+      items,
+      fromStatus,
+      toStatus,
+      paymentMethod: order.paymentMethod,
+      reason,
+    };
+  }
+
+  private async runPaymentForTransition(
+    tenant: TenantContext,
+    order: OrderEntity,
+    items: OrderItemEntity[],
+    fromStatus: OrderStatus,
+    toStatus: OrderStatus,
+  ): Promise<void> {
+    const paymentCtx = this.buildPaymentContext(tenant, order, items, fromStatus, toStatus);
+
+    if (toStatus === CONFIRMED_STATUS) {
+      await this.orderPaymentService.confirmOnAccepted(paymentCtx, order);
+      return;
+    }
+
+    if (toStatus === OrderStatus.REFUNDED) {
+      await this.orderPaymentService.refundOnRefunded(paymentCtx, order);
+    }
   }
 
   private async runInventoryForTransition(
@@ -174,7 +226,6 @@ export class OrderLifecycleService {
   ): Promise<void> {
     switch (toStatus) {
       case CONFIRMED_STATUS:
-        await this.paymentsService.authorizeOrCapture(tenant, order);
         if (order.orderType === OrderType.DELIVERY) {
           await this.deliveryService.createTask(tenant, order);
         }
@@ -186,12 +237,18 @@ export class OrderLifecycleService {
         }
         break;
 
-      case OrderStatus.DELIVERED:
-        await this.paymentsService.authorizeOrCapture(tenant, order);
-        break;
-
       case OrderStatus.CANCELLED:
-        await this.paymentsService.refund(tenant, order, ctxReason(fromStatus));
+        await this.orderPaymentService.refundOnCancelled(
+          this.buildPaymentContext(
+            tenant,
+            order,
+            items,
+            fromStatus,
+            toStatus,
+            ctxReason(fromStatus),
+          ),
+          order,
+        );
         await this.promotionsService.applyPromotions({
           tenant,
           order,
@@ -212,7 +269,10 @@ export class OrderLifecycleService {
         break;
 
       case OrderStatus.FAILED:
-        await this.paymentsService.refund(tenant, order, 'order_failed');
+        await this.orderPaymentService.refundOnCancelled(
+          this.buildPaymentContext(tenant, order, items, fromStatus, toStatus, 'order_failed'),
+          order,
+        );
         break;
 
       default:

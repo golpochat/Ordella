@@ -16,6 +16,7 @@ import { OrderEventsService } from '../../services';
 import { OrderLifecycleService } from '../../services/order-lifecycle.service';
 import { OrderCreationService } from '../../services/order-creation.service';
 import { OrderPricingService } from '../../services/order-pricing.service';
+import { OrderPaymentService } from '../../services/order-payment.service';
 import { OrderTotalsService } from '../../services/order-totals.service';
 import { OrderFeeCalculatorService } from '../../pricing/order-fee-calculator.service';
 import {
@@ -48,6 +49,7 @@ import {
     OrderEventsService,
     OrderLifecycleService,
     OrderPricingService,
+    OrderPaymentService,
     OrderTotalsService,
     OrderFeeCalculatorService,
     PromotionsService,

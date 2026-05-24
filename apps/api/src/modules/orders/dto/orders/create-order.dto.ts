@@ -8,6 +8,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { OrderType } from '../../enums/order-type.enum';
+import { OrderPaymentMethod } from '../../enums/order-payment-method.enum';
 import { CreateOrderNestedItemDto } from './create-order-nested-item.dto';
 
 /** API Spec §5.1 POST /api/v1/orders */
@@ -21,6 +22,10 @@ export class CreateOrderDto {
 
   @IsEnum(OrderType)
   orderType!: OrderType;
+
+  @IsOptional()
+  @IsEnum(OrderPaymentMethod)
+  paymentMethod?: OrderPaymentMethod;
 
   @IsArray()
   @ArrayMinSize(1)
