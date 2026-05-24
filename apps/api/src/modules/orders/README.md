@@ -28,7 +28,9 @@ Order lifecycle per **SRS** and **API Spec §5** (blueprint Orders Service).
 Terminal: `cancelled`, `failed`
 
 Lifecycle rules live in `domain/order-lifecycle.transitions.ts`.  
-Integration hooks (promotions, inventory, payments, delivery, notifications, reporting) are placeholders under `hooks/`.
+`OrderCreationService.createOrder()` handles pricing, draft totals, and promotions.  
+`OrderLifecycleService.transition()` records status history and runs step integrations.  
+Placeholder integrations (no external APIs) live under `integrations/`.
 
 ## Migration
 

@@ -1,4 +1,4 @@
-import { OrderStatus } from '../enums/order-status.enum';
+import { OrderStatus } from "../enums/order-status.enum";
 
 /** Valid status transitions (API Spec §5.7 + pickup shortcut to delivered). */
 export const ORDER_STATUS_TRANSITIONS: Readonly<

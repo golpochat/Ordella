@@ -5,7 +5,7 @@ import { OrderStatusHistoryResponseDto } from '../dto';
 import { OrderStatus } from '../enums/order-status.enum';
 import { OrderStatusHistoryRepository } from '../repositories/order-status-history.repository';
 import { toOrderStatusHistoryResponseDto } from '../mappers/order.mapper';
-import { OrderTransitionContext } from './order-lifecycle.service';
+import { OrderTransitionContext } from '../types/order-transition.context';
 
 @Injectable()
 export class OrderStatusHistoryService {
@@ -21,7 +21,7 @@ export class OrderStatusHistoryService {
   }
 
   async recordTransition(
-    tenant: TenantContext,
+    _tenant: TenantContext,
     orderId: string,
     fromStatus: OrderStatus | null,
     toStatus: OrderStatus,

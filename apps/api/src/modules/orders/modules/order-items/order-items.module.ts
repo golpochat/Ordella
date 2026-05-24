@@ -10,7 +10,7 @@ import { OrderItemRepository } from '../../repositories/order-item.repository';
 import { OrderRepository } from '../../repositories/order.repository';
 import { OrderPricingService } from '../../services/order-pricing.service';
 import { OrderTotalsService } from '../../services/order-totals.service';
-import { OrderPromotionHook } from '../../hooks';
+import { PromotionsService } from '../../integrations';
 
 @Module({
   imports: [
@@ -28,7 +28,7 @@ import { OrderPromotionHook } from '../../hooks';
     OrderRepository,
     OrderPricingService,
     OrderTotalsService,
-    OrderPromotionHook,
+    PromotionsService,
   ],
   exports: [],
 })

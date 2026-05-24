@@ -13,15 +13,15 @@ import { OrderEventRepository } from '../../repositories/order-event.repository'
 import { OrderStatusHistoryService } from '../../services';
 import { OrderEventsService } from '../../services';
 import { OrderLifecycleService } from '../../services/order-lifecycle.service';
+import { OrderCreationService } from '../../services/order-creation.service';
 import { OrderPricingService } from '../../services/order-pricing.service';
 import {
-  OrderDeliveryHook,
-  OrderInventoryHook,
-  OrderNotificationHook,
-  OrderPaymentHook,
-  OrderPromotionHook,
-  OrderReportingHook,
-} from '../../hooks';
+  DeliveryService,
+  InventoryService,
+  NotificationsService,
+  PaymentsService,
+  PromotionsService,
+} from '../../integrations';
 
 @Module({
   imports: [
@@ -36,6 +36,7 @@ import {
   controllers: [OrdersController],
   providers: [
     OrdersService,
+    OrderCreationService,
     OrderRepository,
     OrderStatusHistoryRepository,
     OrderEventRepository,
@@ -43,13 +44,12 @@ import {
     OrderEventsService,
     OrderLifecycleService,
     OrderPricingService,
-    OrderPromotionHook,
-    OrderInventoryHook,
-    OrderPaymentHook,
-    OrderDeliveryHook,
-    OrderNotificationHook,
-    OrderReportingHook,
+    PromotionsService,
+    InventoryService,
+    PaymentsService,
+    DeliveryService,
+    NotificationsService,
   ],
-  exports: [OrderRepository, OrderPricingService, OrderPromotionHook],
+  exports: [OrderRepository, OrderPricingService, PromotionsService],
 })
 export class OrdersFeatureModule {}

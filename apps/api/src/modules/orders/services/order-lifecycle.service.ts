@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderItemEntity } from '../entities/order-item.entity';
@@ -11,35 +10,27 @@ import {
 } from '../domain/order-lifecycle.transitions';
 import { orderStatusToEventType } from '../domain/order-status-event-type.mapper';
 import { OrderEventTypes } from '../constants/order-events.constants';
-import { OrdersDomainEvents } from '../events/orders.events';
 import {
-  OrderDeliveryHook,
-  OrderInventoryHook,
-  OrderNotificationHook,
-  OrderPaymentHook,
-  OrderPromotionHook,
-  OrderReportingHook,
-} from '../hooks';
+  DeliveryService,
+  InventoryService,
+  NotificationsService,
+  PaymentsService,
+  PromotionsService,
+} from '../integrations';
 import { OrderEventsService } from './order-events.service';
 import { OrderStatusHistoryService } from './order-status-history.service';
-
-export interface OrderTransitionContext {
-  changedBy?: string | null;
-  reason?: string | null;
-  manager?: EntityManager;
-}
+import { OrderTransitionContext } from '../types/order-transition.context';
 
 @Injectable()
 export class OrderLifecycleService {
   constructor(
     private readonly statusHistoryService: OrderStatusHistoryService,
     private readonly orderEventsService: OrderEventsService,
-    private readonly promotionHook: OrderPromotionHook,
-    private readonly inventoryHook: OrderInventoryHook,
-    private readonly paymentHook: OrderPaymentHook,
-    private readonly deliveryHook: OrderDeliveryHook,
-    private readonly notificationHook: OrderNotificationHook,
-    private readonly reportingHook: OrderReportingHook,
+    private readonly promotionsService: PromotionsService,
+    private readonly inventoryService: InventoryService,
+    private readonly paymentsService: PaymentsService,
+    private readonly deliveryService: DeliveryService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   assertCanTransition(from: OrderStatus, to: OrderStatus): void {
@@ -56,29 +47,26 @@ export class OrderLifecycleService {
     items: OrderItemEntity[],
     ctx: OrderTransitionContext = {},
   ): Promise<void> {
-    await this.statusHistoryService.recordTransition(
-      tenant,
-      order.id,
-      null,
-      OrderStatus.PENDING,
-      ctx,
-    );
-    await this.orderEventsService.recordEvent(
+    await this.recordStatusChange(tenant, order.id, null, OrderStatus.PENDING, ctx);
+
+    await this.orderEventsService.emit(
       tenant,
       order.id,
       OrderEventTypes.CREATED,
-      { orderNumber: order.orderNumber, total: order.total },
+      { orderNumber: order.orderNumber, total: order.total, subtotal: order.subtotal },
       ctx,
-    );
-    await this.orderEventsService.recordDomainEvent(
-      OrdersDomainEvents.ORDER_CREATED,
+      'orders.order.created',
       order,
     );
 
-    await this.promotionHook.applyOnOrderCreated(tenant, order, items);
-    await this.inventoryHook.reserveSoft(tenant, order, items);
-    await this.notificationHook.onOrderCreated(tenant, order);
-    await this.reportingHook.emitOrderCreated(tenant, order);
+    await this.inventoryService.reserveOrDeduct(tenant, order, items, 'reserve');
+
+    await this.notificationsService.sendOrderNotification(
+      tenant,
+      order,
+      'order.created',
+      { status: order.status },
+    );
   }
 
   async transition(
@@ -99,41 +87,49 @@ export class OrderLifecycleService {
     }
 
     this.assertCanTransition(fromStatus, toStatus);
-
     order.status = toStatus;
 
-    await this.statusHistoryService.recordTransition(
+    await this.recordStatusChange(tenant, order.id, fromStatus, toStatus, ctx);
+
+    const eventType = orderStatusToEventType(toStatus);
+    await this.orderEventsService.emitDomainStatusChange(
       tenant,
-      order.id,
+      order,
+      eventType,
       fromStatus,
       toStatus,
       ctx,
     );
 
-    const eventType = orderStatusToEventType(toStatus);
-    await this.orderEventsService.recordEvent(
-      tenant,
-      order.id,
-      eventType,
-      { fromStatus, toStatus },
-      ctx,
-    );
-    await this.orderEventsService.recordDomainEvent(
-      toStatus === OrderStatus.CANCELLED
-        ? OrdersDomainEvents.ORDER_CANCELLED
-        : OrdersDomainEvents.ORDER_STATUS_CHANGED,
-      order,
-      { fromStatus, toStatus },
-    );
+    await this.runStepIntegrations(tenant, order, items, fromStatus, toStatus);
 
-    await this.runEnterHooks(tenant, order, items, fromStatus, toStatus);
-    await this.notificationHook.onStatusChanged(tenant, order, fromStatus, toStatus);
-    await this.reportingHook.emitStatusChanged(tenant, order, fromStatus, toStatus);
+    await this.notificationsService.sendOrderNotification(
+      tenant,
+      order,
+      'order.status_changed',
+      { fromStatus, toStatus },
+    );
 
     return order;
   }
 
-  private async runEnterHooks(
+  private async recordStatusChange(
+    tenant: TenantContext,
+    orderId: string,
+    fromStatus: OrderStatus | null,
+    toStatus: OrderStatus,
+    ctx: OrderTransitionContext,
+  ): Promise<void> {
+    await this.statusHistoryService.recordTransition(
+      tenant,
+      orderId,
+      fromStatus,
+      toStatus,
+      ctx,
+    );
+  }
+
+  private async runStepIntegrations(
     tenant: TenantContext,
     order: OrderEntity,
     items: OrderItemEntity[],
@@ -142,31 +138,54 @@ export class OrderLifecycleService {
   ): Promise<void> {
     switch (toStatus) {
       case OrderStatus.ACCEPTED:
-        await this.paymentHook.requestConfirmation(tenant, order);
-        break;
-      case OrderStatus.READY:
+        await this.paymentsService.authorizeOrCapture(tenant, order);
         if (order.orderType === OrderType.DELIVERY) {
-          await this.deliveryHook.assignForOrder(tenant, order);
+          await this.deliveryService.createTask(tenant, order);
         }
         break;
+
+      case OrderStatus.READY:
+        if (order.orderType === OrderType.DELIVERY) {
+          await this.deliveryService.assignDriver(tenant, order);
+        }
+        break;
+
       case OrderStatus.DELIVERED:
-        await this.paymentHook.confirmPayment(tenant, order);
-        await this.inventoryHook.commitReservations(tenant, order);
-        await this.reportingHook.emitOrderCompleted(tenant, order);
+        await this.paymentsService.authorizeOrCapture(tenant, order);
+        await this.inventoryService.reserveOrDeduct(tenant, order, items, 'deduct');
         break;
+
       case OrderStatus.CANCELLED:
-        await this.inventoryHook.releaseReservations(tenant, order);
-        await this.promotionHook.voidOnOrderCancelled(tenant, order);
+        await this.inventoryService.restore(tenant, order, items);
+        await this.paymentsService.refund(tenant, order, ctxReason(fromStatus));
+        await this.promotionsService.applyPromotions({
+          tenant,
+          order,
+          items,
+          draftTotals: {
+            subtotal: order.subtotal,
+            tax: order.tax,
+            total: order.total,
+            discountAmount: '0.00',
+            promotionIds: [],
+          },
+          action: 'void',
+        });
         break;
+
       case OrderStatus.FAILED:
-        await this.paymentHook.markPaymentFailed(tenant, order);
-        await this.inventoryHook.releaseReservations(tenant, order);
+        await this.inventoryService.restore(tenant, order, items);
+        await this.paymentsService.refund(tenant, order, 'order_failed');
         break;
+
       default:
         break;
     }
 
-    void items;
     void fromStatus;
   }
+}
+
+function ctxReason(fromStatus: OrderStatus): string {
+  return `cancelled_from_${fromStatus}`;
 }

@@ -4,8 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { TenantContext } from '../../../common/interfaces';
-import { AuthenticatedUser } from '../../../common/interfaces';
+import { TenantContext, AuthenticatedUser } from '../../../common/interfaces';
 import { FilterPaginationDto } from '../../../common/dto';
 import { CreateOrderDto } from '../dto';
 import { UpdateOrderDto } from '../dto';
@@ -13,31 +12,23 @@ import { OrderResponseDto } from '../dto';
 import { OrderStatusHistoryResponseDto } from '../dto';
 import { OrderEventResponseDto } from '../dto';
 import { OrderStatus } from '../enums/order-status.enum';
-import { DEFAULT_ORDER_TAX_RATE } from '../constants/order-tax.constants';
-import { calculateOrderTotals } from '../domain/order-totals.util';
-import { generateOrderNumber } from '../domain/order-number.util';
 import { isTerminalOrderStatus } from '../domain/order-lifecycle.transitions';
-import { OrderItemEntity } from '../entities/order-item.entity';
 import { toOrderResponseDto } from '../mappers/order.mapper';
 import { OrderRepository } from '../repositories/order.repository';
-import { OrderItemRepository } from '../repositories/order-item.repository';
+import { OrderCreationService } from './order-creation.service';
 import { OrderLifecycleService } from './order-lifecycle.service';
-import { OrderPricingService } from './order-pricing.service';
 import { OrderEventsService } from './order-events.service';
 import { OrderStatusHistoryService } from './order-status-history.service';
-import { OrderPromotionHook } from '../hooks';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly orderRepository: OrderRepository,
-    private readonly orderItemRepository: OrderItemRepository,
-    private readonly orderPricingService: OrderPricingService,
+    private readonly orderCreationService: OrderCreationService,
     private readonly orderLifecycleService: OrderLifecycleService,
     private readonly orderEventsService: OrderEventsService,
     private readonly orderStatusHistoryService: OrderStatusHistoryService,
-    private readonly promotionHook: OrderPromotionHook,
   ) {}
 
   async findAll(
@@ -53,89 +44,7 @@ export class OrdersService {
     dto: CreateOrderDto,
     user?: AuthenticatedUser,
   ): Promise<OrderResponseDto> {
-    const resolvedLines = await Promise.all(
-      dto.items.map(async (line) => {
-        const priced = await this.orderPricingService.resolveLinePrice(
-          tenant,
-          line.productId,
-          line.variantId,
-        );
-        return {
-          productId: line.productId,
-          variantId: line.variantId ?? null,
-          quantity: line.quantity,
-          price: priced.unitPrice,
-          notes: line.notes ?? null,
-        };
-      }),
-    );
-
-    const totals = calculateOrderTotals(resolvedLines, DEFAULT_ORDER_TAX_RATE);
-
-    const saved = await this.dataSource.transaction(async (manager) => {
-      const order = this.orderRepository.create(
-        {
-          tenantId: tenant.tenantId,
-          locationId: dto.locationId,
-          customerId: dto.customerId ?? null,
-          orderType: dto.orderType,
-          status: OrderStatus.PENDING,
-          subtotal: totals.subtotal,
-          tax: totals.tax,
-          total: totals.total,
-          orderNumber: generateOrderNumber(),
-        },
-        manager,
-      );
-      const persistedOrder = await this.orderRepository.save(order, manager);
-
-      const items: OrderItemEntity[] = [];
-      for (const line of resolvedLines) {
-        const item = this.orderItemRepository.create(
-          {
-            orderId: persistedOrder.id,
-            productId: line.productId,
-            variantId: line.variantId,
-            quantity: line.quantity,
-            price: line.price,
-            notes: line.notes,
-          },
-          manager,
-        );
-        items.push(await this.orderItemRepository.save(item, manager));
-      }
-
-      persistedOrder.items = items;
-
-      const promotion = await this.promotionHook.applyOnOrderCreated(
-        tenant,
-        persistedOrder,
-        items,
-      );
-      if (Number(promotion.discountAmount) > 0) {
-        const discountedTotal = Math.max(
-          0,
-          Number(persistedOrder.total) - Number(promotion.discountAmount),
-        );
-        persistedOrder.total = discountedTotal.toFixed(2);
-        await this.orderRepository.save(persistedOrder, manager);
-      }
-
-      await this.orderLifecycleService.onOrderCreated(
-        tenant,
-        persistedOrder,
-        items,
-        { changedBy: user?.id ?? null, manager },
-      );
-
-      return persistedOrder;
-    });
-
-    const withItems = await this.orderRepository.findByIdWithItems(
-      tenant.tenantId,
-      saved.id,
-    );
-    return toOrderResponseDto(withItems!, true);
+    return this.orderCreationService.createOrder(tenant, dto, user);
   }
 
   async findOne(tenant: TenantContext, id: string): Promise<OrderResponseDto> {
@@ -162,7 +71,6 @@ export class OrdersService {
     }
 
     if (dto.status !== undefined && dto.status !== order.status) {
-      order.status = dto.status;
       const updated = await this.dataSource.transaction(async (manager) => {
         const managedOrder = await this.orderRepository.findByIdWithItems(
           tenant.tenantId,
@@ -209,12 +117,7 @@ export class OrdersService {
     id: string,
     user?: AuthenticatedUser,
   ): Promise<void> {
-    await this.update(
-      tenant,
-      id,
-      { status: OrderStatus.CANCELLED },
-      user,
-    );
+    await this.update(tenant, id, { status: OrderStatus.CANCELLED }, user);
   }
 
   async getStatusHistory(
