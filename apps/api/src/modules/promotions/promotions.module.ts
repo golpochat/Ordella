@@ -6,6 +6,7 @@ import { PromotionsFeatureModule } from './modules/promotions/promotions-feature
 import { PromotionRulesModule } from './modules/promotion-rules/promotion-rules.module';
 import { PromotionConditionsModule } from './modules/promotion-conditions/promotion-conditions.module';
 import { PromotionApplicationsModule } from './modules/promotion-applications/promotion-applications.module';
+import { PromotionsCoreModule } from './modules/promotions-core/promotions-core.module';
 
 /**
  * Promotions domain — SRS §12 / §47, API Spec §9 (blueprint Promotion Service).
@@ -22,7 +23,8 @@ import { PromotionApplicationsModule } from './modules/promotion-applications/pr
     PromotionRulesModule,
     PromotionConditionsModule,
     PromotionApplicationsModule,
+    PromotionsCoreModule,
   ],
-  exports: [],
+  exports: [PromotionsCoreModule],
 })
 export class PromotionsModule {}

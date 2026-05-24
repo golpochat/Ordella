@@ -5,6 +5,7 @@ import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { PromotionApplicationEntity } from './promotion-application.entity';
 import { PromotionConditionEntity } from './promotion-condition.entity';
 import { PromotionRuleEntity } from './promotion-rule.entity';
+import { PromotionActionEntity } from './promotion-action.entity';
 
 /** ERD §1.8 — API Spec §9.1 */
 @Entity('promotions')
@@ -41,8 +42,14 @@ export class PromotionEntity extends BaseTenantScopedEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
+  @Column({ type: 'jsonb', default: {} })
+  metadata!: Record<string, unknown>;
+
   @OneToMany(() => PromotionRuleEntity, (rule) => rule.promotion)
   rules!: PromotionRuleEntity[];
+
+  @OneToMany(() => PromotionActionEntity, (action) => action.promotion)
+  actions!: PromotionActionEntity[];
 
   @OneToMany(() => PromotionConditionEntity, (condition) => condition.promotion)
   conditions!: PromotionConditionEntity[];

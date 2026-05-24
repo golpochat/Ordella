@@ -22,13 +22,13 @@ import { PromotionsPermissionKeys } from '../constants/permission-keys';
 import { CreatePromotionDto } from '../dto';
 import { PromotionResponseDto } from '../dto';
 import { UpdatePromotionDto } from '../dto';
-import { PromotionsService } from '../services';
+import { PromotionsCrudService } from '../services/promotions-crud.service';
 
 /** API Spec §9.1 */
 @Controller('promotions')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
 export class PromotionsController {
-  constructor(private readonly promotionsService: PromotionsService) {}
+  constructor(private readonly promotionsService: PromotionsCrudService) {}
 
   @Get()
   @RequirePermissions(PromotionsPermissionKeys.PROMOTIONS_READ)

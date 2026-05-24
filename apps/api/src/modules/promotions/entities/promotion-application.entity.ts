@@ -32,4 +32,7 @@ export class PromotionApplicationEntity extends BaseTimestampsEntity {
 
   @Column({ name: 'applied_at', type: 'timestamptz', default: () => 'NOW()' })
   appliedAt!: Date;
+
+  @Column({ type: 'jsonb', default: {} })
+  metadata!: Record<string, unknown>;
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { PromotionConditionEntity } from '../entities';
 
 @Injectable()
@@ -10,5 +10,14 @@ export class PromotionConditionRepository {
     private readonly repository: Repository<PromotionConditionEntity>,
   ) {}
 
-  // TODO: findAllByPromotionId, findById, create, update, remove
+  private repo(manager?: EntityManager): Repository<PromotionConditionEntity> {
+    return manager ? manager.getRepository(PromotionConditionEntity) : this.repository;
+  }
+
+  findByPromotionId(
+    promotionId: string,
+    manager?: EntityManager,
+  ): Promise<PromotionConditionEntity[]> {
+    return this.repo(manager).find({ where: { promotionId } });
+  }
 }

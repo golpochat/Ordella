@@ -1,11 +1,11 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
-import { PromotionConditionType } from '../enums/promotion-condition-type.enum';
+import { RuleType } from '../enums/rule-type.enum';
 import { BaseTimestampsEntity } from './base-timestamps.entity';
 import { PromotionEntity } from './promotion.entity';
 
-/** SRS §12 — eligibility rules */
+/** PromotionRule — persisted as promotion_conditions (ruleType + ruleConfig) */
 @Entity('promotion_conditions')
-@Index(['promotionId', 'conditionType'])
+@Index(['promotionId', 'ruleType'])
 export class PromotionConditionEntity extends BaseTimestampsEntity {
   @Column({ name: 'promotion_id', type: 'uuid' })
   promotionId!: string;
@@ -15,11 +15,11 @@ export class PromotionConditionEntity extends BaseTimestampsEntity {
   promotion!: PromotionEntity;
 
   @Column({ name: 'condition_type', type: 'varchar', length: 32 })
-  conditionType!: PromotionConditionType;
+  ruleType!: RuleType;
 
   @Column({ type: 'varchar', length: 16, default: 'eq' })
   operator!: string;
 
   @Column({ type: 'jsonb', default: {} })
-  value!: Record<string, unknown>;
+  ruleConfig!: Record<string, unknown>;
 }

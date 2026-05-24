@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { PromotionEntity } from '../entities';
+import { PromotionType } from '../enums/promotion-type.enum';
 
 @Injectable()
 export class PromotionRepository {
@@ -10,5 +11,50 @@ export class PromotionRepository {
     private readonly repository: Repository<PromotionEntity>,
   ) {}
 
-  // TODO: findAllForTenant, findByIdForTenant, create, update, remove
+  private repo(manager?: EntityManager): Repository<PromotionEntity> {
+    return manager ? manager.getRepository(PromotionEntity) : this.repository;
+  }
+
+  findByIdForTenant(
+    tenantId: string,
+    id: string,
+    manager?: EntityManager,
+  ): Promise<PromotionEntity | null> {
+    return this.repo(manager).findOne({ where: { id, tenantId } });
+  }
+
+  findByCodeForTenant(
+    tenantId: string,
+    code: string,
+    manager?: EntityManager,
+  ): Promise<PromotionEntity | null> {
+    return this.repo(manager).findOne({
+      where: { tenantId, code },
+    });
+  }
+
+  findActiveAutomaticForTenant(
+    tenantId: string,
+    manager?: EntityManager,
+  ): Promise<PromotionEntity[]> {
+    return this.repo(manager).find({
+      where: { tenantId, type: PromotionType.AUTOMATIC, isActive: true },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  findByIdWithRulesAndActions(
+    tenantId: string,
+    id: string,
+    manager?: EntityManager,
+  ): Promise<PromotionEntity | null> {
+    return this.repo(manager).findOne({
+      where: { id, tenantId },
+      relations: ['conditions', 'actions', 'rules'],
+    });
+  }
+
+  save(promotion: PromotionEntity, manager?: EntityManager): Promise<PromotionEntity> {
+    return this.repo(manager).save(promotion);
+  }
 }
