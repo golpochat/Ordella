@@ -4,9 +4,12 @@ export class DeliveryResponseDto {
   id!: string;
   tenantId!: string;
   orderId!: string;
-  driverProfileId!: string | null;
+  driverId!: string | null;
   status!: DeliveryTaskStatus;
   eta!: Date | null;
+  startedAt!: Date | null;
+  completedAt!: Date | null;
+  metadata!: Record<string, unknown>;
   deliveryFee!: string | null;
   notes!: string | null;
   createdAt!: Date;

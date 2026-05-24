@@ -23,13 +23,13 @@ import { DeliveryResponseDto } from '../dto';
 import { DeliveryTrackingPointResponseDto } from '../dto';
 import { UpdateDeliveryDto } from '../dto';
 import { DeliveryStatusHistoryResponseDto } from '../dto';
-import { DeliveriesService } from '../services';
+import { DeliveriesCrudService } from '../services/deliveries-crud.service';
 
 /** API Spec §7.1–§7.3 — backed by `delivery_tasks` */
 @Controller('deliveries')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
 export class DeliveriesController {
-  constructor(private readonly deliveriesService: DeliveriesService) {}
+  constructor(private readonly deliveriesService: DeliveriesCrudService) {}
 
   @Get()
   @RequirePermissions(DeliveryPermissionKeys.DELIVERIES_READ)

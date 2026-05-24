@@ -7,6 +7,7 @@ export class DriverResponseDto {
   name!: string;
   phone!: string;
   status!: DriverProfileStatus;
+  active!: boolean;
   vehicleType!: string | null;
   createdAt!: Date;
   updatedAt!: Date | null;

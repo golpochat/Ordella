@@ -5,6 +5,7 @@ import { DELIVERIES_ENTITIES } from './entities';
 import { DeliveryTasksFeatureModule } from './modules/delivery-tasks/delivery-tasks-feature.module';
 import { DeliveryAssignmentsModule } from './modules/delivery-assignments/delivery-assignments.module';
 import { DriverProfilesModule } from './modules/driver-profiles/driver-profiles.module';
+import { DeliveriesCoreModule } from './modules/deliveries-core/deliveries-core.module';
 
 /**
  * Deliveries domain — SRS §28 / §44, API Spec §7 (blueprint Delivery Service).
@@ -21,7 +22,8 @@ import { DriverProfilesModule } from './modules/driver-profiles/driver-profiles.
     DeliveryTasksFeatureModule,
     DeliveryAssignmentsModule,
     DriverProfilesModule,
+    DeliveriesCoreModule,
   ],
-  exports: [],
+  exports: [DeliveriesCoreModule],
 })
 export class DeliveriesModule {}

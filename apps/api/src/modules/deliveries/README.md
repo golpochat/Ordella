@@ -23,14 +23,22 @@ Delivery management per **SRS §28 / §44** and **API Spec §7** (blueprint Deli
 - `delivery_assignments` — SRS §28 driver assignment
 - `delivery_status_history` — SRS §28 / §44 audit trail
 
-## Lifecycle (SRS §44)
+## Lifecycle (hardened)
 
-`pending` → `assigned` → `accepted` → `en_route_to_store` → `picked_up` → `en_route_to_customer` → `delivered` → `completed`  
+`pending` → `assigned` → `en_route` → `delivered`  
 Terminal: `failed`, `cancelled`
 
-## Migration
+## Migrations
 
-`1737650000007-CreateDeliverySchema.ts`
+- `1737650000007-CreateDeliverySchema.ts`
+- `1737650000016-AddDeliveryCoreColumns.ts`
+
+## Domain core
+
+`DeliveriesCoreModule` exports `DeliveryService` with:
+- `createTask`, `assignDriver`, `markOutForDelivery`, `markDelivered`, `markFailed`
+- `getTaskForOrder`, `recordEvent`, `syncFromOrderTransition`
+- Placeholder integrations: external providers, route optimization, driver tracking
 
 ## Not in this scaffold (future)
 

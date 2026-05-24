@@ -19,6 +19,9 @@ export class DriverProfileEntity extends BaseTenantScopedEntity {
   @Column({ type: 'varchar', length: 32, default: DriverProfileStatus.ACTIVE })
   status!: DriverProfileStatus;
 
+  @Column({ type: 'boolean', default: true })
+  active!: boolean;
+
   @Column({ name: 'vehicle_type', type: 'varchar', length: 32, nullable: true })
   vehicleType!: string | null;
 
