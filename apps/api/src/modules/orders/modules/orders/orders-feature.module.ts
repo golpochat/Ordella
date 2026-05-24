@@ -4,8 +4,10 @@ import { ProductEntity } from '../../../catalog/entities/product.entity';
 import { VariantEntity } from '../../../catalog/entities/variant.entity';
 import { ModifierOptionEntity } from '../../../catalog/entities/modifier-option.entity';
 import { OrderEntity } from '../../entities';
+import { OrderItemEntity } from '../../entities';
 import { OrderStatusHistoryEntity } from '../../entities';
 import { OrderEventEntity } from '../../entities';
+import { OrderItemRepository } from '../../repositories/order-item.repository';
 import { OrdersController } from '../../controllers';
 import { OrdersService } from '../../services';
 import { OrderRepository } from '../../repositories/order.repository';
@@ -38,6 +40,7 @@ import {
   imports: [
     TypeOrmModule.forFeature([
       OrderEntity,
+      OrderItemEntity,
       OrderStatusHistoryEntity,
       OrderEventEntity,
       ProductEntity,
@@ -50,6 +53,7 @@ import {
     OrdersService,
     OrderCreationService,
     OrderRepository,
+    OrderItemRepository,
     OrderStatusHistoryRepository,
     OrderEventRepository,
     OrderStatusHistoryService,
@@ -72,6 +76,14 @@ import {
     NotificationsService,
     ReportingService,
   ],
-  exports: [OrdersService, OrderRepository, OrderPricingService, PromotionsService],
+  exports: [
+    OrdersService,
+    OrderLifecycleService,
+    OrderAccessService,
+    OrderRepository,
+    OrderItemRepository,
+    OrderPricingService,
+    PromotionsService,
+  ],
 })
 export class OrdersFeatureModule {}
