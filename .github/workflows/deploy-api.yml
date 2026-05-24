@@ -1,0 +1,44 @@
+name: Deploy API
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'infrastructure/docker/api/**'
+      - '.github/workflows/deploy-api.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build API
+        run: npm run build --workspace=@ordella/api
+
+      - name: Migration safety check
+        run: sh ./infrastructure/scripts/check-migration-safety.sh
+        env:
+          NODE_ENV: production
+
+      - name: Run migrations
+        run: npm run migration:run --workspace=@ordella/api
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Build Docker image
+        run: docker build -f infrastructure/docker/api/Dockerfile -t ordella-api:${{ github.sha }} .
+
+      - name: Deploy placeholder
+        run: echo "Push ordella-api:${{ github.sha }} to your registry and roll out to ECS/Fly/Railway"

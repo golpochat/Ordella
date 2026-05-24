@@ -1,17 +1,27 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 import { json, raw } from 'express';
 import { AppModule } from './app.module';
+import { loadDeploymentConfig } from './platform/config/deployment.config';
+import { MigrationRunnerService } from './platform/migrations/migration-runner.service';
+import { AuthenticatedIoAdapter } from './platform/websocket/authenticated-io.adapter';
 
 async function bootstrap(): Promise<void> {
+  const deployConfig = loadDeploymentConfig();
   const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.use('/api/v1/billing/webhook', raw({ type: 'application/json' }));
   expressApp.use(json());
 
-  app.useWebSocketAdapter(new IoAdapter(app));
+  app.useWebSocketAdapter(new AuthenticatedIoAdapter(app));
+
+  app.enableCors({
+    origin: deployConfig.corsOrigins,
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Id'],
+  });
 
   app.setGlobalPrefix('api');
   app.enableVersioning({
@@ -27,7 +37,11 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  const port = process.env.API_PORT ?? 3000;
+  if (deployConfig.runMigrationsOnBoot) {
+    app.get(MigrationRunnerService).runPendingMigrations();
+  }
+
+  const port = app.get(ConfigService).get<string>('API_PORT') ?? 3000;
   await app.listen(port);
 }
 

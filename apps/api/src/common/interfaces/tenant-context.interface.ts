@@ -5,5 +5,5 @@
 export interface TenantContext {
   tenantId: string;
   /** How the tenant was resolved */
-  source: 'subdomain' | 'api_key' | 'jwt' | 'header';
+  source: 'subdomain' | 'custom' | 'api_key' | 'jwt' | 'header';
 }

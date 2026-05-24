@@ -4,6 +4,7 @@ export * from './auth/storage';
 export * from './auth/helpers';
 export * from './auth/tenant-switcher';
 export * from './theme';
+export * from './routing';
 export * from './schemas';
 export * from './websocket/types';
 export * from './websocket/client';

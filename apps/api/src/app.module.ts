@@ -1,7 +1,7 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TenantMiddleware } from './common/middleware/tenant.middleware';
+import { PlatformModule } from './platform/platform.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
@@ -54,10 +54,7 @@ import { BillingModule } from './modules/billing/billing.module';
     AdminModule,
     OnboardingModule,
     BillingModule,
+    PlatformModule,
   ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(TenantMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}

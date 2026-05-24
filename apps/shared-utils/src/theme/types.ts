@@ -23,8 +23,9 @@ export type TenantTheme = {
 };
 
 export type DomainResolveResult = {
+  routingSource?: 'custom' | 'subdomain' | 'onboarding';
   tenantId: string;
   tenantName: string;
   slug: string | null;
-  theme: TenantTheme;
+  theme: TenantTheme | null;
 };

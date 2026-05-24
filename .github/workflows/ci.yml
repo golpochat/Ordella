@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared packages and apps
+        run: npx turbo run build --filter=@ordella/api --filter=@ordella/admin-ui --filter=@ordella/storefront
+
+      - name: Lint
+        run: npx turbo run lint --continue
+
+      - name: Typecheck
+        run: npx turbo run typecheck --continue
+        continue-on-error: true
+
+      - name: Migration safety (production rules)
+        run: sh ./infrastructure/scripts/check-migration-safety.sh
+        env:
+          NODE_ENV: production

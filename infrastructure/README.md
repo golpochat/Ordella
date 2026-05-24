@@ -16,6 +16,15 @@ Local and production infrastructure for Ordella.
 
 ## Layout
 
+- `deployment/` — Architecture, secrets, migrations, monitoring guides
 - `docker/` — Docker Compose full local stack ([README](docker/README.md))
+- `env/` — Per-environment variable templates (dev, staging, production)
 - `k8s/` — Kubernetes manifests (optional v2)
-- `scripts/` — Deployment and ops scripts
+- `scripts/` — Backup, migration safety, deploy helpers
+
+## Quick start (production-like API)
+
+```bash
+cp infrastructure/env/.env.staging.example .env
+docker compose -f infrastructure/docker/docker-compose.deploy.yml up -d api
+```

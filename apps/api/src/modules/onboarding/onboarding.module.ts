@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PlatformModule } from '../../platform/platform.module';
 import { AuthModule } from '../auth/auth.module';
 import { AUTH_ENTITIES } from '../auth/entities';
 import { TENANTS_ENTITIES } from '../tenants/entities';
@@ -19,6 +20,7 @@ import { DomainResolverService } from './services/domain-resolver.service';
 
 @Module({
   imports: [
+    PlatformModule,
     AuthModule,
     TypeOrmModule.forFeature([...ONBOARDING_ENTITIES, ...AUTH_ENTITIES, ...TENANTS_ENTITIES]),
   ],
