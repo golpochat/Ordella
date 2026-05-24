@@ -24,7 +24,11 @@ Order lifecycle per **SRS** and **API Spec §5** (blueprint Orders Service).
 ## Status flow (API Spec §5.7)
 
 `pending` → `accepted` → `preparing` → `ready` → `dispatched` → `delivered`  
+`ready` may also transition directly to `delivered` (pickup / dine-in).  
 Terminal: `cancelled`, `failed`
+
+Lifecycle rules live in `domain/order-lifecycle.transitions.ts`.  
+Integration hooks (promotions, inventory, payments, delivery, notifications, reporting) are placeholders under `hooks/`.
 
 ## Migration
 

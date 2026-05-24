@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProductEntity } from '../../../catalog/entities/product.entity';
+import { VariantEntity } from '../../../catalog/entities/variant.entity';
 import { OrderEntity } from '../../entities';
 import { OrderStatusHistoryEntity } from '../../entities';
 import { OrderEventEntity } from '../../entities';
@@ -10,9 +12,27 @@ import { OrderStatusHistoryRepository } from '../../repositories/order-status-hi
 import { OrderEventRepository } from '../../repositories/order-event.repository';
 import { OrderStatusHistoryService } from '../../services';
 import { OrderEventsService } from '../../services';
+import { OrderLifecycleService } from '../../services/order-lifecycle.service';
+import { OrderPricingService } from '../../services/order-pricing.service';
+import {
+  OrderDeliveryHook,
+  OrderInventoryHook,
+  OrderNotificationHook,
+  OrderPaymentHook,
+  OrderPromotionHook,
+  OrderReportingHook,
+} from '../../hooks';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OrderEntity, OrderStatusHistoryEntity, OrderEventEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      OrderEntity,
+      OrderStatusHistoryEntity,
+      OrderEventEntity,
+      ProductEntity,
+      VariantEntity,
+    ]),
+  ],
   controllers: [OrdersController],
   providers: [
     OrdersService,
@@ -21,7 +41,15 @@ import { OrderEventsService } from '../../services';
     OrderEventRepository,
     OrderStatusHistoryService,
     OrderEventsService,
+    OrderLifecycleService,
+    OrderPricingService,
+    OrderPromotionHook,
+    OrderInventoryHook,
+    OrderPaymentHook,
+    OrderDeliveryHook,
+    OrderNotificationHook,
+    OrderReportingHook,
   ],
-  exports: [],
+  exports: [OrderRepository, OrderPricingService, OrderPromotionHook],
 })
 export class OrdersFeatureModule {}

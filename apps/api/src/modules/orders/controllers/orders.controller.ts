@@ -11,8 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiSuccessResponse } from '../../../common/interfaces';
-import { CurrentTenant } from '../../../common/decorators';
-import { TenantContext } from '../../../common/interfaces';
+import { CurrentTenant, CurrentUser } from '../../../common/decorators';
+import { AuthenticatedUser, TenantContext } from '../../../common/interfaces';
 import { TenantGuard } from '../../../common/guards';
 import { JwtAuthGuard } from '../../auth';
 import { RbacGuard } from '../../auth';
@@ -46,8 +46,9 @@ export class OrdersController {
   async create(
     @CurrentTenant() tenant: TenantContext,
     @Body() dto: CreateOrderDto,
+    @CurrentUser() user?: AuthenticatedUser,
   ): Promise<ApiSuccessResponse<OrderResponseDto>> {
-    const data = await this.ordersService.create(tenant, dto);
+    const data = await this.ordersService.create(tenant, dto, user);
     return { success: true, data };
   }
 
@@ -67,8 +68,9 @@ export class OrdersController {
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateOrderDto,
+    @CurrentUser() user?: AuthenticatedUser,
   ): Promise<ApiSuccessResponse<OrderResponseDto>> {
-    const data = await this.ordersService.update(tenant, id, dto);
+    const data = await this.ordersService.update(tenant, id, dto, user);
     return { success: true, data };
   }
 
@@ -77,8 +79,9 @@ export class OrdersController {
   async cancel(
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user?: AuthenticatedUser,
   ): Promise<ApiSuccessResponse<null>> {
-    await this.ordersService.cancel(tenant, id);
+    await this.ordersService.cancel(tenant, id, user);
     return { success: true, data: null };
   }
 

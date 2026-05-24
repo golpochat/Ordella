@@ -1,0 +1,72 @@
+import { OrderEntity } from '../entities/order.entity';
+import { OrderItemEntity } from '../entities/order-item.entity';
+import { OrderStatusHistoryEntity } from '../entities/order-status-history.entity';
+import { OrderEventEntity } from '../entities/order-event.entity';
+import { OrderResponseDto } from '../dto/orders/order-response.dto';
+import { OrderItemResponseDto } from '../dto/order-items/order-item-response.dto';
+import { OrderStatusHistoryResponseDto } from '../dto/order-status-history/order-status-history-response.dto';
+import { OrderEventResponseDto } from '../dto/order-events/order-event-response.dto';
+
+export function toOrderItemResponseDto(entity: OrderItemEntity): OrderItemResponseDto {
+  return {
+    id: entity.id,
+    orderId: entity.orderId,
+    productId: entity.productId,
+    variantId: entity.variantId,
+    quantity: entity.quantity,
+    price: entity.price,
+    notes: entity.notes,
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt,
+  };
+}
+
+export function toOrderResponseDto(
+  entity: OrderEntity,
+  includeItems = false,
+): OrderResponseDto {
+  const dto: OrderResponseDto = {
+    id: entity.id,
+    tenantId: entity.tenantId,
+    locationId: entity.locationId,
+    customerId: entity.customerId,
+    orderType: entity.orderType,
+    status: entity.status,
+    subtotal: entity.subtotal,
+    tax: entity.tax,
+    total: entity.total,
+    orderNumber: entity.orderNumber,
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt,
+  };
+
+  if (includeItems && entity.items) {
+    dto.items = entity.items.map(toOrderItemResponseDto);
+  }
+
+  return dto;
+}
+
+export function toOrderStatusHistoryResponseDto(
+  entity: OrderStatusHistoryEntity,
+): OrderStatusHistoryResponseDto {
+  return {
+    id: entity.id,
+    orderId: entity.orderId,
+    fromStatus: entity.fromStatus,
+    toStatus: entity.toStatus,
+    changedBy: entity.changedBy,
+    reason: entity.reason,
+    createdAt: entity.createdAt,
+  };
+}
+
+export function toOrderEventResponseDto(entity: OrderEventEntity): OrderEventResponseDto {
+  return {
+    id: entity.id,
+    orderId: entity.orderId,
+    eventType: entity.eventType,
+    metadata: entity.metadata,
+    createdAt: entity.createdAt,
+  };
+}
