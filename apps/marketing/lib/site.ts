@@ -5,19 +5,31 @@ export const siteConfig = {
     'Ordella unifies in-store POS, online ordering, kitchen displays, delivery, and customer apps for multi-location restaurants.',
   url: process.env.NEXT_PUBLIC_MARKETING_URL ?? 'http://localhost:3006',
   ogImage: '/og-default.svg',
+  themeColor: '#3A6DFF',
+  themeColorDark: '#0F1A2A',
+  backgroundColor: '#F4F6F8',
+  backgroundColorDark: '#0F1A2A',
+  manifestPath: '/manifest.json',
 };
 
-export function appSignupUrl(plan = 'free', utmContent?: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
-  const path = process.env.NEXT_PUBLIC_SIGNUP_PATH ?? '/login';
-  const url = new URL(path, base);
-  url.searchParams.set('plan', plan);
-  url.searchParams.set('utm_source', 'marketing');
-  url.searchParams.set('utm_medium', 'website');
-  if (utmContent) {
-    url.searchParams.set('utm_content', utmContent);
-  }
-  return url.toString();
+import { buildSignupUrl as buildSignupUrlImpl, type UtmCampaign } from './signup-url';
+
+export {
+  buildSignupUrl,
+  buildMarketingSignupPath,
+  getSignupBaseUrl,
+  type SignupPlan,
+  type SignupUrlOptions,
+  type UtmCampaign,
+} from './signup-url';
+
+/** @deprecated Use {@link buildSignupUrl} */
+export function appSignupUrl(
+  plan = 'free',
+  utmContent?: string,
+  campaign: UtmCampaign = 'landing',
+): string {
+  return buildSignupUrlImpl({ plan, campaign, content: utmContent });
 }
 
 export function adminLoginUrl(): string {

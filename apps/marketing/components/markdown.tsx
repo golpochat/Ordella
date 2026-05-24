@@ -1,14 +1,16 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Link from 'next/link';
+import { cn } from '@/lib/cn';
 
 type MarkdownProps = {
   content: string;
+  className?: string;
 };
 
-export function Markdown({ content }: MarkdownProps) {
+export function Markdown({ content, className }: MarkdownProps) {
   return (
-    <article className="prose prose-neutral max-w-none dark:prose-invert prose-headings:scroll-mt-24 prose-a:text-primary">
+    <article className={cn('marketing-prose', className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

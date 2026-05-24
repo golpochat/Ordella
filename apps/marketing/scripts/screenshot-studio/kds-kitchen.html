@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    .screen { background: #0f172a; padding: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .col h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 10px; }
+    .ticket { background: #1e293b; border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #f59e0b; }
+    .ticket.new { border-left-color: #22c55e; }
+    .ticket strong { color: #f8fafc; font-size: 14px; }
+    .ticket p { color: #94a3b8; font-size: 12px; margin-top: 6px; }
+    .time { float: right; font-size: 11px; color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="col">
+      <h2>Grill</h2>
+      <div class="ticket"><span class="time">4:02</span><strong>#4822</strong><p>Chicken Sand. · Med rare</p></div>
+      <div class="ticket new"><span class="time">0:45</span><strong>#4823</strong><p>Harbor Bowl · No onion</p></div>
+    </div>
+    <div class="col">
+      <h2>Salad</h2>
+      <div class="ticket"><span class="time">2:18</span><strong>#4821</strong><p>Garden Salad · Dressing side</p></div>
+    </div>
+    <div class="col">
+      <h2>Expo</h2>
+      <div class="ticket"><span class="time">6:10</span><strong>#4819</strong><p>Delivery · 3 items · Driver Ana</p></div>
+      <div class="ticket new"><span class="time">1:12</span><strong>#4820</strong><p>Pickup · Margherita + fries</p></div>
+    </div>
+  </div>
+</body>
+</html>

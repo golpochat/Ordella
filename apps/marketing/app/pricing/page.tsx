@@ -1,8 +1,12 @@
-import { PricingCard } from '@/components/pricing-card';
+import { ComparisonTable } from '@/components/comparison-table';
+import { CtaSection } from '@/components/cta-section';
+import { Faq } from '@/components/faq';
+import { PageHero } from '@/components/page-hero';
+import { PricingGrid } from '@/components/pricing-grid';
 import { Section } from '@/components/section';
-import { CtaButton } from '@/components/cta-button';
+import { resolveCurrency } from '@/lib/currency';
 import { createMetadata } from '@/lib/metadata';
-import { comparisonRows, plans, pricingFaqs, type PlanId } from '@/lib/plans';
+import { getComparisonRows, plans, pricingFaqs, type PlanId } from '@/lib/plans';
 
 export const metadata = createMetadata({
   title: 'Pricing',
@@ -10,79 +14,53 @@ export const metadata = createMetadata({
   path: '/pricing',
 });
 
-function cellValue(value: string | boolean): string {
-  if (value === true) return '✓';
-  if (value === false) return '—';
-  return value;
-}
+const planIds: PlanId[] = ['free', 'starter', 'pro', 'enterprise'];
 
-export default function PricingPage() {
-  const planIds: PlanId[] = ['free', 'starter', 'pro', 'enterprise'];
+type PricingPageProps = {
+  searchParams?: { currency?: string | string[] };
+};
+
+export default function PricingPage({ searchParams }: PricingPageProps) {
+  const currency = resolveCurrency(searchParams?.currency);
+  const comparisonRows = getComparisonRows(currency);
 
   return (
     <>
-      <Section className="pt-12">
-        <h1 className="text-4xl font-bold tracking-tight">Pricing</h1>
-        <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-          Start free with one location. Upgrade when you add channels, locations, or order volume.
-        </p>
+      <Section size="sm" className="pt-6 sm:pt-10">
+        <PageHero
+          eyebrow="Pricing"
+          title="Plans that scale with your restaurants"
+          description="Start free with one location. Upgrade when you add channels, locations, or order volume."
+        />
       </Section>
 
       <Section variant="muted">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {plans.map((plan) => (
-            <PricingCard key={plan.id} plan={plan} />
-          ))}
-        </div>
+        <PricingGrid plans={plans} currency={currency} />
       </Section>
 
-      <Section title="Compare plans">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="py-3 pr-4 text-left font-medium">Feature</th>
-                {planIds.map((id) => (
-                  <th key={id} className="px-3 py-3 text-center font-medium capitalize">
-                    {id}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {comparisonRows.map((row) => (
-                <tr key={row.label} className="border-b border-border/60">
-                  <td className="py-3 pr-4 text-muted-foreground">{row.label}</td>
-                  {planIds.map((id) => (
-                    <td key={id} className="px-3 py-3 text-center">
-                      {cellValue(row.values[id])}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <Section title="Compare plans" subtitle="See what is included at each tier." align="center">
+        <ComparisonTable planIds={planIds} rows={comparisonRows} />
       </Section>
 
-      <Section variant="muted" title="Billing FAQ" id="faq">
-        <dl className="mx-auto max-w-2xl space-y-6">
-          {pricingFaqs.map((faq) => (
-            <div key={faq.q}>
-              <dt className="font-semibold">{faq.q}</dt>
-              <dd className="mt-2 text-muted-foreground">{faq.a}</dd>
-            </div>
-          ))}
-        </dl>
+      <Section variant="muted" id="faq" size="sm">
+        <Faq
+          items={pricingFaqs}
+          title="Billing FAQ"
+          subtitle="Common questions about plans, limits, and upgrades."
+        />
       </Section>
 
-      <Section title="Start your free trial">
-        <p className="mb-6 max-w-xl text-muted-foreground">
-          Create your tenant in minutes. No credit card required on the Free plan.
-        </p>
-        <CtaButton size="lg" utmContent="pricing_footer">
-          Start free trial
-        </CtaButton>
+      <Section>
+        <CtaSection
+          variant="default"
+          align="center"
+          title="Start your free trial"
+          subtitle="Create your tenant in minutes. No credit card required on the Free plan."
+          utmCampaign="pricing"
+          utmContent="pricing_footer"
+          secondaryHref="/contact"
+          secondaryLabel="Contact sales"
+        />
       </Section>
     </>
   );

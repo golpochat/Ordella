@@ -1,9 +1,18 @@
+import { formatPrice, type CurrencyCode } from '@/lib/currency';
+
 export type PlanId = 'free' | 'starter' | 'pro' | 'enterprise';
+
+export const PLAN_MONTHLY_AMOUNTS: Record<PlanId, number | null> = {
+  free: 0,
+  starter: 79,
+  pro: 199,
+  enterprise: null,
+};
 
 export type Plan = {
   id: PlanId;
   name: string;
-  price: string;
+  priceAmount: number | null;
   priceDetail: string;
   description: string;
   locations: string;
@@ -17,7 +26,7 @@ export const plans: Plan[] = [
   {
     id: 'free',
     name: 'Free',
-    price: '$0',
+    priceAmount: PLAN_MONTHLY_AMOUNTS.free,
     priceDetail: 'forever',
     description: 'Pilot a single location and prove the workflow.',
     locations: '1',
@@ -28,7 +37,7 @@ export const plans: Plan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price: '$79',
+    priceAmount: PLAN_MONTHLY_AMOUNTS.starter,
     priceDetail: '/ month',
     description: 'Independent restaurants ready to grow online and in-store.',
     locations: '3',
@@ -40,7 +49,7 @@ export const plans: Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '$199',
+    priceAmount: PLAN_MONTHLY_AMOUNTS.pro,
     priceDetail: '/ month',
     description: 'Busy brands with unlimited locations and high order volume.',
     locations: 'Unlimited',
@@ -51,7 +60,7 @@ export const plans: Plan[] = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 'Custom',
+    priceAmount: PLAN_MONTHLY_AMOUNTS.enterprise,
     priceDetail: 'contact sales',
     description: 'Franchises and groups that need SLAs and tailored limits.',
     locations: 'Custom',
@@ -61,7 +70,22 @@ export const plans: Plan[] = [
   },
 ];
 
-export const comparisonRows: { label: string; values: Record<PlanId, string | boolean> }[] = [
+export function formatPlanPrice(plan: Plan, currency: CurrencyCode): string {
+  if (plan.priceAmount === null) {
+    return 'Custom';
+  }
+  return formatPrice(plan.priceAmount, currency);
+}
+
+export function formatPlanMonthlyPrice(planId: PlanId, currency: CurrencyCode): string {
+  const amount = PLAN_MONTHLY_AMOUNTS[planId];
+  if (amount === null) {
+    return 'Custom';
+  }
+  return formatPrice(amount, currency);
+}
+
+const featureComparisonRows: { label: string; values: Record<PlanId, string | boolean> }[] = [
   { label: 'Locations', values: { free: '1', starter: '3', pro: 'Unlimited', enterprise: 'Custom' } },
   { label: 'Orders / month', values: { free: '100', starter: '1,000', pro: '10,000', enterprise: 'Custom' } },
   { label: 'POS & KDS', values: { free: true, starter: true, pro: true, enterprise: true } },
@@ -74,6 +98,18 @@ export const comparisonRows: { label: string; values: Record<PlanId, string | bo
   { label: 'Reports', values: { free: 'Basic', starter: true, pro: 'Advanced', enterprise: 'Advanced' } },
   { label: 'Priority support', values: { free: false, starter: false, pro: true, enterprise: true } },
 ];
+
+export function getComparisonRows(currency: CurrencyCode = 'EUR') {
+  const planIds: PlanId[] = ['free', 'starter', 'pro', 'enterprise'];
+  const priceRow: { label: string; values: Record<PlanId, string | boolean> } = {
+    label: 'Monthly price',
+    values: Object.fromEntries(
+      planIds.map((id) => [id, formatPlanMonthlyPrice(id, currency)]),
+    ) as Record<PlanId, string | boolean>,
+  };
+
+  return [priceRow, ...featureComparisonRows];
+}
 
 export const pricingFaqs = [
   {

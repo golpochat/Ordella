@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import { Button, type ButtonProps } from '@shared-ui';
-import { appSignupUrl } from '@/lib/site';
+import { buildSignupUrl, type SignupPlan, type UtmCampaign } from '@/lib/signup-url';
 
 type CtaButtonProps = {
-  plan?: 'free' | 'starter' | 'pro' | 'enterprise';
+  plan?: SignupPlan;
+  utmCampaign?: UtmCampaign;
   utmContent?: string;
   href?: string;
   children: React.ReactNode;
@@ -14,6 +15,7 @@ type CtaButtonProps = {
 
 export function CtaButton({
   plan = 'free',
+  utmCampaign = 'landing',
   utmContent,
   href,
   children,
@@ -21,11 +23,23 @@ export function CtaButton({
   size = 'default',
   className,
 }: CtaButtonProps) {
-  const target = href ?? appSignupUrl(plan, utmContent);
+  const target =
+    href ??
+    buildSignupUrl({
+      plan,
+      campaign: utmCampaign,
+      content: utmContent,
+    });
+
+  const isExternal = target.startsWith('http://') || target.startsWith('https://');
 
   return (
     <Button asChild variant={variant} size={size} className={className}>
-      <Link href={target}>{children}</Link>
+      {isExternal ? (
+        <a href={target}>{children}</a>
+      ) : (
+        <Link href={target}>{children}</Link>
+      )}
     </Button>
   );
 }

@@ -25,12 +25,12 @@ export function CookieBanner() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 p-4 shadow-lg backdrop-blur"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 p-4 shadow-brand backdrop-blur"
       role="dialog"
       aria-label="Cookie consent"
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate">
           We use analytics cookies to improve our site. See our{' '}
           <Link href="/legal/privacy" className="text-primary underline">
             Privacy Policy

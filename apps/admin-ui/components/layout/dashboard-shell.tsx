@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Sidebar, Topbar } from '@shared-ui';
-import { Box } from 'lucide-react';
+import { Logo, Sidebar, Topbar } from '@shared-ui';
 import { DASHBOARD_NAV } from '@/lib/navigation';
 import { TenantSwitcher } from './tenant-switcher';
 import { UserMenu } from './user-menu';
@@ -25,9 +24,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
         brand={
-          <Link href="/products" className="flex items-center gap-2 font-semibold">
-            <Box className="h-5 w-5" />
-            <span>Ordella</span>
+          <Link href="/products" className="inline-flex">
+            <Logo variant="full" size="sm" color="auto" />
           </Link>
         }
         items={items}

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    .layout { display: flex; height: 750px; }
+    .sidebar { width: 220px; background: #0f1a2a; color: #fff; padding: 20px 0; }
+    .sidebar .logo { padding: 0 20px 24px; font-weight: 700; font-size: 15px; }
+    .nav-item { padding: 10px 20px; font-size: 13px; color: #94a3b8; }
+    .nav-item.active { background: #3a6dff33; color: #fff; border-left: 3px solid #3a6dff; }
+    .main { flex: 1; padding: 24px 28px; background: #f4f6f8; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; }
+    .card h2 { font-size: 14px; margin-bottom: 12px; }
+    .swatch { display: flex; gap: 10px; margin-top: 8px; }
+    .color { width: 48px; height: 48px; border-radius: 10px; border: 1px solid #e5e7eb; }
+    .preview { border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; margin-top: 12px; }
+    .preview-header { background: #c45c3e; color: #fff; padding: 16px; font-weight: 700; }
+    .preview-body { padding: 16px; background: #fff; }
+    .btn-sample { background: #c45c3e; color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 13px; display: inline-block; margin-top: 12px; border: none; }
+  </style>
+</head>
+<body>
+  <div class="screen layout">
+    <aside class="sidebar">
+      <div class="logo">Bella Kitchen</div>
+      <div class="nav-item">Products</div>
+      <div class="nav-item">Settings</div>
+      <div class="nav-item active">Branding</div>
+    </aside>
+    <main class="main">
+      <h1>Branding & theming</h1>
+      <div class="grid">
+        <div class="card">
+          <h2>Brand kit</h2>
+          <p class="text-muted" style="font-size:12px">Logo uploaded · bellakitchen.svg</p>
+          <p style="font-size:12px;margin-top:12px;font-weight:600">Primary colors</p>
+          <div class="swatch">
+            <div class="color" style="background:#c45c3e" title="Primary"></div>
+            <div class="color" style="background:#3a6dff" title="Accent"></div>
+            <div class="color" style="background:#0f1a2a" title="Text"></div>
+          </div>
+          <p style="font-size:12px;margin-top:16px;font-weight:600">Theme preset</p>
+          <p class="text-muted" style="font-size:12px">Warm Bistro · Light mode</p>
+        </div>
+        <div class="card">
+          <h2>Live preview</h2>
+          <div class="preview">
+            <div class="preview-header">Bella Kitchen</div>
+            <div class="preview-body">
+              <p style="font-size:13px">Order online for pickup or delivery</p>
+              <button class="btn-sample" type="button">View menu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
+import { getAllBlogSlugs } from '@/lib/blog';
+import { getAllDocSlugs } from '@/lib/docs';
 import { siteConfig } from '@/lib/site';
-import { getAllBlogSlugs, getAllDocPaths } from '@/lib/content';
-import { docCategories } from '@/lib/docs-nav';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.url;
@@ -15,18 +15,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }),
   );
 
-  const docRoutes = getAllDocPaths().map((p) => ({
-    url: `${base}/docs/${p.category}/${p.slug}`,
+  const docRoutes = getAllDocSlugs().map((slug) => ({
+    url: `${base}/docs/${slug}`,
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
-    priority: 0.6,
-  }));
-
-  const docCategoryRoutes = docCategories.map((c) => ({
-    url: `${base}/docs/${c.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.5,
+    priority: slug === 'getting-started' ? 0.7 : 0.6,
   }));
 
   const blogRoutes = getAllBlogSlugs().map((slug) => ({
@@ -36,5 +29,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...docCategoryRoutes, ...docRoutes, ...blogRoutes];
+  return [...staticRoutes, ...docRoutes, ...blogRoutes];
 }

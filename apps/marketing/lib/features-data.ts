@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { ScreenshotId } from '@/lib/screenshots';
 import {
   CreditCard,
   Globe,
@@ -20,6 +21,7 @@ export type FeaturePillar = {
   description: string;
   icon: LucideIcon;
   screenshotLabel: string;
+  screenshotImage: ScreenshotId;
 };
 
 export const valuePillars: FeaturePillar[] = [
@@ -29,6 +31,7 @@ export const valuePillars: FeaturePillar[] = [
     description: 'Fast in-store checkout, receipts, and kitchen tickets synced in real time.',
     icon: Monitor,
     screenshotLabel: 'POS checkout',
+    screenshotImage: 'pos-orders',
   },
   {
     id: 'storefront',
@@ -36,6 +39,7 @@ export const valuePillars: FeaturePillar[] = [
     description: 'Branded storefront with basket, checkout, and live order tracking.',
     icon: Globe,
     screenshotLabel: 'Storefront menu',
+    screenshotImage: 'storefront-menu',
   },
   {
     id: 'delivery',
@@ -43,6 +47,7 @@ export const valuePillars: FeaturePillar[] = [
     description: 'Assign deliveries, driver mobile app, and status updates to customers.',
     icon: Truck,
     screenshotLabel: 'Driver tasks',
+    screenshotImage: 'driver-delivery',
   },
   {
     id: 'customer',
@@ -50,6 +55,7 @@ export const valuePillars: FeaturePillar[] = [
     description: 'Order history, reorder, and saved addresses in your brand.',
     icon: Smartphone,
     screenshotLabel: 'Customer orders',
+    screenshotImage: 'customer-orders',
   },
   {
     id: 'control',
@@ -57,6 +63,7 @@ export const valuePillars: FeaturePillar[] = [
     description: 'Admin, roles, billing, and per-tenant branding on your domain.',
     icon: Layers,
     screenshotLabel: 'Admin dashboard',
+    screenshotImage: 'admin-dashboard',
   },
 ];
 
@@ -87,6 +94,7 @@ export type FeatureModule = {
   headline: string;
   bullets: string[];
   screenshotLabel: string;
+  screenshotImage: ScreenshotId;
   docPath: string;
 };
 
@@ -97,7 +105,8 @@ export const featureModules: FeatureModule[] = [
     headline: 'In-store sales without friction',
     bullets: ['Quick cart and modifiers', 'Cash and card payments', 'Receipts and KDS sync'],
     screenshotLabel: 'POS — cart & checkout',
-    docPath: '/docs/pos/pos-setup',
+    screenshotImage: 'pos-orders',
+    docPath: '/docs/pos',
   },
   {
     id: 'storefront',
@@ -105,7 +114,8 @@ export const featureModules: FeatureModule[] = [
     headline: 'Your menu, your domain, your brand',
     bullets: ['Commission-free direct orders', 'Guest checkout and tracking', 'Themed mobile experience'],
     screenshotLabel: 'Storefront — menu & tracking',
-    docPath: '/docs/storefront/storefront-overview',
+    screenshotImage: 'storefront-menu',
+    docPath: '/docs/storefront',
   },
   {
     id: 'delivery',
@@ -113,7 +123,8 @@ export const featureModules: FeatureModule[] = [
     headline: 'From kitchen to doorstep',
     bullets: ['Assign drivers from admin', 'Driver app with live status', 'Customer delivery updates'],
     screenshotLabel: 'Driver app — tasks',
-    docPath: '/docs/delivery/enable-delivery',
+    screenshotImage: 'driver-delivery',
+    docPath: '/docs/delivery',
   },
   {
     id: 'customer',
@@ -121,7 +132,8 @@ export const featureModules: FeatureModule[] = [
     headline: 'Guests who come back',
     bullets: ['Order history and reorder', 'Saved addresses', 'Live order status'],
     screenshotLabel: 'Customer app — home',
-    docPath: '/docs/getting-started/what-is-ordella',
+    screenshotImage: 'customer-orders',
+    docPath: '/docs/getting-started',
   },
   {
     id: 'kds',
@@ -129,7 +141,8 @@ export const featureModules: FeatureModule[] = [
     headline: 'Kitchen clarity in real time',
     bullets: ['Station-based ticket views', 'Per-item prep tracking', 'WebSocket updates'],
     screenshotLabel: 'KDS — active tickets',
-    docPath: '/docs/getting-started/architecture-overview',
+    screenshotImage: 'kds-kitchen',
+    docPath: '/docs/getting-started',
   },
   {
     id: 'admin',
@@ -137,7 +150,8 @@ export const featureModules: FeatureModule[] = [
     headline: 'Command center for your brand',
     bullets: ['Products, categories, modifiers', 'Orders and overrides', 'Staff, roles, and settings'],
     screenshotLabel: 'Admin — products',
-    docPath: '/docs/admin/admin-overview',
+    screenshotImage: 'admin-products',
+    docPath: '/docs/admin',
   },
   {
     id: 'branding',
@@ -145,7 +159,8 @@ export const featureModules: FeatureModule[] = [
     headline: 'Look like you, not like us',
     bullets: ['Logo and color palette', 'Light, dark, and custom presets', 'Consistent across all apps'],
     screenshotLabel: 'Admin — branding',
-    docPath: '/docs/branding/branding-overview',
+    screenshotImage: 'admin-branding',
+    docPath: '/docs/branding',
   },
   {
     id: 'billing',
@@ -153,6 +168,7 @@ export const featureModules: FeatureModule[] = [
     headline: 'Predictable SaaS pricing',
     bullets: ['Plans tied to locations and orders', 'Stripe invoices in admin', 'Sales and ops reports'],
     screenshotLabel: 'Admin — billing & reports',
-    docPath: '/docs/billing/plans-and-limits',
+    screenshotImage: 'admin-billing',
+    docPath: '/docs/billing',
   },
 ];

@@ -31,6 +31,7 @@
     "react-dom": "^18.2.0 || ^19.0.0"
   },
   "dependencies": {
+    "@ordella/ui": "*",
     "@ordella/shared-utils": "*",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-slot": "^1.1.1",

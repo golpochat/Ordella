@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    .screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      background: linear-gradient(135deg, #f4f6f8 0%, #fff 50%, #f4f6f8 100%);
+    }
+    .flow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .node { background: #fff; border: 1px solid #e5e7eb; padding: 12px 20px; border-radius: 999px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 20px #0f1a2a0f; }
+    .node.api { background: #3a6dff; color: #fff; border-color: #3a6dff; }
+    .arrow { color: #6b7280; font-size: 18px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .chip { background: #f4f6f8; border: 1px solid #e5e7eb; padding: 8px 14px; border-radius: 8px; font-size: 13px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <p style="font-size:13px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.06em">One platform</p>
+    <div class="flow">
+      <span class="node">Storefront</span>
+      <span class="arrow">→</span>
+      <span class="node">POS</span>
+      <span class="arrow">→</span>
+      <span class="node api">Ordella API</span>
+    </div>
+    <div class="row">
+      <span class="chip">KDS</span>
+      <span class="chip">Admin</span>
+      <span class="chip">Driver app</span>
+      <span class="chip">Customer app</span>
+    </div>
+    <p class="text-muted" style="font-size:13px;max-width:420px;text-align:center">Shared menu, orders, and branding across every channel in real time.</p>
+  </div>
+</body>
+</html>

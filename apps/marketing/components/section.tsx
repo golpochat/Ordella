@@ -1,40 +1,66 @@
+import { cn } from '@/lib/cn';
+import { Container } from './container';
+import { SectionHeader } from './section-header';
+
 type SectionProps = {
   id?: string;
   title?: string;
   subtitle?: string;
+  eyebrow?: string;
   children: React.ReactNode;
   className?: string;
-  variant?: 'default' | 'muted' | 'brand';
+  containerClassName?: string;
+  variant?: 'default' | 'muted' | 'brand' | 'dark';
+  size?: 'default' | 'sm' | 'lg';
+  align?: 'left' | 'center';
+  titleAs?: 'h1' | 'h2';
 };
 
 const variantClasses = {
   default: 'bg-background',
-  muted: 'bg-muted/40',
-  brand: 'bg-brand text-brand-foreground',
+  muted: 'border-y border-border/60 bg-gray-light',
+  brand: 'bg-primary text-primary-foreground',
+  dark: 'bg-navy text-white',
 };
 
-export function Section({ id, title, subtitle, children, className = '', variant = 'default' }: SectionProps) {
+const sizeClasses = {
+  sm: 'py-section sm:py-16',
+  default: 'py-section lg:py-section-lg',
+  lg: 'py-section-lg lg:py-30',
+};
+
+export function Section({
+  id,
+  title,
+  subtitle,
+  eyebrow,
+  children,
+  className,
+  containerClassName,
+  variant = 'default',
+  size = 'default',
+  align = 'left',
+  titleAs = 'h2',
+}: SectionProps) {
+  const isBrand = variant === 'brand' || variant === 'dark';
+  const hasHeader = title || subtitle || eyebrow;
+
   return (
-    <section id={id} className={`py-16 md:py-24 ${variantClasses[variant]} ${className}`}>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        {(title || subtitle) && (
-          <div className="mb-10 max-w-2xl">
-            {title ? (
-              <h2 className={`text-3xl font-bold tracking-tight md:text-4xl ${variant === 'brand' ? '' : ''}`}>
-                {title}
-              </h2>
-            ) : null}
-            {subtitle ? (
-              <p
-                className={`mt-3 text-lg ${variant === 'brand' ? 'text-brand-foreground/90' : 'text-muted-foreground'}`}
-              >
-                {subtitle}
-              </p>
-            ) : null}
-          </div>
-        )}
+    <section id={id} className={cn(sizeClasses[size], variantClasses[variant], className)}>
+      <Container className={containerClassName}>
+        {hasHeader && title ? (
+          <SectionHeader
+            eyebrow={eyebrow}
+            title={title}
+            subtitle={subtitle}
+            align={align}
+            titleAs={titleAs}
+            inverted={isBrand}
+            className={cn(variant === 'dark' && '[&_h2]:text-white [&_p]:text-white/85')}
+          />
+        ) : null}
         {children}
-      </div>
+      </Container>
     </section>
   );
 }

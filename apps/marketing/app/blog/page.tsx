@@ -1,8 +1,8 @@
-import Link from 'next/link';
-import { Badge } from '@shared-ui';
+import { BlogCard } from '@/components/blog-card';
+import { PageHero } from '@/components/page-hero';
 import { Section } from '@/components/section';
+import { getAllBlogPosts, getFeaturedBlogPosts } from '@/lib/blog';
 import { createMetadata } from '@/lib/metadata';
-import { getAllBlogPosts } from '@/lib/content';
 
 export const metadata = createMetadata({
   title: 'Blog',
@@ -12,36 +12,45 @@ export const metadata = createMetadata({
 
 export default function BlogIndexPage() {
   const posts = getAllBlogPosts();
+  const featured = getFeaturedBlogPosts();
+  const featuredSlugs = new Set(featured.map((post) => post.slug));
+  const rest = posts.filter((post) => !featuredSlugs.has(post.slug));
 
   return (
-    <Section className="pt-12">
-      <h1 className="text-4xl font-bold tracking-tight">Blog</h1>
-      <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-        Guides and insights for operators modernizing in-store, online, and delivery.
-      </p>
-      <ul className="mt-12 space-y-8">
-        {posts.map((post) => (
-          <li key={post.slug} className="border-b border-border pb-8">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              <time dateTime={post.date}>{post.date}</time>
-              {post.tags.map((tag) => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-            <h2 className="mt-2 text-2xl font-semibold">
-              <Link href={`/blog/${post.slug}`} className="hover:text-primary">
-                {post.title}
-              </Link>
-            </h2>
-            <p className="mt-2 text-muted-foreground">{post.description}</p>
-            <Link href={`/blog/${post.slug}`} className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
-              Read more →
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <Section className="pt-6 sm:pt-10" size="sm">
+      <PageHero
+        eyebrow="Blog"
+        title="Insights for modern restaurant operators"
+        description="Guides and ideas for unifying in-store, online, and delivery without vendor sprawl."
+      />
+
+      {featured.length > 0 ? (
+        <section className="mt-12 lg:mt-14" aria-labelledby="featured-posts-heading">
+          <h2 id="featured-posts-heading" className="text-h3">
+            Featured
+          </h2>
+          <ul className="mt-6 grid gap-6 sm:grid-cols-2 sm:gap-8">
+            {featured.map((post) => (
+              <li key={post.slug}>
+                <BlogCard post={post} featured />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section className="mt-12 lg:mt-14" aria-labelledby="all-posts-heading">
+        <h2 id="all-posts-heading" className="text-h3">
+          {featured.length > 0 ? 'All posts' : 'Latest posts'}
+        </h2>
+        <ul className="mt-6 grid gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
+          {(featured.length > 0 ? rest : posts).map((post) => (
+            <li key={post.slug}>
+              <BlogCard post={post} />
+            </li>
+          ))}
+        </ul>
+      </section>
     </Section>
   );
 }

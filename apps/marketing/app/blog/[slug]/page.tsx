@@ -1,10 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Badge } from '@shared-ui';
+import { PostNavigation } from '@/components/blog/post-navigation';
 import { CtaButton } from '@/components/cta-button';
-import { Markdown } from '@/components/markdown';
+import { MdxContent } from '@/components/docs/mdx-content';
 import { Section } from '@/components/section';
-import { createMetadata } from '@/lib/metadata';
-import { getAllBlogSlugs, getBlogPost } from '@/lib/content';
+import { getAdjacentBlogPosts, getAllBlogSlugs, getBlogPostSource } from '@/lib/blog';
+import { createBlogPostMetadata } from '@/lib/metadata';
+import { formatReadingTime } from '@/lib/reading-time';
 
 type Props = { params: { slug: string } };
 
@@ -13,40 +16,62 @@ export function generateStaticParams() {
 }
 
 export function generateMetadata({ params }: Props) {
-  const post = getBlogPost(params.slug);
+  const post = getBlogPostSource(params.slug);
   if (!post) return {};
-  return createMetadata({
-    title: post.title,
-    description: post.description,
-    path: `/blog/${params.slug}`,
+
+  const { meta } = post;
+  return createBlogPostMetadata({
+    title: meta.title,
+    description: meta.description,
+    path: `/blog/${meta.slug}`,
+    publishedTime: meta.date,
+    tags: meta.tags,
   });
 }
 
-export default function BlogPostPage({ params }: Props) {
-  const post = getBlogPost(params.slug);
+export default async function BlogPostPage({ params }: Props) {
+  const post = getBlogPostSource(params.slug);
   if (!post) notFound();
 
+  const { meta, source } = post;
+  const { newer, older } = getAdjacentBlogPosts(meta.slug);
+
   return (
-    <Section className="pt-12">
-      <article className="mx-auto max-w-3xl">
-        <time className="text-sm text-muted-foreground" dateTime={post.date}>
-          {post.date}
-        </time>
-        <h1 className="mt-2 text-4xl font-bold tracking-tight">{post.title}</h1>
-        <p className="mt-3 text-lg text-muted-foreground">{post.description}</p>
+    <Section className="pt-6 sm:pt-10" size="sm">
+      <article className="mx-auto max-w-prose">
+        <header className="border-b border-border pb-8">
+          <div className="flex flex-wrap items-center gap-2 text-caption">
+            <time dateTime={meta.date}>{meta.date}</time>
+            <span aria-hidden>·</span>
+            <span>{formatReadingTime(meta.readingTimeMinutes)}</span>
+            {meta.featured ? <Badge>Featured</Badge> : null}
+            {meta.tags.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <h1 className="text-h1 mt-4">{meta.title}</h1>
+          <p className="text-body-lg mt-4 text-slate">{meta.description}</p>
+        </header>
         <div className="mt-10">
-          <Markdown content={post.body} />
+          <MdxContent source={source} className="blog-mdx" />
         </div>
-        <div className="mt-12 rounded-lg border border-border bg-muted/40 p-6">
-          <p className="font-semibold">Run every order channel from one platform</p>
-          <p className="mt-1 text-sm text-muted-foreground">Start your free Ordella tenant today.</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <CtaButton utmContent={`blog_${params.slug}`}>Start free trial</CtaButton>
-            <Link href="/pricing" className="text-sm font-medium text-primary hover:underline self-center">
+
+        <PostNavigation newer={newer} older={older} />
+
+        <aside className="mt-12 rounded-2xl border border-border bg-gray-light p-6 sm:p-8">
+          <p className="text-h4">Run every order channel from one platform</p>
+          <p className="text-body mt-2">Start your free Ordella tenant today.</p>
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <CtaButton utmCampaign="blog" utmContent={`blog_${params.slug}`}>
+              Start free trial
+            </CtaButton>
+            <Link href="/pricing" className="text-sm font-semibold text-primary hover:underline">
               View pricing
             </Link>
           </div>
-        </div>
+        </aside>
       </article>
     </Section>
   );

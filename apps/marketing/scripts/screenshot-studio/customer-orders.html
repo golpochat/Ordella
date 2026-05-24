@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    body { background: #e8eaed; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .screen--device { overflow: hidden; display: flex; flex-direction: column; background: #fff; }
+    .header { padding: 20px 16px; border-bottom: 1px solid #eee; }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .header p { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .orders { padding: 12px; flex: 1; }
+    .order { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+    .order-top { display: flex; justify-content: space-between; font-size: 13px; }
+    .order strong { font-size: 14px; }
+    .order p { font-size: 12px; color: #6b7280; margin-top: 6px; }
+    .reorder { margin-top: 10px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #3a6dff; background: #fff; color: #3a6dff; font-weight: 600; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="screen--device">
+    <header class="header">
+      <h1>Your orders</h1>
+      <p>Bella Kitchen · Welcome back, Jordan</p>
+    </header>
+    <div class="orders">
+      <article class="order">
+        <div class="order-top">
+          <strong>Today · #4820</strong>
+          <span class="badge badge--success">Delivered</span>
+        </div>
+        <p>Harbor Bowl, Sparkling water · $22.40</p>
+        <button class="reorder" type="button">Reorder</button>
+      </article>
+      <article class="order">
+        <div class="order-top">
+          <strong>May 22 · #4798</strong>
+          <span class="badge badge--success">Delivered</span>
+        </div>
+        <p>Margherita, Garden salad · $24.10</p>
+        <button class="reorder" type="button">Reorder</button>
+      </article>
+    </div>
+  </div>
+</body>
+</html>

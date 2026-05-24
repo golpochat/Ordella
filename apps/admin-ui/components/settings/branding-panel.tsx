@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
   Input,
+  Logo,
   ThemeProvider,
   useTheme,
 } from '@shared-ui';
@@ -31,9 +32,7 @@ function BrandingPreview() {
           {theme.logoUrl ? (
             <img src={theme.logoUrl} alt="Logo" className="h-10 w-10 rounded-md object-cover" />
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-bold">
-              O
-            </div>
+            <Logo variant="mark" size="md" color="auto" />
           )}
           <div>
             <p className="font-semibold">Your storefront</p>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Logo } from '@shared-ui';
 import { getBrandName } from '@/lib/config';
 import { useCustomerSession } from '@/hooks/use-customer-session';
 
@@ -17,8 +18,9 @@ export function CustomerHeader() {
   return (
     <header className="sticky top-0 z-20 border-b bg-background">
       <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
-        <Link href="/home" className="text-lg font-bold tracking-tight">
-          {getBrandName()}
+        <Link href="/home" className="flex items-center gap-2">
+          <Logo variant="mark" size="sm" color="auto" />
+          <span className="text-lg font-bold tracking-tight">{getBrandName()}</span>
         </Link>
         <Link
           href="/profile"

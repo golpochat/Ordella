@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    body { background: #e8eaed; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .screen--device { overflow: hidden; display: flex; flex-direction: column; background: #f4f6f8; }
+    .header { padding: 20px 16px 12px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .header p { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .list { padding: 12px; flex: 1; }
+    .job { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid #e5e7eb; }
+    .job.active { border-color: #3a6dff; box-shadow: 0 0 0 1px #3a6dff33; }
+    .job-top { display: flex; justify-content: space-between; align-items: center; }
+    .job strong { font-size: 14px; }
+    .job p { font-size: 12px; color: #6b7280; margin-top: 6px; }
+    .btn { display: block; width: 100%; margin-top: 10px; padding: 10px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; }
+    .btn-primary { background: #3a6dff; color: #fff; }
+    .map { height: 120px; background: linear-gradient(180deg, #dbeafe, #eff6ff); border-radius: 10px; margin-top: 10px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="screen--device">
+    <header class="header">
+      <h1>Deliveries</h1>
+      <p>3 active · Bella Kitchen Downtown</p>
+    </header>
+    <div class="list">
+      <article class="job active">
+        <div class="job-top">
+          <strong>#4819 · On the way</strong>
+          <span class="badge badge--primary">Next</span>
+        </div>
+        <p>142 Harbor Ave · 2.4 mi · Ana M.</p>
+        <div class="map">Route preview</div>
+        <button class="btn btn-primary" type="button">Mark delivered</button>
+      </article>
+      <article class="job">
+        <div class="job-top"><strong>#4824 · Ready</strong><span class="badge badge--warning">Pickup</span></div>
+        <p>88 Market St · 1.1 mi</p>
+      </article>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    body { background: #e8eaed; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .screen--device { overflow: hidden; display: flex; flex-direction: column; }
+    .status { height: 28px; background: #c45c3e; }
+    .hero { background: #c45c3e; color: #fff; padding: 16px; }
+    .hero h1 { font-size: 20px; font-weight: 700; }
+    .hero p { font-size: 12px; opacity: 0.9; margin-top: 4px; }
+    .cats { display: flex; gap: 8px; padding: 12px; overflow-x: auto; background: #fff; border-bottom: 1px solid #eee; }
+    .cat { padding: 6px 12px; border-radius: 999px; font-size: 12px; background: #f4f6f8; white-space: nowrap; }
+    .cat.on { background: #c45c3e; color: #fff; }
+    .items { padding: 12px; flex: 1; background: #fafafa; }
+    .item { display: flex; gap: 12px; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #eee; }
+    .thumb { width: 56px; height: 56px; border-radius: 10px; background: #f4e4dc; flex-shrink: 0; }
+    .item h3 { font-size: 14px; }
+    .item p { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .add { margin-left: auto; align-self: center; background: #c45c3e; color: #fff; width: 32px; height: 32px; border-radius: 8px; border: none; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <div class="screen--device">
+    <div class="status"></div>
+    <header class="hero">
+      <h1>Bella Kitchen</h1>
+      <p>Downtown · Open until 10pm · 25–35 min</p>
+    </header>
+    <div class="cats">
+      <span class="cat on">Popular</span>
+      <span class="cat">Mains</span>
+      <span class="cat">Sides</span>
+      <span class="cat">Drinks</span>
+    </div>
+    <div class="items">
+      <article class="item">
+        <div class="thumb"></div>
+        <div><h3>Harbor Bowl</h3><p>Salmon, rice, greens · $14.00</p></div>
+        <button class="add" type="button">+</button>
+      </article>
+      <article class="item">
+        <div class="thumb"></div>
+        <div><h3>Margherita Flatbread</h3><p>Fresh mozzarella · $12.50</p></div>
+        <button class="add" type="button">+</button>
+      </article>
+      <article class="item">
+        <div class="thumb"></div>
+        <div><h3>Crispy Chicken</h3><p>House slaw · $13.25</p></div>
+        <button class="add" type="button">+</button>
+      </article>
+    </div>
+  </div>
+</body>
+</html>

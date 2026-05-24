@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    .layout { display: flex; height: 750px; }
+    .sidebar { width: 220px; background: #0f1a2a; color: #fff; padding: 20px 0; }
+    .sidebar .logo { padding: 0 20px 24px; font-weight: 700; font-size: 15px; }
+    .nav-item { padding: 10px 20px; font-size: 13px; color: #94a3b8; }
+    .nav-item.active { background: #3a6dff33; color: #fff; border-left: 3px solid #3a6dff; }
+    .main { flex: 1; padding: 24px 28px; background: #f4f6f8; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; }
+    .plan { font-size: 28px; font-weight: 700; color: #3a6dff; }
+    .meter { height: 8px; background: #e5e7eb; border-radius: 99px; margin: 12px 0; overflow: hidden; }
+    .meter span { display: block; height: 100%; width: 64%; background: #3a6dff; border-radius: 99px; }
+    .row { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="screen layout">
+    <aside class="sidebar">
+      <div class="logo">Bella Kitchen</div>
+      <div class="nav-item">Settings</div>
+      <div class="nav-item active">Billing</div>
+    </aside>
+    <main class="main">
+      <h1>Billing & plans</h1>
+      <div class="grid">
+        <div class="card">
+          <p class="text-muted" style="font-size:12px">Current plan</p>
+          <p class="plan">Pro</p>
+          <p class="text-muted" style="font-size:12px;margin-top:4px">3 locations · Renews Jun 1</p>
+          <p style="font-size:12px;margin-top:16px;font-weight:600">Orders this month</p>
+          <div class="meter"><span></span></div>
+          <p class="text-muted" style="font-size:12px">6,420 / 10,000 orders</p>
+        </div>
+        <div class="card">
+          <h2 style="font-size:14px;margin-bottom:12px">Usage</h2>
+          <div class="row"><span>POS + Online</span><strong>4,180</strong></div>
+          <div class="row"><span>Delivery</span><strong>1,240</strong></div>
+          <div class="row"><span>API webhooks</span><strong>Active</strong></div>
+          <p style="font-size:12px;margin-top:16px;color:#3a6dff;font-weight:600">Manage in Stripe →</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

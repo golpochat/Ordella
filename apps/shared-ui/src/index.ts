@@ -1,5 +1,7 @@
 export { cn } from './lib/utils';
 
+export { Logo, type LogoProps, type LogoVariant, type LogoSize, type LogoColor } from '@ordella/ui';
+
 export { Button, buttonVariants, type ButtonProps } from './components/button';
 export { Input, type InputProps } from './components/input';
 export {

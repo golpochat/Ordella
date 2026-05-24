@@ -8,13 +8,16 @@
     "build": "next build",
     "start": "next start -p 3006",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:favicons": "node scripts/generate-favicons.mjs",
+    "capture:screenshots": "node scripts/capture-screenshots.mjs"
   },
   "dependencies": {
     "@ordella/shared-ui": "*",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.469.0",
     "next": "^14.2.21",
+    "next-mdx-remote": "^5.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",
@@ -26,10 +29,13 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "autoprefixer": "^10.4.20",
+    "playwright": "^1.49.1",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.21",
     "postcss": "^8.4.49",
+    "sharp": "^0.33.5",
     "tailwindcss": "^3.4.17",
+    "to-ico": "^1.1.5",
     "typescript": "^5.7.2"
   }
 }

@@ -1,0 +1,27 @@
+import type { SVGProps } from 'react';
+import { cn } from '../lib/cn';
+
+export type LogoTone = 'light' | 'dark';
+
+type LogoMarkSvgProps = SVGProps<SVGSVGElement> & {
+  tone?: LogoTone;
+};
+
+export function LogoMarkSvg({ tone = 'light', className, ...props }: LogoMarkSvgProps) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      className={cn('shrink-0', className)}
+      {...props}
+    >
+      <rect width="32" height="32" rx="8" fill="#F97316" />
+      <path
+        d="M16 7.5c-3.59 0-6.5 2.91-6.5 6.5 0 2.49 1.4 4.65 3.46 5.73V22.5h6.08v-2.77c2.06-1.08 3.46-3.24 3.46-5.73 0-3.59-2.91-6.5-6.5-6.5zm0 10.25a3.75 3.75 0 1 1 0-7.5 3.75 3.75 0 0 1 0 7.5z"
+        fill={tone === 'dark' ? '#FFFFFF' : '#FFFFFF'}
+      />
+    </svg>
+  );
+}

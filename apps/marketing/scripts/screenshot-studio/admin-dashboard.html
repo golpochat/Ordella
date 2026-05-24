@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="_base.css" />
+  <style>
+    .layout { display: flex; height: 750px; }
+    .sidebar { width: 220px; background: #0f1a2a; color: #fff; padding: 20px 0; }
+    .sidebar .logo { padding: 0 20px 24px; font-weight: 700; font-size: 15px; }
+    .nav-item { padding: 10px 20px; font-size: 13px; color: #94a3b8; }
+    .nav-item.active { background: #3a6dff33; color: #fff; border-left: 3px solid #3a6dff; }
+    .main { flex: 1; padding: 24px 28px; background: #f4f6f8; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+    .stat { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #e5e7eb; }
+    .stat label { font-size: 12px; color: #6b7280; }
+    .stat strong { display: block; font-size: 24px; margin-top: 6px; }
+    .stat span.up { font-size: 11px; color: #1a7a42; }
+    .grid2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+    .card { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 16px; }
+    .card h2 { font-size: 14px; margin-bottom: 12px; }
+    .bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+    .bar { flex: 1; background: #3a6dff; border-radius: 4px 4px 0 0; opacity: 0.85; }
+    table { width: 100%; font-size: 12px; border-collapse: collapse; }
+    th { text-align: left; color: #6b7280; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    td { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+  <div class="screen layout">
+    <aside class="sidebar">
+      <div class="logo">Bella Kitchen</div>
+      <div class="nav-item">Products</div>
+      <div class="nav-item">Orders</div>
+      <div class="nav-item active">Reports</div>
+      <div class="nav-item">Promotions</div>
+      <div class="nav-item">Settings</div>
+    </aside>
+    <main class="main">
+      <div class="top">
+        <div>
+          <h1>Sales overview</h1>
+          <p class="text-muted" style="font-size:13px;margin-top:4px">Downtown · Last 7 days</p>
+        </div>
+        <span class="badge badge--primary">Pro plan</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><label>Net sales</label><strong>$18,420</strong><span class="up">↑ 12%</span></div>
+        <div class="stat"><label>Orders</label><strong>1,284</strong><span class="up">↑ 8%</span></div>
+        <div class="stat"><label>Avg ticket</label><strong>$14.35</strong></div>
+        <div class="stat"><label>Online share</label><strong>38%</strong></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Revenue by day</h2>
+          <div class="bars">
+            <div class="bar" style="height:45%"></div>
+            <div class="bar" style="height:62%"></div>
+            <div class="bar" style="height:55%"></div>
+            <div class="bar" style="height:78%"></div>
+            <div class="bar" style="height:70%"></div>
+            <div class="bar" style="height:88%"></div>
+            <div class="bar" style="height:95%"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Recent orders</h2>
+          <table>
+            <thead><tr><th>Order</th><th>Channel</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td>#4821</td><td>POS</td><td>$24.50</td></tr>
+              <tr><td>#4820</td><td>Online</td><td>$31.20</td></tr>
+              <tr><td>#4819</td><td>Delivery</td><td>$42.80</td></tr>
+              <tr><td>#4818</td><td>POS</td><td>$18.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

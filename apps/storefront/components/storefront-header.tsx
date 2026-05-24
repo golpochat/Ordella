@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
-import { Badge, useTheme } from '@shared-ui';
+import { Badge, Logo, useTheme } from '@shared-ui';
 import { getBrandName } from '@/lib/config';
 import { useBasketStore } from '@/stores/basket-store';
 
@@ -13,11 +13,13 @@ export function StorefrontHeader() {
   return (
     <header className="sticky top-0 z-20 border-b bg-background">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/menu" className="flex items-center gap-2 text-xl font-bold tracking-tight">
+        <Link href="/menu" className="flex items-center gap-2.5">
           {theme.logoUrl ? (
             <img src={theme.logoUrl} alt="" className="h-8 w-8 rounded-md object-cover" />
-          ) : null}
-          <span>{getBrandName()}</span>
+          ) : (
+            <Logo variant="mark" size="md" color="auto" />
+          )}
+          <span className="text-xl font-bold tracking-tight">{getBrandName()}</span>
         </Link>
         <Link href="/basket" className="relative flex items-center gap-2 rounded-md px-3 py-2 hover:bg-accent">
           <ShoppingCart className="h-6 w-6" />
