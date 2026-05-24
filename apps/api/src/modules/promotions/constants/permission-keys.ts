@@ -1,0 +1,16 @@
+export const PromotionsPermissionKeys = {
+  PROMOTIONS_READ: 'promotions:read',
+  PROMOTIONS_CREATE: 'promotions:create',
+  PROMOTIONS_UPDATE: 'promotions:update',
+  PROMOTIONS_DELETE: 'promotions:delete',
+  PROMOTION_RULES_READ: 'promotion-rules:read',
+  PROMOTION_RULES_CREATE: 'promotion-rules:create',
+  PROMOTION_RULES_UPDATE: 'promotion-rules:update',
+  PROMOTION_RULES_DELETE: 'promotion-rules:delete',
+  PROMOTION_CONDITIONS_READ: 'promotion-conditions:read',
+  PROMOTION_CONDITIONS_CREATE: 'promotion-conditions:create',
+  PROMOTION_CONDITIONS_UPDATE: 'promotion-conditions:update',
+  PROMOTION_CONDITIONS_DELETE: 'promotion-conditions:delete',
+  PROMOTION_APPLICATIONS_READ: 'promotion-applications:read',
+  PROMOTION_APPLICATIONS_CREATE: 'promotion-applications:create',
+} as const;
