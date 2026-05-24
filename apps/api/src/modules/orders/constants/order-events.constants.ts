@@ -13,6 +13,7 @@ export const OrderEventTypes = {
   READY: 'order.ready',
   DISPATCHED: 'order.dispatched',
   DELIVERED: 'order.delivered',
+  REFUNDED: 'order.refunded',
   CANCELLED: 'order.cancelled',
   FAILED: 'order.failed',
 } as const;

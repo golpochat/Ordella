@@ -8,6 +8,7 @@ const STATUS_TO_EVENT_TYPE: Partial<Record<OrderStatus, string>> = {
   [OrderStatus.READY]: OrderEventTypes.READY,
   [OrderStatus.DISPATCHED]: OrderEventTypes.DISPATCHED,
   [OrderStatus.DELIVERED]: OrderEventTypes.DELIVERED,
+  [OrderStatus.REFUNDED]: OrderEventTypes.REFUNDED,
   [OrderStatus.CANCELLED]: OrderEventTypes.CANCELLED,
   [OrderStatus.FAILED]: OrderEventTypes.FAILED,
 };

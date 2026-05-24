@@ -20,6 +20,10 @@ import {
 import { OrderEventsService } from './order-events.service';
 import { OrderStatusHistoryService } from './order-status-history.service';
 import { OrderTransitionContext } from '../types/order-transition.context';
+import { OrderInventoryContext } from '../types/order-inventory.context';
+
+/** Business "confirmed" step — inventory deduct runs on this status. */
+const CONFIRMED_STATUS = OrderStatus.ACCEPTED;
 
 @Injectable()
 export class OrderLifecycleService {
@@ -59,7 +63,9 @@ export class OrderLifecycleService {
       order,
     );
 
-    await this.inventoryService.reserveOrDeduct(tenant, order, items, 'reserve');
+    await this.inventoryService.reserve(
+      this.buildInventoryContext(tenant, order, items, null, OrderStatus.PENDING),
+    );
 
     await this.notificationsService.sendOrderNotification(
       tenant,
@@ -101,7 +107,8 @@ export class OrderLifecycleService {
       ctx,
     );
 
-    await this.runStepIntegrations(tenant, order, items, fromStatus, toStatus);
+    await this.runInventoryForTransition(tenant, order, items, fromStatus, toStatus);
+    await this.runNonInventoryIntegrations(tenant, order, items, fromStatus, toStatus);
 
     await this.notificationsService.sendOrderNotification(
       tenant,
@@ -113,23 +120,52 @@ export class OrderLifecycleService {
     return order;
   }
 
-  private async recordStatusChange(
+  private buildInventoryContext(
     tenant: TenantContext,
-    orderId: string,
+    order: OrderEntity,
+    items: OrderItemEntity[],
     fromStatus: OrderStatus | null,
     toStatus: OrderStatus,
-    ctx: OrderTransitionContext,
-  ): Promise<void> {
-    await this.statusHistoryService.recordTransition(
-      tenant,
-      orderId,
-      fromStatus,
-      toStatus,
-      ctx,
-    );
+  ): OrderInventoryContext {
+    return { tenant, order, items, fromStatus, toStatus };
   }
 
-  private async runStepIntegrations(
+  private async runInventoryForTransition(
+    tenant: TenantContext,
+    order: OrderEntity,
+    items: OrderItemEntity[],
+    fromStatus: OrderStatus,
+    toStatus: OrderStatus,
+  ): Promise<void> {
+    const inventoryCtx = this.buildInventoryContext(
+      tenant,
+      order,
+      items,
+      fromStatus,
+      toStatus,
+    );
+
+    if (toStatus === CONFIRMED_STATUS) {
+      await this.inventoryService.deduct(inventoryCtx);
+      return;
+    }
+
+    if (toStatus === OrderStatus.CANCELLED) {
+      await this.inventoryService.releaseOrRestore(inventoryCtx);
+      return;
+    }
+
+    if (toStatus === OrderStatus.REFUNDED) {
+      await this.inventoryService.restoreForRefund(inventoryCtx);
+      return;
+    }
+
+    if (toStatus === OrderStatus.FAILED) {
+      await this.inventoryService.releaseOrRestore(inventoryCtx);
+    }
+  }
+
+  private async runNonInventoryIntegrations(
     tenant: TenantContext,
     order: OrderEntity,
     items: OrderItemEntity[],
@@ -137,7 +173,7 @@ export class OrderLifecycleService {
     toStatus: OrderStatus,
   ): Promise<void> {
     switch (toStatus) {
-      case OrderStatus.ACCEPTED:
+      case CONFIRMED_STATUS:
         await this.paymentsService.authorizeOrCapture(tenant, order);
         if (order.orderType === OrderType.DELIVERY) {
           await this.deliveryService.createTask(tenant, order);
@@ -152,11 +188,9 @@ export class OrderLifecycleService {
 
       case OrderStatus.DELIVERED:
         await this.paymentsService.authorizeOrCapture(tenant, order);
-        await this.inventoryService.reserveOrDeduct(tenant, order, items, 'deduct');
         break;
 
       case OrderStatus.CANCELLED:
-        await this.inventoryService.restore(tenant, order, items);
         await this.paymentsService.refund(tenant, order, ctxReason(fromStatus));
         await this.promotionsService.applyPromotions({
           tenant,
@@ -178,7 +212,6 @@ export class OrderLifecycleService {
         break;
 
       case OrderStatus.FAILED:
-        await this.inventoryService.restore(tenant, order, items);
         await this.paymentsService.refund(tenant, order, 'order_failed');
         break;
 
@@ -187,6 +220,22 @@ export class OrderLifecycleService {
     }
 
     void fromStatus;
+  }
+
+  private async recordStatusChange(
+    tenant: TenantContext,
+    orderId: string,
+    fromStatus: OrderStatus | null,
+    toStatus: OrderStatus,
+    ctx: OrderTransitionContext,
+  ): Promise<void> {
+    await this.statusHistoryService.recordTransition(
+      tenant,
+      orderId,
+      fromStatus,
+      toStatus,
+      ctx,
+    );
   }
 }
 

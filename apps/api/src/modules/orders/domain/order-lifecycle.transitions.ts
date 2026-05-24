@@ -21,13 +21,15 @@ export const ORDER_STATUS_TRANSITIONS: Readonly<
     OrderStatus.CANCELLED,
   ],
   [OrderStatus.DISPATCHED]: [OrderStatus.DELIVERED, OrderStatus.FAILED],
-  [OrderStatus.DELIVERED]: [],
+  [OrderStatus.DELIVERED]: [OrderStatus.REFUNDED],
+  [OrderStatus.REFUNDED]: [],
   [OrderStatus.CANCELLED]: [],
   [OrderStatus.FAILED]: [],
 };
 
 export const ORDER_TERMINAL_STATUSES: readonly OrderStatus[] = [
   OrderStatus.DELIVERED,
+  OrderStatus.REFUNDED,
   OrderStatus.CANCELLED,
   OrderStatus.FAILED,
 ];

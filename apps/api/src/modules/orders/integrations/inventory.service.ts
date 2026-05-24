@@ -1,39 +1,49 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TenantContext } from '../../../common/interfaces';
-import { OrderEntity } from '../entities/order.entity';
-import { OrderItemEntity } from '../entities/order-item.entity';
+import { OrderInventoryContext } from '../types/order-inventory.context';
 
-export type InventoryOrderAction = 'reserve' | 'deduct';
-
-export interface ReserveOrDeductResult {
+export interface InventoryReserveResult {
   reservationIds: string[];
-  action: InventoryOrderAction;
 }
 
-/** Placeholder for InventoryModule — no external integration. */
+export interface InventoryDeductResult {
+  movementIds: string[];
+}
+
+/** Placeholder for InventoryModule — no stock persistence in Orders domain. */
 @Injectable()
 export class InventoryService {
   private readonly logger = new Logger(InventoryService.name);
 
-  async reserveOrDeduct(
-    tenant: TenantContext,
-    order: OrderEntity,
-    items: OrderItemEntity[],
-    action: InventoryOrderAction = 'reserve',
-  ): Promise<ReserveOrDeductResult> {
+  /** Soft-reserve stock while order is pending (not a permanent deduction). */
+  async reserve(context: OrderInventoryContext): Promise<InventoryReserveResult> {
     this.logger.debug(
-      `[placeholder] InventoryService.reserveOrDeduct action=${action} tenant=${tenant.tenantId} order=${order.id} lines=${items.length}`,
+      `[placeholder] InventoryService.reserve tenant=${context.tenant.tenantId} order=${context.order.id} lines=${context.items.length} status=${context.toStatus}`,
     );
-    return { reservationIds: [], action };
+    return { reservationIds: [] };
   }
 
-  async restore(
-    tenant: TenantContext,
-    order: OrderEntity,
-    items?: OrderItemEntity[],
-  ): Promise<void> {
+  /**
+   * Permanent stock deduction when order is confirmed.
+   * Replaces an existing soft reservation (CONFIRMED = {@link OrderStatus.ACCEPTED}).
+   */
+  async deduct(context: OrderInventoryContext): Promise<InventoryDeductResult> {
     this.logger.debug(
-      `[placeholder] InventoryService.restore tenant=${tenant.tenantId} order=${order.id} lines=${items?.length ?? 0}`,
+      `[placeholder] InventoryService.deduct tenant=${context.tenant.tenantId} order=${context.order.id} from=${context.fromStatus} lines=${context.items.length}`,
+    );
+    return { movementIds: [] };
+  }
+
+  /** Release soft reservation or restore deducted stock on cancel. */
+  async releaseOrRestore(context: OrderInventoryContext): Promise<void> {
+    this.logger.debug(
+      `[placeholder] InventoryService.releaseOrRestore tenant=${context.tenant.tenantId} order=${context.order.id} from=${context.fromStatus} to=${context.toStatus}`,
+    );
+  }
+
+  /** Placeholder — restore stock after a refund. */
+  async restoreForRefund(context: OrderInventoryContext): Promise<void> {
+    this.logger.debug(
+      `[placeholder] InventoryService.restoreForRefund tenant=${context.tenant.tenantId} order=${context.order.id} from=${context.fromStatus}`,
     );
   }
 }
