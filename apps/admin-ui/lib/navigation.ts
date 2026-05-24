@@ -43,6 +43,7 @@ export const REPORTS_SUBNAV = [
 ];
 
 export const SETTINGS_TABS = [
+  { id: 'billing', label: 'Billing' },
   { id: 'branding', label: 'Branding' },
   { id: 'business', label: 'Business' },
   { id: 'hours', label: 'Opening hours' },

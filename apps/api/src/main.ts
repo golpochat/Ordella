@@ -1,10 +1,15 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { IoAdapter } from '@nestjs/platform-socket.io';
+import { json, raw } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.use('/api/v1/billing/webhook', raw({ type: 'application/json' }));
+  expressApp.use(json());
 
   app.useWebSocketAdapter(new IoAdapter(app));
 

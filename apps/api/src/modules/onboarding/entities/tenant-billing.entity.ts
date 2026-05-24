@@ -23,6 +23,36 @@ export class TenantBillingEntity {
   @Column({ name: 'payment_method', type: 'jsonb', default: {} })
   paymentMethod!: Record<string, unknown>;
 
+  @Column({ name: 'stripe_customer_id', type: 'varchar', length: 255, nullable: true })
+  stripeCustomerId!: string | null;
+
+  @Column({ name: 'stripe_subscription_id', type: 'varchar', length: 255, nullable: true })
+  stripeSubscriptionId!: string | null;
+
+  @Column({ name: 'subscription_status', type: 'varchar', length: 32, default: 'inactive' })
+  subscriptionStatus!: string;
+
+  @Column({ name: 'trial_ends_at', type: 'timestamptz', nullable: true })
+  trialEndsAt!: Date | null;
+
+  @Column({ name: 'current_period_start', type: 'timestamptz', nullable: true })
+  currentPeriodStart!: Date | null;
+
+  @Column({ name: 'current_period_end', type: 'timestamptz', nullable: true })
+  currentPeriodEnd!: Date | null;
+
+  @Column({ name: 'orders_used_period', type: 'int', default: 0 })
+  ordersUsedPeriod!: number;
+
+  @Column({ name: 'usage_period_start', type: 'timestamptz', nullable: true })
+  usagePeriodStart!: Date | null;
+
+  @Column({ name: 'soft_limit_warned', type: 'boolean', default: false })
+  softLimitWarned!: boolean;
+
+  @Column({ name: 'hard_limit_exceeded', type: 'boolean', default: false })
+  hardLimitExceeded!: boolean;
+
   @Column({ name: 'created_at', type: 'timestamptz', default: () => 'NOW()' })
   createdAt!: Date;
 

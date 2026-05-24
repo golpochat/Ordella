@@ -12,6 +12,7 @@ import {
 } from '@/lib/api/admin/settings';
 import { SETTINGS_TABS } from '@/lib/navigation';
 import { getErrorMessage } from '@/lib/utils';
+import { BillingPanel } from './billing-panel';
 import { BrandingPanel } from './branding-panel';
 
 function SettingsSection({
@@ -76,6 +77,9 @@ export function SettingsForms() {
           </TabsTrigger>
         ))}
       </TabsList>
+      <TabsContent value="billing" className="mt-4">
+        <BillingPanel />
+      </TabsContent>
       <TabsContent value="branding" className="mt-4">
         <BrandingPanel />
       </TabsContent>

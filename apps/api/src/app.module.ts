@@ -18,6 +18,7 @@ import { OnlineModule } from './modules/online/online.module';
 import { KdsModule } from './modules/kds/kds.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
     KdsModule,
     AdminModule,
     OnboardingModule,
+    BillingModule,
   ],
 })
 export class AppModule implements NestModule {
