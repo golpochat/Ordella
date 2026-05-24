@@ -22,13 +22,13 @@ import { CreatePaymentDto } from '../dto';
 import { PaymentProviderResponseDto } from '../dto';
 import { PaymentResponseDto } from '../dto';
 import { UpdatePaymentDto } from '../dto';
-import { PaymentsService } from '../services';
+import { PaymentsCrudService } from '../services/payments-crud.service';
 
 /** API Spec §6.1, §6.3 */
 @Controller('payments')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(private readonly paymentsService: PaymentsCrudService) {}
 
   @Get()
   @RequirePermissions(PaymentsPermissionKeys.PAYMENTS_READ)

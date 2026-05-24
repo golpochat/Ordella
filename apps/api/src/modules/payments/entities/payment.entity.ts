@@ -28,8 +28,12 @@ export class PaymentEntity extends BaseTenantScopedEntity {
   @Column({ type: 'varchar', length: 32, default: PaymentStatus.PENDING })
   status!: PaymentStatus;
 
+  /** Gateway / external reference (Payment.externalRef) */
   @Column({ name: 'provider_payment_id', type: 'varchar', length: 255, nullable: true })
   providerPaymentId!: string | null;
+
+  @Column({ type: 'jsonb', default: {} })
+  metadata!: Record<string, unknown>;
 
   @Column({ name: 'payment_method_id', type: 'uuid', nullable: true })
   paymentMethodId!: string | null;

@@ -6,6 +6,7 @@ import { PaymentsFeatureModule } from './modules/payments/payments-feature.modul
 import { RefundsModule } from './modules/refunds/refunds.module';
 import { PaymentMethodsModule } from './modules/payment-methods/payment-methods.module';
 import { PaymentAttemptsModule } from './modules/payment-attempts/payment-attempts.module';
+import { PaymentsCoreModule } from './modules/payments-core/payments-core.module';
 
 /**
  * Payments domain — SRS §9 Transactions & Payments, API Spec §6 (blueprint Payments Service).
@@ -23,7 +24,8 @@ import { PaymentAttemptsModule } from './modules/payment-attempts/payment-attemp
     RefundsModule,
     PaymentMethodsModule,
     PaymentAttemptsModule,
+    PaymentsCoreModule,
   ],
-  exports: [],
+  exports: [PaymentsCoreModule],
 })
 export class PaymentsModule {}

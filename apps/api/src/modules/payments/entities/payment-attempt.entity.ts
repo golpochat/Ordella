@@ -25,6 +25,9 @@ export class PaymentAttemptEntity {
   @Column({ name: 'provider_response', type: 'jsonb', default: {} })
   providerResponse!: Record<string, unknown>;
 
+  @Column({ name: 'error_code', type: 'varchar', length: 64, nullable: true })
+  errorCode!: string | null;
+
   @Column({ name: 'error_message', type: 'text', nullable: true })
   errorMessage!: string | null;
 
