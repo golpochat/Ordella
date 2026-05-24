@@ -37,6 +37,13 @@ export function defaultLocationSettings(): Record<string, unknown> {
       pickupEnabled: true,
       deliveryEnabled: true,
     },
+    fulfillmentDisplay: {
+      autoAcceptOrders: false,
+      autoCompleteMinutes: null,
+      soundAlerts: true,
+      displayMode: 'grid',
+      showCustomerInfo: true,
+    },
     openingHours: defaultOpeningHoursTemplate(),
   };
 }

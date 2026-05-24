@@ -60,6 +60,8 @@ const CATALOG = [
   'orders:create',
   'orders:cancel',
   'kds:access',
+  'kds:read',
+  'kds:update',
   'deliveries:read',
   'deliveries:update',
   'reports:read',
@@ -98,6 +100,8 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'pos:catalog',
     'orders:read',
     'orders:create',
+    'kds:read',
+    'kds:update',
     OnboardingPermissionKeys.ONBOARDING_READ,
     OnboardingPermissionKeys.STAFF_READ,
   ],
@@ -109,6 +113,8 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'pos:receipt',
     'pos:catalog',
     'kds:access',
+    'kds:read',
+    'kds:update',
     'orders:read',
     'orders:create',
   ],
@@ -127,5 +133,14 @@ export function permissionAllowed(userPermissions: string[], required: string): 
   if (userPermissions.includes('*')) {
     return true;
   }
-  return userPermissions.includes(required);
+  if (userPermissions.includes(required)) {
+    return true;
+  }
+  if (
+    userPermissions.includes('kds:access') &&
+    (required === 'kds:read' || required === 'kds:update')
+  ) {
+    return true;
+  }
+  return false;
 }

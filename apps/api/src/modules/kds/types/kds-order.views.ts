@@ -18,13 +18,20 @@ export interface KdsLineItemView {
   completedAt: string | null;
 }
 
+export interface FulfillmentCustomerInfo {
+  name?: string;
+  phone?: string;
+}
+
 export interface KdsOrderSummaryView {
   id: string;
   orderNumber: string | null;
   status: OrderStatus;
+  fulfillmentStatus: string;
   orderType: OrderType;
   locationId: string;
   createdAt: string;
+  customerInfo?: FulfillmentCustomerInfo | null;
   lineItems: KdsLineItemView[];
 }
 

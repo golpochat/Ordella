@@ -22,12 +22,41 @@ export class KdsOrderQueryService {
     tenantId: string,
     station?: string,
     status?: OrderStatus,
+    locationId?: string,
   ): Promise<KdsOrderSummaryView[]> {
     const statuses = status ? [status] : [...KDS_DEFAULT_ACTIVE_STATUSES];
     const orders = await this.orderQueryRepository.findActiveOrdersForTenant(
       tenantId,
       statuses,
       station,
+      locationId,
+    );
+
+    const catalog = await this.catalogLookup.buildLookupForOrders(tenantId, orders);
+    const views: KdsOrderSummaryView[] = [];
+
+    for (const order of orders) {
+      const states = await this.itemStateRepository.ensurePendingForItems(
+        tenantId,
+        order.id,
+        (order.items ?? []).map((item) => item.id),
+      );
+      views.push(mapKdsOrderSummary(order, states, catalog));
+    }
+
+    return views;
+  }
+
+  async getActiveOrdersByStatuses(
+    tenantId: string,
+    locationId: string,
+    statuses: OrderStatus[],
+  ): Promise<KdsOrderSummaryView[]> {
+    const orders = await this.orderQueryRepository.findActiveOrdersForTenant(
+      tenantId,
+      statuses,
+      undefined,
+      locationId,
     );
 
     const catalog = await this.catalogLookup.buildLookupForOrders(tenantId, orders);

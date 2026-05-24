@@ -24,9 +24,14 @@ export class KdsOrderQueryRepository {
     tenantId: string,
     statuses: OrderStatus[],
     station?: string,
+    locationId?: string,
   ): Promise<OrderEntity[]> {
     const orders = await this.orderRepository.find({
-      where: { tenantId, status: In(statuses) },
+      where: {
+        tenantId,
+        status: In(statuses),
+        ...(locationId ? { locationId } : {}),
+      },
       relations: ['items'],
       order: { createdAt: 'ASC' },
     });

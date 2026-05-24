@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { ProductEntity } from '../catalog/entities/product.entity';
@@ -43,7 +43,7 @@ import { AdminCatalogRepository } from './repositories/admin-catalog.repository'
 import { AdminOrderQueryRepository } from './repositories/admin-order-query.repository';
 import { AdminPromotionRepository } from './repositories/admin-promotion.repository';
 import { AdminInventoryRepository } from './repositories/admin-inventory.repository';
-import { AdminSettingsRepository } from './repositories/admin-settings.repository';
+import { AdminSettingsCoreModule } from './admin-settings-core.module';
 import { AdminNotificationsIntegration } from './integrations/admin-notifications.integration';
 
 /**
@@ -56,6 +56,7 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
 @Module({
   imports: [
     AuthModule,
+    AdminSettingsCoreModule,
     TypeOrmModule.forFeature([
       ProductEntity,
       CategoryEntity,
@@ -68,12 +69,8 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
       StockMovementEntity,
       PromotionEntity,
       PromotionApplicationEntity,
-      TenantEntity,
-      LocationEntity,
-      LocationSettingsEntity,
-      LocationOpeningHoursEntity,
     ]),
-    OrdersFeatureModule,
+    forwardRef(() => OrdersFeatureModule),
     InventoryModule,
     ReportsModule,
   ],
@@ -93,7 +90,6 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
     AdminOrderQueryRepository,
     AdminPromotionRepository,
     AdminInventoryRepository,
-    AdminSettingsRepository,
     ProductAdminService,
     CatalogBuilderService,
     InventoryAdminService,
@@ -104,6 +100,7 @@ import { AdminNotificationsIntegration } from './integrations/admin-notification
     AdminNotificationsIntegration,
   ],
   exports: [
+    AdminSettingsCoreModule,
     ProductAdminService,
     CatalogBuilderService,
     InventoryAdminService,

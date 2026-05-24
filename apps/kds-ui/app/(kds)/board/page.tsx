@@ -1,7 +1,7 @@
-export default function KdsBoardPage() {
-  return (
-    <div className="p-4">
-      <p className="text-muted-foreground">Connect to your business location to view active fulfillment tickets.</p>
-    </div>
-  );
+'use client';
+
+import { FdsBoard } from '@/components/fds-board';
+
+export default function FulfillmentBoardPage() {
+  return <FdsBoard />;
 }

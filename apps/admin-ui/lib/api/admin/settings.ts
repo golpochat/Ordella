@@ -27,3 +27,17 @@ export async function updatePaymentSettings(api: ApiClient, body: Record<string,
 export async function updatePosSettings(api: ApiClient, body: Record<string, unknown>) {
   return api.patch<{ success: boolean; data: unknown }>('admin/settings/pos', body);
 }
+
+export async function updateFulfillmentSettings(
+  api: ApiClient,
+  body: {
+    locationId: string;
+    autoAcceptOrders?: boolean;
+    autoCompleteMinutes?: number | null;
+    soundAlerts?: boolean;
+    displayMode?: 'grid' | 'list';
+    showCustomerInfo?: boolean;
+  },
+) {
+  return api.patch<{ success: boolean; data: unknown }>('admin/settings/fulfillment', body);
+}

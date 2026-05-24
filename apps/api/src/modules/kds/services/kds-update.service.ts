@@ -64,10 +64,26 @@ export class KdsUpdateService {
     return detail;
   }
 
+  async startFulfillment(
+    tenant: TenantContext,
+    orderId: string,
+    user?: AuthenticatedUser,
+  ): Promise<KdsOrderDetailView> {
+    const detail = await this.markOrderPreparing(tenant, orderId, user);
+    for (const line of detail.lineItems) {
+      if (line.kdsStatus === KdsLineStatus.PENDING) {
+        await this.markItemStarted(tenant, orderId, line.id);
+        await this.markItemCompleted(tenant, orderId, line.id);
+      }
+    }
+    return this.orderQueryService.getOrderDetails(tenant.tenantId, orderId);
+  }
+
   async markOrderReady(
     tenant: TenantContext,
     orderId: string,
     user?: AuthenticatedUser,
+    skipLineValidation = false,
   ): Promise<KdsOrderDetailView> {
     const detail = await this.orderQueryService.getOrderDetails(tenant.tenantId, orderId);
 
@@ -75,11 +91,13 @@ export class KdsUpdateService {
       throwKdsOrderNotPreparing(detail.status);
     }
 
-    const allCompleted = detail.lineItems.every(
-      (line) => line.kdsStatus === KdsLineStatus.COMPLETED,
-    );
-    if (!allCompleted) {
-      throwKdsItemsNotAllCompleted();
+    if (!skipLineValidation) {
+      const allCompleted = detail.lineItems.every(
+        (line) => line.kdsStatus === KdsLineStatus.COMPLETED,
+      );
+      if (!allCompleted) {
+        throwKdsItemsNotAllCompleted();
+      }
     }
 
     if (!canTransitionOrderStatus(detail.status, OrderStatus.READY)) {
@@ -95,6 +113,44 @@ export class KdsUpdateService {
     this.broadcastService.orderUpdated(tenant.tenantId, refreshed);
     this.notificationsIntegration.notifyOrderStatus(tenant.tenantId, orderId, OrderStatus.READY);
     await this.reportingIntegration.emitOrderMilestone(tenant.tenantId, orderId, OrderStatus.READY);
+
+    return refreshed;
+  }
+
+  async markOrderCompleted(
+    tenant: TenantContext,
+    orderId: string,
+    user?: AuthenticatedUser,
+  ): Promise<KdsOrderDetailView> {
+    const detail = await this.orderQueryService.getOrderDetails(tenant.tenantId, orderId);
+    if (
+      detail.status !== OrderStatus.READY &&
+      detail.status !== OrderStatus.PREPARING &&
+      detail.status !== OrderStatus.OUT_FOR_DELIVERY
+    ) {
+      throwKdsInvalidOrderTransition(detail.status, OrderStatus.COMPLETED);
+    }
+
+    if (!canTransitionOrderStatus(detail.status, OrderStatus.COMPLETED)) {
+      if (detail.status === OrderStatus.PREPARING) {
+        await this.markOrderReady(tenant, orderId, user, true);
+      }
+    }
+
+    const current = await this.orderQueryService.getOrderDetails(tenant.tenantId, orderId);
+    if (current.status !== OrderStatus.COMPLETED) {
+      await this.transitionOrder(tenant, orderId, OrderStatus.COMPLETED, user);
+    }
+
+    const refreshed = await this.orderQueryService.getOrderDetails(tenant.tenantId, orderId);
+    this.broadcastService.orderCompleted(tenant.tenantId, refreshed);
+    this.broadcastService.orderUpdated(tenant.tenantId, refreshed);
+    this.notificationsIntegration.notifyOrderStatus(tenant.tenantId, orderId, OrderStatus.COMPLETED);
+    await this.reportingIntegration.emitOrderMilestone(
+      tenant.tenantId,
+      orderId,
+      OrderStatus.COMPLETED,
+    );
 
     return refreshed;
   }

@@ -53,4 +53,5 @@ export const SETTINGS_TABS = [
   { id: 'delivery', label: 'Delivery zones' },
   { id: 'payment', label: 'Payment' },
   { id: 'pos', label: 'POS' },
+  { id: 'fulfillment', label: 'Fulfillment display' },
 ] as const;

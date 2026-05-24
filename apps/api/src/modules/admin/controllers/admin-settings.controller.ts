@@ -6,6 +6,7 @@ import { TenantGuard } from '../../../common/guards';
 import { JwtAuthGuard, RbacGuard, RequirePermissions } from '../../auth';
 import { AdminPermissionKeys } from '../constants/admin-permission-keys';
 import { TenantSettingsService } from '../services/tenant-settings.service';
+import { AdminUpdateFulfillmentSettingsDto } from '../dto/admin-update-fulfillment-settings.dto';
 import {
   AdminUpdateBusinessInfoDto,
   AdminUpdateDeliveryZonesDto,
@@ -62,6 +63,15 @@ export class AdminSettingsController {
     @Body() dto: AdminUpdatePosSettingsDto,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.tenantSettingsService.updatePosSettings(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Patch('fulfillment')
+  async updateFulfillment(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: AdminUpdateFulfillmentSettingsDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.tenantSettingsService.updateFulfillmentSettings(tenant.tenantId, dto);
     return { success: true, data };
   }
 

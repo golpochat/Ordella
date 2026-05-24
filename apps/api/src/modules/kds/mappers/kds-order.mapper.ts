@@ -1,7 +1,14 @@
 import { OrderEntity } from '../../orders/entities/order.entity';
 import { KdsOrderItemStateEntity } from '../entities/kds-order-item-state.entity';
 import { KdsLineStatus } from '../enums/kds-line-status.enum';
-import { KdsOrderDetailView, KdsOrderSummaryView, KdsLineItemView } from '../types/kds-order.views';
+import { FulfillmentDisplayStatus } from '../enums/fulfillment-display-status.enum';
+import { OrderStatus } from '../../orders/enums/order-status.enum';
+import {
+  FulfillmentCustomerInfo,
+  KdsOrderDetailView,
+  KdsOrderSummaryView,
+  KdsLineItemView,
+} from '../types/kds-order.views';
 
 export type KdsCatalogLookup = {
   products: Map<string, { name: string; sku: string | null }>;
@@ -38,6 +45,38 @@ export function mapKdsLineItems(
   });
 }
 
+export function mapFulfillmentDisplayStatus(status: OrderStatus): FulfillmentDisplayStatus {
+  switch (status) {
+    case OrderStatus.ACCEPTED:
+      return FulfillmentDisplayStatus.NEW;
+    case OrderStatus.PREPARING:
+      return FulfillmentDisplayStatus.IN_PROGRESS;
+    case OrderStatus.READY:
+    case OrderStatus.OUT_FOR_DELIVERY:
+      return FulfillmentDisplayStatus.READY;
+    case OrderStatus.COMPLETED:
+      return FulfillmentDisplayStatus.COMPLETED;
+    default:
+      return FulfillmentDisplayStatus.NEW;
+  }
+}
+
+function mapCustomerInfo(order: OrderEntity): FulfillmentCustomerInfo | null {
+  const delivery = order.deliveryDetails;
+  if (!delivery) {
+    return null;
+  }
+  const phone = delivery.contactPhone ?? undefined;
+  const name =
+    delivery.addressLine1 && delivery.city
+      ? `${delivery.addressLine1}, ${delivery.city}`
+      : delivery.addressLine1 ?? undefined;
+  if (!phone && !name) {
+    return null;
+  }
+  return { name, phone };
+}
+
 export function mapKdsOrderSummary(
   order: OrderEntity,
   states: KdsOrderItemStateEntity[],
@@ -47,9 +86,11 @@ export function mapKdsOrderSummary(
     id: order.id,
     orderNumber: order.orderNumber,
     status: order.status,
+    fulfillmentStatus: mapFulfillmentDisplayStatus(order.status),
     orderType: order.orderType,
     locationId: order.locationId,
     createdAt: order.createdAt.toISOString(),
+    customerInfo: mapCustomerInfo(order),
     lineItems: mapKdsLineItems(order, states, catalog),
   };
 }

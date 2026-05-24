@@ -14,6 +14,7 @@ import { SETTINGS_TABS } from '@/lib/navigation';
 import { getErrorMessage } from '@/lib/utils';
 import { BillingPanel } from './billing-panel';
 import { BrandingPanel } from './branding-panel';
+import { FulfillmentDisplayPanel } from './fulfillment-display-panel';
 
 function SettingsSection({
   title,
@@ -149,6 +150,9 @@ export function SettingsForms() {
             onChange={(e) => setPosJson(e.target.value)}
           />
         </SettingsSection>
+      </TabsContent>
+      <TabsContent value="fulfillment" className="mt-4">
+        <FulfillmentDisplayPanel />
       </TabsContent>
     </Tabs>
   );

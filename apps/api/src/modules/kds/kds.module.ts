@@ -9,7 +9,11 @@ import { ReportsModule } from '../reports/reports.module';
 import { KDS_ENTITIES, KdsOrderItemStateEntity } from './entities';
 import { KdsController } from './controllers';
 import { KdsGateway } from './gateways/kds.gateway';
+import { AdminSettingsCoreModule } from '../admin/admin-settings-core.module';
 import {
+  FulfillmentFeedService,
+  FulfillmentSettingsService,
+  FulfillmentStatusService,
   KdsBroadcastService,
   KdsOrderQueryService,
   KdsUpdateService,
@@ -33,6 +37,7 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
 @Module({
   imports: [
     AuthModule,
+    AdminSettingsCoreModule,
     TypeOrmModule.forFeature([...KDS_ENTITIES, OrderEntity, ProductEntity, VariantEntity]),
     forwardRef(() => OrdersFeatureModule),
     ReportsModule,
@@ -40,6 +45,9 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
   controllers: [KdsController],
   providers: [
     KdsGateway,
+    FulfillmentFeedService,
+    FulfillmentStatusService,
+    FulfillmentSettingsService,
     KdsBroadcastService,
     KdsOrderQueryRepository,
     KdsOrderItemStateRepository,
@@ -49,6 +57,13 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
     KdsNotificationsIntegration,
     KdsReportingIntegration,
   ],
-  exports: [KdsOrderQueryService, KdsUpdateService, KdsBroadcastService],
+  exports: [
+    KdsOrderQueryService,
+    KdsUpdateService,
+    KdsBroadcastService,
+    FulfillmentFeedService,
+    FulfillmentStatusService,
+    FulfillmentSettingsService,
+  ],
 })
 export class KdsModule {}

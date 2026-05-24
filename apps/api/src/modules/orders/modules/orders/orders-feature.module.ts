@@ -9,6 +9,7 @@ import { OrderStatusHistoryEntity } from '../../entities';
 import { OrderEventEntity } from '../../entities';
 import { OrderItemRepository } from '../../repositories/order-item.repository';
 import { OrdersController, OrdersPosController } from '../../controllers';
+import { OrdersFulfillmentController } from '../../../kds/controllers/orders-fulfillment.controller';
 import { KdsModule } from '../../../kds/kds.module';
 import { OrdersService } from '../../services';
 import { OrderRepository } from '../../repositories/order.repository';
@@ -50,7 +51,7 @@ import {
       ModifierOptionEntity,
     ]),
   ],
-  controllers: [OrdersPosController, OrdersController],
+  controllers: [OrdersFulfillmentController, OrdersPosController, OrdersController],
   providers: [
     OrdersService,
     OrderCreationService,

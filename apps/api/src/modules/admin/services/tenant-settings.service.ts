@@ -6,6 +6,7 @@ import { AdminUpdateOpeningHoursDto } from '../dto/admin-update-opening-hours.dt
 import { AdminUpdateDeliveryZonesDto } from '../dto/admin-update-delivery-zones.dto';
 import { AdminUpdatePaymentSettingsDto } from '../dto/admin-update-payment-settings.dto';
 import { AdminUpdatePosSettingsDto } from '../dto/admin-update-pos-settings.dto';
+import { AdminUpdateFulfillmentSettingsDto } from '../dto/admin-update-fulfillment-settings.dto';
 
 @Injectable()
 export class TenantSettingsService {
@@ -51,6 +52,30 @@ export class TenantSettingsService {
   updatePosSettings(tenantId: string, dto: AdminUpdatePosSettingsDto) {
     return this.settingsRepository.mergeSettings(tenantId, dto.locationId, {
       posSettings: dto.settings,
+    });
+  }
+
+  async updateFulfillmentSettings(tenantId: string, dto: AdminUpdateFulfillmentSettingsDto) {
+    await this.settingsRepository.requireLocationForTenant(tenantId, dto.locationId);
+    const row = await this.settingsRepository.getOrCreateSettings(dto.locationId);
+    const current = (row.settings?.fulfillmentDisplay as Record<string, unknown> | undefined) ?? {};
+    const next = {
+      autoAcceptOrders: false,
+      autoCompleteMinutes: null,
+      soundAlerts: true,
+      displayMode: 'grid',
+      showCustomerInfo: true,
+      ...current,
+      ...(dto.autoAcceptOrders !== undefined ? { autoAcceptOrders: dto.autoAcceptOrders } : {}),
+      ...(dto.autoCompleteMinutes !== undefined
+        ? { autoCompleteMinutes: dto.autoCompleteMinutes }
+        : {}),
+      ...(dto.soundAlerts !== undefined ? { soundAlerts: dto.soundAlerts } : {}),
+      ...(dto.displayMode !== undefined ? { displayMode: dto.displayMode } : {}),
+      ...(dto.showCustomerInfo !== undefined ? { showCustomerInfo: dto.showCustomerInfo } : {}),
+    };
+    return this.settingsRepository.mergeSettings(tenantId, dto.locationId, {
+      fulfillmentDisplay: next,
     });
   }
 
