@@ -18,6 +18,9 @@ export function resolvePaymentProvider(method: string): PaymentProvider {
   if (normalized === 'terminal') {
     return PaymentProvider.TERMINAL;
   }
+  if (normalized === 'external') {
+    return PaymentProvider.MANUAL;
+  }
 
   return PaymentProvider.MANUAL;
 }

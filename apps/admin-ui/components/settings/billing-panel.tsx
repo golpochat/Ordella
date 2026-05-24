@@ -12,7 +12,10 @@ import {
 } from '@shared-ui';
 import {
   attachBillingPaymentMethod,
+  cancelBillingSubscription,
   changeBillingPlan,
+  createBillingPortalSession,
+  createSubscriptionCheckout,
   fetchBillingInvoices,
   fetchBillingSummary,
   subscribeToPlan,
@@ -95,7 +98,7 @@ export function BillingPanel() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <div>
-            <CardTitle>Current plan</CardTitle>
+            <CardTitle>Business billing</CardTitle>
             <p className="text-sm text-muted-foreground">
               {summary.planName} · {summary.subscriptionStatus}
             </p>
@@ -111,6 +114,39 @@ export function BillingPanel() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={loading || !summary.stripeConfigured}
+              onClick={() =>
+                void runAction(async () => {
+                  const { url } = await createBillingPortalSession(
+                    typeof window !== 'undefined'
+                      ? `${window.location.origin}/settings/billing`
+                      : undefined,
+                  );
+                  window.location.href = url;
+                })
+              }
+            >
+              Manage payment method
+            </Button>
+            {summary.plan !== 'free' ? (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={loading}
+                onClick={() =>
+                  void runAction(async () => {
+                    await cancelBillingSubscription();
+                  })
+                }
+              >
+                Cancel subscription
+              </Button>
+            ) : null}
+          </div>
           {summary.currentPeriodEnd ? (
             <p className="text-muted-foreground">
               Billing period ends {new Date(summary.currentPeriodEnd).toLocaleDateString()}
@@ -148,6 +184,12 @@ export function BillingPanel() {
               disabled={loading || summary.plan === plan.id || plan.custom}
               onClick={() =>
                 void runAction(async () => {
+                  if (plan.custom) return;
+                  if (summary.stripeConfigured && summary.plan === 'free' && plan.id !== 'free') {
+                    const { url } = await createSubscriptionCheckout(plan.id);
+                    window.location.href = url;
+                    return;
+                  }
                   if (summary.plan === 'free' && plan.id !== 'free') {
                     await subscribeToPlan(plan.id, paymentMethodId || undefined);
                   } else {

@@ -5,7 +5,13 @@ import { AuthenticatedUser, TenantContext } from '../../../common/interfaces';
 import { TenantGuard } from '../../../common/guards';
 import { JwtAuthGuard, RequirePermissions, RbacGuard } from '../../auth';
 import { OnboardingPermissionKeys } from '../../../common/rbac/role-permissions';
-import { AttachPaymentMethodDto, ChangePlanDto, SubscribePlanDto } from '../dto/billing.dto';
+import {
+  AttachPaymentMethodDto,
+  BillingPortalSessionDto,
+  BillingSubscriptionCheckoutDto,
+  ChangePlanDto,
+  SubscribePlanDto,
+} from '../dto/billing.dto';
 import { TenantBillingService } from '../services/tenant-billing.service';
 import { UsageTrackingService } from '../services/usage-tracking.service';
 
@@ -70,6 +76,48 @@ export class BillingController {
       tenant,
       dto.paymentMethodId,
     );
+    return { success: true, data };
+  }
+
+  @Post('create-portal-session')
+  @RequirePermissions(OnboardingPermissionKeys.TENANT_BILLING_UPDATE)
+  async createPortalSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: BillingPortalSessionDto,
+  ): Promise<ApiSuccessResponse<{ url: string }>> {
+    const data = await this.billingService.createBillingPortalSession(
+      user,
+      tenant,
+      dto.returnUrl,
+    );
+    return { success: true, data };
+  }
+
+  @Post('create-subscription-checkout')
+  @RequirePermissions(OnboardingPermissionKeys.TENANT_BILLING_UPDATE)
+  async createSubscriptionCheckout(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: BillingSubscriptionCheckoutDto,
+  ): Promise<ApiSuccessResponse<{ sessionId: string; url: string }>> {
+    const data = await this.billingService.createSubscriptionCheckoutSession(
+      user,
+      tenant,
+      dto.planId,
+      dto.successUrl,
+      dto.cancelUrl,
+    );
+    return { success: true, data };
+  }
+
+  @Post('cancel')
+  @RequirePermissions(OnboardingPermissionKeys.TENANT_BILLING_UPDATE)
+  async cancelSubscription(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.billingService.cancelSubscription(user, tenant);
     return { success: true, data };
   }
 }

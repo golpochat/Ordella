@@ -27,3 +27,22 @@ export class AttachPaymentMethodDto {
   @IsEmail()
   billingEmail?: string;
 }
+
+export class BillingPortalSessionDto {
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
+}
+
+export class BillingSubscriptionCheckoutDto {
+  @IsIn(PLAN_IDS)
+  planId!: string;
+
+  @IsOptional()
+  @IsString()
+  successUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  cancelUrl?: string;
+}

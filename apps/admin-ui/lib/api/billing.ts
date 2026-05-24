@@ -68,3 +68,25 @@ export async function attachBillingPaymentMethod(paymentMethodId: string): Promi
   const api = createBrowserApiClient();
   await api.post('billing/payment-method', { paymentMethodId });
 }
+
+export async function createBillingPortalSession(returnUrl?: string): Promise<{ url: string }> {
+  const api = createBrowserApiClient();
+  return api.postData<{ url: string }>('billing/create-portal-session', { returnUrl });
+}
+
+export async function createSubscriptionCheckout(
+  planId: string,
+  successUrl?: string,
+  cancelUrl?: string,
+): Promise<{ sessionId: string; url: string }> {
+  const api = createBrowserApiClient();
+  return api.postData<{ sessionId: string; url: string }>(
+    'billing/create-subscription-checkout',
+    { planId, successUrl, cancelUrl },
+  );
+}
+
+export async function cancelBillingSubscription(): Promise<void> {
+  const api = createBrowserApiClient();
+  await api.post('billing/cancel', {});
+}

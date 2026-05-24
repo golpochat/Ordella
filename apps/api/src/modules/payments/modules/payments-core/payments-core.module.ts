@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BillingModule } from '../../../billing/billing.module';
 import { PaymentEntity, PaymentAttemptEntity, RefundEntity } from '../../entities';
 import { PaymentsService } from '../../services/payments.service';
 import { PaymentReconciliationService } from '../../services/payment-reconciliation.service';
@@ -16,7 +17,10 @@ import {
 } from '../../integrations';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PaymentEntity, PaymentAttemptEntity, RefundEntity])],
+  imports: [
+    BillingModule,
+    TypeOrmModule.forFeature([PaymentEntity, PaymentAttemptEntity, RefundEntity]),
+  ],
   providers: [
     PaymentsService,
     PaymentReconciliationService,

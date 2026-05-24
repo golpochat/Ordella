@@ -65,9 +65,12 @@ export class PaymentsService {
           amount: formatAmount(parseAmount(context.amount)),
           currency: context.currency,
           status: PaymentStatus.PENDING,
-          providerPaymentId: null,
+          providerPaymentId: context.stripePaymentIntentId ?? null,
           paymentMethodId: null,
-          metadata: { customerId: context.customerId ?? null },
+          metadata: {
+            customerId: context.customerId ?? null,
+            stripePaymentIntentId: context.stripePaymentIntentId ?? null,
+          },
         },
         manager,
       );

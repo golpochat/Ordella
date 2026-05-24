@@ -207,6 +207,12 @@ export class OnboardingRepository {
     manager?: EntityManager,
   ): Promise<LocationSettingsEntity> {
     const repo = manager ? manager.getRepository(LocationSettingsEntity) : this.locationSettings;
+    if (!entity.id && entity.locationId) {
+      const existing = await repo.findOne({ where: { locationId: entity.locationId } });
+      if (existing) {
+        entity.id = existing.id;
+      }
+    }
     return repo.save(entity);
   }
 

@@ -256,6 +256,98 @@ export class TenantBillingService {
     return this.applySubscriptionToBilling(billing, subscription, planId);
   }
 
+  async createBillingPortalSession(
+    user: AuthenticatedUser,
+    tenant: TenantContext,
+    returnUrl?: string,
+  ): Promise<{ url: string }> {
+    await this.tenantAccess.assertAdmin(user, tenant);
+    const tenantEntity = await this.repository.findTenant(tenant.tenantId);
+    if (!tenantEntity) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    const billing = await this.createStripeCustomer(tenantEntity);
+    const fallback = `${this.stripeClient.adminBaseUrl()}/settings/billing`;
+
+    if (!this.stripeClient.isConfigured() || !billing.stripeCustomerId) {
+      return { url: returnUrl ?? fallback };
+    }
+
+    const session = await this.stripeClient.client().billingPortal.sessions.create({
+      customer: billing.stripeCustomerId,
+      return_url: returnUrl ?? fallback,
+    });
+
+    return { url: session.url };
+  }
+
+  async createSubscriptionCheckoutSession(
+    user: AuthenticatedUser,
+    tenant: TenantContext,
+    planId: string,
+    successUrl?: string,
+    cancelUrl?: string,
+  ): Promise<{ sessionId: string; url: string }> {
+    await this.tenantAccess.assertAdmin(user, tenant);
+    const plan = BillingPlanRegistry.getPlan(planId);
+    if (!plan || plan.custom) {
+      throw new BillingNotConfiguredError('Plan is not available for self-serve checkout');
+    }
+
+    const tenantEntity = await this.repository.findTenant(tenant.tenantId);
+    if (!tenantEntity) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    const billing = await this.createStripeCustomer(tenantEntity);
+    const base = this.stripeClient.adminBaseUrl();
+    const success = successUrl ?? `${base}/settings/billing?checkout=success`;
+    const cancel = cancelUrl ?? `${base}/settings/billing?checkout=cancel`;
+
+    if (!this.stripeClient.isConfigured()) {
+      return {
+        sessionId: `cs_sub_placeholder_${tenant.tenantId.slice(0, 8)}`,
+        url: success,
+      };
+    }
+
+    const priceId = this.stripeClient.getPriceIdForPlan(planId);
+    if (!priceId) {
+      throw new BillingNotConfiguredError(`Stripe price not configured for plan ${planId}`);
+    }
+
+    const session = await this.stripeClient.client().checkout.sessions.create({
+      mode: 'subscription',
+      customer: billing.stripeCustomerId!,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: success,
+      cancel_url: cancel,
+      metadata: {
+        tenantId: tenant.tenantId,
+        planId,
+        type: 'subscription_checkout',
+      },
+      subscription_data: {
+        metadata: { tenantId: tenant.tenantId, planId },
+        trial_period_days: planId === SubscriptionPlan.STARTER ? 14 : undefined,
+      },
+    });
+
+    if (!session.url) {
+      throw new BillingNotConfiguredError('Stripe did not return a checkout URL');
+    }
+
+    return { sessionId: session.id, url: session.url };
+  }
+
+  async cancelSubscription(
+    user: AuthenticatedUser,
+    tenant: TenantContext,
+  ): Promise<TenantBillingEntity> {
+    return this.handlePlanChange(user, tenant, SubscriptionPlan.FREE);
+  }
+
   async listInvoices(tenantId: string): Promise<unknown[]> {
     const billing = await this.requireBillingRecord(tenantId);
     if (!billing.stripeCustomerId) {

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BillingModule } from '../billing/billing.module';
 import { AdminModule } from '../admin/admin.module';
+import { LocationEntity } from '../tenants/entities/location.entity';
 import { CategoryEntity } from '../catalog/entities/category.entity';
 import { ProductEntity } from '../catalog/entities/product.entity';
 import { ModifierEntity } from '../catalog/entities/modifier.entity';
@@ -18,6 +20,8 @@ import { DeliveriesModule } from '../deliveries/deliveries.module';
 import { PublicController } from './controllers';
 import { PublicCatalogController } from './controllers/public-catalog.controller';
 import { OrdersOnlinePublicController } from './controllers/orders-online-public.controller';
+import { PaymentsCheckoutController } from './controllers/payments-checkout.controller';
+import { PaymentsStripeWebhookController } from './controllers/payments-stripe-webhook.controller';
 import {
   BasketService,
   CheckoutService,
@@ -25,6 +29,8 @@ import {
   OnlineBasketFacade,
   OnlineCatalogService,
   OnlineOrderService,
+  OnlineStripeCheckoutService,
+  StripeCheckoutPendingStore,
 } from './services';
 import { MenuQueryRepository } from './repositories/menu-query.repository';
 
@@ -41,10 +47,12 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
  */
 @Module({
   imports: [
+    BillingModule,
     AdminModule,
     KdsModule,
     PosModule,
     TypeOrmModule.forFeature([
+      LocationEntity,
       CategoryEntity,
       ProductEntity,
       ModifierEntity,
@@ -59,7 +67,13 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
     PromotionsModule,
     DeliveriesModule,
   ],
-  controllers: [PublicController, PublicCatalogController, OrdersOnlinePublicController],
+  controllers: [
+    PublicController,
+    PublicCatalogController,
+    OrdersOnlinePublicController,
+    PaymentsCheckoutController,
+    PaymentsStripeWebhookController,
+  ],
   providers: [
     MenuQueryRepository,
     MenuQueryService,
@@ -68,6 +82,8 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
     OnlineBasketFacade,
     CheckoutService,
     OnlineOrderService,
+    StripeCheckoutPendingStore,
+    OnlineStripeCheckoutService,
   ],
   exports: [MenuQueryService, BasketService, CheckoutService, OnlineOrderService],
 })

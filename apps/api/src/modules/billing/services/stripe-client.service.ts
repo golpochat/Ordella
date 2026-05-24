@@ -41,4 +41,16 @@ export class StripeClientService {
   webhookSecret(): string | undefined {
     return this.config.get<string>('STRIPE_WEBHOOK_SECRET');
   }
+
+  publishableKey(): string | null {
+    return this.config.get<string>('STRIPE_PUBLISHABLE_KEY') ?? null;
+  }
+
+  storefrontBaseUrl(): string {
+    return this.config.get<string>('STOREFRONT_URL') ?? 'http://localhost:3003';
+  }
+
+  adminBaseUrl(): string {
+    return this.config.get<string>('ADMIN_URL') ?? 'http://localhost:3001';
+  }
 }

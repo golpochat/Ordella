@@ -168,6 +168,7 @@ export class PosOrderService {
       method: dto.method,
       customerId: order.customerId,
       reason: 'pos_sale',
+      stripePaymentIntentId: dto.stripePaymentIntentId ?? null,
     };
 
     const paymentResult = await this.paymentsService.authorizeOrCapture(paymentContext);

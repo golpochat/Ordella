@@ -62,6 +62,21 @@ export class StripeWebhookHandler {
         }
         break;
       }
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.type === 'subscription_checkout' && session.subscription) {
+          const subscriptionId =
+            typeof session.subscription === 'string'
+              ? session.subscription
+              : session.subscription.id;
+          const sub = await this.stripeClient.client().subscriptions.retrieve(subscriptionId);
+          await this.billingService.syncStripeSubscriptionStatus(sub);
+        }
+        break;
+      }
+      case 'payment_intent.succeeded':
+      case 'payment_intent.payment_failed':
+        break;
       case 'payment_method.attached': {
         const pm = event.data.object as Stripe.PaymentMethod;
         const customerId =

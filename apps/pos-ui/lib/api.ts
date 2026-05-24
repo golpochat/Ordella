@@ -170,10 +170,37 @@ export async function checkoutCart(cartId: string, customerId?: string) {
   return checkoutSchema.parse(data);
 }
 
-export async function payOrder(orderId: string, method: 'cash' | 'card' | 'pos') {
+export async function payOrder(
+  orderId: string,
+  method: 'cash' | 'card' | 'pos' | 'external',
+  stripePaymentIntentId?: string,
+) {
   const session = getSession();
-  const data = await api.postData<unknown>('pos/payment', { ...session, orderId, method });
+  const data = await api.postData<unknown>('pos/payment', {
+    ...session,
+    orderId,
+    method,
+    stripePaymentIntentId,
+  });
   return paymentSchema.parse(data);
+}
+
+const terminalIntentSchema = z.object({
+  paymentIntentId: z.string(),
+  clientSecret: z.string().nullable(),
+});
+
+export async function createTerminalPaymentIntent(orderId: string) {
+  const data = await api.postData<unknown>('payments/terminal/payment-intent', { orderId });
+  return terminalIntentSchema.parse(data);
+}
+
+export async function confirmTerminalPayment(orderId: string, paymentIntentId: string) {
+  const data = await api.postData<unknown>('payments/terminal/confirm', {
+    orderId,
+    paymentIntentId,
+  });
+  return z.object({ paymentIntentId: z.string(), status: z.string() }).parse(data);
 }
 
 export async function getReceipt(orderId: string) {

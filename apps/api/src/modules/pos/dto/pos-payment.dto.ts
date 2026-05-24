@@ -13,4 +13,9 @@ export class PosPaymentDto extends PosContextDto {
   @IsOptional()
   @IsString()
   currency?: string;
+
+  /** Stripe PaymentIntent id after Terminal / card reader collection */
+  @IsOptional()
+  @IsString()
+  stripePaymentIntentId?: string;
 }

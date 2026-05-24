@@ -6,6 +6,10 @@ type PaymentPageProps = {
 
 export default function PaymentPage({ searchParams }: PaymentPageProps) {
   const method =
-    searchParams.method === 'card' || searchParams.method === 'pos' ? searchParams.method : 'cash';
+    searchParams.method === 'card' ||
+    searchParams.method === 'pos' ||
+    searchParams.method === 'external'
+      ? searchParams.method
+      : 'cash';
   return <PaymentScreen orderId={searchParams.orderId} method={method} />;
 }

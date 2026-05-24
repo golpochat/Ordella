@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
 import { createOnlineOrder } from '@/lib/api';
+import { createCheckoutSession } from '@/lib/payments-api';
 import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
 import { useBasketStore } from '@/stores/basket-store';
 
@@ -24,6 +25,7 @@ export function CheckoutForm() {
   const [postalCode, setPostalCode] = useState('');
   const [instructions, setInstructions] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -50,32 +52,58 @@ export function CheckoutForm() {
 
     setLoading(true);
     try {
+      const customer = {
+        name: name.trim(),
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+      };
+      const items = lines.map((line) => ({
+        itemId: line.productId,
+        variantId: line.variantId,
+        modifiers: line.modifierOptionIds,
+        quantity: line.quantity,
+        price: line.unitPrice.toFixed(2),
+      }));
+      const delivery =
+        orderType === 'delivery'
+          ? {
+              addressLine1: addressLine1.trim(),
+              addressLine2: addressLine2.trim() || undefined,
+              city: city.trim(),
+              postalCode: postalCode.trim() || undefined,
+              instructions: instructions.trim() || undefined,
+            }
+          : undefined;
+
+      if (paymentMethod === 'card') {
+        const session = await createCheckoutSession({
+          orderType,
+          customer,
+          items: items.map(({ itemId, variantId, modifiers, quantity }) => ({
+            itemId,
+            variantId,
+            modifiers,
+            quantity,
+          })),
+          notes: orderNotes.trim() || undefined,
+          delivery,
+          totals: {
+            grandTotal: totals.total.toFixed(2),
+            subtotal: totals.subtotal.toFixed(2),
+            taxTotal: totals.tax.toFixed(2),
+          },
+        });
+        window.location.href = session.url;
+        return;
+      }
+
       const order = await createOnlineOrder({
         orderType,
         paymentMethod: 'cash',
-        customer: {
-          name: name.trim(),
-          phone: phone.trim(),
-          email: email.trim() || undefined,
-        },
-        items: lines.map((line) => ({
-          itemId: line.productId,
-          variantId: line.variantId,
-          modifiers: line.modifierOptionIds,
-          quantity: line.quantity,
-          price: line.unitPrice.toFixed(2),
-        })),
+        customer,
+        items,
         notes: orderNotes.trim() || undefined,
-        delivery:
-          orderType === 'delivery'
-            ? {
-                addressLine1: addressLine1.trim(),
-                addressLine2: addressLine2.trim() || undefined,
-                city: city.trim(),
-                postalCode: postalCode.trim() || undefined,
-                instructions: instructions.trim() || undefined,
-              }
-            : undefined,
+        delivery,
       });
       clearBasket();
       router.push(`/order/${order.id}?confirmed=1`);
@@ -167,9 +195,21 @@ export function CheckoutForm() {
             <CardTitle>Payment</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Cash on delivery / pay on pickup (MVP). Card payments via Stripe can be enabled later.
-            </p>
+            <Tabs
+              value={paymentMethod}
+              onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)}
+            >
+              <TabsList className="grid h-12 grid-cols-2">
+                <TabsTrigger value="cash">Cash</TabsTrigger>
+                <TabsTrigger value="card">Card</TabsTrigger>
+              </TabsList>
+              <TabsContent value="cash" className="mt-3 text-sm text-muted-foreground">
+                Pay with cash on pickup or delivery.
+              </TabsContent>
+              <TabsContent value="card" className="mt-3 text-sm text-muted-foreground">
+                Pay securely online with card (Stripe Checkout).
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
@@ -206,7 +246,13 @@ export function CheckoutForm() {
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <Button type="submit" className="h-12 w-full text-base" disabled={loading}>
-            {loading ? 'Placing order…' : 'Place order'}
+            {loading
+              ? paymentMethod === 'card'
+                ? 'Redirecting to payment…'
+                : 'Placing order…'
+              : paymentMethod === 'card'
+                ? 'Pay with card'
+                : 'Place order'}
           </Button>
           <Button asChild type="button" variant="outline" className="h-11 w-full">
             <Link href="/cart">Back to cart</Link>

@@ -25,6 +25,6 @@ import { UsageTrackingService } from './services/usage-tracking.service';
     StripeWebhookHandler,
     UsageTrackingService,
   ],
-  exports: [UsageTrackingService, TenantBillingService],
+  exports: [UsageTrackingService, TenantBillingService, StripeClientService],
 })
 export class BillingModule {}

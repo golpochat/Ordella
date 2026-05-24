@@ -15,7 +15,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@shared-ui';
-import { completeSale } from '@/lib/api';
+import { checkoutCart, completeSale } from '@/lib/api';
 import { enqueueOfflineSale } from '@/lib/offline-queue';
 import { useCartStore } from '@/stores/cart-store';
 
@@ -66,6 +66,13 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
     }
 
     try {
+      if (paymentMethod === 'card') {
+        const checkout = await checkoutCart(cartId);
+        onOpenChange(false);
+        router.push(`/payment?orderId=${checkout.orderId}&method=card`);
+        return;
+      }
+
       const result = await completeSale(payload);
       clearCart();
       onOpenChange(false);

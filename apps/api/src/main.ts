@@ -13,6 +13,7 @@ async function bootstrap(): Promise<void> {
 
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.use('/api/v1/billing/webhook', raw({ type: 'application/json' }));
+  expressApp.use('/api/v1/payments/webhook', raw({ type: 'application/json' }));
   expressApp.use(json());
 
   app.useWebSocketAdapter(new AuthenticatedIoAdapter(app));

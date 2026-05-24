@@ -7,4 +7,6 @@ export interface PaymentOrderContext {
   method: string;
   customerId?: string | null;
   reason?: string;
+  /** Stripe PaymentIntent id (pi_…) when payment was collected via Stripe */
+  stripePaymentIntentId?: string | null;
 }
