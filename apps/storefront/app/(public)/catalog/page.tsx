@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { StorefrontHome } from '@/components/storefront-home';
+import { Suspense, useEffect, useState } from 'react';
+import { CatalogView } from '@/components/catalog-view';
 import { fetchPublicMenu, type OnlineMenu } from '@/lib/api';
 
-export default function HomePage() {
+function CatalogPageInner() {
   const [menu, setMenu] = useState<OnlineMenu | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +19,16 @@ export default function HomePage() {
   }
 
   if (!menu) {
-    return <p className="p-6 text-muted-foreground">Loading…</p>;
+    return <p className="p-6 text-muted-foreground">Loading catalog…</p>;
   }
 
-  return <StorefrontHome menu={menu} />;
+  return <CatalogView menu={menu} />;
+}
+
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-muted-foreground">Loading catalog…</p>}>
+      <CatalogPageInner />
+    </Suspense>
+  );
 }

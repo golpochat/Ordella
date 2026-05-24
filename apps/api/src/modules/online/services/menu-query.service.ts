@@ -44,15 +44,14 @@ export class MenuQueryService {
     const views: OnlineProductView[] = [];
     for (const product of products) {
       const modifiers = await this.menuRepository.findModifiersForProduct(tenantId, product.id);
-      const view = this.mapProduct(
-        product,
-        modifiers,
-        variantsMap.get(product.id) ?? [],
-        stockMap.get(product.id),
+      views.push(
+        this.mapProduct(
+          product,
+          modifiers,
+          variantsMap.get(product.id) ?? [],
+          stockMap.get(product.id),
+        ),
       );
-      if (this.isOrderable(view)) {
-        views.push(view);
-      }
     }
     return views;
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { labelOrderStatus, labelOrderType } from '@shared-utils';
-import { Badge, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { useOrderTracking } from '@/hooks/use-order-tracking';
 
 export function OrderTracking({ orderId }: { orderId: string }) {
@@ -32,6 +32,9 @@ export function OrderTracking({ orderId }: { orderId: string }) {
           <p>Type: {labelOrderType(status.orderType)}</p>
           <p>Total: ${status.total}</p>
           <p className="text-muted-foreground">Placed: {new Date(status.createdAt).toLocaleString()}</p>
+          <Button asChild variant="outline" className="mt-2 h-11 w-full">
+            <a href={`/order/${orderId}`}>Refresh status</a>
+          </Button>
         </CardContent>
       </Card>
     </div>

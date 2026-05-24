@@ -1,9 +1,5 @@
-import { CheckoutPageClient } from '@/components/checkout-page-client';
+import { CheckoutForm } from '@/components/checkout-form';
 
-type CheckoutPageProps = {
-  searchParams: { step?: string; sessionId?: string };
-};
-
-export default function CheckoutPage({ searchParams }: CheckoutPageProps) {
-  return <CheckoutPageClient step={searchParams.step} sessionId={searchParams.sessionId} />;
+export default function CheckoutPage() {
+  return <CheckoutForm />;
 }

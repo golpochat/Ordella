@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces';
-import { CreateOrderDto } from '../../orders/dto';
+import { CreateOrderDto, OrderResponseDto } from '../../orders/dto';
+import { OrderStatus } from '../../orders/enums/order-status.enum';
 import { OrderType } from '../../orders/enums/order-type.enum';
+import { OrderPaymentMethod } from '../../orders/enums/order-payment-method.enum';
 import { OrdersService } from '../../orders/services/orders.service';
 import { InventoryService } from '../../inventory/services/inventory.service';
 import { InventoryOrderContext } from '../../inventory/types/inventory-order.context';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { DeliveryService } from '../../deliveries/services/delivery.service';
+import { KdsBroadcastService } from '../../kds/services/kds-broadcast.service';
+import { KdsOrderQueryService } from '../../kds/services/kds-order-query.service';
+import { PosProductStockService } from '../../pos/services/pos-product-stock.service';
+import { CreateOnlineOrderDto } from '../../orders/dto/orders/create-online-order.dto';
 import { BasketService } from './basket.service';
 import { OnlinePaymentDto } from '../dto/online-payment.dto';
 import {
@@ -26,7 +32,84 @@ export class OnlineOrderService {
     private readonly inventoryService: InventoryService,
     private readonly paymentsService: PaymentsService,
     private readonly deliveryService: DeliveryService,
+    private readonly kdsOrderQuery: KdsOrderQueryService,
+    private readonly kdsBroadcast: KdsBroadcastService,
+    private readonly productStockService: PosProductStockService,
   ) {}
+
+  async createOnlineOrder(
+    tenant: TenantContext,
+    dto: CreateOnlineOrderDto,
+  ): Promise<OrderResponseDto> {
+    const createDto: CreateOrderDto = {
+      locationId: dto.locationId,
+      orderType: this.mapOrderType(dto.orderType),
+      paymentMethod: dto.paymentMethod ?? OrderPaymentMethod.CASH,
+      items: dto.items.map((item) => ({
+        productId: item.itemId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        modifierOptionIds: item.modifiers,
+      })),
+      ...(dto.delivery && dto.orderType === OnlineOrderType.DELIVERY
+        ? {
+            deliveryDetails: {
+              addressLine1: dto.delivery.addressLine1,
+              addressLine2: dto.delivery.addressLine2,
+              city: dto.delivery.city,
+              postalCode: dto.delivery.postalCode,
+              instructions: dto.delivery.instructions ?? dto.notes,
+              contactPhone: dto.customer.phone,
+            },
+          }
+        : {}),
+    };
+
+    const order = await this.ordersService.create(tenant, createDto);
+    await this.inventoryService.reserve(this.toInventoryContext(tenant.tenantId, order));
+
+    const paymentContext = {
+      tenantId: tenant.tenantId,
+      orderId: order.id,
+      method: createDto.paymentMethod ?? OrderPaymentMethod.CASH,
+      amount: order.total,
+      currency: 'EUR',
+      reason: 'online_storefront',
+    };
+
+    const capture = await this.paymentsService.authorizeOrCapture(paymentContext);
+    if (capture.status !== 'captured') {
+      throwOnlinePaymentFailed(capture.failureReason);
+    }
+
+    await this.inventoryService.deduct(this.toInventoryContext(tenant.tenantId, order));
+    await this.productStockService.decrementForOrder(
+      tenant.tenantId,
+      (order.items ?? []).map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    );
+
+    const updated = await this.ordersService.update(tenant, order.id, {
+      status: OrderStatus.ACCEPTED,
+    });
+
+    if (createDto.orderType === OrderType.DELIVERY && dto.delivery) {
+      await this.deliveryService.createTask({
+        tenantId: tenant.tenantId,
+        orderId: order.id,
+        metadata: {
+          customerName: dto.customer.name,
+          customerPhone: dto.customer.phone,
+          deliveryAddress: dto.delivery,
+        },
+      });
+    }
+
+    await this.routeToFulfillment(tenant.tenantId, updated.id);
+    return updated;
+  }
 
   async placeOrder(
     tenant: TenantContext,
@@ -99,7 +182,17 @@ export class OnlineOrderService {
     this.basketService.linkOrder(dto.sessionId, order.id);
     this.basketService.clearBasket(dto.sessionId);
 
+    await this.inventoryService.deduct(this.toInventoryContext(tenant.tenantId, order));
+    await this.productStockService.decrementForOrder(
+      tenant.tenantId,
+      (order.items ?? []).map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    );
+
     const refreshed = await this.ordersService.findOne(tenant, order.id);
+    await this.routeToFulfillment(tenant.tenantId, refreshed.id);
 
     return {
       sessionId: dto.sessionId,
@@ -122,7 +215,8 @@ export class OnlineOrderService {
     if (
       order.orderType !== OrderType.ONLINE &&
       order.orderType !== OrderType.DELIVERY &&
-      order.orderType !== OrderType.PICKUP
+      order.orderType !== OrderType.PICKUP &&
+      order.orderType !== OrderType.POS
     ) {
       throwOnlineOrderNotFound(orderId);
     }
@@ -139,12 +233,20 @@ export class OnlineOrderService {
     };
   }
 
+  private async routeToFulfillment(tenantId: string, orderId: string): Promise<void> {
+    const detail = await this.kdsOrderQuery.getOrderDetails(tenantId, orderId);
+    this.kdsBroadcast.orderCreated(tenantId, detail);
+  }
+
   private mapOrderType(orderType: OnlineOrderType): OrderType {
     if (orderType === OnlineOrderType.DELIVERY) {
       return OrderType.DELIVERY;
     }
     if (orderType === OnlineOrderType.PICKUP) {
       return OrderType.PICKUP;
+    }
+    if (orderType === OnlineOrderType.IN_STORE) {
+      return OrderType.POS;
     }
     return OrderType.ONLINE;
   }

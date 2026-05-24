@@ -32,16 +32,19 @@ const onlineVariantSchema = z.object({
 export const onlineProductSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  description: z.string().nullable(),
+  description: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable(),
   price: z.string(),
-  sortOrder: z.number().int(),
+  sortOrder: z.number().int().optional(),
   sku: z.string().nullable().optional(),
+  barcode: z.string().nullable().optional(),
   imageUrl: z.string().nullable().optional(),
-  availableQuantity: z.number().nullable(),
+  availableQuantity: z.number().nullable().optional(),
   inventoryTrackingEnabled: z.boolean().optional(),
+  stockLevel: z.number().int().nullable().optional(),
+  isActive: z.boolean().optional(),
   variants: z.array(onlineVariantSchema).default([]),
-  modifiers: z.array(modifierSchema),
+  modifiers: z.array(modifierSchema).default([]),
 });
 
 export const onlineMenuSchema = z.object({
@@ -141,10 +144,46 @@ export type CheckoutResult = z.infer<typeof checkoutResultSchema>;
 export type PaymentResult = z.infer<typeof paymentResultSchema>;
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
+const catalogBundleSchema = z.object({
+  categories: z.array(
+    z.object({
+      id: z.string().uuid(),
+      name: z.string(),
+      sortOrder: z.number().int(),
+    }),
+  ),
+  items: z.array(onlineProductSchema),
+});
+
+export async function fetchCatalog() {
+  const data = await api.getData<unknown>('catalog');
+  const bundle = catalogBundleSchema.parse(data);
+  return {
+    categories: bundle.categories,
+    products: bundle.items.map(mapCatalogItemToProduct),
+  } satisfies OnlineMenu;
+}
+
+function mapCatalogItemToProduct(item: z.infer<typeof onlineProductSchema>): OnlineProduct {
+  const stock = item.stockLevel ?? item.availableQuantity ?? null;
+  return {
+    ...item,
+    description: item.description ?? null,
+    sortOrder: item.sortOrder ?? 0,
+    availableQuantity: stock,
+    modifiers: item.modifiers ?? [],
+    variants: item.variants ?? [],
+  };
+}
+
 export async function fetchPublicMenu() {
   const locationId = getLocationId();
-  const data = await api.getData<unknown>('public/menu', { params: { locationId } });
-  return onlineMenuSchema.parse(data);
+  try {
+    return await fetchCatalog();
+  } catch {
+    const data = await api.getData<unknown>('public/menu', { params: { locationId } });
+    return onlineMenuSchema.parse(data);
+  }
 }
 
 export async function fetchProductsByCategory(categoryId: string) {
@@ -208,11 +247,55 @@ export async function fetchOrderStatus(orderId: string) {
 }
 
 export function isProductOrderable(product: OnlineProduct): boolean {
+  if (product.isActive === false) return false;
   if (product.inventoryTrackingEnabled) {
-    return product.availableQuantity !== null && product.availableQuantity > 0;
+    const qty = product.availableQuantity ?? product.stockLevel;
+    return qty !== null && qty !== undefined && qty > 0;
   }
-  if (product.availableQuantity !== null && product.availableQuantity <= 0) {
-    return false;
+  if (product.availableQuantity !== null && product.availableQuantity !== undefined) {
+    return product.availableQuantity > 0;
   }
   return true;
+}
+
+const onlineOrderResponseSchema = z.object({
+  id: z.string().uuid(),
+  orderNumber: z.string().nullable(),
+  orderType: z.string(),
+  status: z.string(),
+  paymentStatus: z.string(),
+  subtotal: z.string(),
+  tax: z.string(),
+  total: z.string(),
+  items: z.array(z.unknown()).optional(),
+});
+
+export type OnlineOrderResult = z.infer<typeof onlineOrderResponseSchema>;
+
+export async function createOnlineOrder(body: {
+  orderType: 'delivery' | 'pickup' | 'online' | 'in_store';
+  customer: { name: string; phone: string; email?: string };
+  items: Array<{
+    itemId: string;
+    variantId?: string;
+    modifiers?: string[];
+    quantity: number;
+    price?: string;
+  }>;
+  delivery?: {
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    postalCode?: string;
+    instructions?: string;
+  };
+  notes?: string;
+  paymentMethod?: 'cash' | 'card';
+}) {
+  const locationId = getLocationId();
+  const data = await api.postData<unknown>('orders/create-online', {
+    locationId,
+    ...body,
+  });
+  return onlineOrderResponseSchema.parse(data);
 }

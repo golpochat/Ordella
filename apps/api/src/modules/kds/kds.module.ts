@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { OrderEntity } from '../orders/entities/order.entity';
@@ -34,7 +34,7 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
   imports: [
     AuthModule,
     TypeOrmModule.forFeature([...KDS_ENTITIES, OrderEntity, ProductEntity, VariantEntity]),
-    OrdersFeatureModule,
+    forwardRef(() => OrdersFeatureModule),
     ReportsModule,
   ],
   controllers: [KdsController],

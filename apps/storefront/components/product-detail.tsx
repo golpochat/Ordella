@@ -9,7 +9,6 @@ import { useBasketStore } from '@/stores/basket-store';
 export function ProductDetail({ product }: { product: OnlineProduct }) {
   const router = useRouter();
   const addItem = useBasketStore((s) => s.addItem);
-  const syncing = useBasketStore((s) => s.syncing);
   const error = useBasketStore((s) => s.error);
   const orderable = isProductOrderable(product);
 
@@ -55,12 +54,12 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
     ) &&
     (product.variants.length === 0 || !!selectedVariantId);
 
-  const onAdd = async () => {
-    await addItem(product, {
+  const onAdd = () => {
+    addItem(product, {
       variantId: selectedVariantId,
       modifierOptionIds: selectedOptions.length ? selectedOptions : undefined,
     });
-    router.push('/basket');
+    router.push('/cart');
   };
 
   return (
@@ -77,6 +76,15 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
           {product.sku ? <p className="text-sm text-muted-foreground">SKU {product.sku}</p> : null}
           <p className="text-xl font-semibold">${displayPrice}</p>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
+          {product.inventoryTrackingEnabled &&
+          product.availableQuantity !== null &&
+          product.availableQuantity !== undefined ? (
+            <p className="text-sm text-muted-foreground">
+              {product.availableQuantity > 0
+                ? `${product.availableQuantity} in stock`
+                : 'Out of stock'}
+            </p>
+          ) : null}
 
           {product.variants.length > 0 ? (
             <div className="space-y-2">
@@ -126,8 +134,8 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
           ))}
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button className="h-12 w-full text-base" disabled={!canAdd || syncing} onClick={onAdd}>
-            Add to basket
+          <Button type="button" className="h-12 w-full text-base" disabled={!canAdd} onClick={onAdd}>
+            Add to cart
           </Button>
         </CardContent>
       </Card>

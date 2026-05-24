@@ -12,7 +12,7 @@ export interface OnlineBasketLine {
 export interface OnlineCustomerDetails {
   name: string;
   phone: string;
-  email: string;
+  email?: string;
 }
 
 export interface OnlineDeliveryDetails {

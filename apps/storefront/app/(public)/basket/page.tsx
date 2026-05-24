@@ -1,5 +1,5 @@
-import { BasketView } from '@/components/basket-view';
+import { redirect } from 'next/navigation';
 
 export default function BasketPage() {
-  return <BasketView />;
+  redirect('/cart');
 }

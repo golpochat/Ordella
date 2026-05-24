@@ -1,133 +1,158 @@
 'use client';
 
 import { create } from 'zustand';
-import {
-  createOrPatchBasket,
-  isProductOrderable,
-  type OnlineBasket,
-  type OnlineProduct,
-} from '@/lib/api';
+import { clearBasketStorage, loadBasket, saveBasket } from '@/lib/basket-storage';
+import { isProductOrderable, type OnlineProduct } from '@/lib/api';
 
-export type BasketLine = {
-  id: string;
+export type BasketLineMeta = {
+  lineId: string;
   productId: string;
-  quantity: number;
+  variantId?: string;
   modifierOptionIds?: string[];
+  name: string;
+  variantName?: string;
+  modifierLabels: string[];
+  sku?: string | null;
+  unitPrice: number;
+  quantity: number;
+  notes?: string;
 };
 
+function lineKey(line: {
+  productId: string;
+  variantId?: string;
+  modifierOptionIds?: string[];
+}): string {
+  const mods = [...(line.modifierOptionIds ?? [])].sort().join(',');
+  return `${line.productId}:${line.variantId ?? ''}:${mods}`;
+}
+
+function resolveUnitPrice(
+  product: OnlineProduct,
+  variantId?: string,
+  modifierOptionIds?: string[],
+): number {
+  let price = Number.parseFloat(product.price) || 0;
+  const variant = product.variants.find((v) => v.id === variantId);
+  if (variant) price += Number.parseFloat(variant.priceDelta) || 0;
+  for (const mod of product.modifiers) {
+    for (const opt of mod.options) {
+      if (modifierOptionIds?.includes(opt.id)) {
+        price += Number.parseFloat(opt.priceDelta) || 0;
+      }
+    }
+  }
+  return price;
+}
+
+function buildLineMeta(
+  product: OnlineProduct,
+  quantity: number,
+  options?: { variantId?: string; modifierOptionIds?: string[]; notes?: string },
+): BasketLineMeta {
+  const variant = product.variants.find((v) => v.id === options?.variantId);
+  const modifierLabels: string[] = [];
+  for (const mod of product.modifiers) {
+    for (const opt of mod.options) {
+      if (options?.modifierOptionIds?.includes(opt.id)) {
+        modifierLabels.push(opt.name);
+      }
+    }
+  }
+  return {
+    lineId: crypto.randomUUID(),
+    productId: product.id,
+    variantId: options?.variantId,
+    modifierOptionIds: options?.modifierOptionIds,
+    name: product.name,
+    variantName: variant?.name,
+    modifierLabels,
+    sku: product.sku ?? variant?.sku,
+    unitPrice: resolveUnitPrice(product, options?.variantId, options?.modifierOptionIds),
+    quantity,
+    notes: options?.notes,
+  };
+}
+
 type BasketState = {
-  sessionId?: string;
-  items: BasketLine[];
-  syncing: boolean;
+  lines: BasketLineMeta[];
+  hydrated: boolean;
   error?: string;
-  setFromServer: (basket: OnlineBasket) => void;
+  hydrate: () => void;
   addItem: (
     product: OnlineProduct,
-    options?: { variantId?: string; modifierOptionIds?: string[] },
-  ) => Promise<void>;
-  updateQuantity: (lineId: string, quantity: number) => Promise<void>;
-  removeItem: (lineId: string) => Promise<void>;
+    options?: { variantId?: string; modifierOptionIds?: string[]; notes?: string },
+  ) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
+  removeLine: (lineId: string) => void;
+  setLineNotes: (lineId: string, notes: string) => void;
   clearBasket: () => void;
   lineCount: () => number;
 };
 
+function persist(lines: BasketLineMeta[]) {
+  saveBasket(lines);
+}
+
 export const useBasketStore = create<BasketState>((set, get) => ({
-  sessionId: undefined,
-  items: [],
-  syncing: false,
+  lines: [],
+  hydrated: false,
   error: undefined,
 
-  setFromServer: (basket) => {
-    set({
-      sessionId: basket.sessionId,
-      items: basket.items.map((line) => ({
-        id: line.id,
-        productId: line.productId,
-        quantity: line.quantity,
-        modifierOptionIds: line.modifierOptionIds,
-      })),
-    });
+  hydrate: () => {
+    if (get().hydrated) return;
+    set({ lines: loadBasket(), hydrated: true });
   },
 
-  addItem: async (product, options) => {
+  addItem: (product, options) => {
     if (!isProductOrderable(product)) {
       set({ error: 'This item is out of stock' });
       return;
     }
-
-    set({ syncing: true, error: undefined });
-    try {
-      const current = get();
-      const line = {
-        productId: product.id,
-        quantity: 1,
-        variantId: options?.variantId,
-        modifierOptionIds: options?.modifierOptionIds,
-      };
-      const basket = await createOrPatchBasket(
-        current.sessionId
-          ? {
-              sessionId: current.sessionId,
-              action: 'add',
-              item: line,
-            }
-          : {
-              item: line,
-            },
+    const key = lineKey({
+      productId: product.id,
+      variantId: options?.variantId,
+      modifierOptionIds: options?.modifierOptionIds,
+    });
+    const existing = get().lines.find((l) => lineKey(l) === key);
+    let next: BasketLineMeta[];
+    if (existing) {
+      next = get().lines.map((l) =>
+        l.lineId === existing.lineId ? { ...l, quantity: l.quantity + 1 } : l,
       );
-      get().setFromServer(basket);
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to add item' });
-    } finally {
-      set({ syncing: false });
+    } else {
+      next = [...get().lines, buildLineMeta(product, 1, options)];
     }
+    persist(next);
+    set({ lines: next, error: undefined });
   },
 
-  updateQuantity: async (lineId, quantity) => {
+  updateQuantity: (lineId, quantity) => {
     if (quantity < 1) {
       set({ error: 'Quantity must be at least 1' });
       return;
     }
-    const sessionId = get().sessionId;
-    if (!sessionId) return;
-
-    set({ syncing: true, error: undefined });
-    try {
-      const basket = await createOrPatchBasket({
-        sessionId,
-        action: 'update',
-        item: { itemId: lineId, quantity },
-      });
-      get().setFromServer(basket);
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to update quantity' });
-    } finally {
-      set({ syncing: false });
-    }
+    const next = get().lines.map((l) => (l.lineId === lineId ? { ...l, quantity } : l));
+    persist(next);
+    set({ lines: next, error: undefined });
   },
 
-  removeItem: async (lineId) => {
-    const sessionId = get().sessionId;
-    if (!sessionId) return;
+  removeLine: (lineId) => {
+    const next = get().lines.filter((l) => l.lineId !== lineId);
+    persist(next);
+    set({ lines: next, error: undefined });
+  },
 
-    set({ syncing: true, error: undefined });
-    try {
-      const basket = await createOrPatchBasket({
-        sessionId,
-        action: 'remove',
-        item: { itemId: lineId, quantity: 1 },
-      });
-      get().setFromServer(basket);
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to remove item' });
-    } finally {
-      set({ syncing: false });
-    }
+  setLineNotes: (lineId, notes) => {
+    const next = get().lines.map((l) => (l.lineId === lineId ? { ...l, notes } : l));
+    persist(next);
+    set({ lines: next });
   },
 
   clearBasket: () => {
-    set({ sessionId: undefined, items: [], error: undefined });
+    clearBasketStorage();
+    set({ lines: [], error: undefined });
   },
 
-  lineCount: () => get().items.reduce((sum, line) => sum + line.quantity, 0),
+  lineCount: () => get().lines.reduce((sum, line) => sum + line.quantity, 0),
 }));

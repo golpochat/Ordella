@@ -1,0 +1,211 @@
+'use client';
+
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import type { OnlineMenu, OnlineProduct } from '@/lib/api';
+import { isProductOrderable } from '@/lib/api';
+import { useBasketStore } from '@/stores/basket-store';
+
+type SortKey = 'name' | 'price-asc' | 'price-desc';
+
+export function CatalogView({ menu }: { menu: OnlineMenu }) {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') ?? 'all';
+  const addItem = useBasketStore((s) => s.addItem);
+  const error = useBasketStore((s) => s.error);
+
+  const [categoryId, setCategoryId] = useState(initialCategory);
+  const [search, setSearch] = useState('');
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [sort, setSort] = useState<SortKey>('name');
+
+  const products = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = menu.products.filter((item) => {
+      if (categoryId !== 'all' && item.categoryId !== categoryId) return false;
+      if (inStockOnly && !isProductOrderable(item)) return false;
+      if (!q) return true;
+      return (
+        item.name.toLowerCase().includes(q) ||
+        (item.sku?.toLowerCase().includes(q) ?? false) ||
+        (item.barcode?.toLowerCase().includes(q) ?? false)
+      );
+    });
+
+    list = [...list].sort((a, b) => {
+      if (sort === 'price-asc') {
+        return Number.parseFloat(a.price) - Number.parseFloat(b.price);
+      }
+      if (sort === 'price-desc') {
+        return Number.parseFloat(b.price) - Number.parseFloat(a.price);
+      }
+      return a.name.localeCompare(b.name);
+    });
+    return list;
+  }, [menu.products, categoryId, search, inStockOnly, sort]);
+
+  const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return;
+    const trimmed = search.trim();
+    if (!trimmed) return;
+    const match = menu.products.find(
+      (p) => p.barcode === trimmed || p.sku === trimmed,
+    );
+    if (match) {
+      if (match.variants.length || match.modifiers.length) {
+        window.location.href = `/product/${match.id}`;
+      } else if (isProductOrderable(match)) {
+        addItem(match);
+        setSearch('');
+      }
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-6">
+      <h1 className="mb-4 text-3xl font-bold">Catalog</h1>
+      {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+
+      <div className="mb-6 flex flex-col gap-3 lg:flex-row">
+        <Input
+          className="h-12 flex-1 text-base"
+          placeholder="Search name, SKU, or scan barcode…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={onSearchKeyDown}
+        />
+        <select
+          className="h-12 rounded-md border bg-background px-3 text-sm"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortKey)}
+          aria-label="Sort items"
+        >
+          <option value="name">Sort: Name</option>
+          <option value="price-asc">Price: Low to high</option>
+          <option value="price-desc">Price: High to low</option>
+        </select>
+        <label className="flex h-12 items-center gap-2 rounded-md border px-3 text-sm">
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={(e) => setInStockOnly(e.target.checked)}
+          />
+          In stock only
+        </label>
+      </div>
+
+      <div className="flex min-h-[50vh] gap-4">
+        <aside className="hidden w-44 shrink-0 space-y-1 md:block">
+          <Button
+            type="button"
+            variant={categoryId === 'all' ? 'default' : 'ghost'}
+            className="h-11 w-full justify-start"
+            onClick={() => setCategoryId('all')}
+          >
+            All
+          </Button>
+          {menu.categories.map((category) => (
+            <Button
+              key={category.id}
+              type="button"
+              variant={categoryId === category.id ? 'default' : 'ghost'}
+              className="h-11 w-full justify-start text-left"
+              onClick={() => setCategoryId(category.id)}
+            >
+              {category.name}
+            </Button>
+          ))}
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-4 flex gap-2 overflow-x-auto md:hidden">
+            <Button
+              type="button"
+              size="sm"
+              variant={categoryId === 'all' ? 'default' : 'outline'}
+              onClick={() => setCategoryId('all')}
+            >
+              All
+            </Button>
+            {menu.categories.map((category) => (
+              <Button
+                key={category.id}
+                type="button"
+                size="sm"
+                variant={categoryId === category.id ? 'default' : 'outline'}
+                onClick={() => setCategoryId(category.id)}
+              >
+                {category.name}
+              </Button>
+            ))}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {products.map((product) => (
+              <CatalogItemCard key={product.id} product={product} onAdd={addItem} />
+            ))}
+          </div>
+          {products.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground">No items match your filters.</p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CatalogItemCard({
+  product,
+  onAdd,
+}: {
+  product: OnlineProduct;
+  onAdd: (p: OnlineProduct) => void;
+}) {
+  const orderable = isProductOrderable(product);
+  const hasOptions = product.variants.length > 0 || product.modifiers.length > 0;
+
+  return (
+    <Card className={!orderable ? 'opacity-80' : undefined}>
+      <CardContent className="space-y-3 p-4">
+        {product.imageUrl ? (
+          <div className="aspect-video w-full overflow-hidden rounded-md bg-muted">
+            <img
+              src={product.imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : null}
+        <div>
+          <p className="text-lg font-semibold leading-tight">{product.name}</p>
+          {product.description ? (
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{product.description}</p>
+          ) : null}
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="font-semibold">${product.price}</span>
+          {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
+        </div>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="h-11 flex-1">
+            <Link href={`/product/${product.id}`}>Details</Link>
+          </Button>
+          <Button
+            type="button"
+            className="h-11 flex-1"
+            disabled={!orderable}
+            onClick={() =>
+              hasOptions
+                ? (window.location.href = `/product/${product.id}`)
+                : onAdd(product)
+            }
+          >
+            {hasOptions ? 'Choose' : 'Add'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

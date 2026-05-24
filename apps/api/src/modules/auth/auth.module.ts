@@ -30,6 +30,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     TypeOrmModule.forFeature(AUTH_ENTITIES),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
+      global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({

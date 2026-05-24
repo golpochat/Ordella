@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductEntity } from '../../../catalog/entities/product.entity';
 import { VariantEntity } from '../../../catalog/entities/variant.entity';
@@ -39,7 +39,7 @@ import {
 
 @Module({
   imports: [
-    KdsModule,
+    forwardRef(() => KdsModule),
     TypeOrmModule.forFeature([
       OrderEntity,
       OrderItemEntity,
