@@ -9,6 +9,6 @@ import { ReportDefinitionRepository } from '../../repositories/report-definition
   imports: [TypeOrmModule.forFeature([ReportDefinitionEntity])],
   controllers: [ReportDefinitionsController],
   providers: [ReportDefinitionsService, ReportDefinitionRepository],
-  exports: [ReportDefinitionsService, ReportDefinitionRepository],
+  exports: [],
 })
 export class ReportDefinitionsModule {}

@@ -9,6 +9,6 @@ import { AddonRepository } from '../../repositories/addon.repository';
   imports: [TypeOrmModule.forFeature([AddonEntity])],
   controllers: [AddonsController],
   providers: [AddonsService, AddonRepository],
-  exports: [AddonsService, AddonRepository],
+  exports: [],
 })
 export class AddonsModule {}

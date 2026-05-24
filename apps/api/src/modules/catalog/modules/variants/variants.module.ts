@@ -9,6 +9,6 @@ import { VariantRepository } from '../../repositories/variant.repository';
   imports: [TypeOrmModule.forFeature([VariantEntity])],
   controllers: [VariantsController],
   providers: [VariantsService, VariantRepository],
-  exports: [VariantsService, VariantRepository],
+  exports: [],
 })
 export class VariantsModule {}

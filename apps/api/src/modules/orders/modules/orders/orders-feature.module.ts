@@ -22,6 +22,6 @@ import { OrderEventsService } from '../../services/order-events.service';
     OrderStatusHistoryService,
     OrderEventsService,
   ],
-  exports: [OrdersService, OrderRepository, OrderStatusHistoryService, OrderEventsService],
+  exports: [],
 })
 export class OrdersFeatureModule {}

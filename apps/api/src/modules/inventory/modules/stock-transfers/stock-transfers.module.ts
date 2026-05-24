@@ -10,6 +10,6 @@ import { StockTransferRepository } from '../../repositories/stock-transfer.repos
   imports: [TypeOrmModule.forFeature([StockTransferEntity, StockTransferLineEntity])],
   controllers: [StockTransfersController],
   providers: [StockTransfersService, StockTransferRepository],
-  exports: [StockTransfersService, StockTransferRepository],
+  exports: [],
 })
 export class StockTransfersModule {}

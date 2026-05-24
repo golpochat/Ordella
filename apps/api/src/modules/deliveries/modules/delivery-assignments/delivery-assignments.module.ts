@@ -9,6 +9,6 @@ import { DeliveryAssignmentRepository } from '../../repositories/delivery-assign
   imports: [TypeOrmModule.forFeature([DeliveryAssignmentEntity])],
   controllers: [DeliveryAssignmentsController],
   providers: [DeliveryAssignmentsService, DeliveryAssignmentRepository],
-  exports: [DeliveryAssignmentsService, DeliveryAssignmentRepository],
+  exports: [],
 })
 export class DeliveryAssignmentsModule {}

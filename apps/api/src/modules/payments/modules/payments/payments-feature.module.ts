@@ -9,6 +9,6 @@ import { PaymentRepository } from '../../repositories/payment.repository';
   imports: [TypeOrmModule.forFeature([PaymentEntity])],
   controllers: [PaymentsController],
   providers: [PaymentsService, PaymentRepository],
-  exports: [PaymentsService, PaymentRepository],
+  exports: [],
 })
 export class PaymentsFeatureModule {}

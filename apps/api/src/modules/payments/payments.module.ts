@@ -24,12 +24,6 @@ import { PaymentAttemptsModule } from './modules/payment-attempts/payment-attemp
     PaymentMethodsModule,
     PaymentAttemptsModule,
   ],
-  exports: [
-    PaymentsFeatureModule,
-    RefundsModule,
-    PaymentMethodsModule,
-    PaymentAttemptsModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class PaymentsModule {}

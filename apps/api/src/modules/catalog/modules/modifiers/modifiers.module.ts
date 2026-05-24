@@ -11,6 +11,6 @@ import { ModifierOptionRepository } from '../../repositories/modifier-option.rep
   imports: [TypeOrmModule.forFeature([ModifierEntity, ModifierOptionEntity])],
   controllers: [ModifiersController],
   providers: [ModifiersService, ModifierRepository, ModifierOptionRepository],
-  exports: [ModifiersService, ModifierRepository],
+  exports: [],
 })
 export class ModifiersModule {}

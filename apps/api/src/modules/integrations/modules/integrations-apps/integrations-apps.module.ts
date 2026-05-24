@@ -13,6 +13,6 @@ import { IntegrationRepository } from '../../repositories/integration.repository
   imports: [TypeOrmModule.forFeature([IntegrationEntity])],
   controllers: [IntegrationsAppsController, IntegrationsWebhooksController],
   providers: [IntegrationsAppsService, IntegrationsWebhooksService, IntegrationRepository],
-  exports: [IntegrationsAppsService, IntegrationsWebhooksService, IntegrationRepository],
+  exports: [],
 })
 export class IntegrationsAppsModule {}

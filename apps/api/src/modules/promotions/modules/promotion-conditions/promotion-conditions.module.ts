@@ -9,6 +9,6 @@ import { PromotionConditionRepository } from '../../repositories/promotion-condi
   imports: [TypeOrmModule.forFeature([PromotionConditionEntity])],
   controllers: [PromotionConditionsController],
   providers: [PromotionConditionsService, PromotionConditionRepository],
-  exports: [PromotionConditionsService, PromotionConditionRepository],
+  exports: [],
 })
 export class PromotionConditionsModule {}

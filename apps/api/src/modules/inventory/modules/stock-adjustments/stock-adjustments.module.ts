@@ -9,6 +9,6 @@ import { StockAdjustmentRepository } from '../../repositories/stock-adjustment.r
   imports: [TypeOrmModule.forFeature([StockAdjustmentEntity])],
   controllers: [StockAdjustmentsController],
   providers: [StockAdjustmentsService, StockAdjustmentRepository],
-  exports: [StockAdjustmentsService, StockAdjustmentRepository],
+  exports: [],
 })
 export class StockAdjustmentsModule {}

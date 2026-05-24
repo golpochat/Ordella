@@ -24,6 +24,6 @@ import { LocationOpeningHoursRepository } from '../../repositories/location-open
     LocationSettingsRepository,
     LocationOpeningHoursRepository,
   ],
-  exports: [LocationsService, LocationRepository],
+  exports: [],
 })
 export class LocationsFeatureModule {}

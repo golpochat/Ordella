@@ -23,12 +23,6 @@ import { NotificationLogsModule } from './modules/notification-logs/notification
     NotificationsFeatureModule,
     NotificationLogsModule,
   ],
-  exports: [
-    NotificationsFeatureModule,
-    NotificationTemplatesModule,
-    NotificationChannelsModule,
-    NotificationLogsModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class NotificationsModule {}

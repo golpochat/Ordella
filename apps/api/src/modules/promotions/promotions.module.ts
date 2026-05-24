@@ -23,12 +23,6 @@ import { PromotionApplicationsModule } from './modules/promotion-applications/pr
     PromotionConditionsModule,
     PromotionApplicationsModule,
   ],
-  exports: [
-    PromotionsFeatureModule,
-    PromotionRulesModule,
-    PromotionConditionsModule,
-    PromotionApplicationsModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class PromotionsModule {}

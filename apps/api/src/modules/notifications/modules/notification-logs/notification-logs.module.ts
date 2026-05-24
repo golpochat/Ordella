@@ -9,6 +9,6 @@ import { NotificationLogRepository } from '../../repositories/notification-log.r
   imports: [TypeOrmModule.forFeature([NotificationLogEntity])],
   controllers: [NotificationLogsController],
   providers: [NotificationLogsService, NotificationLogRepository],
-  exports: [NotificationLogsService, NotificationLogRepository],
+  exports: [],
 })
 export class NotificationLogsModule {}

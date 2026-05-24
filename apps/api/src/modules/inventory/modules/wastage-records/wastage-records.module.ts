@@ -9,6 +9,6 @@ import { WastageRecordRepository } from '../../repositories/wastage-record.repos
   imports: [TypeOrmModule.forFeature([WastageRecordEntity])],
   controllers: [WastageRecordsController],
   providers: [WastageRecordsService, WastageRecordRepository],
-  exports: [WastageRecordsService, WastageRecordRepository],
+  exports: [],
 })
 export class WastageRecordsModule {}

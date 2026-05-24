@@ -9,6 +9,6 @@ import { NotificationChannelRepository } from '../../repositories/notification-c
   imports: [TypeOrmModule.forFeature([NotificationChannelEntity])],
   controllers: [NotificationChannelsController],
   providers: [NotificationChannelsService, NotificationChannelRepository],
-  exports: [NotificationChannelsService, NotificationChannelRepository],
+  exports: [],
 })
 export class NotificationChannelsModule {}

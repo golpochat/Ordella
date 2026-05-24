@@ -11,6 +11,6 @@ import { DeliveryStatusHistoryRepository } from '../../repositories/delivery-sta
   imports: [TypeOrmModule.forFeature([DeliveryTaskEntity, DeliveryStatusHistoryEntity])],
   controllers: [DeliveriesController],
   providers: [DeliveriesService, DeliveryTaskRepository, DeliveryStatusHistoryRepository],
-  exports: [DeliveriesService, DeliveryTaskRepository, DeliveryStatusHistoryRepository],
+  exports: [],
 })
 export class DeliveryTasksFeatureModule {}

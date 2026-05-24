@@ -9,6 +9,6 @@ import { PromotionRepository } from '../../repositories/promotion.repository';
   imports: [TypeOrmModule.forFeature([PromotionEntity])],
   controllers: [PromotionsController],
   providers: [PromotionsService, PromotionRepository],
-  exports: [PromotionsService, PromotionRepository],
+  exports: [],
 })
 export class PromotionsFeatureModule {}

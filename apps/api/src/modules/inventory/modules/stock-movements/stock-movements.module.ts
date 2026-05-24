@@ -9,6 +9,6 @@ import { StockMovementRepository } from '../../repositories/stock-movement.repos
   imports: [TypeOrmModule.forFeature([StockMovementEntity])],
   controllers: [StockMovementsController],
   providers: [StockMovementsService, StockMovementRepository],
-  exports: [StockMovementsService, StockMovementRepository],
+  exports: [],
 })
 export class StockMovementsModule {}

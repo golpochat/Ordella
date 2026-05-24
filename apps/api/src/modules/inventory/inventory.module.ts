@@ -27,14 +27,6 @@ import { WastageRecordsModule } from './modules/wastage-records/wastage-records.
     StockReservationsModule,
     WastageRecordsModule,
   ],
-  exports: [
-    StockItemsModule,
-    StockMovementsModule,
-    StockAdjustmentsModule,
-    StockTransfersModule,
-    StockReservationsModule,
-    WastageRecordsModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class InventoryModule {}

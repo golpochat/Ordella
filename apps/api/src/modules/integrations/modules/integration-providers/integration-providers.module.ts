@@ -9,6 +9,6 @@ import { IntegrationProviderRepository } from '../../repositories/integration-pr
   imports: [TypeOrmModule.forFeature([IntegrationProviderEntity])],
   controllers: [IntegrationProvidersController],
   providers: [IntegrationProvidersService, IntegrationProviderRepository],
-  exports: [IntegrationProvidersService, IntegrationProviderRepository],
+  exports: [],
 })
 export class IntegrationProvidersModule {}

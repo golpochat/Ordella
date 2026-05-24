@@ -9,6 +9,6 @@ import { NotificationTemplateRepository } from '../../repositories/notification-
   imports: [TypeOrmModule.forFeature([NotificationTemplateEntity])],
   controllers: [NotificationTemplatesController],
   providers: [NotificationTemplatesService, NotificationTemplateRepository],
-  exports: [NotificationTemplatesService, NotificationTemplateRepository],
+  exports: [],
 })
 export class NotificationTemplatesModule {}

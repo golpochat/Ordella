@@ -9,6 +9,6 @@ import { DriverProfileRepository } from '../../repositories/driver-profile.repos
   imports: [TypeOrmModule.forFeature([DriverProfileEntity])],
   controllers: [DriversController],
   providers: [DriversService, DriverProfileRepository],
-  exports: [DriversService, DriverProfileRepository],
+  exports: [],
 })
 export class DriverProfilesModule {}

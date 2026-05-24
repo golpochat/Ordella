@@ -23,6 +23,6 @@ import { LocationsFeatureModule } from './modules/locations/locations.module';
     StoresModule,
     LocationsFeatureModule,
   ],
-  exports: [TenantsFeatureModule, StoresModule, LocationsFeatureModule, TypeOrmModule],
+  exports: [],
 })
 export class TenantsModule {}

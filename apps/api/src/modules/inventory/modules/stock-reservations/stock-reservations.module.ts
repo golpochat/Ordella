@@ -9,6 +9,6 @@ import { StockReservationRepository } from '../../repositories/stock-reservation
   imports: [TypeOrmModule.forFeature([StockReservationEntity])],
   controllers: [StockReservationsController],
   providers: [StockReservationsService, StockReservationRepository],
-  exports: [StockReservationsService, StockReservationRepository],
+  exports: [],
 })
 export class StockReservationsModule {}

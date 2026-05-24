@@ -9,6 +9,6 @@ import { IntegrationEventRepository } from '../../repositories/integration-event
   imports: [TypeOrmModule.forFeature([IntegrationEventEntity])],
   controllers: [IntegrationEventsController],
   providers: [IntegrationEventsService, IntegrationEventRepository],
-  exports: [IntegrationEventsService, IntegrationEventRepository],
+  exports: [],
 })
 export class IntegrationEventsModule {}

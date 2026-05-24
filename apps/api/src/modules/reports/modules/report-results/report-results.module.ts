@@ -9,6 +9,6 @@ import { ReportResultRepository } from '../../repositories/report-result.reposit
   imports: [TypeOrmModule.forFeature([ReportResultEntity])],
   controllers: [ReportResultsController],
   providers: [ReportResultsService, ReportResultRepository],
-  exports: [ReportResultsService, ReportResultRepository],
+  exports: [],
 })
 export class ReportResultsModule {}

@@ -9,6 +9,6 @@ import { IntegrationLogRepository } from '../../repositories/integration-log.rep
   imports: [TypeOrmModule.forFeature([IntegrationLogEntity])],
   controllers: [IntegrationLogsController],
   providers: [IntegrationLogsService, IntegrationLogRepository],
-  exports: [IntegrationLogsService, IntegrationLogRepository],
+  exports: [],
 })
 export class IntegrationLogsModule {}

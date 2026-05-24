@@ -9,6 +9,6 @@ import { ReportRepository } from '../../repositories/report.repository';
   imports: [TypeOrmModule.forFeature([ReportEntity])],
   controllers: [ReportsController],
   providers: [ReportsAnalyticsService, ReportsService, ReportRepository],
-  exports: [ReportsAnalyticsService, ReportsService, ReportRepository],
+  exports: [],
 })
 export class ReportsFeatureModule {}

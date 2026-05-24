@@ -24,13 +24,6 @@ import { AddonsModule } from './modules/addons/addons.module';
     ModifiersModule,
     AddonsModule,
   ],
-  exports: [
-    CategoriesModule,
-    ProductsModule,
-    VariantsModule,
-    ModifiersModule,
-    AddonsModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class CatalogModule {}

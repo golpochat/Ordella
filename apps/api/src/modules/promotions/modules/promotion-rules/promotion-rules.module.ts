@@ -9,6 +9,6 @@ import { PromotionRuleRepository } from '../../repositories/promotion-rule.repos
   imports: [TypeOrmModule.forFeature([PromotionRuleEntity])],
   controllers: [PromotionRulesController],
   providers: [PromotionRulesService, PromotionRuleRepository],
-  exports: [PromotionRulesService, PromotionRuleRepository],
+  exports: [],
 })
 export class PromotionRulesModule {}

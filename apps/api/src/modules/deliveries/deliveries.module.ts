@@ -22,11 +22,6 @@ import { DriverProfilesModule } from './modules/driver-profiles/driver-profiles.
     DeliveryAssignmentsModule,
     DriverProfilesModule,
   ],
-  exports: [
-    DeliveryTasksFeatureModule,
-    DeliveryAssignmentsModule,
-    DriverProfilesModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class DeliveriesModule {}

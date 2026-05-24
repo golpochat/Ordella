@@ -23,12 +23,6 @@ import { IntegrationLogsModule } from './modules/integration-logs/integration-lo
     IntegrationEventsModule,
     IntegrationLogsModule,
   ],
-  exports: [
-    IntegrationsAppsModule,
-    IntegrationProvidersModule,
-    IntegrationEventsModule,
-    IntegrationLogsModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class IntegrationsModule {}

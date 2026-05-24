@@ -19,6 +19,6 @@ import { OrderItemsModule } from './modules/order-items/order-items.module';
     OrdersFeatureModule,
     OrderItemsModule,
   ],
-  exports: [OrdersFeatureModule, OrderItemsModule, TypeOrmModule],
+  exports: [],
 })
 export class OrdersModule {}

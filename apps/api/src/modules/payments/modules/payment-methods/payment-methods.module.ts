@@ -9,6 +9,6 @@ import { PaymentMethodRepository } from '../../repositories/payment-method.repos
   imports: [TypeOrmModule.forFeature([PaymentMethodEntity])],
   controllers: [PaymentMethodsController],
   providers: [PaymentMethodsService, PaymentMethodRepository],
-  exports: [PaymentMethodsService, PaymentMethodRepository],
+  exports: [],
 })
 export class PaymentMethodsModule {}

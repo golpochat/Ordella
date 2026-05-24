@@ -23,12 +23,6 @@ import { ReportResultsModule } from './modules/report-results/report-results.mod
     ReportJobsModule,
     ReportResultsModule,
   ],
-  exports: [
-    ReportsFeatureModule,
-    ReportDefinitionsModule,
-    ReportJobsModule,
-    ReportResultsModule,
-    TypeOrmModule,
-  ],
+  exports: [],
 })
 export class ReportsModule {}

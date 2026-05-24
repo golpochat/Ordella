@@ -9,6 +9,6 @@ import { StockItemRepository } from '../../repositories/stock-item.repository';
   imports: [TypeOrmModule.forFeature([StockItemEntity])],
   controllers: [StockItemsController],
   providers: [StockItemsService, StockItemRepository],
-  exports: [StockItemsService, StockItemRepository],
+  exports: [],
 })
 export class StockItemsModule {}

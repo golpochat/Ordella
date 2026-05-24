@@ -10,6 +10,6 @@ import { UserDeviceEntity } from '../../entities/user-device.entity';
   imports: [TypeOrmModule.forFeature([SessionEntity, UserDeviceEntity])],
   controllers: [SessionsController],
   providers: [SessionsService, SessionRepository],
-  exports: [SessionsService, SessionRepository],
+  exports: [],
 })
 export class SessionsModule {}

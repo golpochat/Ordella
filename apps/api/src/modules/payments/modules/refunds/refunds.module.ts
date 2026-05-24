@@ -9,6 +9,6 @@ import { RefundRepository } from '../../repositories/refund.repository';
   imports: [TypeOrmModule.forFeature([RefundEntity])],
   controllers: [RefundsController],
   providers: [RefundsService, RefundRepository],
-  exports: [RefundsService, RefundRepository],
+  exports: [],
 })
 export class RefundsModule {}
