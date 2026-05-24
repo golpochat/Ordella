@@ -1,3 +1,6 @@
+export * from './order-access.service';
+export * from './order-inventory.service';
+export * from './order-promotions.service';
 export * from './order-events.service';
 export * from './order-items.service';
 export * from './order-status-history.service';

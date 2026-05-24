@@ -15,19 +15,23 @@ export class OrderEventRepository {
     return manager ? manager.getRepository(OrderEventEntity) : this.repository;
   }
 
-  findByOrderId(
+  findByOrderIdForTenant(
+    tenantId: string,
     orderId: string,
     query: FilterPaginationDto,
   ): Promise<OrderEventEntity[]> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
-    return this.repository.find({
-      where: { orderId },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    return this.repository
+      .createQueryBuilder('event')
+      .innerJoin('event.order', 'order')
+      .where('event.orderId = :orderId', { orderId })
+      .andWhere('order.tenantId = :tenantId', { tenantId })
+      .orderBy('event.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
   }
 
   appendEvent(

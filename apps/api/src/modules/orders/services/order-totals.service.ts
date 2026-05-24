@@ -26,7 +26,11 @@ export class OrderTotalsService {
       throw new NotFoundException(`Order ${orderId} not found`);
     }
 
-    const items = await this.orderItemRepository.findByOrderId(orderId, manager);
+    const items = await this.orderItemRepository.findByOrderIdForTenant(
+      tenantId,
+      orderId,
+      manager,
+    );
     const lines = this.mapItemsToCalculatedLines(items);
 
     const context = this.orderPricingService.buildPricingContext(

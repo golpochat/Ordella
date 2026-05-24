@@ -4,6 +4,9 @@ import { TenantContext, AuthenticatedUser } from '../../../common/interfaces';
 import { CreateOrderDto } from '../dto';
 import { OrderResponseDto } from '../dto';
 import { OrderStatus } from '../enums/order-status.enum';
+import { ORDER_CONFIRMED_STATUS } from '../domain/order-lifecycle.constants';
+import { assertValidLineQuantity } from '../domain/order-lifecycle.validation';
+import { throwOrderMissingItems } from '../domain/order-domain.errors';
 import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
 import { generateOrderNumber } from '../domain/order-number.util';
 import { isImmediatePaymentMethod } from '../domain/order-payment.util';
@@ -23,9 +26,6 @@ import {
 } from '../types/draft-order.types';
 import { OrderTransitionContext } from '../types/order-transition.context';
 
-/** CONFIRMED maps to accepted in the order status enum. */
-const CONFIRMED_STATUS = OrderStatus.ACCEPTED;
-
 @Injectable()
 export class OrderCreationService {
   constructor(
@@ -42,6 +42,14 @@ export class OrderCreationService {
     dto: CreateOrderDto,
     user?: AuthenticatedUser,
   ): Promise<OrderResponseDto> {
+    if (!dto.items?.length) {
+      throwOrderMissingItems();
+    }
+
+    for (const item of dto.items) {
+      assertValidLineQuantity(item.quantity);
+    }
+
     const pricingContext = this.orderPricingService.buildPricingContext(
       tenant,
       dto.locationId,
@@ -107,7 +115,7 @@ export class OrderCreationService {
           tenant,
           persistedOrder,
           items,
-          CONFIRMED_STATUS,
+          ORDER_CONFIRMED_STATUS,
           ctx,
         );
         await this.orderRepository.save(persistedOrder, manager);

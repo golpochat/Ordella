@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { assertValidLineQuantity } from '../domain/order-lifecycle.validation';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
@@ -50,6 +51,8 @@ export class OrderPricingService {
     pricingContext: OrderPricingContext,
   ): Promise<CalculatedLineItem> {
     const { productId, quantity, variantId, modifierOptionIds = [], notes } = input;
+
+    assertValidLineQuantity(quantity);
 
     const unitPrice = await this.resolveUnitPrice(tenant, productId, variantId);
     const modifiers = await this.resolveModifierSelections(modifierOptionIds);

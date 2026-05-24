@@ -16,7 +16,11 @@ export class OrderStatusHistoryService {
     orderId: string,
     query: FilterPaginationDto,
   ): Promise<OrderStatusHistoryResponseDto[]> {
-    const rows = await this.repository.findByOrderId(orderId, query);
+    const rows = await this.repository.findByOrderIdForTenant(
+      tenant.tenantId,
+      orderId,
+      query,
+    );
     return rows.map(toOrderStatusHistoryResponseDto);
   }
 

@@ -18,19 +18,23 @@ export class OrderStatusHistoryRepository {
       : this.repository;
   }
 
-  findByOrderId(
+  findByOrderIdForTenant(
+    tenantId: string,
     orderId: string,
     query: FilterPaginationDto,
   ): Promise<OrderStatusHistoryEntity[]> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
 
-    return this.repository.find({
-      where: { orderId },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    return this.repository
+      .createQueryBuilder('history')
+      .innerJoin('history.order', 'order')
+      .where('history.orderId = :orderId', { orderId })
+      .andWhere('order.tenantId = :tenantId', { tenantId })
+      .orderBy('history.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
   }
 
   appendTransition(

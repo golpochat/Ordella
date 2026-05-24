@@ -2,6 +2,10 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
 import { PaymentsService } from '../integrations/payments.service';
+import {
+  isPaymentConfirmIdempotent,
+  isPaymentRefundIdempotent,
+} from '../domain/order-lifecycle.idempotency';
 import { OrderPaymentContext } from '../types/order-payment.context';
 
 /**
@@ -18,7 +22,7 @@ export class OrderPaymentService {
     context: OrderPaymentContext,
     order: OrderEntity,
   ): Promise<void> {
-    if (order.paymentStatus === OrderPaymentStatus.PAID) {
+    if (isPaymentConfirmIdempotent(order)) {
       return;
     }
 
@@ -40,6 +44,10 @@ export class OrderPaymentService {
     context: OrderPaymentContext,
     order: OrderEntity,
   ): Promise<void> {
+    if (isPaymentRefundIdempotent(order)) {
+      return;
+    }
+
     const result = await this.paymentsService.refund(context);
 
     if (result.status === 'failed') {

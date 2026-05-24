@@ -21,8 +21,34 @@ export class OrderItemRepository {
     });
   }
 
+  findByIdForTenant(
+    tenantId: string,
+    id: string,
+    manager?: EntityManager,
+  ): Promise<OrderItemEntity | null> {
+    return this.repo(manager)
+      .createQueryBuilder('item')
+      .innerJoinAndSelect('item.order', 'order')
+      .where('item.id = :id', { id })
+      .andWhere('order.tenantId = :tenantId', { tenantId })
+      .getOne();
+  }
+
   findByOrderId(orderId: string, manager?: EntityManager): Promise<OrderItemEntity[]> {
     return this.repo(manager).find({ where: { orderId } });
+  }
+
+  findByOrderIdForTenant(
+    tenantId: string,
+    orderId: string,
+    manager?: EntityManager,
+  ): Promise<OrderItemEntity[]> {
+    return this.repo(manager)
+      .createQueryBuilder('item')
+      .innerJoin('item.order', 'order')
+      .where('item.orderId = :orderId', { orderId })
+      .andWhere('order.tenantId = :tenantId', { tenantId })
+      .getMany();
   }
 
   save(item: OrderItemEntity, manager?: EntityManager): Promise<OrderItemEntity> {

@@ -1,4 +1,5 @@
 import { OrderStatus } from '../enums/order-status.enum';
+import { throwInvalidOrderStatusTransition } from './order-domain.errors';
 
 /** Valid status transitions (API Spec §5.7 + pickup shortcut to completed). */
 export const ORDER_STATUS_TRANSITIONS: Readonly<
@@ -52,7 +53,10 @@ export function assertOrderStatusTransition(
   from: OrderStatus,
   to: OrderStatus,
 ): void {
+  if (from === to) {
+    return;
+  }
   if (!canTransitionOrderStatus(from, to)) {
-    throw new Error(`Invalid order status transition: ${from} → ${to}`);
+    throwInvalidOrderStatusTransition(from, to);
   }
 }

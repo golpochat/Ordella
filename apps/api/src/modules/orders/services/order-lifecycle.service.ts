@@ -1,23 +1,30 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderStatus } from '../enums/order-status.enum';
 import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
 import { OrderNotificationType } from '../enums/order-notification-type.enum';
+import { assertOrderStatusTransition } from '../domain/order-lifecycle.transitions';
+import { ORDER_CONFIRMED_STATUS } from '../domain/order-lifecycle.constants';
 import {
-  canTransitionOrderStatus,
-  isTerminalOrderStatus,
-} from '../domain/order-lifecycle.transitions';
+  assertNotTransitioningFromTerminal,
+  resolveStatusTransition,
+} from '../domain/order-lifecycle.idempotency';
+import {
+  assertOrderHasItems,
+  assertOrderTenantScope,
+} from '../domain/order-lifecycle.validation';
 import { orderStatusToEventType } from '../domain/order-status-event-type.mapper';
 import { OrderEventTypes } from '../constants/order-events.constants';
-import { InventoryService, PromotionsService } from '../integrations';
 import { OrderEventsService } from './order-events.service';
 import { OrderStatusHistoryService } from './order-status-history.service';
 import { OrderPaymentService } from './order-payment.service';
 import { OrderDeliveryService } from './order-delivery.service';
 import { OrderNotificationService } from './order-notification.service';
 import { OrderReportingService } from './order-reporting.service';
+import { OrderInventoryService } from './order-inventory.service';
+import { OrderPromotionsService } from './order-promotions.service';
 import { OrderReportingEventType } from '../enums/order-reporting-event-type.enum';
 import { buildOrderReportingPayload } from '../domain/order-reporting-payload.util';
 import { OrderTransitionContext } from '../types/order-transition.context';
@@ -25,16 +32,13 @@ import { OrderInventoryContext } from '../types/order-inventory.context';
 import { OrderPaymentContext } from '../types/order-payment.context';
 import { OrderDeliveryContext } from '../types/order-delivery.context';
 
-/** Business "confirmed" step — inventory deduct and payment capture run on this status. */
-const CONFIRMED_STATUS = OrderStatus.ACCEPTED;
-
 @Injectable()
 export class OrderLifecycleService {
   constructor(
     private readonly statusHistoryService: OrderStatusHistoryService,
     private readonly orderEventsService: OrderEventsService,
-    private readonly promotionsService: PromotionsService,
-    private readonly inventoryService: InventoryService,
+    private readonly orderInventoryService: OrderInventoryService,
+    private readonly orderPromotionsService: OrderPromotionsService,
     private readonly orderPaymentService: OrderPaymentService,
     private readonly orderDeliveryService: OrderDeliveryService,
     private readonly orderNotificationService: OrderNotificationService,
@@ -42,11 +46,7 @@ export class OrderLifecycleService {
   ) {}
 
   assertCanTransition(from: OrderStatus, to: OrderStatus): void {
-    if (!canTransitionOrderStatus(from, to)) {
-      throw new BadRequestException(
-        `Cannot transition order from "${from}" to "${to}"`,
-      );
-    }
+    assertOrderStatusTransition(from, to);
   }
 
   async onOrderCreated(
@@ -55,6 +55,9 @@ export class OrderLifecycleService {
     items: OrderItemEntity[],
     ctx: OrderTransitionContext = {},
   ): Promise<void> {
+    assertOrderTenantScope(order, tenant.tenantId);
+    assertOrderHasItems(items);
+
     order.paymentStatus = OrderPaymentStatus.UNPAID;
 
     await this.recordStatusChange(tenant, order.id, null, OrderStatus.PENDING, ctx);
@@ -69,7 +72,7 @@ export class OrderLifecycleService {
       order,
     );
 
-    await this.inventoryService.reserve(
+    await this.orderInventoryService.reserve(
       this.buildInventoryContext(tenant, order, items, null, OrderStatus.PENDING),
     );
 
@@ -106,19 +109,19 @@ export class OrderLifecycleService {
     toStatus: OrderStatus,
     ctx: OrderTransitionContext = {},
   ): Promise<OrderEntity> {
+    assertOrderTenantScope(order, tenant.tenantId);
+    assertOrderHasItems(items);
+
     const fromStatus = order.status;
 
-    if (fromStatus === toStatus) {
+    if (resolveStatusTransition(fromStatus, toStatus) === 'noop') {
       return order;
     }
 
-    if (isTerminalOrderStatus(fromStatus)) {
-      throw new BadRequestException(`Order is in terminal status "${fromStatus}"`);
-    }
-
+    assertNotTransitioningFromTerminal(fromStatus, toStatus);
     this.assertCanTransition(fromStatus, toStatus);
 
-    if (toStatus === CONFIRMED_STATUS) {
+    if (toStatus === ORDER_CONFIRMED_STATUS) {
       await this.runPaymentForTransition(tenant, order, items, fromStatus, toStatus);
     }
 
@@ -196,7 +199,7 @@ export class OrderLifecycleService {
   ): Promise<void> {
     const paymentCtx = this.buildPaymentContext(tenant, order, items, fromStatus, toStatus);
 
-    if (toStatus === CONFIRMED_STATUS) {
+    if (toStatus === ORDER_CONFIRMED_STATUS) {
       await this.orderPaymentService.confirmOnAccepted(paymentCtx, order);
       return;
     }
@@ -261,23 +264,23 @@ export class OrderLifecycleService {
       toStatus,
     );
 
-    if (toStatus === CONFIRMED_STATUS) {
-      await this.inventoryService.deduct(inventoryCtx);
+    if (toStatus === ORDER_CONFIRMED_STATUS) {
+      await this.orderInventoryService.deduct(inventoryCtx);
       return;
     }
 
     if (toStatus === OrderStatus.CANCELLED) {
-      await this.inventoryService.releaseOrRestore(inventoryCtx);
+      await this.orderInventoryService.releaseOrRestore(inventoryCtx);
       return;
     }
 
     if (toStatus === OrderStatus.REFUNDED) {
-      await this.inventoryService.restoreForRefund(inventoryCtx);
+      await this.orderInventoryService.restoreForRefund(inventoryCtx);
       return;
     }
 
     if (toStatus === OrderStatus.FAILED) {
-      await this.inventoryService.releaseOrRestore(inventoryCtx);
+      await this.orderInventoryService.releaseOrRestore(inventoryCtx);
     }
   }
 
@@ -301,23 +304,7 @@ export class OrderLifecycleService {
           ),
           order,
         );
-        await this.promotionsService.applyPromotions({
-          tenant,
-          order,
-          items,
-          lines: [],
-          draftTotals: {
-            subtotal: order.subtotal,
-            discountTotal: '0.00',
-            taxTotal: order.tax,
-            serviceChargeTotal: '0.00',
-            deliveryFee: '0.00',
-            grandTotal: order.total,
-            promotionIds: [],
-            appliedPromotions: [],
-          },
-          action: 'void',
-        });
+        await this.orderPromotionsService.voidOnCancel(tenant, order, items);
         break;
 
       case OrderStatus.FAILED:

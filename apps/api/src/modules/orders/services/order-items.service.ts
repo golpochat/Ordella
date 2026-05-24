@@ -1,27 +1,31 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
 import { CreateOrderItemDto } from '../dto';
 import { UpdateOrderItemDto } from '../dto';
 import { OrderItemResponseDto } from '../dto';
 import { OrderStatus } from '../enums/order-status.enum';
+import { assertValidLineQuantity } from '../domain/order-lifecycle.validation';
+import { throwOrderItemNotFound, throwOrderNotEditable } from '../domain/order-domain.errors';
 import { toOrderItemResponseDto } from '../mappers/order.mapper';
-import { OrderRepository } from '../repositories/order.repository';
 import { OrderItemRepository } from '../repositories/order-item.repository';
 import { OrderPricingService } from './order-pricing.service';
 import { OrderTotalsService } from './order-totals.service';
+import { OrderAccessService } from './order-access.service';
 
 @Injectable()
 export class OrderItemsService {
   constructor(
     private readonly dataSource: DataSource,
-    private readonly orderRepository: OrderRepository,
+    private readonly orderAccessService: OrderAccessService,
     private readonly orderItemRepository: OrderItemRepository,
     private readonly orderPricingService: OrderPricingService,
     private readonly orderTotalsService: OrderTotalsService,
   ) {}
 
   async create(tenant: TenantContext, dto: CreateOrderItemDto): Promise<OrderItemResponseDto> {
+    assertValidLineQuantity(dto.quantity);
+
     const order = await this.requireEditableOrder(tenant.tenantId, dto.orderId);
     const pricingContext = this.orderPricingService.buildPricingContext(
       tenant,
@@ -66,14 +70,15 @@ export class OrderItemsService {
     id: string,
     dto: UpdateOrderItemDto,
   ): Promise<OrderItemResponseDto> {
-    const existing = await this.orderItemRepository.findById(id);
-    if (!existing?.order || existing.order.tenantId !== tenant.tenantId) {
-      throw new NotFoundException(`Order item ${id} not found`);
+    const existing = await this.orderItemRepository.findByIdForTenant(tenant.tenantId, id);
+    if (!existing) {
+      throwOrderItemNotFound(id);
     }
 
     await this.requireEditableOrder(tenant.tenantId, existing.orderId);
 
     if (dto.quantity !== undefined) {
+      assertValidLineQuantity(dto.quantity);
       existing.quantity = dto.quantity;
     }
     if (dto.notes !== undefined) {
@@ -94,9 +99,9 @@ export class OrderItemsService {
   }
 
   async remove(tenant: TenantContext, id: string): Promise<void> {
-    const existing = await this.orderItemRepository.findById(id);
-    if (!existing?.order || existing.order.tenantId !== tenant.tenantId) {
-      throw new NotFoundException(`Order item ${id} not found`);
+    const existing = await this.orderItemRepository.findByIdForTenant(tenant.tenantId, id);
+    if (!existing) {
+      throwOrderItemNotFound(id);
     }
 
     await this.requireEditableOrder(tenant.tenantId, existing.orderId);
@@ -112,14 +117,9 @@ export class OrderItemsService {
   }
 
   private async requireEditableOrder(tenantId: string, orderId: string) {
-    const order = await this.orderRepository.findByIdForTenant(tenantId, orderId);
-    if (!order) {
-      throw new NotFoundException(`Order ${orderId} not found`);
-    }
+    const order = await this.orderAccessService.requireOrder(tenantId, orderId);
     if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException(
-        `Order items can only be modified while status is "${OrderStatus.PENDING}"`,
-      );
+      throwOrderNotEditable(order.status);
     }
     return order;
   }

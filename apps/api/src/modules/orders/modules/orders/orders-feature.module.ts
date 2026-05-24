@@ -20,6 +20,9 @@ import { OrderPaymentService } from '../../services/order-payment.service';
 import { OrderDeliveryService } from '../../services/order-delivery.service';
 import { OrderNotificationService } from '../../services/order-notification.service';
 import { OrderReportingService } from '../../services/order-reporting.service';
+import { OrderAccessService } from '../../services/order-access.service';
+import { OrderInventoryService } from '../../services/order-inventory.service';
+import { OrderPromotionsService } from '../../services/order-promotions.service';
 import { OrderTotalsService } from '../../services/order-totals.service';
 import { OrderFeeCalculatorService } from '../../pricing/order-fee-calculator.service';
 import {
@@ -57,6 +60,9 @@ import {
     OrderDeliveryService,
     OrderNotificationService,
     OrderReportingService,
+    OrderAccessService,
+    OrderInventoryService,
+    OrderPromotionsService,
     OrderTotalsService,
     OrderFeeCalculatorService,
     PromotionsService,
