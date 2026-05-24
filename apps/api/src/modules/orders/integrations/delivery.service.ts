@@ -1,36 +1,52 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TenantContext } from '../../../common/interfaces';
-import { OrderEntity } from '../entities/order.entity';
 import { OrderType } from '../enums/order-type.enum';
+import { OrderDeliveryContext } from '../types/order-delivery.context';
 
 export interface CreateDeliveryTaskResult {
   taskId: string | null;
 }
 
-/** Placeholder for DeliveriesModule — no external integration. */
+export interface AssignDriverResult {
+  driverId: string | null;
+}
+
+/** Placeholder for DeliveriesModule — no routing or driver tracking. */
 @Injectable()
 export class DeliveryService {
   private readonly logger = new Logger(DeliveryService.name);
 
-  async createTask(
-    tenant: TenantContext,
-    order: OrderEntity,
-  ): Promise<CreateDeliveryTaskResult> {
-    if (order.orderType !== OrderType.DELIVERY) {
+  async createTask(context: OrderDeliveryContext): Promise<CreateDeliveryTaskResult> {
+    if (context.order.orderType !== OrderType.DELIVERY) {
       return { taskId: null };
     }
     this.logger.debug(
-      `[placeholder] DeliveryService.createTask tenant=${tenant.tenantId} order=${order.id}`,
+      `[placeholder] DeliveryService.createTask tenant=${context.tenant.tenantId} order=${context.order.id}`,
     );
     return { taskId: null };
   }
 
-  async assignDriver(tenant: TenantContext, order: OrderEntity): Promise<void> {
-    if (order.orderType !== OrderType.DELIVERY) {
+  async assignDriver(context: OrderDeliveryContext): Promise<AssignDriverResult> {
+    if (context.order.orderType !== OrderType.DELIVERY) {
+      return { driverId: null };
+    }
+    this.logger.debug(
+      `[placeholder] DeliveryService.assignDriver tenant=${context.tenant.tenantId} order=${context.order.id}`,
+    );
+    return { driverId: null };
+  }
+
+  async markOutForDelivery(context: OrderDeliveryContext): Promise<void> {
+    if (context.order.orderType !== OrderType.DELIVERY) {
       return;
     }
     this.logger.debug(
-      `[placeholder] DeliveryService.assignDriver tenant=${tenant.tenantId} order=${order.id}`,
+      `[placeholder] DeliveryService.markOutForDelivery tenant=${context.tenant.tenantId} order=${context.order.id} ${context.fromStatus}→${context.toStatus}`,
+    );
+  }
+
+  async markDelivered(context: OrderDeliveryContext): Promise<void> {
+    this.logger.debug(
+      `[placeholder] DeliveryService.markDelivered tenant=${context.tenant.tenantId} order=${context.order.id} type=${context.order.orderType}`,
     );
   }
 }

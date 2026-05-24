@@ -14,6 +14,8 @@ import { OrderRepository } from '../repositories/order.repository';
 import { OrderItemRepository } from '../repositories/order-item.repository';
 import { OrderPricingService } from './order-pricing.service';
 import { OrderLifecycleService } from './order-lifecycle.service';
+import { OrderDeliveryService } from './order-delivery.service';
+import { OrderType } from '../enums/order-type.enum';
 import {
   CalculatedLineItem,
   DraftOrderTotals,
@@ -32,6 +34,7 @@ export class OrderCreationService {
     private readonly orderItemRepository: OrderItemRepository,
     private readonly orderPricingService: OrderPricingService,
     private readonly orderLifecycleService: OrderLifecycleService,
+    private readonly orderDeliveryService: OrderDeliveryService,
   ) {}
 
   async createOrder(
@@ -50,6 +53,16 @@ export class OrderCreationService {
       dto.items,
       pricingContext,
     );
+
+    this.orderDeliveryService.assertDeliveryDetailsForCreate(
+      dto.orderType,
+      dto.deliveryDetails,
+    );
+
+    const deliveryDetails =
+      dto.orderType === OrderType.DELIVERY && dto.deliveryDetails
+        ? this.orderDeliveryService.toDeliveryDetailsSnapshot(dto.deliveryDetails)
+        : null;
 
     const draftTotals = this.orderPricingService.calculateOrderTotals(lines, pricingContext);
 
@@ -70,6 +83,7 @@ export class OrderCreationService {
           tax: columns.tax,
           total: columns.total,
           orderNumber: generateOrderNumber(),
+          deliveryDetails,
         },
         manager,
       );

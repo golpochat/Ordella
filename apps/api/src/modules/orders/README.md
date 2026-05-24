@@ -23,13 +23,15 @@ Order lifecycle per **SRS** and **API Spec §5** (blueprint Orders Service).
 
 ## Status flow (API Spec §5.7)
 
-`pending` → `accepted` → `preparing` → `ready` → `dispatched` → `delivered` → `refunded`  
-`accepted` is the confirmed step (inventory deduct). `ready` may skip to `delivered` (pickup / dine-in).  
-Terminal: `delivered`, `refunded`, `cancelled`, `failed`
+`pending` → `accepted` → `preparing` → `ready` → `out_for_delivery` → `completed` → `refunded`  
+`accepted` is the confirmed step (inventory deduct + payment). `ready` may skip to `completed` (pickup / dine-in).  
+Terminal: `completed`, `refunded`, `cancelled`, `failed`
 
 Inventory placeholders (`integrations/inventory.service.ts`): soft `reserve` on create, `deduct` on `accepted`, `releaseOrRestore` on `cancelled`/`failed`, `restoreForRefund` on `refunded`.
 
 Payment placeholders: `authorizeOrCapture` on `accepted` (CONFIRMED), `refund` on `refunded`. Order `paymentStatus`: `unpaid` → `paid` → `refunded`. CASH/POS on create auto-transitions to `accepted`.
+
+Delivery placeholders: on `ready` (delivery orders) → `createTask` + `assignDriver`; `out_for_delivery` → `markOutForDelivery`; `completed` → `markDelivered`. Create delivery orders with `deliveryDetails` (fee via `OrderFeeCalculatorService`).
 
 Lifecycle rules live in `domain/order-lifecycle.transitions.ts`.  
 `OrderCreationService.createOrder()` handles line pricing, draft totals, promotions, and persistence.  

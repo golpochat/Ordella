@@ -3,7 +3,6 @@ import { TenantContext } from '../../../common/interfaces';
 import { OrderEntity } from '../entities/order.entity';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderStatus } from '../enums/order-status.enum';
-import { OrderType } from '../enums/order-type.enum';
 import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
 import {
   canTransitionOrderStatus,
@@ -11,18 +10,15 @@ import {
 } from '../domain/order-lifecycle.transitions';
 import { orderStatusToEventType } from '../domain/order-status-event-type.mapper';
 import { OrderEventTypes } from '../constants/order-events.constants';
-import {
-  DeliveryService,
-  InventoryService,
-  NotificationsService,
-  PromotionsService,
-} from '../integrations';
+import { InventoryService, NotificationsService, PromotionsService } from '../integrations';
 import { OrderEventsService } from './order-events.service';
 import { OrderStatusHistoryService } from './order-status-history.service';
 import { OrderPaymentService } from './order-payment.service';
+import { OrderDeliveryService } from './order-delivery.service';
 import { OrderTransitionContext } from '../types/order-transition.context';
 import { OrderInventoryContext } from '../types/order-inventory.context';
 import { OrderPaymentContext } from '../types/order-payment.context';
+import { OrderDeliveryContext } from '../types/order-delivery.context';
 
 /** Business "confirmed" step — inventory deduct and payment capture run on this status. */
 const CONFIRMED_STATUS = OrderStatus.ACCEPTED;
@@ -35,7 +31,7 @@ export class OrderLifecycleService {
     private readonly promotionsService: PromotionsService,
     private readonly inventoryService: InventoryService,
     private readonly orderPaymentService: OrderPaymentService,
-    private readonly deliveryService: DeliveryService,
+    private readonly orderDeliveryService: OrderDeliveryService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -117,6 +113,7 @@ export class OrderLifecycleService {
     );
 
     await this.runInventoryForTransition(tenant, order, items, fromStatus, toStatus);
+    await this.runDeliveryForTransition(tenant, order, items, fromStatus, toStatus);
 
     if (toStatus === OrderStatus.REFUNDED) {
       await this.runPaymentForTransition(tenant, order, items, fromStatus, toStatus);
@@ -182,6 +179,46 @@ export class OrderLifecycleService {
     }
   }
 
+  private buildDeliveryContext(
+    tenant: TenantContext,
+    order: OrderEntity,
+    items: OrderItemEntity[],
+    fromStatus: OrderStatus,
+    toStatus: OrderStatus,
+  ): OrderDeliveryContext {
+    return { tenant, order, items, fromStatus, toStatus };
+  }
+
+  private async runDeliveryForTransition(
+    tenant: TenantContext,
+    order: OrderEntity,
+    items: OrderItemEntity[],
+    fromStatus: OrderStatus,
+    toStatus: OrderStatus,
+  ): Promise<void> {
+    const deliveryCtx = this.buildDeliveryContext(
+      tenant,
+      order,
+      items,
+      fromStatus,
+      toStatus,
+    );
+
+    if (toStatus === OrderStatus.READY) {
+      await this.orderDeliveryService.onOrderReady(deliveryCtx, order);
+      return;
+    }
+
+    if (toStatus === OrderStatus.OUT_FOR_DELIVERY) {
+      await this.orderDeliveryService.onOutForDelivery(deliveryCtx);
+      return;
+    }
+
+    if (toStatus === OrderStatus.COMPLETED) {
+      await this.orderDeliveryService.onCompleted(deliveryCtx);
+    }
+  }
+
   private async runInventoryForTransition(
     tenant: TenantContext,
     order: OrderEntity,
@@ -225,18 +262,6 @@ export class OrderLifecycleService {
     toStatus: OrderStatus,
   ): Promise<void> {
     switch (toStatus) {
-      case CONFIRMED_STATUS:
-        if (order.orderType === OrderType.DELIVERY) {
-          await this.deliveryService.createTask(tenant, order);
-        }
-        break;
-
-      case OrderStatus.READY:
-        if (order.orderType === OrderType.DELIVERY) {
-          await this.deliveryService.assignDriver(tenant, order);
-        }
-        break;
-
       case OrderStatus.CANCELLED:
         await this.orderPaymentService.refundOnCancelled(
           this.buildPaymentContext(

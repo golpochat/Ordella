@@ -38,6 +38,7 @@ export function toOrderResponseDto(
     tax: entity.tax,
     total: entity.total,
     orderNumber: entity.orderNumber,
+    deliveryDetails: entity.deliveryDetails,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
   };

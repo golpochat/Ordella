@@ -6,4 +6,5 @@ export * from './order-lifecycle.service';
 export * from './order-creation.service';
 export * from './order-pricing.service';
 export * from './order-payment.service';
+export * from './order-delivery.service';
 export * from './order-totals.service';

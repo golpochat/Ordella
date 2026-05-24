@@ -3,6 +3,7 @@ import { OrderStatus } from '../enums/order-status.enum';
 import { OrderType } from '../enums/order-type.enum';
 import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
 import { OrderPaymentMethod } from '../enums/order-payment-method.enum';
+import { OrderDeliveryDetails } from '../types/order-delivery-details.types';
 import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { OrderItemEntity } from './order-item.entity';
 import { OrderStatusHistoryEntity } from './order-status-history.entity';
@@ -47,6 +48,9 @@ export class OrderEntity extends BaseTenantScopedEntity {
 
   @Column({ name: 'order_number', type: 'varchar', length: 32, nullable: true })
   orderNumber!: string | null;
+
+  @Column({ name: 'delivery_details', type: 'jsonb', nullable: true })
+  deliveryDetails!: OrderDeliveryDetails | null;
 
   @OneToMany(() => OrderItemEntity, (item) => item.order)
   items!: OrderItemEntity[];

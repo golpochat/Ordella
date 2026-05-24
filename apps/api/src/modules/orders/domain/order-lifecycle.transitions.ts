@@ -1,6 +1,6 @@
-import { OrderStatus } from "../enums/order-status.enum";
+import { OrderStatus } from '../enums/order-status.enum';
 
-/** Valid status transitions (API Spec §5.7 + pickup shortcut to delivered). */
+/** Valid status transitions (API Spec §5.7 + pickup shortcut to completed). */
 export const ORDER_STATUS_TRANSITIONS: Readonly<
   Record<OrderStatus, readonly OrderStatus[]>
 > = {
@@ -16,19 +16,19 @@ export const ORDER_STATUS_TRANSITIONS: Readonly<
   ],
   [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
   [OrderStatus.READY]: [
-    OrderStatus.DISPATCHED,
-    OrderStatus.DELIVERED,
+    OrderStatus.OUT_FOR_DELIVERY,
+    OrderStatus.COMPLETED,
     OrderStatus.CANCELLED,
   ],
-  [OrderStatus.DISPATCHED]: [OrderStatus.DELIVERED, OrderStatus.FAILED],
-  [OrderStatus.DELIVERED]: [OrderStatus.REFUNDED],
+  [OrderStatus.OUT_FOR_DELIVERY]: [OrderStatus.COMPLETED, OrderStatus.FAILED],
+  [OrderStatus.COMPLETED]: [OrderStatus.REFUNDED],
   [OrderStatus.REFUNDED]: [],
   [OrderStatus.CANCELLED]: [],
   [OrderStatus.FAILED]: [],
 };
 
 export const ORDER_TERMINAL_STATUSES: readonly OrderStatus[] = [
-  OrderStatus.DELIVERED,
+  OrderStatus.COMPLETED,
   OrderStatus.REFUNDED,
   OrderStatus.CANCELLED,
   OrderStatus.FAILED,

@@ -5,11 +5,13 @@ import {
   IsEnum,
   IsOptional,
   IsUUID,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { OrderType } from '../../enums/order-type.enum';
 import { OrderPaymentMethod } from '../../enums/order-payment-method.enum';
 import { CreateOrderNestedItemDto } from './create-order-nested-item.dto';
+import { CreateOrderDeliveryDetailsDto } from './create-order-delivery-details.dto';
 
 /** API Spec §5.1 POST /api/v1/orders */
 export class CreateOrderDto {
@@ -26,6 +28,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsEnum(OrderPaymentMethod)
   paymentMethod?: OrderPaymentMethod;
+
+  @ValidateIf((dto: CreateOrderDto) => dto.orderType === OrderType.DELIVERY)
+  @ValidateNested()
+  @Type(() => CreateOrderDeliveryDetailsDto)
+  deliveryDetails?: CreateOrderDeliveryDetailsDto;
 
   @IsArray()
   @ArrayMinSize(1)
