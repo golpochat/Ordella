@@ -16,6 +16,7 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
 import { PosModule } from './modules/pos/pos.module';
 import { OnlineModule } from './modules/online/online.module';
 import { KdsModule } from './modules/kds/kds.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { KdsModule } from './modules/kds/kds.module';
     PosModule,
     OnlineModule,
     KdsModule,
+    AdminModule,
   ],
 })
 export class AppModule implements NestModule {
