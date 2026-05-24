@@ -33,6 +33,14 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        surface: {
+          DEFAULT: 'hsl(var(--surface))',
+        },
+      },
+      fontSize: {
+        sm: 'var(--font-size-sm)',
+        md: 'var(--font-size-md)',
+        lg: 'var(--font-size-lg)',
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -1,4 +1,3 @@
-import type { ApiClient } from '@shared-utils';
 import {
   fetchTenantList,
   switchTenantContext,

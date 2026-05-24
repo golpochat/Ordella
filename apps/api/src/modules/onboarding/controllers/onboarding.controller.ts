@@ -18,7 +18,7 @@ import { OnboardingStep } from '../enums/onboarding-step.enum';
 import { InviteStaffDto, AssignStaffRoleDto, UpdateStaffStatusDto } from '../dto/staff.dto';
 import { TenantSignupDto } from '../dto/tenant-signup.dto';
 import { UpdateBillingDto } from '../dto/update-billing.dto';
-import { UpdateBrandingDto, UpdateLogoDto } from '../dto/update-branding.dto';
+import { UpdateBrandingDto, UpdateIconDto, UpdateLogoDto } from '../dto/update-branding.dto';
 import { SwitchTenantDto } from '../dto/switch-tenant.dto';
 import { OnboardingWizardService } from '../services/onboarding-wizard.service';
 import { StaffManagementService } from '../services/staff-management.service';
@@ -140,7 +140,7 @@ export class OnboardingController {
   @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
   @RequirePermissions(OnboardingPermissionKeys.TENANT_BRANDING_UPDATE)
   async getBranding(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown>> {
-    const data = await this.brandingService.getBranding(tenant.tenantId);
+    const data = await this.brandingService.getTheme(tenant.tenantId);
     return { success: true, data };
   }
 
@@ -165,6 +165,18 @@ export class OnboardingController {
     @Body() dto: UpdateLogoDto,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.brandingService.updateLogo(user, tenant, dto.logoUrl);
+    return { success: true, data };
+  }
+
+  @Patch('branding/icon')
+  @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+  @RequirePermissions(OnboardingPermissionKeys.TENANT_BRANDING_UPDATE)
+  async updateIcon(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpdateIconDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.brandingService.updateIcon(user, tenant, dto.iconUrl);
     return { success: true, data };
   }
 

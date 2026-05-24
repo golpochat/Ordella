@@ -57,6 +57,10 @@ export class OnboardingRepository {
     return this.tenantRepo(manager).findOne({ where: { slug } });
   }
 
+  async findTenantBySubdomain(subdomain: string): Promise<TenantEntity | null> {
+    return this.tenants.findOne({ where: { subdomain } });
+  }
+
   async findTenantById(id: string): Promise<TenantEntity | null> {
     return this.tenants.findOne({ where: { id } });
   }

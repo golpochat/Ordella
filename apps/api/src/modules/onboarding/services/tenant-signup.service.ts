@@ -77,7 +77,17 @@ export class TenantSignupService {
         {
           tenantId: tenant.id,
           logoUrl: null,
-          theme: { primary: '#0f766e', secondary: '#134e4a' },
+          theme: {
+            preset: 'light',
+            colors: {
+              primary: '#0f766e',
+              secondary: '#ccfbf1',
+              background: '#ffffff',
+              surface: '#f0fdfa',
+            },
+            typography: { sm: '0.875rem', md: '1rem', lg: '1.125rem' },
+            iconUrl: null,
+          },
           businessInfo: {},
         },
         manager,

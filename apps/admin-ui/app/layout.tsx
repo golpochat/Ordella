@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@ordella/shared-ui/styles.css';
+import { ThemeRoot } from '@/components/theme-root';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeRoot>{children}</ThemeRoot>
+      </body>
     </html>
   );
 }
