@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MapPinned, ListChecks, User } from 'lucide-react';
+import { ListChecks, User, Settings } from 'lucide-react';
 import { cn } from '@shared-ui';
 
 const links = [
-  { href: '/tasks', label: 'Tasks', icon: ListChecks },
-  { href: '/navigation', label: 'Navigation', icon: MapPinned },
+  { href: '/orders', label: 'Orders', icon: ListChecks },
   { href: '/profile', label: 'Profile', icon: User },
+  { href: '/profile?tab=settings', label: 'Settings', icon: Settings },
 ];
 
 export function DriverBottomNav() {

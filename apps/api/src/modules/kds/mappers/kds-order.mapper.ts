@@ -81,6 +81,11 @@ export function mapKdsOrderSummary(
   order: OrderEntity,
   states: KdsOrderItemStateEntity[],
   catalog?: KdsCatalogLookup,
+  driverInfo?: {
+    driverStatus?: string | null;
+    driverStatusLabel?: string | null;
+    driverName?: string | null;
+  },
 ): KdsOrderSummaryView {
   return {
     id: order.id,
@@ -92,6 +97,9 @@ export function mapKdsOrderSummary(
     createdAt: order.createdAt.toISOString(),
     customerInfo: mapCustomerInfo(order),
     lineItems: mapKdsLineItems(order, states, catalog),
+    driverStatus: driverInfo?.driverStatus ?? null,
+    driverStatusLabel: driverInfo?.driverStatusLabel ?? null,
+    driverName: driverInfo?.driverName ?? null,
   };
 }
 
@@ -99,9 +107,14 @@ export function mapKdsOrderDetail(
   order: OrderEntity,
   states: KdsOrderItemStateEntity[],
   catalog?: KdsCatalogLookup,
+  driverInfo?: {
+    driverStatus?: string | null;
+    driverStatusLabel?: string | null;
+    driverName?: string | null;
+  },
 ): KdsOrderDetailView {
   return {
-    ...mapKdsOrderSummary(order, states, catalog),
+    ...mapKdsOrderSummary(order, states, catalog, driverInfo),
     subtotal: order.subtotal,
     total: order.total,
     updatedAt: order.updatedAt?.toISOString() ?? null,

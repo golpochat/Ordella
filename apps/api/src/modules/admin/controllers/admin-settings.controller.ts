@@ -7,6 +7,7 @@ import { JwtAuthGuard, RbacGuard, RequirePermissions } from '../../auth';
 import { AdminPermissionKeys } from '../constants/admin-permission-keys';
 import { TenantSettingsService } from '../services/tenant-settings.service';
 import { AdminUpdateFulfillmentSettingsDto } from '../dto/admin-update-fulfillment-settings.dto';
+import { AdminUpdateDeliverySettingsDto } from '../dto/admin-update-delivery-settings.dto';
 import {
   AdminUpdateBusinessInfoDto,
   AdminUpdateDeliveryZonesDto,
@@ -36,6 +37,15 @@ export class AdminSettingsController {
     @Body() dto: AdminUpdateOpeningHoursDto,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.tenantSettingsService.updateOpeningHours(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Patch('delivery')
+  async updateDelivery(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: AdminUpdateDeliverySettingsDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.tenantSettingsService.updateDeliverySettings(tenant.tenantId, dto);
     return { success: true, data };
   }
 

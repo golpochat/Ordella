@@ -31,6 +31,9 @@ export const fulfillmentOrderSchema = z.object({
     .nullable()
     .optional(),
   lineItems: z.array(lineItemSchema),
+  driverStatus: z.string().nullable().optional(),
+  driverStatusLabel: z.string().nullable().optional(),
+  driverName: z.string().nullable().optional(),
 });
 
 export type FulfillmentOrder = z.infer<typeof fulfillmentOrderSchema>;

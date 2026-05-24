@@ -10,3 +10,4 @@ export * from './delivery-status-history/delivery-status-history-response.dto';
 export * from './drivers/create-driver.dto';
 export * from './drivers/driver-response.dto';
 export * from './drivers/update-driver.dto';
+export * from './driver-orders';

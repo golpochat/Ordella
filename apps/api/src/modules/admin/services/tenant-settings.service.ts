@@ -7,6 +7,7 @@ import { AdminUpdateDeliveryZonesDto } from '../dto/admin-update-delivery-zones.
 import { AdminUpdatePaymentSettingsDto } from '../dto/admin-update-payment-settings.dto';
 import { AdminUpdatePosSettingsDto } from '../dto/admin-update-pos-settings.dto';
 import { AdminUpdateFulfillmentSettingsDto } from '../dto/admin-update-fulfillment-settings.dto';
+import { AdminUpdateDeliverySettingsDto } from '../dto/admin-update-delivery-settings.dto';
 
 @Injectable()
 export class TenantSettingsService {
@@ -40,6 +41,32 @@ export class TenantSettingsService {
   updateDeliveryZones(tenantId: string, dto: AdminUpdateDeliveryZonesDto) {
     return this.settingsRepository.mergeSettings(tenantId, dto.locationId, {
       deliveryZones: dto.zones,
+    });
+  }
+
+  async updateDeliverySettings(tenantId: string, dto: AdminUpdateDeliverySettingsDto) {
+    await this.settingsRepository.requireLocationForTenant(tenantId, dto.locationId);
+    const row = await this.settingsRepository.getOrCreateSettings(dto.locationId);
+    const current = (row.settings?.deliverySettings as Record<string, unknown> | undefined) ?? {};
+    const next = {
+      deliveryRadiusKm: 5,
+      deliveryFee: 0,
+      freeDeliveryThreshold: null,
+      autoAssignDrivers: false,
+      maxActiveDeliveriesPerDriver: 3,
+      ...current,
+      ...(dto.deliveryRadiusKm !== undefined ? { deliveryRadiusKm: dto.deliveryRadiusKm } : {}),
+      ...(dto.deliveryFee !== undefined ? { deliveryFee: dto.deliveryFee } : {}),
+      ...(dto.freeDeliveryThreshold !== undefined
+        ? { freeDeliveryThreshold: dto.freeDeliveryThreshold }
+        : {}),
+      ...(dto.autoAssignDrivers !== undefined ? { autoAssignDrivers: dto.autoAssignDrivers } : {}),
+      ...(dto.maxActiveDeliveriesPerDriver !== undefined
+        ? { maxActiveDeliveriesPerDriver: dto.maxActiveDeliveriesPerDriver }
+        : {}),
+    };
+    return this.settingsRepository.mergeSettings(tenantId, dto.locationId, {
+      deliverySettings: next,
     });
   }
 

@@ -87,6 +87,19 @@ export function FdsOrderCard({
           </div>
         ) : null}
 
+        {order.orderType === 'delivery' || order.orderType === 'pickup' ? (
+          <div className="rounded-md border bg-muted/20 p-2 text-xs">
+            {order.driverStatusLabel ? (
+              <p className="font-medium text-foreground">{order.driverStatusLabel}</p>
+            ) : (
+              <p className="text-muted-foreground">Awaiting driver</p>
+            )}
+            {order.driverName ? (
+              <p className="text-muted-foreground">Driver: {order.driverName}</p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap gap-2">
           {order.fulfillmentStatus === 'NEW' ? (
             <Button type="button" className="h-11 flex-1" disabled={busy} onClick={onStart}>

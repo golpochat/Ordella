@@ -13,10 +13,15 @@ export function useDriverSession() {
     setReady(true);
   }, []);
 
+  const refresh = () => {
+    setSessionState(getSession());
+  };
+
   return {
     session,
     ready,
     isAuthenticated: session ? hasValidSession(session) : false,
     setSession: setSessionState,
+    refresh,
   };
 }

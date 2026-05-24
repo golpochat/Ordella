@@ -28,8 +28,8 @@ export function assertTransition(from: DeliveryTaskStatus, to: DeliveryTaskStatu
 
 export function statusLabel(status: DeliveryTaskStatus): string {
   const labels: Record<DeliveryTaskStatus, string> = {
-    pending: 'Pending',
-    assigned: 'Assigned',
+    pending: 'Awaiting acceptance',
+    assigned: 'Accepted',
     en_route: 'En route',
     delivered: 'Delivered',
     cancelled: 'Cancelled',

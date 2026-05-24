@@ -1,5 +1,5 @@
-import { TasksList } from '@/components/tasks-list';
+import { redirect } from 'next/navigation';
 
 export default function TasksPage() {
-  return <TasksList />;
+  redirect('/orders');
 }

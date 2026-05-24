@@ -28,6 +28,20 @@ export async function updatePosSettings(api: ApiClient, body: Record<string, unk
   return api.patch<{ success: boolean; data: unknown }>('admin/settings/pos', body);
 }
 
+export async function updateDeliverySettings(
+  api: ApiClient,
+  body: {
+    locationId: string;
+    deliveryRadiusKm?: number;
+    deliveryFee?: number;
+    freeDeliveryThreshold?: number | null;
+    autoAssignDrivers?: boolean;
+    maxActiveDeliveriesPerDriver?: number;
+  },
+) {
+  return api.patch<{ success: boolean; data: unknown }>('admin/settings/delivery', body);
+}
+
 export async function updateFulfillmentSettings(
   api: ApiClient,
   body: {

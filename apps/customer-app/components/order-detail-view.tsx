@@ -50,12 +50,31 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
           <h1 className="text-xl font-bold">
             Order {order?.orderNumber ?? liveStatus?.orderNumber ?? orderId.slice(0, 8)}
           </h1>
-          <p className="text-sm text-muted-foreground">Live delivery tracking</p>
+          <p className="text-sm text-muted-foreground">Live order tracking</p>
         </div>
         <Badge>{label}</Badge>
       </div>
 
       {trackError ? <p className="text-sm text-destructive">{trackError}</p> : null}
+
+      {liveStatus?.driverStatusLabel || liveStatus?.driverName ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Delivery</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            {liveStatus.driverStatusLabel ? (
+              <p className="font-medium">{liveStatus.driverStatusLabel}</p>
+            ) : null}
+            {liveStatus.driverName ? (
+              <p className="text-muted-foreground">Driver: {liveStatus.driverName}</p>
+            ) : null}
+            {liveStatus.deliveryConfirmed ? (
+              <p className="text-muted-foreground">Your order has been delivered.</p>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

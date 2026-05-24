@@ -33,4 +33,11 @@ export class DeliveryStatusHistoryRepository {
     });
     return this.repo(manager).save(row);
   }
+
+  findForTask(deliveryTaskId: string): Promise<DeliveryStatusHistoryEntity[]> {
+    return this.repository.find({
+      where: { deliveryTaskId },
+      order: { createdAt: 'ASC' },
+    });
+  }
 }

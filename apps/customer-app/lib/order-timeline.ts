@@ -5,9 +5,9 @@ export type TimelineStep = {
 
 export const ORDER_TIMELINE: TimelineStep[] = [
   { key: 'preparing', label: 'In fulfillment' },
-  { key: 'ready', label: 'Ready' },
+  { key: 'ready', label: 'Ready for pickup' },
   { key: 'out_for_delivery', label: 'Out for delivery' },
-  { key: 'completed', label: 'Delivered' },
+  { key: 'completed', label: 'Order delivered' },
 ];
 
 const ACTIVE_STATUSES = new Set([

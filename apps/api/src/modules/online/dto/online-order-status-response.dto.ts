@@ -11,4 +11,8 @@ export class OnlineOrderStatusResponseDto {
   total!: string;
   createdAt!: string;
   updatedAt!: string | null;
+  driverName?: string | null;
+  driverStatus?: string | null;
+  driverStatusLabel?: string | null;
+  deliveryConfirmed?: boolean;
 }

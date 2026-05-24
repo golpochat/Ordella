@@ -9,6 +9,13 @@ import { InventoryService } from '../../inventory/services/inventory.service';
 import { InventoryOrderContext } from '../../inventory/types/inventory-order.context';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { DeliveryService } from '../../deliveries/services/delivery.service';
+import { DeliveryTaskRepository } from '../../deliveries/repositories/delivery-task.repository';
+import { DriverProfileRepository } from '../../deliveries/repositories/driver-profile.repository';
+import {
+  labelDriverDisplayStatus,
+  mapDriverDisplayStatus,
+} from '../../deliveries/mappers/driver-display-status.mapper';
+import { DeliveryTaskStatus } from '../../deliveries/enums/delivery-task-status.enum';
 import { KdsBroadcastService } from '../../kds/services/kds-broadcast.service';
 import { KdsOrderQueryService } from '../../kds/services/kds-order-query.service';
 import { PosProductStockService } from '../../pos/services/pos-product-stock.service';
@@ -32,6 +39,8 @@ export class OnlineOrderService {
     private readonly inventoryService: InventoryService,
     private readonly paymentsService: PaymentsService,
     private readonly deliveryService: DeliveryService,
+    private readonly deliveryTaskRepository: DeliveryTaskRepository,
+    private readonly driverProfileRepository: DriverProfileRepository,
     private readonly kdsOrderQuery: KdsOrderQueryService,
     private readonly kdsBroadcast: KdsBroadcastService,
     private readonly productStockService: PosProductStockService,
@@ -221,7 +230,7 @@ export class OnlineOrderService {
       throwOnlineOrderNotFound(orderId);
     }
 
-    return {
+    const base = {
       orderId: order.id,
       orderNumber: order.orderNumber,
       status: order.status,
@@ -230,6 +239,38 @@ export class OnlineOrderService {
       total: order.total,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt?.toISOString() ?? null,
+    };
+
+    if (order.orderType !== OrderType.DELIVERY && order.orderType !== OrderType.PICKUP) {
+      return base;
+    }
+
+    const task = await this.deliveryTaskRepository.findByOrderForTenant(
+      tenant.tenantId,
+      orderId,
+    );
+    if (!task) {
+      return base;
+    }
+
+    const display = mapDriverDisplayStatus(task.status, Boolean(task.driverId));
+    let driverName: string | null = null;
+    if (task.driverId) {
+      const driver = await this.driverProfileRepository.findByIdForTenant(
+        tenant.tenantId,
+        task.driverId,
+      );
+      driverName = driver?.name ?? null;
+    }
+
+    return {
+      ...base,
+      driverName,
+      driverStatus: display,
+      driverStatusLabel: labelDriverDisplayStatus(display),
+      deliveryConfirmed:
+        task.status === DeliveryTaskStatus.DELIVERED ||
+        order.status === OrderStatus.COMPLETED,
     };
   }
 

@@ -33,6 +33,9 @@ export interface KdsOrderSummaryView {
   createdAt: string;
   customerInfo?: FulfillmentCustomerInfo | null;
   lineItems: KdsLineItemView[];
+  driverStatus?: string | null;
+  driverStatusLabel?: string | null;
+  driverName?: string | null;
 }
 
 export interface KdsOrderDetailView extends KdsOrderSummaryView {

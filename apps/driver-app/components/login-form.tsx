@@ -53,7 +53,7 @@ export function LoginForm() {
         status: 'available',
       };
       setSession(session);
-      router.replace('/tasks');
+      router.replace('/orders');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed');
     } finally {

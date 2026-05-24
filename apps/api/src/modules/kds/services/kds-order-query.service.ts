@@ -9,6 +9,7 @@ import { mapKdsOrderDetail, mapKdsOrderSummary } from '../mappers/kds-order.mapp
 import { throwKdsOrderNotFound } from '../domain/kds-domain.errors';
 import { KdsOrderDetailView, KdsOrderSummaryView } from '../types/kds-order.views';
 import { KdsCatalogLookupService } from './kds-catalog-lookup.service';
+import { KdsDeliveryEnrichmentService } from './kds-delivery-enrichment.service';
 
 @Injectable()
 export class KdsOrderQueryService {
@@ -16,6 +17,7 @@ export class KdsOrderQueryService {
     private readonly orderQueryRepository: KdsOrderQueryRepository,
     private readonly itemStateRepository: KdsOrderItemStateRepository,
     private readonly catalogLookup: KdsCatalogLookupService,
+    private readonly deliveryEnrichment: KdsDeliveryEnrichmentService,
   ) {}
 
   async getActiveOrders(
@@ -33,6 +35,7 @@ export class KdsOrderQueryService {
     );
 
     const catalog = await this.catalogLookup.buildLookupForOrders(tenantId, orders);
+    const driverInfoMap = await this.deliveryEnrichment.buildDriverInfoMap(tenantId, orders);
     const views: KdsOrderSummaryView[] = [];
 
     for (const order of orders) {
@@ -41,7 +44,7 @@ export class KdsOrderQueryService {
         order.id,
         (order.items ?? []).map((item) => item.id),
       );
-      views.push(mapKdsOrderSummary(order, states, catalog));
+      views.push(mapKdsOrderSummary(order, states, catalog, driverInfoMap.get(order.id)));
     }
 
     return views;
@@ -60,6 +63,7 @@ export class KdsOrderQueryService {
     );
 
     const catalog = await this.catalogLookup.buildLookupForOrders(tenantId, orders);
+    const driverInfoMap = await this.deliveryEnrichment.buildDriverInfoMap(tenantId, orders);
     const views: KdsOrderSummaryView[] = [];
 
     for (const order of orders) {
@@ -68,7 +72,7 @@ export class KdsOrderQueryService {
         order.id,
         (order.items ?? []).map((item) => item.id),
       );
-      views.push(mapKdsOrderSummary(order, states, catalog));
+      views.push(mapKdsOrderSummary(order, states, catalog, driverInfoMap.get(order.id)));
     }
 
     return views;
@@ -87,6 +91,7 @@ export class KdsOrderQueryService {
     );
 
     const catalog = await this.catalogLookup.buildLookupForOrders(tenantId, [order]);
-    return mapKdsOrderDetail(order, states, catalog);
+    const driverInfoMap = await this.deliveryEnrichment.buildDriverInfoMap(tenantId, [order]);
+    return mapKdsOrderDetail(order, states, catalog, driverInfoMap.get(order.id));
   }
 }

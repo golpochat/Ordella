@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/lib/utils';
 import { BillingPanel } from './billing-panel';
 import { BrandingPanel } from './branding-panel';
 import { FulfillmentDisplayPanel } from './fulfillment-display-panel';
+import { DeliverySettingsPanel } from './delivery-settings-panel';
 
 function SettingsSection({
   title,
@@ -109,7 +110,8 @@ export function SettingsForms() {
           />
         </SettingsSection>
       </TabsContent>
-      <TabsContent value="delivery" className="mt-4">
+      <TabsContent value="delivery" className="mt-4 space-y-4">
+        <DeliverySettingsPanel />
         <SettingsSection
           title="Delivery zones"
           onSave={async () => {

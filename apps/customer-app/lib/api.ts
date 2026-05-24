@@ -78,6 +78,10 @@ export const orderStatusSchema = z.object({
   paymentStatus: z.string(),
   orderType: z.string(),
   total: z.string(),
+  driverName: z.string().nullable().optional(),
+  driverStatus: z.string().nullable().optional(),
+  driverStatusLabel: z.string().nullable().optional(),
+  deliveryConfirmed: z.boolean().optional(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
 });

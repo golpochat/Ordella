@@ -19,6 +19,11 @@ import {
   KdsUpdateService,
 } from './services';
 import { KdsCatalogLookupService } from './services/kds-catalog-lookup.service';
+import { KdsDeliveryEnrichmentService } from './services/kds-delivery-enrichment.service';
+import { DeliveryTaskEntity } from '../deliveries/entities/delivery-task.entity';
+import { DriverProfileEntity } from '../deliveries/entities/driver-profile.entity';
+import { DeliveryTaskRepository } from '../deliveries/repositories/delivery-task.repository';
+import { DriverProfileRepository } from '../deliveries/repositories/driver-profile.repository';
 import { KdsOrderQueryRepository } from './repositories/kds-order-query.repository';
 import { KdsOrderItemStateRepository } from './repositories/kds-order-item-state.repository';
 import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrations';
@@ -38,7 +43,14 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
   imports: [
     AuthModule,
     AdminSettingsCoreModule,
-    TypeOrmModule.forFeature([...KDS_ENTITIES, OrderEntity, ProductEntity, VariantEntity]),
+    TypeOrmModule.forFeature([
+      ...KDS_ENTITIES,
+      OrderEntity,
+      ProductEntity,
+      VariantEntity,
+      DeliveryTaskEntity,
+      DriverProfileEntity,
+    ]),
     forwardRef(() => OrdersFeatureModule),
     ReportsModule,
   ],
@@ -52,6 +64,9 @@ import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrat
     KdsOrderQueryRepository,
     KdsOrderItemStateRepository,
     KdsCatalogLookupService,
+    KdsDeliveryEnrichmentService,
+    DeliveryTaskRepository,
+    DriverProfileRepository,
     KdsOrderQueryService,
     KdsUpdateService,
     KdsNotificationsIntegration,
