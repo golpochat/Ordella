@@ -1,0 +1,35 @@
+{
+  "name": "@ordella/marketing",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Ordella marketing site — Next.js 14",
+  "scripts": {
+    "dev": "next dev -p 3006",
+    "build": "next build",
+    "start": "next start -p 3006",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ordella/shared-ui": "*",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^0.469.0",
+    "next": "^14.2.21",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "remark-gfm": "^4.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.21",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}
