@@ -1,0 +1,11 @@
+/** Order lifecycle notification event types (NotificationsModule placeholders). */
+export enum OrderNotificationType {
+  ORDER_CREATED = 'ORDER_CREATED',
+  ORDER_CONFIRMED = 'ORDER_CONFIRMED',
+  ORDER_PREPARING = 'ORDER_PREPARING',
+  ORDER_READY = 'ORDER_READY',
+  ORDER_OUT_FOR_DELIVERY = 'ORDER_OUT_FOR_DELIVERY',
+  ORDER_COMPLETED = 'ORDER_COMPLETED',
+  ORDER_CANCELLED = 'ORDER_CANCELLED',
+  ORDER_REFUNDED = 'ORDER_REFUNDED',
+}

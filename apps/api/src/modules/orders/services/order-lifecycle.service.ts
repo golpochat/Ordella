@@ -4,17 +4,19 @@ import { OrderEntity } from '../entities/order.entity';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderStatus } from '../enums/order-status.enum';
 import { OrderPaymentStatus } from '../enums/order-payment-status.enum';
+import { OrderNotificationType } from '../enums/order-notification-type.enum';
 import {
   canTransitionOrderStatus,
   isTerminalOrderStatus,
 } from '../domain/order-lifecycle.transitions';
 import { orderStatusToEventType } from '../domain/order-status-event-type.mapper';
 import { OrderEventTypes } from '../constants/order-events.constants';
-import { InventoryService, NotificationsService, PromotionsService } from '../integrations';
+import { InventoryService, PromotionsService } from '../integrations';
 import { OrderEventsService } from './order-events.service';
 import { OrderStatusHistoryService } from './order-status-history.service';
 import { OrderPaymentService } from './order-payment.service';
 import { OrderDeliveryService } from './order-delivery.service';
+import { OrderNotificationService } from './order-notification.service';
 import { OrderTransitionContext } from '../types/order-transition.context';
 import { OrderInventoryContext } from '../types/order-inventory.context';
 import { OrderPaymentContext } from '../types/order-payment.context';
@@ -32,7 +34,7 @@ export class OrderLifecycleService {
     private readonly inventoryService: InventoryService,
     private readonly orderPaymentService: OrderPaymentService,
     private readonly orderDeliveryService: OrderDeliveryService,
-    private readonly notificationsService: NotificationsService,
+    private readonly orderNotificationService: OrderNotificationService,
   ) {}
 
   assertCanTransition(from: OrderStatus, to: OrderStatus): void {
@@ -67,11 +69,16 @@ export class OrderLifecycleService {
       this.buildInventoryContext(tenant, order, items, null, OrderStatus.PENDING),
     );
 
-    await this.notificationsService.sendOrderNotification(
-      tenant,
-      order,
-      'order.created',
-      { status: order.status },
+    await this.orderNotificationService.notify(
+      this.orderNotificationService.buildContext(
+        tenant,
+        order,
+        items,
+        null,
+        OrderStatus.PENDING,
+        OrderNotificationType.ORDER_CREATED,
+      ),
+      OrderNotificationType.ORDER_CREATED,
     );
   }
 
@@ -121,11 +128,12 @@ export class OrderLifecycleService {
 
     await this.runNonInventoryIntegrations(tenant, order, items, fromStatus, toStatus);
 
-    await this.notificationsService.sendOrderNotification(
+    await this.orderNotificationService.notifyForStatus(
       tenant,
       order,
-      'order.status_changed',
-      { fromStatus, toStatus },
+      items,
+      fromStatus,
+      toStatus,
     );
 
     return order;
