@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { StockTransferEntity } from '../../entities/stock-transfer.entity';
-import { StockTransferLineEntity } from '../../entities/stock-transfer-line.entity';
-import { StockTransfersController } from '../../controllers/stock-transfers.controller';
-import { StockTransfersService } from '../../services/stock-transfers.service';
+import { StockTransferEntity } from '../../entities';
+import { StockTransferLineEntity } from '../../entities';
+import { StockTransfersController } from '../../controllers';
+import { StockTransfersService } from '../../services';
 import { StockTransferRepository } from '../../repositories/stock-transfer.repository';
 
 @Module({

@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateModifierDto } from '../dto/modifiers/create-modifier.dto';
-import { UpdateModifierDto } from '../dto/modifiers/update-modifier.dto';
-import { ModifierResponseDto } from '../dto/modifiers/modifier-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateModifierDto } from '../dto';
+import { UpdateModifierDto } from '../dto';
+import { ModifierResponseDto } from '../dto';
 
 @Injectable()
 export class ModifiersService {

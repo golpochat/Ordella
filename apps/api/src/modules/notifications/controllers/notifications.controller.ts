@@ -15,11 +15,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { NotificationsPermissionKeys } from '../constants/permission-keys';
-import { CreateNotificationDto } from '../dto/notifications/create-notification.dto';
-import { NotificationResponseDto } from '../dto/notifications/notification-response.dto';
-import { NotificationsService } from '../services/notifications.service';
+import { CreateNotificationDto } from '../dto';
+import { NotificationResponseDto } from '../dto';
+import { NotificationsService } from '../services';
 
 /** API Spec §10.1 */
 @Controller('notifications')

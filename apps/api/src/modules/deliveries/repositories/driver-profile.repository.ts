@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DriverProfileEntity } from '../entities/driver-profile.entity';
+import { DriverProfileEntity } from '../entities';
 
 @Injectable()
 export class DriverProfileRepository {

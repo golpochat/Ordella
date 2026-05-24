@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IntegrationProviderEntity } from '../../entities/integration-provider.entity';
-import { IntegrationProvidersController } from '../../controllers/integration-providers.controller';
-import { IntegrationProvidersService } from '../../services/integration-providers.service';
+import { IntegrationProviderEntity } from '../../entities';
+import { IntegrationProvidersController } from '../../controllers';
+import { IntegrationProvidersService } from '../../services';
 import { IntegrationProviderRepository } from '../../repositories/integration-provider.repository';
 
 @Module({

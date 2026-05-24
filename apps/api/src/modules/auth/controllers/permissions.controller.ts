@@ -3,9 +3,9 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RbacGuard } from '../guards/rbac.guard';
 import { RequirePermissions } from '../decorators/require-permissions.decorator';
-import { PermissionResponseDto } from '../dto/permissions/permission-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
-import { PermissionsService } from '../services/permissions.service';
+import { PermissionResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
+import { PermissionsService } from '../services';
 
 @Controller('permissions')
 @UseGuards(JwtAuthGuard, RbacGuard)

@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStockTransferDto } from '../dto/stock-transfers/create-stock-transfer.dto';
-import { UpdateStockTransferDto } from '../dto/stock-transfers/update-stock-transfer.dto';
-import { StockTransferResponseDto } from '../dto/stock-transfers/stock-transfer-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStockTransferDto } from '../dto';
+import { UpdateStockTransferDto } from '../dto';
+import { StockTransferResponseDto } from '../dto';
 
 @Injectable()
 export class StockTransfersService {

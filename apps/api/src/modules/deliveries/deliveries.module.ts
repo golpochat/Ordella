@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
-import { DELIVERY_ENTITIES } from './entities';
+import { DELIVERIES_ENTITIES } from './entities';
 import { DeliveryTasksFeatureModule } from './modules/delivery-tasks/delivery-tasks-feature.module';
 import { DeliveryAssignmentsModule } from './modules/delivery-assignments/delivery-assignments.module';
 import { DriverProfilesModule } from './modules/driver-profiles/driver-profiles.module';
@@ -17,7 +17,7 @@ import { DriverProfilesModule } from './modules/driver-profiles/driver-profiles.
 @Module({
   imports: [
     AuthModule,
-    TypeOrmModule.forFeature(DELIVERY_ENTITIES),
+    TypeOrmModule.forFeature(DELIVERIES_ENTITIES),
     DeliveryTasksFeatureModule,
     DeliveryAssignmentsModule,
     DriverProfilesModule,

@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateModifierDto } from '../dto/modifiers/create-modifier.dto';
-import { UpdateModifierDto } from '../dto/modifiers/update-modifier.dto';
-import { ModifierResponseDto } from '../dto/modifiers/modifier-response.dto';
-import { ModifiersService } from '../services/modifiers.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateModifierDto } from '../dto';
+import { UpdateModifierDto } from '../dto';
+import { ModifierResponseDto } from '../dto';
+import { ModifiersService } from '../services';
 
 /** API Spec §3.3 */
 @Controller('modifiers')

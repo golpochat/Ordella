@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { LocationEntity } from '../../entities/location.entity';
-import { LocationSettingsEntity } from '../../entities/location-settings.entity';
-import { LocationOpeningHoursEntity } from '../../entities/location-opening-hours.entity';
-import { LocationsController } from '../../controllers/locations.controller';
-import { LocationsService } from '../../services/locations.service';
+import { LocationEntity } from '../../entities';
+import { LocationSettingsEntity } from '../../entities';
+import { LocationOpeningHoursEntity } from '../../entities';
+import { LocationsController } from '../../controllers';
+import { LocationsService } from '../../services';
 import { LocationRepository } from '../../repositories/location.repository';
 import { LocationSettingsRepository } from '../../repositories/location-settings.repository';
 import { LocationOpeningHoursRepository } from '../../repositories/location-opening-hours.repository';

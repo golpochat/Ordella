@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ModifierEntity } from '../../entities/modifier.entity';
-import { ModifierOptionEntity } from '../../entities/modifier-option.entity';
-import { ModifiersController } from '../../controllers/modifiers.controller';
-import { ModifiersService } from '../../services/modifiers.service';
+import { ModifierEntity } from '../../entities';
+import { ModifierOptionEntity } from '../../entities';
+import { ModifiersController } from '../../controllers';
+import { ModifiersService } from '../../services';
 import { ModifierRepository } from '../../repositories/modifier.repository';
 import { ModifierOptionRepository } from '../../repositories/modifier-option.repository';
 

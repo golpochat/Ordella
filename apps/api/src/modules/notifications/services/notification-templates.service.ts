@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateNotificationTemplateDto } from '../dto/notification-templates/create-notification-template.dto';
-import { NotificationTemplateResponseDto } from '../dto/notification-templates/notification-template-response.dto';
-import { UpdateNotificationTemplateDto } from '../dto/notification-templates/update-notification-template.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateNotificationTemplateDto } from '../dto';
+import { NotificationTemplateResponseDto } from '../dto';
+import { UpdateNotificationTemplateDto } from '../dto';
 
 @Injectable()
 export class NotificationTemplatesService {

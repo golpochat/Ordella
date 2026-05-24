@@ -7,9 +7,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { ReportsPermissionKeys } from '../constants/permission-keys';
-import { FilterReportResultDto } from '../dto/report-results/filter-report-result.dto';
-import { ReportResultResponseDto } from '../dto/report-results/report-result-response.dto';
-import { ReportResultsService } from '../services/report-results.service';
+import { FilterReportResultDto } from '../dto';
+import { ReportResultResponseDto } from '../dto';
+import { ReportResultsService } from '../services';
 
 @Controller('report-results')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)

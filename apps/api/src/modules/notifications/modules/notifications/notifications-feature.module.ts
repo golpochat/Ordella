@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { NotificationEntity } from '../../entities/notification.entity';
-import { NotificationsController } from '../../controllers/notifications.controller';
-import { NotificationsService } from '../../services/notifications.service';
+import { NotificationEntity } from '../../entities';
+import { NotificationsController } from '../../controllers';
+import { NotificationsService } from '../../services';
 import { NotificationRepository } from '../../repositories/notification.repository';
 
 @Module({

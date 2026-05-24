@@ -17,12 +17,12 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { NotificationsPermissionKeys } from '../constants/permission-keys';
-import { CreateNotificationChannelDto } from '../dto/notification-channels/create-notification-channel.dto';
-import { NotificationChannelResponseDto } from '../dto/notification-channels/notification-channel-response.dto';
-import { UpdateNotificationChannelDto } from '../dto/notification-channels/update-notification-channel.dto';
-import { NotificationChannelsService } from '../services/notification-channels.service';
+import { CreateNotificationChannelDto } from '../dto';
+import { NotificationChannelResponseDto } from '../dto';
+import { UpdateNotificationChannelDto } from '../dto';
+import { NotificationChannelsService } from '../services';
 
 /** SRS §22 — multi-channel configuration */
 @Controller('notification-channels')

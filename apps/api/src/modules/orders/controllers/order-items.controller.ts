@@ -15,10 +15,10 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { CreateOrderItemDto } from '../dto/order-items/create-order-item.dto';
-import { UpdateOrderItemDto } from '../dto/order-items/update-order-item.dto';
-import { OrderItemResponseDto } from '../dto/order-items/order-item-response.dto';
-import { OrderItemsService } from '../services/order-items.service';
+import { CreateOrderItemDto } from '../dto';
+import { UpdateOrderItemDto } from '../dto';
+import { OrderItemResponseDto } from '../dto';
+import { OrderItemsService } from '../services';
 
 /** API Spec §5.2 */
 @Controller('order-items')

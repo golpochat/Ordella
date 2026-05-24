@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AddonEntity } from '../../entities/addon.entity';
-import { AddonsController } from '../../controllers/addons.controller';
-import { AddonsService } from '../../services/addons.service';
+import { AddonEntity } from '../../entities';
+import { AddonsController } from '../../controllers';
+import { AddonsService } from '../../services';
 import { AddonRepository } from '../../repositories/addon.repository';
 
 @Module({

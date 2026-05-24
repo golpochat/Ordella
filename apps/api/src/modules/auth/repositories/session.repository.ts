@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SessionEntity } from '../entities/session.entity';
+import { SessionEntity } from '../entities';
 import { BaseTenantRepository } from './base-tenant.repository';
 
 @Injectable()

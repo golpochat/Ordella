@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreatePaymentMethodDto } from '../dto/payment-methods/create-payment-method.dto';
-import { PaymentMethodResponseDto } from '../dto/payment-methods/payment-method-response.dto';
-import { UpdatePaymentMethodDto } from '../dto/payment-methods/update-payment-method.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreatePaymentMethodDto } from '../dto';
+import { PaymentMethodResponseDto } from '../dto';
+import { UpdatePaymentMethodDto } from '../dto';
 
 @Injectable()
 export class PaymentMethodsService {

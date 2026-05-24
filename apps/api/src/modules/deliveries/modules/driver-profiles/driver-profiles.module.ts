@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DriverProfileEntity } from '../../entities/driver-profile.entity';
-import { DriversController } from '../../controllers/drivers.controller';
-import { DriversService } from '../../services/drivers.service';
+import { DriverProfileEntity } from '../../entities';
+import { DriversController } from '../../controllers';
+import { DriversService } from '../../services';
 import { DriverProfileRepository } from '../../repositories/driver-profile.repository';
 
 @Module({

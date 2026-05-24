@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { CreateRoleDto } from '../dto/roles/create-role.dto';
-import { UpdateRolePermissionsDto } from '../dto/roles/update-role-permissions.dto';
-import { RoleResponseDto } from '../dto/roles/role-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
+import { CreateRoleDto } from '../dto';
+import { UpdateRolePermissionsDto } from '../dto';
+import { RoleResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 
 @Injectable()

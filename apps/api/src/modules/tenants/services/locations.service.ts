@@ -1,14 +1,14 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { CreateLocationDto } from '../dto/locations/create-location.dto';
-import { UpdateLocationDto } from '../dto/locations/update-location.dto';
-import { UpdateLocationStatusDto } from '../dto/locations/update-location-status.dto';
-import { LocationResponseDto } from '../dto/locations/location-response.dto';
-import { UpdateLocationSettingsDto } from '../dto/locations/update-location-settings.dto';
-import { LocationSettingsResponseDto } from '../dto/locations/location-settings-response.dto';
-import { UpdateLocationOpeningHoursDto } from '../dto/locations/update-location-opening-hours.dto';
-import { LocationOpeningHoursResponseDto } from '../dto/locations/location-opening-hours-response.dto';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { CreateLocationDto } from '../dto';
+import { UpdateLocationDto } from '../dto';
+import { UpdateLocationStatusDto } from '../dto';
+import { LocationResponseDto } from '../dto';
+import { UpdateLocationSettingsDto } from '../dto';
+import { LocationSettingsResponseDto } from '../dto';
+import { UpdateLocationOpeningHoursDto } from '../dto';
+import { LocationOpeningHoursResponseDto } from '../dto';
+import { FilterPaginationDto } from '../../auth/dto';
 
 @Injectable()
 export class LocationsService {

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IntegrationLogEntity } from '../../entities/integration-log.entity';
-import { IntegrationLogsController } from '../../controllers/integration-logs.controller';
-import { IntegrationLogsService } from '../../services/integration-logs.service';
+import { IntegrationLogEntity } from '../../entities';
+import { IntegrationLogsController } from '../../controllers';
+import { IntegrationLogsService } from '../../services';
 import { IntegrationLogRepository } from '../../repositories/integration-log.repository';
 
 @Module({

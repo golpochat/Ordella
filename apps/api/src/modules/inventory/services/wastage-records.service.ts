@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateWastageRecordDto } from '../dto/wastage/create-wastage-record.dto';
-import { WastageRecordResponseDto } from '../dto/wastage/wastage-record-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateWastageRecordDto } from '../dto';
+import { WastageRecordResponseDto } from '../dto';
 
 @Injectable()
 export class WastageRecordsService {

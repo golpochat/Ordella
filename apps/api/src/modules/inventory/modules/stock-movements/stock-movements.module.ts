@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { StockMovementEntity } from '../../entities/stock-movement.entity';
-import { StockMovementsController } from '../../controllers/stock-movements.controller';
-import { StockMovementsService } from '../../services/stock-movements.service';
+import { StockMovementEntity } from '../../entities';
+import { StockMovementsController } from '../../controllers';
+import { StockMovementsService } from '../../services';
 import { StockMovementRepository } from '../../repositories/stock-movement.repository';
 
 @Module({

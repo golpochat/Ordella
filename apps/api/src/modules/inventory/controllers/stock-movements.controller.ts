@@ -15,10 +15,10 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStockMovementDto } from '../dto/stock-movements/create-stock-movement.dto';
-import { StockMovementResponseDto } from '../dto/stock-movements/stock-movement-response.dto';
-import { StockMovementsService } from '../services/stock-movements.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStockMovementDto } from '../dto';
+import { StockMovementResponseDto } from '../dto';
+import { StockMovementsService } from '../services';
 
 /** API Spec §4.2 — append-only ledger */
 @Controller('stock-movements')

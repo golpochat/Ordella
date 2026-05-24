@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateCategoryDto } from '../dto/categories/create-category.dto';
-import { UpdateCategoryDto } from '../dto/categories/update-category.dto';
-import { CategoryResponseDto } from '../dto/categories/category-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateCategoryDto } from '../dto';
+import { UpdateCategoryDto } from '../dto';
+import { CategoryResponseDto } from '../dto';
 
 @Injectable()
 export class CategoriesService {

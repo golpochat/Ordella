@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PromotionApplicationEntity } from '../entities/promotion-application.entity';
+import { PromotionApplicationEntity } from '../entities';
 
 @Injectable()
 export class PromotionApplicationRepository {

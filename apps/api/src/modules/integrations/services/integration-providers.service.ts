@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateIntegrationProviderDto } from '../dto/integration-providers/create-integration-provider.dto';
-import { IntegrationProviderResponseDto } from '../dto/integration-providers/integration-provider-response.dto';
-import { UpdateIntegrationProviderDto } from '../dto/integration-providers/update-integration-provider.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateIntegrationProviderDto } from '../dto';
+import { IntegrationProviderResponseDto } from '../dto';
+import { UpdateIntegrationProviderDto } from '../dto';
 
 @Injectable()
 export class IntegrationProvidersService {

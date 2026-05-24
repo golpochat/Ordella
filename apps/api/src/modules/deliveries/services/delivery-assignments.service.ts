@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterDeliveryAssignmentDto } from '../dto/delivery-assignments/filter-delivery-assignment.dto';
-import { DeliveryAssignmentResponseDto } from '../dto/delivery-assignments/delivery-assignment-response.dto';
-import { CreateDeliveryAssignmentDto } from '../dto/delivery-assignments/create-delivery-assignment.dto';
-import { UpdateDeliveryAssignmentDto } from '../dto/delivery-assignments/update-delivery-assignment.dto';
+import { FilterDeliveryAssignmentDto } from '../dto';
+import { DeliveryAssignmentResponseDto } from '../dto';
+import { CreateDeliveryAssignmentDto } from '../dto';
+import { UpdateDeliveryAssignmentDto } from '../dto';
 
 @Injectable()
 export class DeliveryAssignmentsService {

@@ -17,12 +17,12 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { PromotionsPermissionKeys } from '../constants/permission-keys';
-import { CreatePromotionDto } from '../dto/promotions/create-promotion.dto';
-import { PromotionResponseDto } from '../dto/promotions/promotion-response.dto';
-import { UpdatePromotionDto } from '../dto/promotions/update-promotion.dto';
-import { PromotionsService } from '../services/promotions.service';
+import { CreatePromotionDto } from '../dto';
+import { PromotionResponseDto } from '../dto';
+import { UpdatePromotionDto } from '../dto';
+import { PromotionsService } from '../services';
 
 /** API Spec §9.1 */
 @Controller('promotions')

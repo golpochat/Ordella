@@ -16,13 +16,13 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { PaymentsPermissionKeys } from '../constants/permission-keys';
-import { CreatePaymentDto } from '../dto/payments/create-payment.dto';
-import { PaymentProviderResponseDto } from '../dto/payments/payment-provider-response.dto';
-import { PaymentResponseDto } from '../dto/payments/payment-response.dto';
-import { UpdatePaymentDto } from '../dto/payments/update-payment.dto';
-import { PaymentsService } from '../services/payments.service';
+import { CreatePaymentDto } from '../dto';
+import { PaymentProviderResponseDto } from '../dto';
+import { PaymentResponseDto } from '../dto';
+import { UpdatePaymentDto } from '../dto';
+import { PaymentsService } from '../services';
 
 /** API Spec §6.1, §6.3 */
 @Controller('payments')

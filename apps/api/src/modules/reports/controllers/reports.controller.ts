@@ -6,18 +6,18 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { ReportsPermissionKeys } from '../constants/permission-keys';
-import { CreateReportDto } from '../dto/reports/create-report.dto';
-import { CustomersReportResponseDto } from '../dto/reports/customers-report-response.dto';
-import { CreateExportReportDto } from '../dto/reports/create-export-report.dto';
-import { ExportReportResponseDto } from '../dto/reports/export-report-response.dto';
-import { InventoryReportResponseDto } from '../dto/reports/inventory-report-response.dto';
-import { OrdersReportResponseDto } from '../dto/reports/orders-report-response.dto';
-import { FilterReportDateRangeDto } from '../dto/reports/filter-report-date-range.dto';
-import { ReportResponseDto } from '../dto/reports/report-response.dto';
-import { SalesReportResponseDto } from '../dto/reports/sales-report-response.dto';
-import { ReportsAnalyticsService, ReportsService } from '../services/reports.service';
+import { CreateReportDto } from '../dto';
+import { CustomersReportResponseDto } from '../dto';
+import { CreateExportReportDto } from '../dto';
+import { ExportReportResponseDto } from '../dto';
+import { InventoryReportResponseDto } from '../dto';
+import { OrdersReportResponseDto } from '../dto';
+import { FilterReportDateRangeDto } from '../dto';
+import { ReportResponseDto } from '../dto';
+import { SalesReportResponseDto } from '../dto';
+import { ReportsAnalyticsService, ReportsService } from '../services';
 
 /** API Spec §12 */
 @Controller('reports')

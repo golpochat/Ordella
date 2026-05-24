@@ -1,7 +1,7 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { CreateRefundDto } from '../dto/refunds/create-refund.dto';
-import { RefundResponseDto } from '../dto/refunds/refund-response.dto';
+import { CreateRefundDto } from '../dto';
+import { RefundResponseDto } from '../dto';
 
 @Injectable()
 export class RefundsService {

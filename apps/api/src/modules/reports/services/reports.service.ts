@@ -1,15 +1,15 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { FilterReportDateRangeDto } from '../dto/reports/filter-report-date-range.dto';
-import { SalesReportResponseDto } from '../dto/reports/sales-report-response.dto';
-import { OrdersReportResponseDto } from '../dto/reports/orders-report-response.dto';
-import { CustomersReportResponseDto } from '../dto/reports/customers-report-response.dto';
-import { InventoryReportResponseDto } from '../dto/reports/inventory-report-response.dto';
-import { CreateExportReportDto } from '../dto/reports/create-export-report.dto';
-import { ExportReportResponseDto } from '../dto/reports/export-report-response.dto';
-import { CreateReportDto } from '../dto/reports/create-report.dto';
-import { ReportResponseDto } from '../dto/reports/report-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { FilterReportDateRangeDto } from '../dto';
+import { SalesReportResponseDto } from '../dto';
+import { OrdersReportResponseDto } from '../dto';
+import { CustomersReportResponseDto } from '../dto';
+import { InventoryReportResponseDto } from '../dto';
+import { CreateExportReportDto } from '../dto';
+import { ExportReportResponseDto } from '../dto';
+import { CreateReportDto } from '../dto';
+import { ReportResponseDto } from '../dto';
 
 @Injectable()
 export class ReportsAnalyticsService {

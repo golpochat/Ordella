@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreatePromotionDto } from '../dto/promotions/create-promotion.dto';
-import { PromotionResponseDto } from '../dto/promotions/promotion-response.dto';
-import { UpdatePromotionDto } from '../dto/promotions/update-promotion.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreatePromotionDto } from '../dto';
+import { PromotionResponseDto } from '../dto';
+import { UpdatePromotionDto } from '../dto';
 
 @Injectable()
 export class PromotionsService {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { WastageRecordEntity } from '../entities/wastage-record.entity';
+import { WastageRecordEntity } from '../entities';
 
 @Injectable()
 export class WastageRecordRepository {

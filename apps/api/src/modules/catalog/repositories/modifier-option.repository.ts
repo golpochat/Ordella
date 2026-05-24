@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ModifierOptionEntity } from '../entities/modifier-option.entity';
+import { ModifierOptionEntity } from '../entities';
 
 @Injectable()
 export class ModifierOptionRepository {

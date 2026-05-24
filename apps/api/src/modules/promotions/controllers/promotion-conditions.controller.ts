@@ -18,11 +18,11 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { PromotionsPermissionKeys } from '../constants/permission-keys';
-import { CreatePromotionConditionDto } from '../dto/promotion-conditions/create-promotion-condition.dto';
-import { FilterPromotionConditionDto } from '../dto/promotion-conditions/filter-promotion-condition.dto';
-import { PromotionConditionResponseDto } from '../dto/promotion-conditions/promotion-condition-response.dto';
-import { UpdatePromotionConditionDto } from '../dto/promotion-conditions/update-promotion-condition.dto';
-import { PromotionConditionsService } from '../services/promotion-conditions.service';
+import { CreatePromotionConditionDto } from '../dto';
+import { FilterPromotionConditionDto } from '../dto';
+import { PromotionConditionResponseDto } from '../dto';
+import { UpdatePromotionConditionDto } from '../dto';
+import { PromotionConditionsService } from '../services';
 
 /** SRS §12 — eligibility rules */
 @Controller('promotion-conditions')

@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStoreDto } from '../dto/stores/create-store.dto';
-import { UpdateStoreDto } from '../dto/stores/update-store.dto';
-import { StoreResponseDto } from '../dto/stores/store-response.dto';
-import { StoresService } from '../services/stores.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStoreDto } from '../dto';
+import { UpdateStoreDto } from '../dto';
+import { StoreResponseDto } from '../dto';
+import { StoresService } from '../services';
 
 /** SRS §2.3 — stores under tenant (tenant-scoped) */
 @Controller('stores')

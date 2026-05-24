@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateDriverDto } from '../dto/drivers/create-driver.dto';
-import { DriverResponseDto } from '../dto/drivers/driver-response.dto';
-import { UpdateDriverDto } from '../dto/drivers/update-driver.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateDriverDto } from '../dto';
+import { DriverResponseDto } from '../dto';
+import { UpdateDriverDto } from '../dto';
 
 @Injectable()
 export class DriversService {

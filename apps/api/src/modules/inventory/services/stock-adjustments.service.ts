@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStockAdjustmentDto } from '../dto/stock-adjustments/create-stock-adjustment.dto';
-import { StockAdjustmentResponseDto } from '../dto/stock-adjustments/stock-adjustment-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStockAdjustmentDto } from '../dto';
+import { StockAdjustmentResponseDto } from '../dto';
 
 @Injectable()
 export class StockAdjustmentsService {

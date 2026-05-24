@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateProductDto } from '../dto/products/create-product.dto';
-import { UpdateProductDto } from '../dto/products/update-product.dto';
-import { ProductResponseDto } from '../dto/products/product-response.dto';
-import { ProductsService } from '../services/products.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateProductDto } from '../dto';
+import { UpdateProductDto } from '../dto';
+import { ProductResponseDto } from '../dto';
+import { ProductsService } from '../services';
 
 /** API Spec §3.1 */
 @Controller('products')

@@ -15,10 +15,10 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStockAdjustmentDto } from '../dto/stock-adjustments/create-stock-adjustment.dto';
-import { StockAdjustmentResponseDto } from '../dto/stock-adjustments/stock-adjustment-response.dto';
-import { StockAdjustmentsService } from '../services/stock-adjustments.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStockAdjustmentDto } from '../dto';
+import { StockAdjustmentResponseDto } from '../dto';
+import { StockAdjustmentsService } from '../services';
 
 /** SRS §4.3 — manual adjustments */
 @Controller('stock-adjustments')

@@ -1,6 +1,6 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { PermissionResponseDto } from '../dto/permissions/permission-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
+import { PermissionResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
 
 @Injectable()
 export class PermissionsService {

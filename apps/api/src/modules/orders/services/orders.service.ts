@@ -1,11 +1,11 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateOrderDto } from '../dto/orders/create-order.dto';
-import { UpdateOrderDto } from '../dto/orders/update-order.dto';
-import { OrderResponseDto } from '../dto/orders/order-response.dto';
-import { OrderStatusHistoryResponseDto } from '../dto/order-status-history/order-status-history-response.dto';
-import { OrderEventResponseDto } from '../dto/order-events/order-event-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateOrderDto } from '../dto';
+import { UpdateOrderDto } from '../dto';
+import { OrderResponseDto } from '../dto';
+import { OrderStatusHistoryResponseDto } from '../dto';
+import { OrderEventResponseDto } from '../dto';
 
 @Injectable()
 export class OrdersService {

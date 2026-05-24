@@ -1,7 +1,7 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterNotificationLogDto } from '../dto/notification-logs/filter-notification-log.dto';
-import { NotificationLogResponseDto } from '../dto/notification-logs/notification-log-response.dto';
+import { FilterNotificationLogDto } from '../dto';
+import { NotificationLogResponseDto } from '../dto';
 
 @Injectable()
 export class NotificationLogsService {

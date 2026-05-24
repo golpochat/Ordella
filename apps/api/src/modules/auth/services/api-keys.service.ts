@@ -1,7 +1,7 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { CreateApiKeyDto } from '../dto/api-keys/create-api-key.dto';
-import { ApiKeyResponseDto } from '../dto/api-keys/api-key-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
+import { CreateApiKeyDto } from '../dto';
+import { ApiKeyResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 
 @Injectable()

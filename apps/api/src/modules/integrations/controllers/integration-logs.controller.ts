@@ -7,9 +7,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { FilterIntegrationLogDto } from '../dto/integration-logs/filter-integration-log.dto';
-import { IntegrationLogResponseDto } from '../dto/integration-logs/integration-log-response.dto';
-import { IntegrationLogsService } from '../services/integration-logs.service';
+import { FilterIntegrationLogDto } from '../dto';
+import { IntegrationLogResponseDto } from '../dto';
+import { IntegrationLogsService } from '../services';
 
 @Controller('integration-logs')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)

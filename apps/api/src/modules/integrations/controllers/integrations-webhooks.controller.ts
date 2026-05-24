@@ -7,8 +7,8 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { CreateIntegrationWebhookDto } from '../dto/integrations/create-integration-webhook.dto';
-import { IntegrationsWebhooksService } from '../services/integrations.service';
+import { CreateIntegrationWebhookDto } from '../dto';
+import { IntegrationsWebhooksService } from '../services';
 
 /** API Spec §13.1–§13.3 */
 @Controller('integrations')

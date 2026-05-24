@@ -17,12 +17,12 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { CreateIntegrationAppDto } from '../dto/integrations/create-integration-app.dto';
-import { IntegrationAppResponseDto } from '../dto/integrations/integration-app-response.dto';
-import { UpdateIntegrationDto } from '../dto/integrations/update-integration.dto';
-import { IntegrationsAppsService } from '../services/integrations.service';
+import { CreateIntegrationAppDto } from '../dto';
+import { IntegrationAppResponseDto } from '../dto';
+import { UpdateIntegrationDto } from '../dto';
+import { IntegrationsAppsService } from '../services';
 
 /** API Spec §13.4 */
 @Controller('integrations/apps')

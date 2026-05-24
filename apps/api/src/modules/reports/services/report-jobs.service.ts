@@ -1,7 +1,7 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterReportJobDto } from '../dto/report-jobs/filter-report-job.dto';
-import { ReportJobResponseDto } from '../dto/report-jobs/report-job-response.dto';
+import { FilterReportJobDto } from '../dto';
+import { ReportJobResponseDto } from '../dto';
 
 @Injectable()
 export class ReportJobsService {

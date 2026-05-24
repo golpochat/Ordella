@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RbacGuard } from '../guards/rbac.guard';
 import { RequirePermissions } from '../decorators/require-permissions.decorator';
-import { CreateUserDto } from '../dto/users/create-user.dto';
-import { UpdateUserDto } from '../dto/users/update-user.dto';
-import { UserResponseDto } from '../dto/users/user-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
-import { UsersService } from '../services/users.service';
+import { CreateUserDto } from '../dto';
+import { UpdateUserDto } from '../dto';
+import { UserResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
+import { UsersService } from '../services';
 
 @Controller('users')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)

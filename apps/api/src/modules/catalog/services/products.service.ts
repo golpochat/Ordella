@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateProductDto } from '../dto/products/create-product.dto';
-import { UpdateProductDto } from '../dto/products/update-product.dto';
-import { ProductResponseDto } from '../dto/products/product-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateProductDto } from '../dto';
+import { UpdateProductDto } from '../dto';
+import { ProductResponseDto } from '../dto';
 
 @Injectable()
 export class ProductsService {

@@ -16,14 +16,14 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { DeliveryPermissionKeys } from '../constants/permission-keys';
-import { CreateDeliveryDto } from '../dto/deliveries/create-delivery.dto';
-import { DeliveryResponseDto } from '../dto/deliveries/delivery-response.dto';
-import { DeliveryTrackingPointResponseDto } from '../dto/deliveries/delivery-tracking-point-response.dto';
-import { UpdateDeliveryDto } from '../dto/deliveries/update-delivery.dto';
-import { DeliveryStatusHistoryResponseDto } from '../dto/delivery-status-history/delivery-status-history-response.dto';
-import { DeliveriesService } from '../services/deliveries.service';
+import { CreateDeliveryDto } from '../dto';
+import { DeliveryResponseDto } from '../dto';
+import { DeliveryTrackingPointResponseDto } from '../dto';
+import { UpdateDeliveryDto } from '../dto';
+import { DeliveryStatusHistoryResponseDto } from '../dto';
+import { DeliveriesService } from '../services';
 
 /** API Spec §7.1–§7.3 — backed by `delivery_tasks` */
 @Controller('deliveries')

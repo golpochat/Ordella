@@ -15,9 +15,9 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
-import { SessionResponseDto } from '../dto/sessions/session-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
-import { SessionsService } from '../services/sessions.service';
+import { SessionResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
+import { SessionsService } from '../services';
 import { AuthenticatedUser } from '../interfaces/authenticated-user.interface';
 
 /** API Spec §1.8 Sessions API */

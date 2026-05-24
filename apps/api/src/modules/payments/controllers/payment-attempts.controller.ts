@@ -7,9 +7,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { PaymentsPermissionKeys } from '../constants/permission-keys';
-import { FilterPaymentAttemptDto } from '../dto/payment-attempts/filter-payment-attempt.dto';
-import { PaymentAttemptResponseDto } from '../dto/payment-attempts/payment-attempt-response.dto';
-import { PaymentAttemptsService } from '../services/payment-attempts.service';
+import { FilterPaymentAttemptDto } from '../dto';
+import { PaymentAttemptResponseDto } from '../dto';
+import { PaymentAttemptsService } from '../services';
 
 /** SRS §9 — gateway attempt audit log */
 @Controller('payment-attempts')

@@ -17,12 +17,12 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { PaymentsPermissionKeys } from '../constants/permission-keys';
-import { CreatePaymentMethodDto } from '../dto/payment-methods/create-payment-method.dto';
-import { PaymentMethodResponseDto } from '../dto/payment-methods/payment-method-response.dto';
-import { UpdatePaymentMethodDto } from '../dto/payment-methods/update-payment-method.dto';
-import { PaymentMethodsService } from '../services/payment-methods.service';
+import { CreatePaymentMethodDto } from '../dto';
+import { PaymentMethodResponseDto } from '../dto';
+import { UpdatePaymentMethodDto } from '../dto';
+import { PaymentMethodsService } from '../services';
 
 /** SRS §9 — saved / configured payment methods */
 @Controller('payment-methods')

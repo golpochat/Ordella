@@ -7,9 +7,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { NotificationsPermissionKeys } from '../constants/permission-keys';
-import { FilterNotificationLogDto } from '../dto/notification-logs/filter-notification-log.dto';
-import { NotificationLogResponseDto } from '../dto/notification-logs/notification-log-response.dto';
-import { NotificationLogsService } from '../services/notification-logs.service';
+import { FilterNotificationLogDto } from '../dto';
+import { NotificationLogResponseDto } from '../dto';
+import { NotificationLogsService } from '../services';
 
 /** API Spec §10.6 */
 @Controller('notifications/logs')

@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateAddonDto } from '../dto/addons/create-addon.dto';
-import { UpdateAddonDto } from '../dto/addons/update-addon.dto';
-import { AddonResponseDto } from '../dto/addons/addon-response.dto';
-import { AddonsService } from '../services/addons.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateAddonDto } from '../dto';
+import { UpdateAddonDto } from '../dto';
+import { AddonResponseDto } from '../dto';
+import { AddonsService } from '../services';
 
 /** API Spec §3.4 */
 @Controller('addons')

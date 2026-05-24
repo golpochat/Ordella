@@ -13,12 +13,12 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { IntegrationsPermissionKeys } from '../constants/permission-keys';
-import { CreateIntegrationProviderDto } from '../dto/integration-providers/create-integration-provider.dto';
-import { IntegrationProviderResponseDto } from '../dto/integration-providers/integration-provider-response.dto';
-import { UpdateIntegrationProviderDto } from '../dto/integration-providers/update-integration-provider.dto';
-import { IntegrationProvidersService } from '../services/integration-providers.service';
+import { CreateIntegrationProviderDto } from '../dto';
+import { IntegrationProviderResponseDto } from '../dto';
+import { UpdateIntegrationProviderDto } from '../dto';
+import { IntegrationProvidersService } from '../services';
 
 /** Platform provider catalog */
 @Controller('integration-providers')

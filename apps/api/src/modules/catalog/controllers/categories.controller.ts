@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateCategoryDto } from '../dto/categories/create-category.dto';
-import { UpdateCategoryDto } from '../dto/categories/update-category.dto';
-import { CategoryResponseDto } from '../dto/categories/category-response.dto';
-import { CategoriesService } from '../services/categories.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateCategoryDto } from '../dto';
+import { UpdateCategoryDto } from '../dto';
+import { CategoryResponseDto } from '../dto';
+import { CategoriesService } from '../services';
 
 /** API Spec §3.5 */
 @Controller('categories')

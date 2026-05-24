@@ -18,10 +18,10 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RbacGuard } from '../guards/rbac.guard';
 import { RequirePermissions } from '../decorators/require-permissions.decorator';
-import { CreateApiKeyDto } from '../dto/api-keys/create-api-key.dto';
-import { ApiKeyResponseDto } from '../dto/api-keys/api-key-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
-import { ApiKeysService } from '../services/api-keys.service';
+import { CreateApiKeyDto } from '../dto';
+import { ApiKeyResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
+import { ApiKeysService } from '../services';
 
 /** API Spec §13.5 API Keys */
 @Controller('api-keys')

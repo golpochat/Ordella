@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateVariantDto } from '../dto/variants/create-variant.dto';
-import { UpdateVariantDto } from '../dto/variants/update-variant.dto';
-import { VariantResponseDto } from '../dto/variants/variant-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateVariantDto } from '../dto';
+import { UpdateVariantDto } from '../dto';
+import { VariantResponseDto } from '../dto';
 
 @Injectable()
 export class VariantsService {

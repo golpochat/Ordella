@@ -15,11 +15,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RbacGuard } from '../guards/rbac.guard';
 import { RequirePermissions } from '../decorators/require-permissions.decorator';
-import { CreateRoleDto } from '../dto/roles/create-role.dto';
-import { UpdateRolePermissionsDto } from '../dto/roles/update-role-permissions.dto';
-import { RoleResponseDto } from '../dto/roles/role-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
-import { RolesService } from '../services/roles.service';
+import { CreateRoleDto } from '../dto';
+import { UpdateRolePermissionsDto } from '../dto';
+import { RoleResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
+import { RolesService } from '../services';
 
 @Controller('roles')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)

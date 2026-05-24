@@ -16,11 +16,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStockTransferDto } from '../dto/stock-transfers/create-stock-transfer.dto';
-import { UpdateStockTransferDto } from '../dto/stock-transfers/update-stock-transfer.dto';
-import { StockTransferResponseDto } from '../dto/stock-transfers/stock-transfer-response.dto';
-import { StockTransfersService } from '../services/stock-transfers.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStockTransferDto } from '../dto';
+import { UpdateStockTransferDto } from '../dto';
+import { StockTransferResponseDto } from '../dto';
+import { StockTransfersService } from '../services';
 
 /** API Spec §4.3 */
 @Controller('stock-transfers')

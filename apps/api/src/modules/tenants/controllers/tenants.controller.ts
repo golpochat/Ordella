@@ -14,11 +14,11 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateTenantDto } from '../dto/tenants/create-tenant.dto';
-import { UpdateTenantDto } from '../dto/tenants/update-tenant.dto';
-import { TenantResponseDto } from '../dto/tenants/tenant-response.dto';
-import { TenantsService } from '../services/tenants.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateTenantDto } from '../dto';
+import { UpdateTenantDto } from '../dto';
+import { TenantResponseDto } from '../dto';
+import { TenantsService } from '../services';
 
 /** API Spec §2.1 — platform-level tenant management */
 @Controller('tenants')

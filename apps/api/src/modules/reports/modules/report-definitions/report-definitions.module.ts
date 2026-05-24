@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ReportDefinitionEntity } from '../../entities/report-definition.entity';
-import { ReportDefinitionsController } from '../../controllers/report-definitions.controller';
-import { ReportDefinitionsService } from '../../services/report-definitions.service';
+import { ReportDefinitionEntity } from '../../entities';
+import { ReportDefinitionsController } from '../../controllers';
+import { ReportDefinitionsService } from '../../services';
 import { ReportDefinitionRepository } from '../../repositories/report-definition.repository';
 
 @Module({

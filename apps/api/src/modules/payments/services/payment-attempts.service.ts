@@ -1,7 +1,7 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaymentAttemptDto } from '../dto/payment-attempts/filter-payment-attempt.dto';
-import { PaymentAttemptResponseDto } from '../dto/payment-attempts/payment-attempt-response.dto';
+import { FilterPaymentAttemptDto } from '../dto';
+import { PaymentAttemptResponseDto } from '../dto';
 
 @Injectable()
 export class PaymentAttemptsService {

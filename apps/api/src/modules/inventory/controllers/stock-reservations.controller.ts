@@ -17,10 +17,10 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStockReservationDto } from '../dto/stock-reservations/create-stock-reservation.dto';
-import { StockReservationResponseDto } from '../dto/stock-reservations/stock-reservation-response.dto';
-import { StockReservationsService } from '../services/stock-reservations.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStockReservationDto } from '../dto';
+import { StockReservationResponseDto } from '../dto';
+import { StockReservationsService } from '../services';
 
 /** SRS §4.3 — reserve stock on checkout */
 @Controller('stock-reservations')

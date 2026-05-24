@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { VariantEntity } from '../../entities/variant.entity';
-import { VariantsController } from '../../controllers/variants.controller';
-import { VariantsService } from '../../services/variants.service';
+import { VariantEntity } from '../../entities';
+import { VariantsController } from '../../controllers';
+import { VariantsService } from '../../services';
 import { VariantRepository } from '../../repositories/variant.repository';
 
 @Module({

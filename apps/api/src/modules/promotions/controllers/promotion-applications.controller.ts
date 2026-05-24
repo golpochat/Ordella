@@ -7,10 +7,10 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { PromotionsPermissionKeys } from '../constants/permission-keys';
-import { CreatePromotionApplicationDto } from '../dto/promotion-applications/create-promotion-application.dto';
-import { FilterPromotionApplicationDto } from '../dto/promotion-applications/filter-promotion-application.dto';
-import { PromotionApplicationResponseDto } from '../dto/promotion-applications/promotion-application-response.dto';
-import { PromotionApplicationsService } from '../services/promotion-applications.service';
+import { CreatePromotionApplicationDto } from '../dto';
+import { FilterPromotionApplicationDto } from '../dto';
+import { PromotionApplicationResponseDto } from '../dto';
+import { PromotionApplicationsService } from '../services';
 
 /** SRS §47 — apply / redeem tracking */
 @Controller('promotion-applications')

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { OrderItemEntity } from '../../entities/order-item.entity';
-import { OrderItemsController } from '../../controllers/order-items.controller';
-import { OrderItemsService } from '../../services/order-items.service';
+import { OrderItemEntity } from '../../entities';
+import { OrderItemsController } from '../../controllers';
+import { OrderItemsService } from '../../services';
 import { OrderItemRepository } from '../../repositories/order-item.repository';
 
 @Module({

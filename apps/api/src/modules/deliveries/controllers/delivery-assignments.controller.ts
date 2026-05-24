@@ -17,11 +17,11 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { DeliveryPermissionKeys } from '../constants/permission-keys';
-import { CreateDeliveryAssignmentDto } from '../dto/delivery-assignments/create-delivery-assignment.dto';
-import { FilterDeliveryAssignmentDto } from '../dto/delivery-assignments/filter-delivery-assignment.dto';
-import { DeliveryAssignmentResponseDto } from '../dto/delivery-assignments/delivery-assignment-response.dto';
-import { UpdateDeliveryAssignmentDto } from '../dto/delivery-assignments/update-delivery-assignment.dto';
-import { DeliveryAssignmentsService } from '../services/delivery-assignments.service';
+import { CreateDeliveryAssignmentDto } from '../dto';
+import { FilterDeliveryAssignmentDto } from '../dto';
+import { DeliveryAssignmentResponseDto } from '../dto';
+import { UpdateDeliveryAssignmentDto } from '../dto';
+import { DeliveryAssignmentsService } from '../services';
 
 /** SRS §28 — manual / auto driver assignments */
 @Controller('delivery-assignments')

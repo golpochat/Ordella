@@ -1,11 +1,11 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateDeliveryDto } from '../dto/deliveries/create-delivery.dto';
-import { DeliveryResponseDto } from '../dto/deliveries/delivery-response.dto';
-import { DeliveryTrackingPointResponseDto } from '../dto/deliveries/delivery-tracking-point-response.dto';
-import { UpdateDeliveryDto } from '../dto/deliveries/update-delivery.dto';
-import { DeliveryStatusHistoryResponseDto } from '../dto/delivery-status-history/delivery-status-history-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateDeliveryDto } from '../dto';
+import { DeliveryResponseDto } from '../dto';
+import { DeliveryTrackingPointResponseDto } from '../dto';
+import { UpdateDeliveryDto } from '../dto';
+import { DeliveryStatusHistoryResponseDto } from '../dto';
 
 @Injectable()
 export class DeliveriesService {

@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateReportDefinitionDto } from '../dto/report-definitions/create-report-definition.dto';
-import { ReportDefinitionResponseDto } from '../dto/report-definitions/report-definition-response.dto';
-import { UpdateReportDefinitionDto } from '../dto/report-definitions/update-report-definition.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateReportDefinitionDto } from '../dto';
+import { ReportDefinitionResponseDto } from '../dto';
+import { UpdateReportDefinitionDto } from '../dto';
 
 @Injectable()
 export class ReportDefinitionsService {

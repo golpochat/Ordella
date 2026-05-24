@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IntegrationEntity } from '../../entities/integration.entity';
-import { IntegrationsAppsController } from '../../controllers/integrations-apps.controller';
-import { IntegrationsWebhooksController } from '../../controllers/integrations-webhooks.controller';
+import { IntegrationEntity } from '../../entities';
+import { IntegrationsAppsController } from '../../controllers';
+import { IntegrationsWebhooksController } from '../../controllers';
 import {
   IntegrationsAppsService,
   IntegrationsWebhooksService,
-} from '../../services/integrations.service';
+} from '../../services';
 import { IntegrationRepository } from '../../repositories/integration.repository';
 
 @Module({

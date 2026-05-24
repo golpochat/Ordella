@@ -1,10 +1,10 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { CreateLoginDto } from '../dto/authentication/create-login.dto';
-import { LoginResponseDto } from '../dto/authentication/login-response.dto';
-import { CreateRefreshTokenDto } from '../dto/authentication/create-refresh-token.dto';
-import { CreateLogoutDto } from '../dto/authentication/create-logout.dto';
-import { CreateMfaVerifyDto } from '../dto/authentication/create-mfa-verify.dto';
-import { CreatePinLoginDto } from '../dto/authentication/create-pin-login.dto';
+import { CreateLoginDto } from '../dto';
+import { LoginResponseDto } from '../dto';
+import { CreateRefreshTokenDto } from '../dto';
+import { CreateLogoutDto } from '../dto';
+import { CreateMfaVerifyDto } from '../dto';
+import { CreatePinLoginDto } from '../dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 
 @Injectable()

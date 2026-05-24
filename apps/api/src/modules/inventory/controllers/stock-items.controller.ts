@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateStockItemDto } from '../dto/stock-items/create-stock-item.dto';
-import { UpdateStockItemDto } from '../dto/stock-items/update-stock-item.dto';
-import { StockItemResponseDto } from '../dto/stock-items/stock-item-response.dto';
-import { StockItemsService } from '../services/stock-items.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateStockItemDto } from '../dto';
+import { UpdateStockItemDto } from '../dto';
+import { StockItemResponseDto } from '../dto';
+import { StockItemsService } from '../services';
 
 /** API Spec §4.1 */
 @Controller('stock-items')

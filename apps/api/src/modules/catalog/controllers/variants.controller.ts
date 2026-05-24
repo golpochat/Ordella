@@ -17,11 +17,11 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateVariantDto } from '../dto/variants/create-variant.dto';
-import { UpdateVariantDto } from '../dto/variants/update-variant.dto';
-import { VariantResponseDto } from '../dto/variants/variant-response.dto';
-import { VariantsService } from '../services/variants.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateVariantDto } from '../dto';
+import { UpdateVariantDto } from '../dto';
+import { VariantResponseDto } from '../dto';
+import { VariantsService } from '../services';
 
 /** API Spec §3.2 */
 @Controller('variants')

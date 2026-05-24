@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DeliveryStatusHistoryEntity } from '../entities/delivery-status-history.entity';
+import { DeliveryStatusHistoryEntity } from '../entities';
 
 @Injectable()
 export class DeliveryStatusHistoryRepository {

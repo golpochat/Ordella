@@ -7,9 +7,9 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { PaymentsPermissionKeys } from '../constants/permission-keys';
-import { CreateRefundDto } from '../dto/refunds/create-refund.dto';
-import { RefundResponseDto } from '../dto/refunds/refund-response.dto';
-import { RefundsService } from '../services/refunds.service';
+import { CreateRefundDto } from '../dto';
+import { RefundResponseDto } from '../dto';
+import { RefundsService } from '../services';
 
 /** API Spec §6.2 */
 @Controller('refunds')

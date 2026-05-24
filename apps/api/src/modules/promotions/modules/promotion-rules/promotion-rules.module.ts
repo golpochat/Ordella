@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PromotionRuleEntity } from '../../entities/promotion-rule.entity';
-import { PromotionRulesController } from '../../controllers/promotion-rules.controller';
-import { PromotionRulesService } from '../../services/promotion-rules.service';
+import { PromotionRuleEntity } from '../../entities';
+import { PromotionRulesController } from '../../controllers';
+import { PromotionRulesService } from '../../services';
 import { PromotionRuleRepository } from '../../repositories/promotion-rule.repository';
 
 @Module({

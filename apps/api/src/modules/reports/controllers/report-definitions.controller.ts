@@ -13,12 +13,12 @@ import { ApiSuccessResponse } from '../../../common/interfaces/api-response.inte
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../auth/dto';
 import { ReportsPermissionKeys } from '../constants/permission-keys';
-import { CreateReportDefinitionDto } from '../dto/report-definitions/create-report-definition.dto';
-import { ReportDefinitionResponseDto } from '../dto/report-definitions/report-definition-response.dto';
-import { UpdateReportDefinitionDto } from '../dto/report-definitions/update-report-definition.dto';
-import { ReportDefinitionsService } from '../services/report-definitions.service';
+import { CreateReportDefinitionDto } from '../dto';
+import { ReportDefinitionResponseDto } from '../dto';
+import { UpdateReportDefinitionDto } from '../dto';
+import { ReportDefinitionsService } from '../services';
 
 @Controller('report-definitions')
 @UseGuards(JwtAuthGuard, RbacGuard)

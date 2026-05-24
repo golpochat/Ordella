@@ -17,13 +17,13 @@ import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateOrderDto } from '../dto/orders/create-order.dto';
-import { UpdateOrderDto } from '../dto/orders/update-order.dto';
-import { OrderResponseDto } from '../dto/orders/order-response.dto';
-import { OrderStatusHistoryResponseDto } from '../dto/order-status-history/order-status-history-response.dto';
-import { OrderEventResponseDto } from '../dto/order-events/order-event-response.dto';
-import { OrdersService } from '../services/orders.service';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateOrderDto } from '../dto';
+import { UpdateOrderDto } from '../dto';
+import { OrderResponseDto } from '../dto';
+import { OrderStatusHistoryResponseDto } from '../dto';
+import { OrderEventResponseDto } from '../dto';
+import { OrdersService } from '../services';
 
 /** API Spec §5.1, §5.6, §5.7 */
 @Controller('orders')

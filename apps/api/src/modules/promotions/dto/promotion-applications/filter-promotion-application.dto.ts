@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
-import { FilterPaginationDto } from '../../../auth/dto/filter-pagination.dto';
+import { FilterPaginationDto } from '../../../auth/dto';
 import { PromotionApplicationStatus } from '../../enums/promotion-application-status.enum';
 
 export class FilterPromotionApplicationDto extends FilterPaginationDto {

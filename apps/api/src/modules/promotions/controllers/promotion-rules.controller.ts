@@ -18,11 +18,11 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RbacGuard } from '../../auth/guards/rbac.guard';
 import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
 import { PromotionsPermissionKeys } from '../constants/permission-keys';
-import { CreatePromotionRuleDto } from '../dto/promotion-rules/create-promotion-rule.dto';
-import { FilterPromotionRuleDto } from '../dto/promotion-rules/filter-promotion-rule.dto';
-import { PromotionRuleResponseDto } from '../dto/promotion-rules/promotion-rule-response.dto';
-import { UpdatePromotionRuleDto } from '../dto/promotion-rules/update-promotion-rule.dto';
-import { PromotionRulesService } from '../services/promotion-rules.service';
+import { CreatePromotionRuleDto } from '../dto';
+import { FilterPromotionRuleDto } from '../dto';
+import { PromotionRuleResponseDto } from '../dto';
+import { UpdatePromotionRuleDto } from '../dto';
+import { PromotionRulesService } from '../services';
 
 /** SRS §12 / §47 — stacking and rules engine */
 @Controller('promotion-rules')

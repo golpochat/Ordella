@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
-import { CreateUserDto } from '../dto/users/create-user.dto';
-import { UpdateUserDto } from '../dto/users/update-user.dto';
-import { UserResponseDto } from '../dto/users/user-response.dto';
-import { FilterPaginationDto } from '../dto/filter-pagination.dto';
+import { CreateUserDto } from '../dto';
+import { UpdateUserDto } from '../dto';
+import { UserResponseDto } from '../dto';
+import { FilterPaginationDto } from '../dto';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
 
 @Injectable()

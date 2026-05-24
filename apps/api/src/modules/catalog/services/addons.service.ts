@@ -1,9 +1,9 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { FilterPaginationDto } from '../../auth/dto/filter-pagination.dto';
-import { CreateAddonDto } from '../dto/addons/create-addon.dto';
-import { UpdateAddonDto } from '../dto/addons/update-addon.dto';
-import { AddonResponseDto } from '../dto/addons/addon-response.dto';
+import { FilterPaginationDto } from '../../auth/dto';
+import { CreateAddonDto } from '../dto';
+import { UpdateAddonDto } from '../dto';
+import { AddonResponseDto } from '../dto';
 
 @Injectable()
 export class AddonsService {

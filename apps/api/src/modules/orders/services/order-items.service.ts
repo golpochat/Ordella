@@ -1,8 +1,8 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
-import { CreateOrderItemDto } from '../dto/order-items/create-order-item.dto';
-import { UpdateOrderItemDto } from '../dto/order-items/update-order-item.dto';
-import { OrderItemResponseDto } from '../dto/order-items/order-item-response.dto';
+import { CreateOrderItemDto } from '../dto';
+import { UpdateOrderItemDto } from '../dto';
+import { OrderItemResponseDto } from '../dto';
 
 @Injectable()
 export class OrderItemsService {
