@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { OrderDetailActions } from '@/components/orders/order-detail-actions';
 import { Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { labelOrderStatus, labelOrderType } from '@shared-utils';
 import { formatDate, formatMoney, getErrorMessage } from '@/lib/utils';
 
 type OrderDetailPageProps = {
@@ -19,7 +20,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
       <>
         <PageHeader
           title={`Order ${order.orderNumber ?? order.id.slice(0, 8)}`}
-          description={`${order.orderType} · ${order.status}`}
+          description={`${labelOrderType(order.orderType)} · ${labelOrderStatus(order.status)}`}
         />
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>

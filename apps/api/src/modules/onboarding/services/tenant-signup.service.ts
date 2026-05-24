@@ -4,10 +4,12 @@ import { DataSource } from 'typeorm';
 import { UserStatus } from '../../auth/enums/user-status.enum';
 import { TenantStatus } from '../../tenants/enums/tenant-status.enum';
 import { LocationStatus } from '../../tenants/enums/location-status.enum';
+import { LocationOpeningHoursEntity } from '../../tenants/entities/location-opening-hours.entity';
 import { SubscriptionPlan } from '../enums/subscription-plan.enum';
 import { OnboardingStep } from '../enums/onboarding-step.enum';
 import {
   ALL_PERMISSION_KEYS,
+  DEFAULT_TENANT_ROLE_NAMES,
   ROLE_PERMISSION_MAP,
   SystemRoleNames,
 } from '../../../common/rbac/role-permissions';
@@ -15,6 +17,16 @@ import { throwTenantSlugTaken } from '../domain/onboarding.errors';
 import { OnboardingRepository } from '../repositories/onboarding.repositories';
 import { hashPassword } from '../utils/password.util';
 import { slugifyTenantName } from '../utils/slug.util';
+import {
+  DEFAULT_CURRENCY,
+  DEFAULT_LOCALE,
+  DEFAULT_LOCATION_NAME,
+  DEFAULT_TIMEZONE,
+  defaultLocationSettings,
+  defaultOpeningHoursRows,
+  defaultOpeningHoursTemplate,
+  defaultTenantMetadata,
+} from '../constants/default-provisioning';
 
 export type TenantSignupResult = {
   tenantId: string;
@@ -23,14 +35,9 @@ export type TenantSignupResult = {
   userId: string;
   email: string;
   accessToken: string;
+  refreshToken: string;
+  onboardingComplete: boolean;
 };
-
-function defaultOpeningHours(): Record<string, unknown> {
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-  return Object.fromEntries(
-    days.map((day) => [day, { open: '09:00', close: '21:00', isClosed: day === 'sunday' }]),
-  );
-}
 
 @Injectable()
 export class TenantSignupService {
@@ -65,10 +72,10 @@ export class TenantSignupService {
       await this.repository.saveSettings(
         {
           tenantId: tenant.id,
-          currency: 'USD',
-          locale: 'en-US',
-          openingHours: defaultOpeningHours(),
-          metadata: {},
+          currency: DEFAULT_CURRENCY,
+          locale: DEFAULT_LOCALE,
+          openingHours: defaultOpeningHoursTemplate(),
+          metadata: defaultTenantMetadata(),
         },
         manager,
       );
@@ -88,7 +95,12 @@ export class TenantSignupService {
             typography: { sm: '0.875rem', md: '1rem', lg: '1.125rem' },
             iconUrl: null,
           },
-          businessInfo: {},
+          businessInfo: {
+            businessName: '',
+            businessType: null,
+            receiptHeader: '',
+            receiptFooter: '',
+          },
         },
         manager,
       );
@@ -106,7 +118,7 @@ export class TenantSignupService {
       await this.repository.saveOnboarding(
         {
           tenantId: tenant.id,
-          currentStep: OnboardingStep.STARTED,
+          currentStep: OnboardingStep.BUSINESS,
           completedSteps: [OnboardingStep.STARTED],
           isComplete: false,
         },
@@ -120,7 +132,7 @@ export class TenantSignupService {
       }
 
       const roleIds = new Map<string, string>();
-      for (const roleName of Object.values(SystemRoleNames)) {
+      for (const roleName of DEFAULT_TENANT_ROLE_NAMES) {
         const role = await this.repository.saveRole(
           {
             tenantId: tenant.id,
@@ -149,19 +161,19 @@ export class TenantSignupService {
         }
       }
 
-      const adminRoleId = roleIds.get(SystemRoleNames.ADMIN);
-      if (!adminRoleId) {
-        throw new Error('Admin role was not created');
+      const ownerRoleId = roleIds.get(SystemRoleNames.OWNER);
+      if (!ownerRoleId) {
+        throw new Error('Owner role was not created');
       }
 
       const passwordHash = await hashPassword(password);
-      const adminUser = await this.repository.saveUser(
+      const ownerUser = await this.repository.saveUser(
         {
           tenantId: tenant.id,
           name: name.trim(),
           email: normalizedEmail,
           passwordHash,
-          roleId: adminRoleId,
+          roleId: ownerRoleId,
           status: UserStatus.ACTIVE,
           mfaEnabled: false,
         },
@@ -171,8 +183,8 @@ export class TenantSignupService {
       await this.repository.saveMembership(
         {
           tenantId: tenant.id,
-          userId: adminUser.id,
-          roleId: adminRoleId,
+          userId: ownerUser.id,
+          roleId: ownerRoleId,
           isActive: true,
         },
         manager,
@@ -181,9 +193,9 @@ export class TenantSignupService {
       const location = await this.repository.saveLocation(
         {
           tenantId: tenant.id,
-          name: `${name.trim()} — Main`,
+          name: DEFAULT_LOCATION_NAME,
           address: null,
-          timezone: 'UTC',
+          timezone: DEFAULT_TIMEZONE,
           status: LocationStatus.CLOSED,
         },
         manager,
@@ -192,30 +204,46 @@ export class TenantSignupService {
       await this.repository.saveLocationSettings(
         {
           locationId: location.id,
-          settings: { currency: 'USD', locale: 'en-US' },
+          settings: defaultLocationSettings(),
         },
         manager,
+      );
+
+      const hoursRepo = manager.getRepository(LocationOpeningHoursEntity);
+      await hoursRepo.save(
+        defaultOpeningHoursRows().map((row) =>
+          hoursRepo.create({
+            locationId: location.id,
+            ...row,
+          }),
+        ),
       );
 
       this.sendVerificationEmailPlaceholder(normalizedEmail, tenant.id);
 
       const permissions = ['*'];
       const accessToken = await this.jwtService.signAsync({
-        sub: adminUser.id,
+        sub: ownerUser.id,
         tenantId: tenant.id,
-        email: adminUser.email,
-        roleId: adminRoleId,
-        roleName: SystemRoleNames.ADMIN,
+        email: ownerUser.email,
+        roleId: ownerRoleId,
+        roleName: SystemRoleNames.OWNER,
         permissions,
       });
+      const refreshToken = await this.jwtService.signAsync(
+        { sub: ownerUser.id, tenantId: tenant.id, type: 'refresh' },
+        { expiresIn: '7d' },
+      );
 
       return {
         tenantId: tenant.id,
         tenantName: tenant.name,
         slug,
-        userId: adminUser.id,
-        email: adminUser.email,
+        userId: ownerUser.id,
+        email: ownerUser.email,
         accessToken,
+        refreshToken,
+        onboardingComplete: false,
       };
     });
   }

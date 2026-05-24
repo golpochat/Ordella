@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OrderStatus } from '../../orders/enums/order-status.enum';
 
-/** Optional — kitchen notifications via NotificationsModule */
+/** Optional — fulfillment notifications via NotificationsModule */
 @Injectable()
 export class KdsNotificationsIntegration {
   private readonly logger = new Logger(KdsNotificationsIntegration.name);

@@ -22,7 +22,7 @@ export default async function ProductsPage() {
     <>
       <PageHeader
         title="Products"
-        description="Manage menu items and pricing"
+        description="Manage catalog items and pricing"
         action={{ label: 'New product', href: '/products/new' }}
       />
       <SubNav items={PRODUCTS_SUBNAV} />

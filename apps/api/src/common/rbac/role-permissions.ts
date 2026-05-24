@@ -1,10 +1,18 @@
 export const SystemRoleNames = {
+  OWNER: 'owner',
   ADMIN: 'admin',
   MANAGER: 'manager',
   STAFF: 'staff',
   DRIVER: 'driver',
   CUSTOMER: 'customer',
 } as const;
+
+/** Roles created automatically for new tenants during signup. */
+export const DEFAULT_TENANT_ROLE_NAMES = [
+  SystemRoleNames.OWNER,
+  SystemRoleNames.MANAGER,
+  SystemRoleNames.STAFF,
+] as const;
 
 export const OnboardingPermissionKeys = {
   TENANT_SETTINGS_READ: 'tenant:settings:read',
@@ -49,11 +57,19 @@ const CATALOG = [
   'deliveries:update',
   'reports:read',
   ...Object.values(OnboardingPermissionKeys),
+  'admin:access',
+  'admin:products',
+  'admin:inventory',
+  'admin:orders',
+  'admin:promotions',
+  'admin:reports',
+  'admin:settings',
 ];
 
 export const ALL_PERMISSION_KEYS = [...new Set(CATALOG)];
 
 export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
+  [SystemRoleNames.OWNER]: ['*'],
   [SystemRoleNames.ADMIN]: ['*'],
   [SystemRoleNames.MANAGER]: [
     'products:read',

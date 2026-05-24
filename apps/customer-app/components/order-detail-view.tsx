@@ -5,19 +5,9 @@ import Link from 'next/link';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { useOrderTracking } from '@/hooks/use-order-tracking';
 import { fetchCustomerOrder, type CustomerOrderDetail } from '@/lib/api';
+import { labelOrderStatus } from '@shared-utils';
 import { ORDER_TIMELINE, timelineIndexForStatus } from '@/lib/order-timeline';
 import { setLastOrderId } from '@/lib/session';
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'Order received',
-  accepted: 'Confirmed',
-  preparing: 'Preparing',
-  ready: 'Ready',
-  out_for_delivery: 'Out for delivery',
-  completed: 'Delivered',
-  cancelled: 'Cancelled',
-  failed: 'Failed',
-};
 
 export function OrderDetailView({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<CustomerOrderDetail | null>(null);
@@ -51,7 +41,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
     return <p className="p-4 text-sm text-muted-foreground">Loading order…</p>;
   }
 
-  const label = STATUS_LABELS[currentStatus] ?? currentStatus;
+  const label = labelOrderStatus(currentStatus);
 
   return (
     <div className="space-y-4 p-4 pb-24">

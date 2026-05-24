@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Ordella Driver',
-  description: 'Delivery driver app',
+  description: 'Delivery driver app for retail and food businesses',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

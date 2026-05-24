@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Badge, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
+import { labelOrderStatus, labelOrderType } from '@shared-utils';
 import { fetchCustomerOrders, type CustomerOrder } from '@/lib/api';
 import { isActiveOrderStatus } from '@/lib/order-timeline';
 
@@ -67,10 +68,12 @@ export function OrdersList() {
                   <CardTitle className="text-base">
                     {order.orderNumber ?? order.id.slice(0, 8)}
                   </CardTitle>
-                  <Badge variant={statusVariant(order.status)}>{order.status}</Badge>
+                  <Badge variant={statusVariant(order.status)}>{labelOrderStatus(order.status)}</Badge>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  <p>${order.total} · {order.orderType}</p>
+                  <p>
+                    ${order.total} · {labelOrderType(order.orderType)}
+                  </p>
                   <p>{new Date(order.createdAt).toLocaleString()}</p>
                 </CardContent>
               </Card>

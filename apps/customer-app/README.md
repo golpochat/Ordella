@@ -6,7 +6,7 @@ Next.js 14 customer app for order history, tracking, profile, and saved addresse
 
 | Route | Description |
 |-------|-------------|
-| `/home` | Recommended items, quick reorder, menu link |
+| `/home` | Recommended items, quick reorder, catalog link |
 | `/orders` | Order list (active / past filters) |
 | `/orders/[orderId]` | Order detail + live tracking timeline |
 | `/profile` | Profile and notification preferences |
@@ -25,7 +25,7 @@ http://localhost:3005
 
 - `NEXT_PUBLIC_API_URL` — API base (`http://localhost:3000/api/v1`)
 - `NEXT_PUBLIC_TENANT_ID` — default tenant for login
-- `NEXT_PUBLIC_STOREFRONT_URL` — online menu link (`http://localhost:3003`)
+- `NEXT_PUBLIC_STOREFRONT_URL` — online catalog link (`http://localhost:3003`)
 
 ## API (expected public customer routes)
 
@@ -39,4 +39,4 @@ http://localhost:3005
 
 Auth tokens stored via `@ordella/shared-utils` `createBrowserTokenStorage`.
 
-WebSocket: KDS namespace (`order.preparing`, `order.ready`, `order.out_for_delivery`, `order.completed`).
+WebSocket: fulfillment display namespace `/kds` (`order.preparing`, `order.ready`, `order.out_for_delivery`, `order.completed`).

@@ -8,9 +8,9 @@ import { getStorefrontUrl } from '@/lib/config';
 import { getLastOrderId } from '@/lib/session';
 
 const RECOMMENDED = [
-  { name: 'Margherita Pizza', note: 'Chef pick' },
-  { name: 'Caesar Salad', note: 'Popular' },
-  { name: 'Chocolate Brownie', note: 'Dessert' },
+  { name: 'Organic apples (1 kg)', note: 'Grocery pick' },
+  { name: 'Flat white', note: 'Café favourite' },
+  { name: 'Classic crew tee', note: 'Retail bestseller' },
 ];
 
 export function HomeView() {
@@ -36,13 +36,13 @@ export function HomeView() {
       });
   }, []);
 
-  const menuUrl = `${getStorefrontUrl()}/menu`;
+  const catalogUrl = `${getStorefrontUrl()}/menu`;
 
   return (
     <div className="space-y-4 p-4 pb-24">
       <div>
         <h1 className="text-2xl font-bold">Welcome back</h1>
-        <p className="text-sm text-muted-foreground">Order from your favourite restaurant</p>
+        <p className="text-sm text-muted-foreground">Retail ordering from your favourite businesses</p>
       </div>
 
       <Card>
@@ -63,7 +63,7 @@ export function HomeView() {
             <p className="text-sm text-muted-foreground">No previous orders yet.</p>
           )}
           <Button asChild variant="outline">
-            <a href={menuUrl}>Browse menu</a>
+            <a href={catalogUrl}>Browse catalog</a>
           </Button>
         </CardContent>
       </Card>

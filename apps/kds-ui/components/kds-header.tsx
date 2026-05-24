@@ -5,7 +5,7 @@ export function KdsHeader() {
     <header className="flex h-14 items-center justify-between border-b bg-card px-4">
       <div className="flex items-center gap-3">
         <Logo variant="full" size="sm" color="auto" />
-        <span className="text-sm font-medium text-muted-foreground">Kitchen display</span>
+        <span className="text-sm font-medium text-muted-foreground">Fulfillment display</span>
       </div>
     </header>
   );

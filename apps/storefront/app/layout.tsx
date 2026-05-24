@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Order Online',
-  description: 'Order food online',
+  description: 'Retail ordering online',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

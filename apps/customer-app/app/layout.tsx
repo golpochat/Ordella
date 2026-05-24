@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Ordella',
-  description: 'Customer app',
+  description: 'Retail ordering and order tracking for customers',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

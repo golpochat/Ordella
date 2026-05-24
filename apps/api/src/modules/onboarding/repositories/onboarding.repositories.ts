@@ -16,6 +16,7 @@ import { PermissionEntity } from '../../auth/entities/permission.entity';
 import { UserEntity } from '../../auth/entities/user.entity';
 import { LocationEntity } from '../../tenants/entities/location.entity';
 import { LocationSettingsEntity } from '../../tenants/entities/location-settings.entity';
+import { OrderEntity } from '../../orders/entities/order.entity';
 import { StaffInvitationStatus } from '../enums/staff-invitation-status.enum';
 
 @Injectable()
@@ -47,6 +48,8 @@ export class OnboardingRepository {
     private readonly locations: Repository<LocationEntity>,
     @InjectRepository(LocationSettingsEntity)
     private readonly locationSettings: Repository<LocationSettingsEntity>,
+    @InjectRepository(OrderEntity)
+    private readonly orders: Repository<OrderEntity>,
   ) {}
 
   tenantRepo(manager?: EntityManager): Repository<TenantEntity> {
@@ -205,6 +208,28 @@ export class OnboardingRepository {
   ): Promise<LocationSettingsEntity> {
     const repo = manager ? manager.getRepository(LocationSettingsEntity) : this.locationSettings;
     return repo.save(entity);
+  }
+
+  async findLocationSettings(locationId: string): Promise<LocationSettingsEntity | null> {
+    return this.locationSettings.findOne({ where: { locationId } });
+  }
+
+  async findPrimaryLocation(tenantId: string): Promise<LocationEntity | null> {
+    return this.locations.findOne({
+      where: { tenantId },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async findLocationForTenant(
+    tenantId: string,
+    locationId: string,
+  ): Promise<LocationEntity | null> {
+    return this.locations.findOne({ where: { id: locationId, tenantId } });
+  }
+
+  async countOrdersForTenant(tenantId: string): Promise<number> {
+    return this.orders.count({ where: { tenantId } });
   }
 
   async getRolePermissions(roleId: string): Promise<string[]> {

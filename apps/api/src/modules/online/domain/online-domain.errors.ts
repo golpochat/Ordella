@@ -17,7 +17,7 @@ export function throwOnlineCheckoutRequired(sessionId: string): never {
 }
 
 export function throwOnlineProductInactive(productId: string): never {
-  throw new BadRequestException(`Product ${productId} is not available for online ordering`);
+  throw new BadRequestException(`Product ${productId} is not available for online retail ordering`);
 }
 
 export function throwOnlineProductOutOfStock(productId: string): never {
@@ -39,7 +39,7 @@ export function throwOnlineOrderNotFound(orderId: string): never {
 }
 
 export function throwOnlineCategoryNotFound(categoryId: string): never {
-  throw new NotFoundException(`Menu category not found: ${categoryId}`);
+  throw new NotFoundException(`Catalog category not found: ${categoryId}`);
 }
 
 export function throwOnlineInvalidQuantity(): never {

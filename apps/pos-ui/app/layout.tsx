@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Ordella POS',
-  description: 'Point of sale interface',
+  description: 'In-store POS and catalog checkout',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

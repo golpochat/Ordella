@@ -3,8 +3,8 @@ import '@ordella/shared-ui/styles.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Ordella KDS',
-  description: 'Kitchen display for Ordella restaurants',
+  title: 'Ordella FDS',
+  description: 'Fulfillment display for multi-channel retail businesses',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

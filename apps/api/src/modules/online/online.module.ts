@@ -22,7 +22,7 @@ import {
 import { MenuQueryRepository } from './repositories/menu-query.repository';
 
 /**
- * Online ordering flow — public menu, session basket, checkout, payment, order status.
+ * Online retail ordering — public catalog, session basket, checkout, payment, order status.
  *
  * Routes (/api/v1, tenant via X-Tenant-Id):
  * - GET /public/menu, GET /public/menu/:categoryId

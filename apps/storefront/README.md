@@ -18,7 +18,7 @@ Create `apps/storefront/.env.local`:
 NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
 NEXT_PUBLIC_TENANT_ID=<tenant-uuid>
 NEXT_PUBLIC_LOCATION_ID=<location-uuid>
-NEXT_PUBLIC_BRAND_NAME=My Restaurant
+NEXT_PUBLIC_BRAND_NAME=Bella Market
 NEXT_PUBLIC_OPENING_HOURS=Mon–Sun 11:00–22:00
 NEXT_PUBLIC_BUSINESS_ADDRESS=123 Main Street
 ```

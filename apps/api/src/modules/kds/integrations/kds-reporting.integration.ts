@@ -3,7 +3,7 @@ import { ReportsIngestService } from '../../reports/services/reports-ingest.serv
 import { ReportEventType } from '../../reports/enums/report-event-type.enum';
 import { OrderStatus } from '../../orders/enums/order-status.enum';
 
-/** Optional — emit kitchen milestones to reporting ingest */
+/** Optional — emit fulfillment milestones to reporting ingest */
 @Injectable()
 export class KdsReportingIntegration {
   private readonly logger = new Logger(KdsReportingIntegration.name);

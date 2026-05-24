@@ -10,7 +10,7 @@ Tenant signup, SaaS billing placeholders, branding, staff invites, onboarding wi
 | GET | `/tenants` | JWT | List tenants for user email |
 | POST | `/tenants/switch` | JWT | Issue JWT for selected tenant |
 | POST | `/start` | JWT + tenant | Begin onboarding wizard |
-| POST | `/step/menu` | JWT + tenant | Complete menu step |
+| POST | `/step/menu` | JWT + tenant | Complete catalog step |
 | POST | `/step/pos` | JWT + tenant | Complete POS step |
 | POST | `/step/delivery` | JWT + tenant | Complete delivery step |
 | POST | `/step/payments` | JWT + tenant | Complete payments step |
@@ -24,7 +24,7 @@ Tenant signup, SaaS billing placeholders, branding, staff invites, onboarding wi
 
 - `admin` — full access (`*`)
 - `manager` — products, orders, inventory
-- `staff` — POS + KDS
+- `staff` — POS + fulfillment display (FDS)
 - `driver` — deliveries
 - `customer` — customer app (no admin API permissions)
 

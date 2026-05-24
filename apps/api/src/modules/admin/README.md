@@ -8,7 +8,7 @@ All routes require `admin:access` plus area permission:
 
 | Permission | Area |
 |------------|------|
-| `admin:products` | Catalog / menu management |
+| `admin:products` | Catalog and inventory management |
 | `admin:inventory` | Stock levels, movements, adjustments |
 | `admin:orders` | Order list, status override, notifications |
 | `admin:promotions` | Promotions CRUD and usage |

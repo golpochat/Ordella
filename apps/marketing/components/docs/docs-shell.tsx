@@ -35,7 +35,7 @@ export function DocsShell({ navigation, children }: DocsShellProps) {
           {mobileOpen ? (
             <X className="h-4 w-4 text-slate" aria-hidden />
           ) : (
-            <span className="text-caption font-normal">Menu</span>
+            <span className="text-caption font-normal">Sections</span>
           )}
         </button>
         <div

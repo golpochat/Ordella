@@ -41,7 +41,7 @@ export function BasketView() {
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
         <p className="text-muted-foreground">Your basket is empty.</p>
         <Button asChild className="mt-4 h-12">
-          <Link href="/menu">Browse menu</Link>
+          <Link href="/menu">Browse catalog</Link>
         </Button>
       </div>
     );

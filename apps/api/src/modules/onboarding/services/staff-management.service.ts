@@ -30,8 +30,11 @@ export class StaffManagementService {
   ): Promise<StaffInvitationEntity> {
     await this.tenantAccess.assertAdmin(user, tenant);
 
-    if (roleName === SystemRoleNames.ADMIN) {
-      throw new BadRequestException('Cannot invite another admin via staff invite');
+    if (
+      roleName === SystemRoleNames.ADMIN ||
+      roleName === SystemRoleNames.OWNER
+    ) {
+      throw new BadRequestException('Cannot invite an owner or admin via staff invite');
     }
 
     const role = await this.repository.findRoleByName(tenant.tenantId, roleName);

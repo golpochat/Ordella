@@ -25,7 +25,7 @@ export function MenuView({ menu }: { menu: OnlineMenu }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      <h1 className="mb-4 text-3xl font-bold">Menu</h1>
+      <h1 className="mb-4 text-3xl font-bold">Catalog</h1>
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
 
       <Tabs value={categoryId} onValueChange={setCategoryId}>

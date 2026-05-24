@@ -1,21 +1,11 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { labelOrderChannel, labelOrderStatus, ORDER_CHANNEL_LABELS, ORDER_STATUS_LABELS } from '@shared-utils';
 import { Button, Input } from '@shared-ui';
 
-const STATUSES = [
-  'pending',
-  'accepted',
-  'preparing',
-  'ready',
-  'out_for_delivery',
-  'completed',
-  'cancelled',
-  'refunded',
-  'failed',
-];
-
-const CHANNELS = ['online', 'pos', 'delivery', 'pickup', 'dine_in'];
+const STATUS_VALUES = Object.keys(ORDER_STATUS_LABELS);
+const CHANNEL_VALUES = Object.keys(ORDER_CHANNEL_LABELS);
 
 export function OrdersFilters() {
   const router = useRouter();
@@ -44,9 +34,9 @@ export function OrdersFilters() {
         defaultValue={searchParams.get('status') ?? ''}
       >
         <option value="">All statuses</option>
-        {STATUSES.map((s) => (
+        {STATUS_VALUES.map((s) => (
           <option key={s} value={s}>
-            {s}
+            {labelOrderStatus(s)}
           </option>
         ))}
       </select>
@@ -56,9 +46,9 @@ export function OrdersFilters() {
         defaultValue={searchParams.get('channel') ?? ''}
       >
         <option value="">All channels</option>
-        {CHANNELS.map((c) => (
+        {CHANNEL_VALUES.map((c) => (
           <option key={c} value={c}>
-            {c}
+            {labelOrderChannel(c)}
           </option>
         ))}
       </select>

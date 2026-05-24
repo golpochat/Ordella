@@ -32,7 +32,7 @@ export default function ProductPage({ params }: ProductPageProps) {
       <div className="p-6">
         <p className="text-sm text-destructive">{error}</p>
         <Button asChild className="mt-4">
-          <Link href="/menu">Back to menu</Link>
+          <Link href="/menu">Back to catalog</Link>
         </Button>
       </div>
     );

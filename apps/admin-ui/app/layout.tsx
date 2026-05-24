@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Ordella Admin',
-  description: 'Restaurant operations admin dashboard',
+  description: 'Multi-channel retail operations admin dashboard',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

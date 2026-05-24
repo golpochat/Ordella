@@ -16,8 +16,10 @@ export class TenantAccessService {
 
   async assertAdmin(user: AuthenticatedUser, tenant: TenantContext): Promise<void> {
     this.assertTenantAccess(user, tenant);
-    const role = await this.repository.findRoleByName(tenant.tenantId, SystemRoleNames.ADMIN);
-    if (!role || user.roleId !== role.id) {
+    const owner = await this.repository.findRoleByName(tenant.tenantId, SystemRoleNames.OWNER);
+    const admin = await this.repository.findRoleByName(tenant.tenantId, SystemRoleNames.ADMIN);
+    const allowedIds = new Set([owner?.id, admin?.id].filter(Boolean));
+    if (!allowedIds.has(user.roleId)) {
       throwAdminRequired();
     }
   }

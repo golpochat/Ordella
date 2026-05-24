@@ -26,12 +26,21 @@ import { TenantBillingService } from '../services/tenant-billing.service';
 import { TenantBrandingService } from '../services/tenant-branding.service';
 import { TenantSignupService } from '../services/tenant-signup.service';
 import { TenantSwitcherService } from '../services/tenant-switcher.service';
+import { OnboardingProvisioningService } from '../services/onboarding-provisioning.service';
+import {
+  CatalogStarterDto,
+  InitSampleCatalogDto,
+  UpdateBusinessDetailsDto,
+  UpdateLocationSetupDto,
+  UpdateOnboardingBrandingDto,
+} from '../dto/onboarding-provisioning.dto';
 
 @Controller('onboarding')
 export class OnboardingController {
   constructor(
     private readonly signupService: TenantSignupService,
     private readonly wizardService: OnboardingWizardService,
+    private readonly provisioningService: OnboardingProvisioningService,
     private readonly brandingService: TenantBrandingService,
     private readonly billingService: TenantBillingService,
     private readonly staffService: StaffManagementService,
@@ -70,6 +79,74 @@ export class OnboardingController {
     @CurrentTenant() tenant: TenantContext,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.wizardService.start(user, tenant);
+    return { success: true, data };
+  }
+
+  @Post('step/business')
+  @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+  @RequirePermissions(OnboardingPermissionKeys.ONBOARDING_UPDATE)
+  async stepBusiness(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpdateBusinessDetailsDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.provisioningService.saveBusinessDetails(user, tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('step/location')
+  @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+  @RequirePermissions(OnboardingPermissionKeys.ONBOARDING_UPDATE)
+  async stepLocation(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpdateLocationSetupDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.provisioningService.saveLocationSetup(user, tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('step/catalog')
+  @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+  @RequirePermissions(OnboardingPermissionKeys.ONBOARDING_UPDATE)
+  async stepCatalog(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: CatalogStarterDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.provisioningService.saveCatalogStarter(user, tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('catalog/init-sample')
+  @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+  @RequirePermissions(OnboardingPermissionKeys.ONBOARDING_UPDATE)
+  async initSampleCatalog(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: InitSampleCatalogDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.provisioningService.initCatalog(user, tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('step/branding')
+  @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+  @RequirePermissions(OnboardingPermissionKeys.TENANT_BRANDING_UPDATE)
+  async stepBranding(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpdateOnboardingBrandingDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.provisioningService.updateBranding(user, tenant, dto);
+    return { success: true, data };
+  }
+
+  @Get('setup-status')
+  @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+  @RequirePermissions(OnboardingPermissionKeys.ONBOARDING_READ)
+  async setupStatus(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.provisioningService.getSetupStatus(tenant.tenantId);
     return { success: true, data };
   }
 

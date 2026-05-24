@@ -1,15 +1,17 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 export function throwKdsOrderNotFound(orderId: string): never {
-  throw new NotFoundException(`KDS order not found: ${orderId}`);
+  throw new NotFoundException(`Fulfillment display order not found: ${orderId}`);
 }
 
 export function throwKdsLineItemNotFound(orderId: string, lineItemId: string): never {
-  throw new NotFoundException(`KDS line item not found: order=${orderId} item=${lineItemId}`);
+  throw new NotFoundException(
+    `Fulfillment display line item not found: order=${orderId} item=${lineItemId}`,
+  );
 }
 
 export function throwKdsInvalidLineTransition(from: string, to: string): never {
-  throw new BadRequestException(`Invalid KDS line transition: ${from} → ${to}`);
+  throw new BadRequestException(`Invalid fulfillment line transition: ${from} → ${to}`);
 }
 
 export function throwKdsItemsNotAllCompleted(): never {
@@ -17,11 +19,11 @@ export function throwKdsItemsNotAllCompleted(): never {
 }
 
 export function throwKdsOrderNotPreparing(status: string): never {
-  throw new BadRequestException(`Order must be in preparing status, current: ${status}`);
+  throw new BadRequestException(`Order must be in fulfillment (preparing) status, current: ${status}`);
 }
 
 export function throwKdsInvalidOrderTransition(from: string, to: string): never {
-  throw new BadRequestException(`Invalid order status transition for KDS: ${from} → ${to}`);
+  throw new BadRequestException(`Invalid order status transition for fulfillment display: ${from} → ${to}`);
 }
 
 export function throwKdsOrderNotReadyForCompletion(status: string): never {

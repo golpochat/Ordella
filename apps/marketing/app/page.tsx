@@ -105,7 +105,7 @@ export default function HomePage({ searchParams }: HomePageProps) {
           <ScreenshotFrame
             image="architecture-overview"
             title="Ordella architecture across channels"
-            caption="Storefront, POS, KDS, and delivery share one API and one catalog"
+            caption="Storefront, POS, fulfillment display, and delivery share one API and one catalog"
           />
         </div>
       </Section>

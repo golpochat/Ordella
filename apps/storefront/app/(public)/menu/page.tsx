@@ -11,7 +11,7 @@ export default function MenuPage() {
   useEffect(() => {
     fetchPublicMenu()
       .then(setMenu)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load menu'));
+      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load catalog'));
   }, []);
 
   if (error) {
@@ -19,7 +19,7 @@ export default function MenuPage() {
   }
 
   if (!menu) {
-    return <p className="p-6 text-muted-foreground">Loading menu…</p>;
+    return <p className="p-6 text-muted-foreground">Loading catalog…</p>;
   }
 
   return <MenuView menu={menu} />;

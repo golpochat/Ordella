@@ -140,10 +140,10 @@ export function TaskDetail({ taskId }: TaskDetailProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Pickup</CardTitle>
+          <CardTitle className="text-base">Business pickup</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">{task.pickup.name ?? 'Restaurant'}</p>
+          <p className="font-medium text-foreground">{task.pickup.name ?? 'Business location'}</p>
           <p>{pickupAddress}</p>
         </CardContent>
       </Card>

@@ -52,6 +52,7 @@ export function PosShell({ products }: PosShellProps) {
       </aside>
 
       <section className="col-span-7 overflow-auto">
+        <h2 className="mb-3 text-lg font-semibold">Catalog</h2>
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-3">
           {visibleProducts.map((product) => (
             <Card key={product.id} className="min-h-36">

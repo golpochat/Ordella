@@ -38,4 +38,24 @@ export { Badge, badgeVariants, type BadgeProps } from './components/badge';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/tabs';
 export { Sidebar, type SidebarProps, type SidebarNavItem } from './components/sidebar';
 export { Topbar, type TopbarProps } from './components/topbar';
+
+export { OnboardingLayout, type OnboardingLayoutProps } from './components/onboarding/onboarding-layout';
+export { StepHeader, type StepHeaderProps } from './components/onboarding/step-header';
+export { StepFooter, type StepFooterProps } from './components/onboarding/step-footer';
+export {
+  ProgressIndicator,
+  type ProgressIndicatorProps,
+  type ProgressStep,
+} from './components/onboarding/progress-indicator';
+export {
+  BusinessTypeSelector,
+  BUSINESS_TYPE_OPTIONS,
+  type BusinessTypeSelectorProps,
+} from './components/onboarding/business-type-selector';
+export { LocationForm, type LocationFormProps, type LocationFormValues } from './components/onboarding/location-form';
+export {
+  CatalogStarter,
+  type CatalogStarterProps,
+  type CatalogStarterValues,
+} from './components/onboarding/catalog-starter';
 export { ThemeProvider, useTheme } from './theme/theme-provider';

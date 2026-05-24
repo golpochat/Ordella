@@ -18,7 +18,7 @@ import { KdsOrderItemStateRepository } from './repositories/kds-order-item-state
 import { KdsNotificationsIntegration, KdsReportingIntegration } from './integrations';
 
 /**
- * Kitchen Display System — active order queue, line-item prep tracking, WebSocket updates.
+ * Fulfillment Display System (FDS) — active order queue, line-item prep tracking, WebSocket updates.
  *
  * Routes (/api/v1, tenant-scoped):
  * - GET /kds/orders

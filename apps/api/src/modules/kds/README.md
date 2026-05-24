@@ -1,6 +1,6 @@
-# KDS module
+# Fulfillment display (FDS / KDS) module
 
-Kitchen Display System backend: order queue, per-line prep state, REST + WebSocket.
+Fulfillment Display System backend: order queue, per-line prep state, REST + WebSocket. API routes remain under `/kds` for compatibility.
 
 ## REST (`/api/v1/kds`)
 
@@ -41,7 +41,7 @@ Uses `OrderLifecycleService.transition()` (via transactional wrapper) and aligns
 
 ## Integrations
 
-- **ReportsIngestService** (optional) — kitchen milestones
+- **ReportsIngestService** (optional) — fulfillment milestones
 - **Notifications** — placeholder `KdsNotificationsIntegration`
 
 ## Migration

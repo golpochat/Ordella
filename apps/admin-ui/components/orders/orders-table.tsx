@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { Order } from '@shared-utils';
+import { labelOrderStatus, labelOrderType, type Order } from '@shared-utils';
 import { Badge, Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { formatDate, formatMoney } from '@/lib/utils';
 
@@ -20,9 +20,9 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
         {orders.map((order) => (
           <TableRow key={order.id}>
             <TableCell className="font-medium">{order.orderNumber ?? order.id.slice(0, 8)}</TableCell>
-            <TableCell>{order.orderType}</TableCell>
+            <TableCell>{labelOrderType(order.orderType)}</TableCell>
             <TableCell>
-              <Badge variant="outline">{order.status}</Badge>
+              <Badge variant="outline">{labelOrderStatus(order.status)}</Badge>
             </TableCell>
             <TableCell>{formatMoney(order.total)}</TableCell>
             <TableCell>{formatDate(order.createdAt)}</TableCell>
