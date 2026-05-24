@@ -1,0 +1,181 @@
+import { createApiClient } from '@shared-utils';
+import { z } from 'zod';
+import { getApiBaseUrl, getTenantId } from './config';
+import {
+  createAddressSchema,
+  customerAddressSchema,
+  updateAddressSchema,
+  type CreateAddressInput,
+  type CustomerAddress,
+  type UpdateAddressInput,
+} from './schemas/address';
+import { getCustomerId, tokenStorage } from './session';
+
+function createCustomerApiClient() {
+  return createApiClient({
+    baseUrl: getApiBaseUrl(),
+    getAccessToken: () => tokenStorage.getAccessToken(),
+    getTenantId: () => tokenStorage.getTenantId() ?? getTenantId() ?? null,
+  });
+}
+
+const loginResponseSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string().optional(),
+  customerId: z.string().uuid(),
+  name: z.string().optional(),
+});
+
+export const customerOrderSchema = z.object({
+  id: z.string().uuid(),
+  orderNumber: z.string().nullable(),
+  status: z.string(),
+  paymentStatus: z.string(),
+  orderType: z.string(),
+  total: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+});
+
+export const customerOrderDetailSchema = customerOrderSchema.extend({
+  subtotal: z.string().optional(),
+  tax: z.string().optional(),
+  items: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        name: z.string(),
+        quantity: z.number().int(),
+        price: z.string(),
+      }),
+    )
+    .optional(),
+  delivery: z
+    .object({
+      addressLine1: z.string(),
+      city: z.string(),
+      instructions: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const customerProfileSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email(),
+  phone: z.string(),
+  notificationPreferences: z.object({
+    email: z.boolean(),
+    sms: z.boolean(),
+    push: z.boolean(),
+  }),
+});
+
+export const orderStatusSchema = z.object({
+  orderId: z.string().uuid(),
+  orderNumber: z.string().nullable(),
+  status: z.string(),
+  paymentStatus: z.string(),
+  orderType: z.string(),
+  total: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable(),
+});
+
+export type CustomerOrder = z.infer<typeof customerOrderSchema>;
+export type CustomerOrderDetail = z.infer<typeof customerOrderDetailSchema>;
+export type CustomerProfile = z.infer<typeof customerProfileSchema>;
+export type OrderStatus = z.infer<typeof orderStatusSchema>;
+
+export async function loginWithPassword(email: string, password: string) {
+  const api = createCustomerApiClient();
+  const data = await api.postData<unknown>('public/customer/login', { email, password });
+  return loginResponseSchema.parse(data);
+}
+
+export async function requestOtp(email: string) {
+  const api = createCustomerApiClient();
+  await api.post('public/customer/otp/request', { email });
+}
+
+export async function loginWithOtp(email: string, otp: string) {
+  const api = createCustomerApiClient();
+  const data = await api.postData<unknown>('public/customer/login', { email, otp });
+  return loginResponseSchema.parse(data);
+}
+
+export async function fetchCustomerOrders(filter?: 'active' | 'past') {
+  const api = createCustomerApiClient();
+  const data = await api.getData<unknown[]>('public/customer/orders', {
+    params: filter ? { filter } : undefined,
+  });
+  return z.array(customerOrderSchema).parse(data);
+}
+
+export async function fetchCustomerOrder(orderId: string) {
+  const api = createCustomerApiClient();
+  const customerId = getCustomerId();
+  const data = await api.getData<unknown>(`public/customer/orders/${orderId}`);
+  const order = customerOrderDetailSchema.parse(data);
+  if (customerId && (data as { customerId?: string }).customerId) {
+    const ownerId = (data as { customerId: string }).customerId;
+    if (ownerId !== customerId) {
+      throw new Error('Order not found');
+    }
+  }
+  return order;
+}
+
+export async function fetchOrderStatus(orderId: string) {
+  const api = createCustomerApiClient();
+  const data = await api.getData<unknown>(`public/order-status/${orderId}`);
+  return orderStatusSchema.parse(data);
+}
+
+export async function fetchCustomerProfile() {
+  const api = createCustomerApiClient();
+  const data = await api.getData<unknown>('public/customer/profile');
+  return customerProfileSchema.parse(data);
+}
+
+export async function updateCustomerProfile(body: {
+  name?: string;
+  email?: string;
+  phone?: string;
+  notificationPreferences?: Partial<CustomerProfile['notificationPreferences']>;
+}) {
+  const api = createCustomerApiClient();
+  const data = await api.patch<{ success: boolean; data: unknown }>('public/customer/profile', body);
+  return customerProfileSchema.parse((data as { data: unknown }).data);
+}
+
+export async function fetchAddresses(): Promise<CustomerAddress[]> {
+  const api = createCustomerApiClient();
+  const data = await api.getData<unknown[]>('public/customer/addresses');
+  return z.array(customerAddressSchema).parse(data);
+}
+
+export async function createAddress(input: CreateAddressInput): Promise<CustomerAddress> {
+  const body = createAddressSchema.parse(input);
+  const api = createCustomerApiClient();
+  const data = await api.postData<unknown>('public/customer/addresses', body);
+  return customerAddressSchema.parse(data);
+}
+
+export async function updateAddress(
+  addressId: string,
+  input: UpdateAddressInput,
+): Promise<CustomerAddress> {
+  const body = updateAddressSchema.parse(input);
+  const api = createCustomerApiClient();
+  const data = await api.patch<{ success: boolean; data: unknown }>(
+    `public/customer/addresses/${addressId}`,
+    body,
+  );
+  return customerAddressSchema.parse((data as { data: unknown }).data);
+}
+
+export async function deleteAddress(addressId: string): Promise<void> {
+  const api = createCustomerApiClient();
+  await api.delete(`public/customer/addresses/${addressId}`);
+}
