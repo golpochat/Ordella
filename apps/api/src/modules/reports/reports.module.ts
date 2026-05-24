@@ -6,6 +6,7 @@ import { ReportsFeatureModule } from './modules/reports/reports-feature.module';
 import { ReportDefinitionsModule } from './modules/report-definitions/report-definitions.module';
 import { ReportJobsModule } from './modules/report-jobs/report-jobs.module';
 import { ReportResultsModule } from './modules/report-results/report-results.module';
+import { ReportsCoreModule } from './modules/reports-core/reports-core.module';
 
 /**
  * Reports domain — SRS §14, API Spec §12 (blueprint Reporting Service).
@@ -22,7 +23,8 @@ import { ReportResultsModule } from './modules/report-results/report-results.mod
     ReportsFeatureModule,
     ReportJobsModule,
     ReportResultsModule,
+    ReportsCoreModule,
   ],
-  exports: [],
+  exports: [ReportsCoreModule],
 })
 export class ReportsModule {}

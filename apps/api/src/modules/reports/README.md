@@ -20,9 +20,26 @@ Reporting and analytics per **SRS §14** and **API Spec §12** (blueprint Report
 
 `sales`, `orders`, `customers`, `inventory`
 
-## Migration
+## Domain core
 
-`1737650000010-CreateReportsSchema.ts`
+`ReportsCoreModule` exports **`ReportsIngestService`** and **`ReportsQueryService`**:
+
+| Domain name | Table |
+|-------------|-------|
+| ReportEvent | `report_events` |
+| DailySalesSummary | `daily_sales_summaries` |
+| InventoryMovementSummary | `inventory_movement_summaries` |
+| DeliveryPerformanceSummary | `delivery_performance_summaries` |
+| PromotionUsage (query) | `promotion_usage_summaries` |
+
+Processors: `SalesReportProcessor`, `InventoryReportProcessor`, `DeliveryReportProcessor`, `PromotionsReportProcessor`.
+
+Placeholder integrations: `BiToolsService`, `CsvExportService`, `ScheduledReportsService`.
+
+## Migrations
+
+- `1737650000010-CreateReportsSchema.ts`
+- `1737650000018-CreateReportingCoreTables.ts`
 
 ## Not in this scaffold (future)
 
