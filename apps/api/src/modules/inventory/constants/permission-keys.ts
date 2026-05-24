@@ -1,0 +1,18 @@
+export const InventoryPermissionKeys = {
+  STOCK_ITEMS_READ: 'stock-items:read',
+  STOCK_ITEMS_CREATE: 'stock-items:create',
+  STOCK_ITEMS_UPDATE: 'stock-items:update',
+  STOCK_ITEMS_DELETE: 'stock-items:delete',
+  STOCK_MOVEMENTS_READ: 'stock-movements:read',
+  STOCK_MOVEMENTS_CREATE: 'stock-movements:create',
+  STOCK_ADJUSTMENTS_READ: 'stock-adjustments:read',
+  STOCK_ADJUSTMENTS_CREATE: 'stock-adjustments:create',
+  STOCK_TRANSFERS_READ: 'stock-transfers:read',
+  STOCK_TRANSFERS_CREATE: 'stock-transfers:create',
+  STOCK_TRANSFERS_UPDATE: 'stock-transfers:update',
+  STOCK_RESERVATIONS_READ: 'stock-reservations:read',
+  STOCK_RESERVATIONS_CREATE: 'stock-reservations:create',
+  STOCK_RESERVATIONS_UPDATE: 'stock-reservations:update',
+  WASTAGE_RECORDS_READ: 'wastage-records:read',
+  WASTAGE_RECORDS_CREATE: 'wastage-records:create',
+} as const;

@@ -1,0 +1,29 @@
+import { Column, Entity, Index } from 'typeorm';
+import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
+
+/** ERD §1.3 — stock_items (SRS §4.4 multi-location via location_id) */
+@Entity('stock_items')
+@Index(['tenantId', 'locationId', 'sku'], { unique: true })
+export class StockItemEntity extends BaseTenantScopedEntity {
+  @Column({ name: 'location_id', type: 'uuid' })
+  locationId!: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  name!: string;
+
+  @Column({ type: 'varchar', length: 128 })
+  sku!: string;
+
+  @Column({ type: 'varchar', length: 32 })
+  unit!: string;
+
+  /** Current on-hand quantity snapshot — updated atomically via movements (SRS §4.4) */
+  @Column({ type: 'decimal', precision: 14, scale: 4, default: 0 })
+  quantityOnHand!: string;
+
+  @Column({ name: 'product_id', type: 'uuid', nullable: true })
+  productId!: string | null;
+
+  @Column({ name: 'reorder_level', type: 'decimal', precision: 14, scale: 4, nullable: true })
+  reorderLevel!: string | null;
+}

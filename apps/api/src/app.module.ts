@@ -4,6 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { DeliveryModule } from './modules/delivery/delivery.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 
 @Module({
   imports: [
@@ -24,6 +31,13 @@ import { TenantsModule } from './modules/tenants/tenants.module';
     }),
     AuthModule,
     TenantsModule,
+    CatalogModule,
+    InventoryModule,
+    OrdersModule,
+    PaymentsModule,
+    DeliveryModule,
+    NotificationsModule,
+    IntegrationsModule,
   ],
 })
 export class AppModule implements NestModule {

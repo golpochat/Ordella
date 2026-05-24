@@ -1,0 +1,106 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiSuccessResponse } from '../../../common/interfaces/api-response.interface';
+import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator';
+import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
+import { TenantGuard } from '../../../common/guards/tenant.guard';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RbacGuard } from '../../auth/guards/rbac.guard';
+import { RequirePermissions } from '../../auth/decorators/require-permissions.decorator';
+import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { CreateOrderDto } from '../dto/orders/create-order.dto';
+import { UpdateOrderDto } from '../dto/orders/update-order.dto';
+import { OrderResponseDto } from '../dto/orders/order-response.dto';
+import { OrderStatusHistoryResponseDto } from '../dto/order-status-history/order-status-history-response.dto';
+import { OrderEventResponseDto } from '../dto/order-events/order-event-response.dto';
+import { OrdersService } from '../services/orders.service';
+
+/** API Spec §5.1, §5.6, §5.7 */
+@Controller('orders')
+@UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
+export class OrdersController {
+  constructor(private readonly ordersService: OrdersService) {}
+
+  @Get()
+  @RequirePermissions('orders:read')
+  async findAll(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: PaginationQueryDto,
+  ): Promise<ApiSuccessResponse<OrderResponseDto[]>> {
+    const data = await this.ordersService.findAll(tenant, query);
+    return { success: true, data };
+  }
+
+  @Post()
+  @RequirePermissions('orders:create')
+  async create(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: CreateOrderDto,
+  ): Promise<ApiSuccessResponse<OrderResponseDto>> {
+    const data = await this.ordersService.create(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Get(':id')
+  @RequirePermissions('orders:read')
+  async findOne(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiSuccessResponse<OrderResponseDto>> {
+    const data = await this.ordersService.findOne(tenant, id);
+    return { success: true, data };
+  }
+
+  @Patch(':id')
+  @RequirePermissions('orders:update')
+  async update(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateOrderDto,
+  ): Promise<ApiSuccessResponse<OrderResponseDto>> {
+    const data = await this.ordersService.update(tenant, id, dto);
+    return { success: true, data };
+  }
+
+  @Delete(':id')
+  @RequirePermissions('orders:cancel')
+  async cancel(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiSuccessResponse<null>> {
+    await this.ordersService.cancel(tenant, id);
+    return { success: true, data: null };
+  }
+
+  @Get(':id/status-history')
+  @RequirePermissions('orders:read')
+  async getStatusHistory(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: PaginationQueryDto,
+  ): Promise<ApiSuccessResponse<OrderStatusHistoryResponseDto[]>> {
+    const data = await this.ordersService.getStatusHistory(tenant, id, query);
+    return { success: true, data };
+  }
+
+  @Get(':id/events')
+  @RequirePermissions('orders:read')
+  async getEvents(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: PaginationQueryDto,
+  ): Promise<ApiSuccessResponse<OrderEventResponseDto[]>> {
+    const data = await this.ordersService.getEvents(tenant, id, query);
+    return { success: true, data };
+  }
+}

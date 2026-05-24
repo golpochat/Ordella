@@ -1,0 +1,14 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { DriverProfileEntity } from '../../entities/driver-profile.entity';
+import { DriversController } from '../../controllers/drivers.controller';
+import { DriversService } from '../../services/drivers.service';
+import { DriverProfileRepository } from '../../repositories/driver-profile.repository';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([DriverProfileEntity])],
+  controllers: [DriversController],
+  providers: [DriversService, DriverProfileRepository],
+  exports: [DriversService, DriverProfileRepository],
+})
+export class DriverProfilesModule {}

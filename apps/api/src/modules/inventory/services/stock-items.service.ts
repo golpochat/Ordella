@@ -1,0 +1,29 @@
+import { Injectable, NotImplementedException } from '@nestjs/common';
+import { TenantContext } from '../../../common/interfaces/tenant-context.interface';
+import { PaginationQueryDto } from '../../auth/dto/pagination-query.dto';
+import { CreateStockItemDto } from '../dto/stock-items/create-stock-item.dto';
+import { UpdateStockItemDto } from '../dto/stock-items/update-stock-item.dto';
+import { StockItemResponseDto } from '../dto/stock-items/stock-item-response.dto';
+
+@Injectable()
+export class StockItemsService {
+  findAll(_tenant: TenantContext, _query: PaginationQueryDto): Promise<StockItemResponseDto[]> {
+    throw new NotImplementedException('findAll stock-items');
+  }
+
+  create(_tenant: TenantContext, _dto: CreateStockItemDto): Promise<StockItemResponseDto> {
+    throw new NotImplementedException('create stock-item');
+  }
+
+  findOne(_tenant: TenantContext, _id: string): Promise<StockItemResponseDto> {
+    throw new NotImplementedException('findOne stock-item');
+  }
+
+  update(_tenant: TenantContext, _id: string, _dto: UpdateStockItemDto): Promise<StockItemResponseDto> {
+    throw new NotImplementedException('update stock-item');
+  }
+
+  remove(_tenant: TenantContext, _id: string): Promise<void> {
+    throw new NotImplementedException('remove stock-item');
+  }
+}
