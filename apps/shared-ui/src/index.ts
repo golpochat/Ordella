@@ -38,6 +38,7 @@ export { Badge, badgeVariants, type BadgeProps } from './components/badge';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './components/tabs';
 export { Sidebar, type SidebarProps, type SidebarNavItem } from './components/sidebar';
 export { Topbar, type TopbarProps } from './components/topbar';
+export { LocationSwitcher } from './components/location-switcher';
 
 export { OnboardingLayout, type OnboardingLayoutProps } from './components/onboarding/onboarding-layout';
 export { StepHeader, type StepHeaderProps } from './components/onboarding/step-header';

@@ -3,6 +3,7 @@
 import { Logo } from '@shared-ui';
 import { getLocationName } from '@/lib/config';
 import type { FdsLocalSettings } from '@/lib/fds-settings';
+import { FdsLocationSwitcher } from '@/components/fds-location-switcher';
 import { FdsSettingsModal } from '@/components/fds-settings-modal';
 
 type FdsHeaderProps = {
@@ -38,6 +39,7 @@ export function FdsHeader({
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <FdsLocationSwitcher />
         <span
           className={
             connected

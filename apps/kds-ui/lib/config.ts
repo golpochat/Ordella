@@ -11,6 +11,12 @@ export function getTenantId(): string {
 }
 
 export function getLocationId(): string {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('ordella.locationId');
+    if (stored) {
+      return stored;
+    }
+  }
   return process.env.NEXT_PUBLIC_LOCATION_ID ?? '';
 }
 

@@ -1,15 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { CatalogBuilderService } from '../../admin/services/catalog-builder.service';
+import { MenuQueryService } from './menu-query.service';
 
 @Injectable()
 export class OnlineCatalogService {
-  constructor(private readonly catalogBuilder: CatalogBuilderService) {}
+  constructor(
+    private readonly catalogBuilder: CatalogBuilderService,
+    private readonly menuQuery: MenuQueryService,
+  ) {}
 
-  getCatalogBundle(tenantId: string) {
-    return Promise.all([
+  async getCatalogBundle(tenantId: string, locationId?: string) {
+    if (locationId) {
+      const menu = await this.menuQuery.getPublicMenu(tenantId, locationId);
+      return {
+        categories: menu.categories,
+        items: menu.products,
+        locationId,
+      };
+    }
+
+    const [categories, items] = await Promise.all([
       this.catalogBuilder.listCategories(tenantId),
       this.catalogBuilder.listItems(tenantId, { channel: 'online' }),
-    ]).then(([categories, items]) => ({ categories, items }));
+    ]);
+    return { categories, items };
   }
 
   listCategories(tenantId: string) {

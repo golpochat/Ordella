@@ -22,4 +22,16 @@ export class CreateLocationDto {
   @IsOptional()
   @IsEnum(LocationStatus)
   status?: LocationStatus;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  @IsOptional()
+  @IsString()
+  slug?: string;
 }

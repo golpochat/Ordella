@@ -3,6 +3,7 @@ export * from './api/client';
 export * from './auth/storage';
 export * from './auth/helpers';
 export * from './auth/tenant-switcher';
+export * from './location';
 export * from './theme';
 export * from './routing';
 export * from './schemas';

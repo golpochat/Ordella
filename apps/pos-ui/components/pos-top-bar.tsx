@@ -3,14 +3,11 @@
 import Link from 'next/link';
 import { Logo } from '@shared-ui';
 import { getSession } from '@/lib/session';
+import { PosLocationSwitcher } from '@/components/pos-location-switcher';
 import { PosSessionModal } from '@/components/pos-session-modal';
 
 export function PosTopBar({ online = true }: { online?: boolean }) {
   const session = getSession();
-  const locationLabel = session.locationId
-    ? `Location ${session.locationId.slice(0, 8)}…`
-    : 'Set location';
-
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4">
       <div className="flex items-center gap-4">
@@ -18,9 +15,9 @@ export function PosTopBar({ online = true }: { online?: boolean }) {
           <Logo variant="mark" size="md" color="auto" />
           <span className="text-lg font-semibold">Register</span>
         </Link>
-        <span className="hidden rounded-md bg-muted px-3 py-1.5 text-sm md:inline">
-          {locationLabel}
-        </span>
+        <div className="hidden md:block">
+          <PosLocationSwitcher />
+        </div>
         <span
           className={
             online

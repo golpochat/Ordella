@@ -73,6 +73,10 @@ const CATALOG = [
   'admin:promotions',
   'admin:reports',
   'admin:settings',
+  'locations:read',
+  'locations:create',
+  'locations:update',
+  'locations:delete',
 ];
 
 export const ALL_PERMISSION_KEYS = [...new Set(CATALOG)];

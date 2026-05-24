@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   ClipboardList,
   LayoutDashboard,
+  MapPin,
   Package,
   Percent,
   Settings,
@@ -18,6 +19,7 @@ export type NavItem = {
 
 export const DASHBOARD_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Analytics', href: '/dashboard', icon: LayoutDashboard },
+  { id: 'locations', label: 'Locations', href: '/locations', icon: MapPin },
   { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BillingModule } from '../billing/billing.module';
+import { LocationsFeatureModule } from '../tenants/modules/locations/locations.module';
 import { AdminModule } from '../admin/admin.module';
 import { LocationEntity } from '../tenants/entities/location.entity';
 import { CategoryEntity } from '../catalog/entities/category.entity';
@@ -22,6 +23,7 @@ import { PublicCatalogController } from './controllers/public-catalog.controller
 import { OrdersOnlinePublicController } from './controllers/orders-online-public.controller';
 import { PaymentsCheckoutController } from './controllers/payments-checkout.controller';
 import { PaymentsStripeWebhookController } from './controllers/payments-stripe-webhook.controller';
+import { PublicLocationsController } from './controllers/public-locations.controller';
 import {
   BasketService,
   CheckoutService,
@@ -48,6 +50,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
 @Module({
   imports: [
     BillingModule,
+    LocationsFeatureModule,
     AdminModule,
     KdsModule,
     PosModule,
@@ -73,6 +76,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
     OrdersOnlinePublicController,
     PaymentsCheckoutController,
     PaymentsStripeWebhookController,
+    PublicLocationsController,
   ],
   providers: [
     MenuQueryRepository,

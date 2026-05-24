@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo, Sidebar, Topbar } from '@shared-ui';
 import { DASHBOARD_NAV } from '@/lib/navigation';
+import { LocationSwitcherBar } from './location-switcher-bar';
 import { TenantSwitcher } from './tenant-switcher';
 import { UserMenu } from './user-menu';
 
@@ -31,7 +32,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         items={items}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar title="Admin" trailing={<TenantSwitcher />} leading={<UserMenu />} />
+        <Topbar
+          title="Admin"
+          trailing={
+            <div className="flex flex-wrap items-center gap-3">
+              <LocationSwitcherBar />
+              <TenantSwitcher />
+            </div>
+          }
+          leading={<UserMenu />}
+        />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
     </div>

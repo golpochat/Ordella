@@ -3,8 +3,10 @@ import { LocationSettingsEntity } from './location-settings.entity';
 import { LocationEntity } from './location.entity';
 import { StoreEntity } from './store.entity';
 import { TenantEntity } from './tenant.entity';
+import { UserLocationAssignmentEntity } from './user-location-assignment.entity';
 
 export { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
+export { UserLocationAssignmentEntity } from './user-location-assignment.entity';
 export { BaseTimestampsEntity } from './base-timestamps.entity';
 export { LocationOpeningHoursEntity } from './location-opening-hours.entity';
 export { LocationSettingsEntity } from './location-settings.entity';
@@ -18,4 +20,5 @@ export const TENANTS_ENTITIES = [
   LocationEntity,
   StoreEntity,
   TenantEntity,
+  UserLocationAssignmentEntity,
 ];

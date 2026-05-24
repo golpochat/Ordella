@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Badge, Logo, useTheme } from '@shared-ui';
-import { getBrandName, getLocationId } from '@/lib/config';
+import { LocationPicker } from '@/components/location-picker';
+import { getBrandName } from '@/lib/config';
 import { useBasketStore } from '@/stores/basket-store';
 
 const nav = [
@@ -19,8 +20,6 @@ export function StorefrontHeader() {
   const count = useBasketStore((s) => s.lineCount());
   const hydrate = useBasketStore((s) => s.hydrate);
   const theme = useTheme();
-  const locationId = getLocationId();
-
   useEffect(() => {
     hydrate();
   }, [hydrate]);
@@ -56,11 +55,7 @@ export function StorefrontHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {locationId ? (
-            <span className="hidden max-w-[8rem] truncate text-xs text-muted-foreground lg:inline">
-              Location
-            </span>
-          ) : null}
+          <LocationPicker />
           <Link
             href="/cart"
             className="relative flex items-center gap-2 rounded-md px-3 py-2 hover:bg-accent"

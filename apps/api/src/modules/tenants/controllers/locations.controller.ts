@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -26,20 +27,62 @@ import { UpdateLocationSettingsDto } from '../dto';
 import { LocationSettingsResponseDto } from '../dto';
 import { UpdateLocationOpeningHoursDto } from '../dto';
 import { LocationOpeningHoursResponseDto } from '../dto';
+import { AssignLocationStaffDto } from '../dto/locations/assign-location-staff.dto';
+import { LocationDetailResponseDto } from '../dto/locations/location-detail-response.dto';
+import { LocationListItemResponseDto } from '../dto/locations/location-list-item-response.dto';
 import { LocationsService } from '../services';
 
-/** API Spec §2.2–§2.5 — locations */
+/** API Spec §2.2–§2.5 — business locations (multi-site retail) */
 @Controller('locations')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
 export class LocationsController {
   constructor(private readonly locationsService: LocationsService) {}
+
+  @Get('list')
+  @RequirePermissions('locations:read')
+  async listAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: FilterPaginationDto,
+  ): Promise<ApiSuccessResponse<LocationListItemResponseDto[]>> {
+    return this.findAll(tenant, query);
+  }
+
+  @Post('create')
+  @RequirePermissions('locations:create')
+  async createAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: CreateLocationDto,
+  ): Promise<ApiSuccessResponse<LocationDetailResponseDto>> {
+    return this.create(tenant, dto);
+  }
+
+  @Post('update')
+  @RequirePermissions('locations:update')
+  async updateAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() body: UpdateLocationDto & { id: string },
+  ): Promise<ApiSuccessResponse<LocationDetailResponseDto>> {
+    const { id, ...dto } = body;
+    const data = await this.locationsService.update(tenant, id, dto);
+    return { success: true, data };
+  }
+
+  @Post('delete')
+  @RequirePermissions('locations:delete')
+  async deleteAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() body: { id: string },
+  ): Promise<ApiSuccessResponse<null>> {
+    await this.locationsService.remove(tenant, body.id);
+    return { success: true, data: null };
+  }
 
   @Get()
   @RequirePermissions('locations:read')
   async findAll(
     @CurrentTenant() tenant: TenantContext,
     @Query() query: FilterPaginationDto,
-  ): Promise<ApiSuccessResponse<LocationResponseDto[]>> {
+  ): Promise<ApiSuccessResponse<LocationListItemResponseDto[]>> {
     const data = await this.locationsService.findAll(tenant, query);
     return { success: true, data };
   }
@@ -49,7 +92,7 @@ export class LocationsController {
   async create(
     @CurrentTenant() tenant: TenantContext,
     @Body() dto: CreateLocationDto,
-  ): Promise<ApiSuccessResponse<LocationResponseDto>> {
+  ): Promise<ApiSuccessResponse<LocationDetailResponseDto>> {
     const data = await this.locationsService.create(tenant, dto);
     return { success: true, data };
   }
@@ -59,7 +102,7 @@ export class LocationsController {
   async findOne(
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiSuccessResponse<LocationResponseDto>> {
+  ): Promise<ApiSuccessResponse<LocationDetailResponseDto>> {
     const data = await this.locationsService.findOne(tenant, id);
     return { success: true, data };
   }
@@ -70,8 +113,29 @@ export class LocationsController {
     @CurrentTenant() tenant: TenantContext,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateLocationDto,
-  ): Promise<ApiSuccessResponse<LocationResponseDto>> {
+  ): Promise<ApiSuccessResponse<LocationDetailResponseDto>> {
     const data = await this.locationsService.update(tenant, id, dto);
+    return { success: true, data };
+  }
+
+  @Get(':id/staff')
+  @RequirePermissions('locations:read')
+  async listStaff(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.locationsService.listStaff(tenant, id);
+    return { success: true, data };
+  }
+
+  @Put(':id/staff')
+  @RequirePermissions('locations:update')
+  async assignStaff(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AssignLocationStaffDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.locationsService.assignStaff(tenant, id, dto);
     return { success: true, data };
   }
 

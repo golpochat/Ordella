@@ -14,8 +14,9 @@ export class PublicCatalogController {
   @Get()
   async getCatalog(
     @CurrentTenant() tenant: TenantContext,
+    @Query('locationId') locationId?: string,
   ): Promise<ApiSuccessResponse<{ categories: unknown[]; items: unknown[] }>> {
-    const data = await this.onlineCatalog.getCatalogBundle(tenant.tenantId);
+    const data = await this.onlineCatalog.getCatalogBundle(tenant.tenantId, locationId);
     return { success: true, data };
   }
 

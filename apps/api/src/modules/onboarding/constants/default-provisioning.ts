@@ -44,6 +44,12 @@ export function defaultLocationSettings(): Record<string, unknown> {
       displayMode: 'grid',
       showCustomerInfo: true,
     },
+    deliverySettings: {
+      radiusKm: 5,
+      deliveryFee: 0,
+      freeDeliveryThreshold: null,
+    },
+    deliveryZones: [],
     openingHours: defaultOpeningHoursTemplate(),
   };
 }
