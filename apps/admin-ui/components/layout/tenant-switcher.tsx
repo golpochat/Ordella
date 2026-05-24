@@ -1,32 +1,58 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@shared-ui';
+import { getCachedTenantList, getActiveTenantId } from '@shared-utils';
 import { browserTokenStorage } from '@/lib/api/browser';
+import { loadTenantsForSwitcher, switchActiveTenant, type TenantOption } from '@/lib/api/onboarding';
 
-function parseTenantOptions(): { id: string; label: string }[] {
+function parseEnvTenantOptions(): TenantOption[] {
   const raw = process.env.NEXT_PUBLIC_TENANT_OPTIONS ?? '';
   if (!raw.trim()) return [];
   return raw.split(',').map((entry) => {
-    const [id, label] = entry.split(':').map((s) => s.trim());
-    return { id, label: label || id };
+    const [tenantId, tenantName] = entry.split(':').map((s) => s.trim());
+    return {
+      tenantId,
+      tenantName: tenantName || tenantId,
+      slug: null,
+      roleId: '',
+      roleName: 'unknown',
+      isActive: true,
+    };
   });
 }
 
 export function TenantSwitcher() {
   const router = useRouter();
-  const options = parseTenantOptions();
-  const current = browserTokenStorage.getTenantId() ?? '';
+  const [tenants, setTenants] = useState<TenantOption[]>([]);
+  const [current, setCurrent] = useState(getActiveTenantId(browserTokenStorage) ?? '');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setTenants(getCachedTenantList());
+    void loadTenantsForSwitcher()
+      .then(setTenants)
+      .catch(() => setTenants(parseEnvTenantOptions()));
+  }, []);
 
   async function onChange(tenantId: string) {
-    await fetch('/api/auth/tenant', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantId }),
-    });
-    browserTokenStorage.setTenantId(tenantId);
-    router.refresh();
+    if (!tenantId) return;
+    setLoading(true);
+    try {
+      await switchActiveTenant(tenantId);
+      setCurrent(tenantId);
+      router.refresh();
+    } catch {
+      browserTokenStorage.setTenantId(tenantId);
+      setCurrent(tenantId);
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
   }
+
+  const options = tenants.length > 0 ? tenants : parseEnvTenantOptions();
 
   if (options.length > 0) {
     return (
@@ -35,12 +61,13 @@ export function TenantSwitcher() {
         <select
           className="h-9 rounded-md border border-input bg-background px-2 text-sm"
           value={current}
-          onChange={(e) => onChange(e.target.value)}
+          disabled={loading}
+          onChange={(e) => void onChange(e.target.value)}
         >
           <option value="">Select…</option>
           {options.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.label}
+            <option key={t.tenantId} value={t.tenantId}>
+              {t.tenantName}
             </option>
           ))}
         </select>
@@ -55,8 +82,9 @@ export function TenantSwitcher() {
         className="h-9 w-56"
         defaultValue={current}
         placeholder="UUID"
+        disabled={loading}
         onBlur={(e) => {
-          if (e.target.value) onChange(e.target.value);
+          if (e.target.value) void onChange(e.target.value);
         }}
       />
     </label>

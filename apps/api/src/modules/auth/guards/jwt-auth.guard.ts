@@ -1,23 +1,26 @@
 import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { CURRENT_USER_KEY } from '../../../common/decorators';
+import { IS_PUBLIC_KEY } from '../decorators';
 
 /**
- * JWT authentication guard (placeholder).
- * TODO: wire Passport JWT strategy and attach AuthenticatedUser + tenant from token claims.
+ * JWT authentication guard — validates Bearer tokens via Passport JWT strategy.
  */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private readonly reflector: Reflector) {
+    super();
+  }
+
   canActivate(context: ExecutionContext) {
-    // TODO: return super.canActivate(context) when JwtStrategy is implemented
-    const request = context.switchToHttp().getRequest();
-    if (!request[CURRENT_USER_KEY]) {
-      throw new UnauthorizedException({
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required',
-      });
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
     }
-    return true;
+    return super.canActivate(context);
   }
 
   handleRequest<TUser>(err: Error | null, user: TUser): TUser {

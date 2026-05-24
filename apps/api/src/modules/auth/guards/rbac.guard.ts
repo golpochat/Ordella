@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators';
 import { CURRENT_USER_KEY } from '../../../common/decorators';
 import { AuthenticatedUser } from '../../../common/interfaces';
+import { permissionAllowed, resolveRolePermissions } from '../../../common/rbac/role-permissions';
 
 /**
  * RBAC guard — checks @RequirePermissions() metadata against user.permissions.
@@ -29,7 +30,7 @@ export class RbacGuard implements CanActivate {
       return false;
     }
 
-    // TODO: enforce permission checks when AuthenticationService populates permissions
-    return required.every((permission) => user.permissions.includes(permission));
+    const effective = resolveRolePermissions(user.roleName ?? '', user.permissions);
+    return required.every((permission) => permissionAllowed(effective, permission));
   }
 }
