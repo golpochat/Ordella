@@ -8,7 +8,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
-import { DeliveryModule } from './modules/delivery/delivery.module';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { ReportsModule } from './modules/reports/reports.module';
@@ -37,7 +37,7 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
     InventoryModule,
     OrdersModule,
     PaymentsModule,
-    DeliveryModule,
+    DeliveriesModule,
     NotificationsModule,
     IntegrationsModule,
     ReportsModule,

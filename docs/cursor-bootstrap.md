@@ -48,7 +48,7 @@ Code
     /catalog
     /orders
     /payments
-    /delivery
+    /deliveries
     /customers
     /promotions
     /notifications

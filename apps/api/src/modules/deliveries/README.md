@@ -1,6 +1,6 @@
-# Delivery module
+# Deliveries module
 
-Delivery management per **SRS §28 / §44** and **API Spec §7** (blueprint Delivery Service).
+Delivery management per **SRS §28 / §44** and **API Spec §7** (blueprint Deliveries Service).
 
 ## Submodules
 

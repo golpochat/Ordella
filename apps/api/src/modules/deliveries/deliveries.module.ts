@@ -7,7 +7,7 @@ import { DeliveryAssignmentsModule } from './modules/delivery-assignments/delive
 import { DriverProfilesModule } from './modules/driver-profiles/driver-profiles.module';
 
 /**
- * Delivery domain — SRS §28 / §44, API Spec §7 (blueprint Delivery Service).
+ * Deliveries domain — SRS §28 / §44, API Spec §7 (blueprint Delivery Service).
  *
  * Routes (/api/v1, tenant-scoped):
  * - /deliveries (delivery_tasks), /drivers (driver_profiles)
@@ -29,4 +29,4 @@ import { DriverProfilesModule } from './modules/driver-profiles/driver-profiles.
     TypeOrmModule,
   ],
 })
-export class DeliveryModule {}
+export class DeliveriesModule {}
