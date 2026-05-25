@@ -1,4 +1,5 @@
 import { LocationStatus } from '../../enums/location-status.enum';
+import { FulfillmentMode } from '../../entities/location.entity';
 
 export class LocationResponseDto {
   id!: string;
@@ -8,6 +9,7 @@ export class LocationResponseDto {
   address!: string | null;
   timezone!: string;
   status!: LocationStatus;
+  fulfillmentMode!: FulfillmentMode;
   createdAt!: Date;
   updatedAt!: Date;
 }

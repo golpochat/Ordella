@@ -90,10 +90,68 @@ export const pickTaskSchema = z.object({
   transferId: z.string().uuid().nullable().optional(),
   orderId: z.string().uuid().nullable().optional(),
   status: z.enum(['pending', 'picking', 'completed']),
+  priority: z.number().optional(),
+  batchId: z.string().uuid().nullable().optional(),
+  waveId: z.string().uuid().nullable().optional(),
+  slotId: z.string().uuid().nullable().optional(),
   assignedTo: z.string().uuid().nullable().optional(),
+  startedAt: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
   createdAt: z.string(),
   warehouse: locationRefSchema.optional(),
+  order: z.object({
+    id: z.string().uuid(),
+    orderNumber: z.string().nullable().optional(),
+    total: z.string().optional(),
+    items: z.array(z.unknown()).optional(),
+  }).passthrough().optional(),
   transfer: stockTransferSchema.partial().optional(),
+  lines: z.array(z.object({
+    productId: z.string().uuid(),
+    quantity: z.number(),
+    binCode: z.string().nullable(),
+    zoneName: z.string().nullable(),
+    status: z.string(),
+  })).optional(),
+  pickPath: z.array(z.object({
+    zoneName: z.string(),
+    binCode: z.string(),
+    itemId: z.string().uuid(),
+  })).optional(),
+});
+
+export const darkStoreOrderSchema = z.object({
+  id: z.string().uuid(),
+  orderNumber: z.string().nullable().optional(),
+  locationId: z.string().uuid(),
+  status: z.string(),
+  total: z.string(),
+  createdAt: z.string(),
+  itemCount: z.number(),
+  fulfilledBy: z.string(),
+  pickTask: pickTaskSchema.nullable().optional(),
+});
+
+export const fulfillmentSlotSchema = z.object({
+  id: z.string(),
+  tenantId: z.string().uuid(),
+  locationId: z.string().uuid(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date(),
+  capacity: z.number(),
+  createdAt: z.coerce.date(),
+});
+
+export const pickWaveSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  locationId: z.string().uuid(),
+  status: z.enum(['pending', 'picking', 'completed']),
+  pickerId: z.string().uuid().nullable().optional(),
+  batchId: z.string().uuid().optional(),
+  taskCount: z.number().optional(),
+  tasks: z.array(pickTaskSchema).optional(),
+  createdAt: z.string().optional(),
 });
 
 export type WarehouseZone = z.infer<typeof warehouseZoneSchema>;
@@ -101,6 +159,9 @@ export type WarehouseBin = z.infer<typeof warehouseBinSchema>;
 export type WarehouseDashboard = z.infer<typeof warehouseDashboardSchema>;
 export type StockTransfer = z.infer<typeof stockTransferSchema>;
 export type PickTask = z.infer<typeof pickTaskSchema>;
+export type DarkStoreOrder = z.infer<typeof darkStoreOrderSchema>;
+export type FulfillmentSlot = z.infer<typeof fulfillmentSlotSchema>;
+export type PickWave = z.infer<typeof pickWaveSchema>;
 
 export async function getWarehouseDashboard(api: ApiClient): Promise<WarehouseDashboard> {
   const data = await api.getData<unknown>('warehouse/dashboard');
@@ -160,4 +221,29 @@ export async function listPickTasks(api: ApiClient): Promise<PickTask[]> {
 export async function completePickTask(api: ApiClient, pickTaskId: string) {
   const data = await api.postData<unknown>('picks/complete', { pickTaskId });
   return pickTaskSchema.parse(data);
+}
+
+export async function listDarkStoreOrders(api: ApiClient, params?: { locationId?: string }): Promise<DarkStoreOrder[]> {
+  const data = await api.getData<unknown[]>('dark-store/orders', { params });
+  return z.array(darkStoreOrderSchema).parse(data);
+}
+
+export async function createDarkStorePickTask(api: ApiClient, body: Record<string, unknown>) {
+  const data = await api.postData<unknown>('dark-store/pick-task/create', body);
+  return pickTaskSchema.parse(data);
+}
+
+export async function completeDarkStorePickTask(api: ApiClient, pickTaskId: string, missingItemIds?: string[]) {
+  const data = await api.postData<unknown>('dark-store/pick-task/complete', { pickTaskId, missingItemIds });
+  return pickTaskSchema.parse(data);
+}
+
+export async function createPickWave(api: ApiClient, body: Record<string, unknown>) {
+  const data = await api.postData<unknown>('dark-store/wave/create', body);
+  return pickWaveSchema.parse(data);
+}
+
+export async function listFulfillmentSlots(api: ApiClient, params?: { locationId?: string; from?: string; to?: string }): Promise<FulfillmentSlot[]> {
+  const data = await api.getData<unknown[]>('dark-store/slots', { params });
+  return z.array(fulfillmentSlotSchema).parse(data);
 }

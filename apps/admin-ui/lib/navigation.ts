@@ -39,6 +39,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
   { id: 'multi-store-inventory', label: 'Multi-Store Inventory', href: '/inventory/multi-store', icon: Warehouse },
   { id: 'warehouse', label: 'Warehouse Management', href: '/warehouse', icon: Boxes },
+  { id: 'picking-mode', label: 'Picking Mode', href: '/warehouse/picking', icon: Boxes },
   { id: 'stock-transfers', label: 'Stock Transfers', href: '/warehouse/transfers', icon: Truck },
   { id: 'suppliers', label: 'Suppliers', href: '/suppliers', icon: Truck },
   { id: 'purchase-orders', label: 'Purchase Orders', href: '/purchase-orders', icon: ClipboardList },

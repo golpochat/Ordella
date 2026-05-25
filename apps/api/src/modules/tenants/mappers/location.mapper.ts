@@ -18,6 +18,7 @@ export function toLocationResponseDto(location: LocationEntity): LocationRespons
     address: location.address,
     timezone: location.timezone,
     status: location.status,
+    fulfillmentMode: location.fulfillmentMode,
     createdAt: location.createdAt,
     updatedAt: location.updatedAt,
   };

@@ -7,6 +7,8 @@ import { StoreEntity } from './store.entity';
 import { LocationSettingsEntity } from './location-settings.entity';
 import { LocationOpeningHoursEntity } from './location-opening-hours.entity';
 
+export type FulfillmentMode = 'storefront' | 'pos' | 'dark_store' | 'micro_fulfillment';
+
 /** ERD §1.1 — locations */
 @Entity('locations')
 @Index(['tenantId', 'name'])
@@ -39,6 +41,9 @@ export class LocationEntity extends BaseTenantScopedEntity {
 
   @Column({ name: 'location_type', type: 'varchar', length: 32, default: LocationType.STORE })
   locationType!: LocationType;
+
+  @Column({ name: 'fulfillment_mode', type: 'varchar', length: 32, default: 'storefront' })
+  fulfillmentMode!: FulfillmentMode;
 
   @OneToOne(() => LocationSettingsEntity, (settings) => settings.location)
   settings!: LocationSettingsEntity;

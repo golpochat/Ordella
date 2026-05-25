@@ -213,6 +213,45 @@ const posRecommendationResponseSchema = z.object({
 
 export type PosRecommendationItem = z.infer<typeof posRecommendationItemSchema>;
 
+const pickingTaskLineSchema = z.object({
+  productId: z.string().uuid(),
+  quantity: z.number(),
+  binCode: z.string().nullable(),
+  zoneName: z.string().nullable(),
+  status: z.string(),
+});
+
+const pickingTaskSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  warehouseId: z.string().uuid(),
+  orderId: z.string().uuid().nullable().optional(),
+  status: z.enum(['pending', 'picking', 'completed']),
+  priority: z.number().optional(),
+  batchId: z.string().uuid().nullable().optional(),
+  waveId: z.string().uuid().nullable().optional(),
+  lines: z.array(pickingTaskLineSchema).optional().default([]),
+  pickPath: z.array(z.object({
+    zoneName: z.string(),
+    binCode: z.string(),
+    itemId: z.string().uuid(),
+  })).optional().default([]),
+  createdAt: z.string(),
+});
+
+const pickingOrderSchema = z.object({
+  id: z.string().uuid(),
+  orderNumber: z.string().nullable().optional(),
+  locationId: z.string().uuid(),
+  status: z.string(),
+  total: z.string(),
+  itemCount: z.number(),
+  pickTask: pickingTaskSchema.nullable().optional(),
+});
+
+export type PickingTask = z.infer<typeof pickingTaskSchema>;
+export type PickingOrder = z.infer<typeof pickingOrderSchema>;
+
 const posCatalogBundleSchema = z.object({
   categories: z.array(posCatalogCategorySchema),
   items: z.array(posCatalogItemSchema),
@@ -482,6 +521,26 @@ export async function completeSale(body: {
   const session = getSession();
   const data = await api.postData<unknown>('pos/complete-sale', { ...session, ...body });
   return completeSaleSchema.parse(data);
+}
+
+export async function listPickingOrders(locationId?: string) {
+  const data = await api.getData<unknown[]>('dark-store/orders', {
+    params: { locationId: locationId || undefined },
+  });
+  return z.array(pickingOrderSchema).parse(data);
+}
+
+export async function createPickingTask(orderId: string, locationId?: string) {
+  const data = await api.postData<unknown>('dark-store/pick-task/create', {
+    orderId,
+    locationId: locationId || undefined,
+  });
+  return pickingTaskSchema.parse(data);
+}
+
+export async function completePickingTask(pickTaskId: string) {
+  const data = await api.postData<unknown>('dark-store/pick-task/complete', { pickTaskId });
+  return pickingTaskSchema.parse(data);
 }
 
 export async function searchLoyaltyCustomers(q: string) {

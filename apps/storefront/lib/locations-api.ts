@@ -16,6 +16,8 @@ const publicLocationSchema = z.object({
   timezone: z.string(),
   currency: z.string(),
   phone: z.string(),
+  locationType: z.string().optional(),
+  fulfillmentMode: z.enum(['storefront', 'pos', 'dark_store', 'micro_fulfillment']).optional(),
 });
 
 export type PublicLocation = z.infer<typeof publicLocationSchema>;

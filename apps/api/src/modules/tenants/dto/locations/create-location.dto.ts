@@ -1,6 +1,8 @@
 import { IsEnum, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 import { LocationStatus } from '../../enums/location-status.enum';
 
+const fulfillmentModes = ['storefront', 'pos', 'dark_store', 'micro_fulfillment'] as const;
+
 /** API Spec §2.2 POST /api/v1/locations */
 export class CreateLocationDto {
   @IsString()
@@ -34,4 +36,8 @@ export class CreateLocationDto {
   @IsOptional()
   @IsString()
   slug?: string;
+
+  @IsOptional()
+  @IsEnum(fulfillmentModes)
+  fulfillmentMode?: 'storefront' | 'pos' | 'dark_store' | 'micro_fulfillment';
 }

@@ -469,6 +469,9 @@ export function CheckoutForm() {
           <CardTitle>Order summary</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+            Delivery orders may be fulfilled by the nearest dark store or micro-fulfillment location with stock.
+          </p>
           <ul className="space-y-2 text-sm">
             {lines.map((line) => (
               <li key={line.lineId} className="flex justify-between gap-2">

@@ -3,6 +3,8 @@ import { UserEntity } from '../../auth/entities';
 import { OrderEntity } from '../../orders/entities';
 import { LocationEntity } from '../../tenants/entities';
 import { StockTransferEntity } from '../../inventory/entities';
+import { PickWaveEntity } from './pick-wave.entity';
+import { FulfillmentSlotEntity } from './fulfillment-slot.entity';
 
 export type WarehousePickTaskStatus = 'pending' | 'picking' | 'completed';
 
@@ -39,12 +41,38 @@ export class WarehousePickTaskEntity {
   @Column({ type: 'varchar', length: 32, default: 'pending' })
   status!: WarehousePickTaskStatus;
 
+  @Column({ type: 'int', default: 0 })
+  priority!: number;
+
+  @Column({ name: 'batch_id', type: 'uuid', nullable: true })
+  batchId!: string | null;
+
+  @Column({ name: 'wave_id', type: 'uuid', nullable: true })
+  waveId!: string | null;
+
+  @ManyToOne(() => PickWaveEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'wave_id' })
+  wave!: PickWaveEntity | null;
+
+  @Column({ name: 'slot_id', type: 'uuid', nullable: true })
+  slotId!: string | null;
+
+  @ManyToOne(() => FulfillmentSlotEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'slot_id' })
+  slot!: FulfillmentSlotEntity | null;
+
   @Column({ name: 'assigned_to', type: 'uuid', nullable: true })
   assignedTo!: string | null;
 
   @ManyToOne(() => UserEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'assigned_to' })
   assignee!: UserEntity | null;
+
+  @Column({ name: 'started_at', type: 'timestamptz', nullable: true })
+  startedAt!: Date | null;
+
+  @Column({ name: 'completed_at', type: 'timestamptz', nullable: true })
+  completedAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

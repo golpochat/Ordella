@@ -119,8 +119,8 @@ export class WarehouseService {
   listPicks(tenant: TenantContext) {
     return this.pickTasks.find({
       where: { tenantId: tenant.tenantId },
-      relations: { warehouse: true, transfer: { lines: { item: true } }, assignee: true },
-      order: { createdAt: 'DESC' },
+      relations: { warehouse: true, transfer: { lines: { item: true } }, order: { items: true }, assignee: true, wave: true, slot: true },
+      order: { priority: 'DESC', createdAt: 'DESC' },
       take: 100,
     });
   }
@@ -135,6 +135,12 @@ export class WarehouseService {
       orderId: null,
       status: 'pending',
       assignedTo: null,
+      priority: 0,
+      batchId: null,
+      waveId: null,
+      slotId: null,
+      startedAt: null,
+      completedAt: null,
     }));
   }
 
@@ -143,6 +149,8 @@ export class WarehouseService {
     if (!task) throw new NotFoundException('Pick task not found');
     task.status = dto.status;
     task.assignedTo = dto.assignedTo ?? task.assignedTo;
+    if (dto.status === 'picking') task.startedAt ??= new Date();
+    if (dto.status === 'completed') task.completedAt = new Date();
     return this.pickTasks.save(task);
   }
 

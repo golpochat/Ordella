@@ -110,6 +110,7 @@ export class LocationsService {
           address: dto.address?.trim() ?? null,
           timezone: dto.timezone ?? DEFAULT_TIMEZONE,
           status: dto.status ?? LocationStatus.CLOSED,
+          fulfillmentMode: dto.fulfillmentMode ?? 'storefront',
         }),
       );
 
@@ -153,6 +154,9 @@ export class LocationsService {
     }
     if (dto.status !== undefined) {
       location.status = dto.status;
+    }
+    if (dto.fulfillmentMode !== undefined) {
+      location.fulfillmentMode = dto.fulfillmentMode;
     }
 
     await this.locationRepository.save(location);
@@ -338,6 +342,8 @@ export class LocationsService {
           timezone: location.timezone,
           currency: (settings.currency as string) ?? 'EUR',
           phone: (settings.phone as string) ?? '',
+          locationType: location.locationType,
+          fulfillmentMode: location.fulfillmentMode,
         };
       }),
     );
@@ -379,6 +385,8 @@ export class LocationsService {
       timezone: location.timezone,
       currency: (merged.currency as string) ?? 'EUR',
       phone: (merged.phone as string) ?? '',
+      locationType: location.locationType,
+      fulfillmentMode: location.fulfillmentMode,
     };
   }
 

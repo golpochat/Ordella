@@ -277,6 +277,7 @@ function CatalogItemCard({
           <span className="font-semibold">${product.price} <span className="text-xs font-normal text-muted-foreground">tax calculated at checkout</span></span>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
         </div>
+        <p className="text-xs text-muted-foreground">Eligible delivery orders may be fulfilled by a dark store.</p>
         <div className="flex gap-2">
           <Button asChild variant="outline" className="h-11 flex-1">
             <Link href={isBundle ? `/bundle/${product.id}` : `/product/${product.id}`}>Details</Link>
