@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDateString, IsEmail, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
-import { PurchaseOrderStatus } from '../entities';
+import { IsArray, IsBoolean, IsDateString, IsEmail, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min, MinLength, ValidateNested } from 'class-validator';
+import { PurchaseOrderStatus, SupplierPurchaseOrderStatus } from '../entities';
 
 export class SupplierItemDto {
   @IsUUID()
@@ -58,6 +58,15 @@ export class UpsertSupplierDto {
   isActive?: boolean;
 
   @IsOptional()
+  @IsEmail()
+  portalUserEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  portalPassword?: string;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SupplierItemDto)
@@ -96,6 +105,18 @@ export class UpsertPurchaseOrderDto {
   @IsDateString()
   expectedDeliveryDate?: string;
 
+  @IsOptional()
+  @IsEnum(SupplierPurchaseOrderStatus)
+  supplierStatus?: SupplierPurchaseOrderStatus;
+
+  @IsOptional()
+  @IsDateString()
+  supplierExpectedDeliveryDate?: string;
+
+  @IsOptional()
+  @IsString()
+  supplierNotes?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PurchaseOrderLineDto)
@@ -119,4 +140,98 @@ export class ReceivePurchaseOrderLineDto {
   @IsInt()
   @Min(0)
   quantityReceived!: number;
+}
+
+export class SupplierLoginDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  password!: string;
+}
+
+export class SupplierPasswordResetDto {
+  @IsEmail()
+  email!: string;
+}
+
+export class SupplierUpdatePasswordDto {
+  @IsString()
+  currentPassword!: string;
+
+  @IsString()
+  @MinLength(8)
+  newPassword!: string;
+}
+
+export class SupplierPurchaseOrderActionDto {
+  @IsUUID()
+  purchaseOrderId!: string;
+
+  @IsOptional()
+  @IsDateString()
+  expectedDeliveryDate?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class SupplierUpdateDeliveryDto {
+  @IsUUID()
+  purchaseOrderId!: string;
+
+  @IsDateString()
+  expectedDeliveryDate!: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class SupplierSendMessageDto {
+  @IsOptional()
+  @IsUUID()
+  purchaseOrderId?: string;
+
+  @IsString()
+  message!: string;
+}
+
+export class SupplierCatalogUpdateDto {
+  @IsUUID()
+  supplierItemId!: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  costPrice?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  leadTimeDays?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  minOrderQty?: number;
+
+  @IsOptional()
+  @IsString()
+  sku?: string;
+}
+
+export class SupplierProfileUpdateDto {
+  @IsOptional()
+  @IsString()
+  contactName?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }

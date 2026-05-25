@@ -1,9 +1,14 @@
 import { Column, CreateDateColumn, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { SupplierItemEntity } from './supplier-item.entity';
 import { PurchaseOrderEntity } from './purchase-order.entity';
+import { SupplierMessageEntity } from './supplier-message.entity';
 
 @Entity('suppliers')
 @Index(['tenantId', 'name'])
+@Index(['tenantId', 'portalUserEmail'], {
+  unique: true,
+  where: 'portal_user_email IS NOT NULL',
+})
 export class SupplierEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -29,6 +34,15 @@ export class SupplierEntity {
   @Column({ type: 'text', nullable: true })
   notes!: string | null;
 
+  @Column({ name: 'portal_user_email', type: 'varchar', length: 255, nullable: true })
+  portalUserEmail!: string | null;
+
+  @Column({ name: 'portal_password_hash', type: 'text', nullable: true, select: false })
+  portalPasswordHash!: string | null;
+
+  @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
+  lastLoginAt!: Date | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
@@ -40,4 +54,7 @@ export class SupplierEntity {
 
   @OneToMany(() => PurchaseOrderEntity, (order) => order.supplier)
   purchaseOrders!: PurchaseOrderEntity[];
+
+  @OneToMany(() => SupplierMessageEntity, (message) => message.supplier)
+  messages!: SupplierMessageEntity[];
 }

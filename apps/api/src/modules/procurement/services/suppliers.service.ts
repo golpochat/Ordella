@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { UpsertSupplierDto } from '../dto';
 import { SupplierEntity, SupplierItemEntity } from '../entities';
 import { SearchIndexService } from '../../search';
+import { hashPassword } from '../../onboarding/utils/password.util';
 
 @Injectable()
 export class SuppliersService {
@@ -41,6 +42,8 @@ export class SuppliersService {
       phone: dto.phone ?? null,
       address: dto.address ?? null,
       notes: dto.notes ?? null,
+      portalUserEmail: dto.portalUserEmail ? this.normalizeEmail(dto.portalUserEmail) : null,
+      portalPasswordHash: dto.portalPassword ? await hashPassword(dto.portalPassword) : null,
       isActive: dto.isActive ?? true,
     }));
     await this.replaceItems(supplier.id, dto.items ?? []);
@@ -58,6 +61,12 @@ export class SuppliersService {
     supplier.phone = dto.phone ?? null;
     supplier.address = dto.address ?? null;
     supplier.notes = dto.notes ?? null;
+    supplier.portalUserEmail = dto.portalUserEmail !== undefined
+      ? this.normalizeEmail(dto.portalUserEmail)
+      : supplier.portalUserEmail;
+    if (dto.portalPassword) {
+      supplier.portalPasswordHash = await hashPassword(dto.portalPassword);
+    }
     supplier.isActive = dto.isActive ?? supplier.isActive;
     await this.suppliers.save(supplier);
     if (dto.items) {
@@ -88,5 +97,10 @@ export class SuppliersService {
       leadTimeDays: item.leadTimeDays ?? 0,
       minOrderQty: item.minOrderQty ?? 1,
     })));
+  }
+
+  private normalizeEmail(email?: string | null): string | null {
+    const normalized = email?.trim().toLowerCase();
+    return normalized || null;
   }
 }

@@ -10,6 +10,7 @@ import {
   PurchaseOrderEntity,
   PurchaseOrderItemEntity,
   PurchaseOrderStatus,
+  SupplierPurchaseOrderStatus,
   SupplierEntity,
   SupplierItemEntity,
 } from '../entities';
@@ -55,8 +56,11 @@ export class PurchaseOrdersService {
       supplierId: dto.supplierId,
       locationId: dto.locationId,
       status: dto.status ?? PurchaseOrderStatus.DRAFT,
+      supplierStatus: dto.supplierStatus ?? SupplierPurchaseOrderStatus.PENDING,
       totalCost,
       expectedDeliveryDate: dto.expectedDeliveryDate ?? null,
+      supplierExpectedDeliveryDate: dto.supplierExpectedDeliveryDate ?? null,
+      supplierNotes: dto.supplierNotes ?? null,
       sentAt: dto.status === PurchaseOrderStatus.SENT ? new Date() : null,
     }));
     await this.replaceItems(order.id, dto.items);
@@ -71,12 +75,18 @@ export class PurchaseOrdersService {
     if ([PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.CANCELLED].includes(order.status)) {
       throw new BadRequestException('Received or cancelled purchase orders cannot be edited');
     }
+    if ([SupplierPurchaseOrderStatus.CONFIRMED, SupplierPurchaseOrderStatus.SHIPPED].includes(order.supplierStatus)) {
+      throw new BadRequestException('Supplier-confirmed purchase orders are locked');
+    }
     await this.assertSupplier(tenantId, dto.supplierId);
     order.supplierId = dto.supplierId;
     order.locationId = dto.locationId;
     order.status = dto.status ?? order.status;
+    order.supplierStatus = dto.supplierStatus ?? order.supplierStatus;
     order.totalCost = this.total(dto.items);
     order.expectedDeliveryDate = dto.expectedDeliveryDate ?? null;
+    order.supplierExpectedDeliveryDate = dto.supplierExpectedDeliveryDate ?? order.supplierExpectedDeliveryDate;
+    order.supplierNotes = dto.supplierNotes ?? order.supplierNotes;
     order.sentAt = order.status === PurchaseOrderStatus.SENT && !order.sentAt ? new Date() : order.sentAt;
     await this.purchaseOrders.save(order);
     await this.replaceItems(order.id, dto.items);

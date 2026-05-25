@@ -5,10 +5,11 @@ import { ProductEntity } from '../catalog/entities';
 import { InventoryModule } from '../inventory/inventory.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { LocationEntity } from '../tenants/entities';
-import { PurchaseOrdersController, SuppliersController } from './controllers';
+import { PurchaseOrdersController, SupplierPortalController, SuppliersController } from './controllers';
 import { PROCUREMENT_ENTITIES } from './entities';
-import { PurchaseOrdersService, SuppliersService } from './services';
+import { PurchaseOrdersService, SupplierPortalService, SuppliersService } from './services';
 import { SearchModule } from '../search';
+import { SupplierAuthGuard } from './guards/supplier-auth.guard';
 
 @Module({
   imports: [
@@ -22,8 +23,8 @@ import { SearchModule } from '../search';
       LocationEntity,
     ]),
   ],
-  controllers: [SuppliersController, PurchaseOrdersController],
-  providers: [SuppliersService, PurchaseOrdersService],
-  exports: [SuppliersService, PurchaseOrdersService],
+  controllers: [SuppliersController, PurchaseOrdersController, SupplierPortalController],
+  providers: [SuppliersService, PurchaseOrdersService, SupplierPortalService, SupplierAuthGuard],
+  exports: [SuppliersService, PurchaseOrdersService, SupplierPortalService],
 })
 export class ProcurementModule {}

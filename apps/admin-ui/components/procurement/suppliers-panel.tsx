@@ -29,6 +29,8 @@ type SupplierForm = {
   phone: string;
   address: string;
   notes: string;
+  portalUserEmail: string;
+  portalPassword: string;
   isActive: boolean;
   items: SupplierItemForm[];
 };
@@ -40,6 +42,8 @@ const emptyForm: SupplierForm = {
   phone: '',
   address: '',
   notes: '',
+  portalUserEmail: '',
+  portalPassword: '',
   isActive: true,
   items: [],
 };
@@ -83,6 +87,8 @@ export function SuppliersPanel() {
       phone: supplier.phone ?? '',
       address: supplier.address ?? '',
       notes: supplier.notes ?? '',
+      portalUserEmail: supplier.portalUserEmail ?? '',
+      portalPassword: '',
       isActive: supplier.isActive,
       items: supplier.items.map((item) => ({
         itemId: item.itemId,
@@ -119,6 +125,8 @@ export function SuppliersPanel() {
         phone: form.phone || undefined,
         address: form.address || undefined,
         notes: form.notes || undefined,
+        portalUserEmail: form.portalUserEmail || undefined,
+        portalPassword: form.portalPassword || undefined,
         isActive: form.isActive,
         items: form.items.map((item) => ({
           itemId: item.itemId,
@@ -167,6 +175,8 @@ export function SuppliersPanel() {
             <Input placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             <Input placeholder="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
             <Input placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <Input placeholder="Supplier portal login email" value={form.portalUserEmail} onChange={(e) => setForm({ ...form, portalUserEmail: e.target.value })} />
+            <Input placeholder="Portal password / reset password" type="password" value={form.portalPassword} onChange={(e) => setForm({ ...form, portalPassword: e.target.value })} />
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
               Active
@@ -227,6 +237,7 @@ export function SuppliersPanel() {
               <th className="p-3 font-medium">Contact</th>
               <th className="p-3 font-medium">Items supplied</th>
               <th className="p-3 font-medium">Status</th>
+              <th className="p-3 font-medium">Portal</th>
               <th className="p-3 font-medium">Actions</th>
             </tr>
           </thead>
@@ -242,6 +253,11 @@ export function SuppliersPanel() {
                 </td>
                 <td className="p-3">
                   <Badge variant={supplier.isActive ? 'default' : 'secondary'}>{supplier.isActive ? 'Active' : 'Disabled'}</Badge>
+                </td>
+                <td className="p-3">
+                  <Badge variant={supplier.portalUserEmail ? 'default' : 'secondary'}>
+                    {supplier.portalUserEmail ? 'Enabled' : 'Off'}
+                  </Badge>
                 </td>
                 <td className="p-3">
                   <div className="flex flex-wrap gap-2">
