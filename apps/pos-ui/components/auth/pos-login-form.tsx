@@ -8,7 +8,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1
 
 export function PosLoginForm() {
   const router = useRouter();
-  const [tenantId, setTenantId] = useState('');
+  const [tenantId, setTenantId] = useState(() => {
+    if (typeof window === 'undefined') return process.env.NEXT_PUBLIC_TENANT_ID ?? '';
+    return localStorage.getItem('ordella.tenantId') ?? process.env.NEXT_PUBLIC_TENANT_ID ?? '';
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

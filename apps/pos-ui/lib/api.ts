@@ -5,7 +5,10 @@ import { getSession } from './session';
 const api = createApiClient({
   baseUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1',
   getAccessToken: () => (typeof window === 'undefined' ? null : localStorage.getItem('ordella.accessToken')),
-  getTenantId: () => (typeof window === 'undefined' ? null : localStorage.getItem('ordella.tenantId')),
+  getTenantId: () => {
+    if (typeof window === 'undefined') return process.env.NEXT_PUBLIC_TENANT_ID ?? null;
+    return localStorage.getItem('ordella.tenantId') ?? process.env.NEXT_PUBLIC_TENANT_ID ?? null;
+  },
 });
 
 const posCartLineSchema = z.object({
