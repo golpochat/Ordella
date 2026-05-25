@@ -17,6 +17,12 @@ import {
   CatalogItemUpdateDto,
   CatalogListItemsQueryDto,
   CatalogVariantDto,
+  GlobalCategoryCreateDto,
+  GlobalCategoryUpdateDto,
+  GlobalItemCreateDto,
+  GlobalItemUpdateDto,
+  LocalCatalogOverrideDto,
+  LocalCatalogResetOverrideDto,
 } from '../dto/catalog-builder.dto';
 
 @Controller('catalog')
@@ -24,6 +30,84 @@ import {
 @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.PRODUCTS)
 export class CatalogBuilderController {
   constructor(private readonly catalogBuilder: CatalogBuilderService) {}
+
+  @Get('global')
+  async listGlobalItems(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.listGlobalItems(tenant.tenantId);
+    return { success: true, data };
+  }
+
+  @Post('global/create')
+  async createGlobalItem(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: GlobalItemCreateDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.createGlobalItem(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Post('global/update')
+  async updateGlobalItem(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: GlobalItemUpdateDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.updateGlobalItem(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Get('local')
+  async listLocalCatalog(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.listLocalCatalog(tenant.tenantId);
+    return { success: true, data };
+  }
+
+  @Post('local/override')
+  async overrideLocalItem(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: LocalCatalogOverrideDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.overrideLocalItem(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Post('local/reset-override')
+  async resetLocalOverride(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: LocalCatalogResetOverrideDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.resetLocalOverride(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Get('categories/global')
+  async listGlobalCategories(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.listGlobalCategories(tenant.tenantId);
+    return { success: true, data };
+  }
+
+  @Post('categories/global/create')
+  async createGlobalCategory(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: GlobalCategoryCreateDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.createGlobalCategory(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Post('categories/global/update')
+  async updateGlobalCategory(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: GlobalCategoryUpdateDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.catalogBuilder.updateGlobalCategory(tenant.tenantId, dto);
+    return { success: true, data };
+  }
 
   @Get('categories')
   async listCategories(

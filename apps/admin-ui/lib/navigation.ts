@@ -100,6 +100,7 @@ export const FRANCHISE_HQ_SUBNAV = [
   { label: 'Locations', href: '/franchise-hq/locations' },
   { label: 'Orders', href: '/franchise-hq/orders' },
   { label: 'Inventory', href: '/franchise-hq/inventory' },
+  { label: 'Brand Catalog', href: '/franchise-hq/catalog' },
   { label: 'Staff', href: '/franchise-hq/staff' },
 ];
 

@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { ProductEntity } from '../catalog/entities/product.entity';
 import { CategoryEntity } from '../catalog/entities/category.entity';
+import { GlobalCategoryEntity } from '../catalog/entities/global-category.entity';
+import { GlobalItemEntity } from '../catalog/entities/global-item.entity';
 import { ModifierEntity } from '../catalog/entities/modifier.entity';
 import { ModifierOptionEntity } from '../catalog/entities/modifier-option.entity';
 import { ProductModifierEntity } from '../catalog/entities/product-modifier.entity';
@@ -16,6 +18,7 @@ import { StockMovementEntity } from '../inventory/entities/stock-movement.entity
 import { PromotionEntity } from '../promotions/entities/promotion.entity';
 import { PromotionApplicationEntity } from '../promotions/entities/promotion-application.entity';
 import { TenantEntity } from '../tenants/entities/tenant.entity';
+import { BrandGroupEntity } from '../tenants/entities/brand-group.entity';
 import { LocationEntity } from '../tenants/entities/location.entity';
 import { LocationSettingsEntity } from '../tenants/entities/location-settings.entity';
 import { LocationOpeningHoursEntity } from '../tenants/entities/location-opening-hours.entity';
@@ -67,6 +70,8 @@ import { SearchModule } from '../search';
     TypeOrmModule.forFeature([
       ProductEntity,
       CategoryEntity,
+      GlobalCategoryEntity,
+      GlobalItemEntity,
       ModifierEntity,
       ModifierOptionEntity,
       ProductModifierEntity,
@@ -80,6 +85,8 @@ import { SearchModule } from '../search';
       PromotionEntity,
       PromotionApplicationEntity,
       LocationEntity,
+      TenantEntity,
+      BrandGroupEntity,
     ]),
     forwardRef(() => OrdersFeatureModule),
     InventoryModule,

@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { CategoryEntity } from '../../catalog/entities/category.entity';
+import { GlobalCategoryEntity } from '../../catalog/entities/global-category.entity';
+import { GlobalItemEntity } from '../../catalog/entities/global-item.entity';
 import { ProductEntity } from '../../catalog/entities/product.entity';
 import { VariantEntity } from '../../catalog/entities/variant.entity';
 import { ModifierEntity } from '../../catalog/entities/modifier.entity';
 import { ModifierOptionEntity } from '../../catalog/entities/modifier-option.entity';
 import { ProductModifierEntity } from '../../catalog/entities/product-modifier.entity';
 import { ProductStatus } from '../../catalog/enums/product-status.enum';
+import { BrandGroupEntity, TenantEntity } from '../../tenants/entities';
 
 @Injectable()
 export class CatalogBuilderRepository {
@@ -16,6 +19,14 @@ export class CatalogBuilderRepository {
     private readonly categories: Repository<CategoryEntity>,
     @InjectRepository(ProductEntity)
     private readonly products: Repository<ProductEntity>,
+    @InjectRepository(GlobalItemEntity)
+    private readonly globalItems: Repository<GlobalItemEntity>,
+    @InjectRepository(GlobalCategoryEntity)
+    private readonly globalCategories: Repository<GlobalCategoryEntity>,
+    @InjectRepository(TenantEntity)
+    private readonly tenants: Repository<TenantEntity>,
+    @InjectRepository(BrandGroupEntity)
+    private readonly brandGroups: Repository<BrandGroupEntity>,
     @InjectRepository(VariantEntity)
     private readonly variants: Repository<VariantEntity>,
     @InjectRepository(ModifierEntity)
@@ -26,6 +37,65 @@ export class CatalogBuilderRepository {
     private readonly productModifiers: Repository<ProductModifierEntity>,
   ) {}
 
+  findTenant(tenantId: string): Promise<TenantEntity | null> {
+    return this.tenants.findOne({ where: { id: tenantId } });
+  }
+
+  saveTenant(tenant: TenantEntity): Promise<TenantEntity> {
+    return this.tenants.save(tenant);
+  }
+
+  createBrandGroup(partial: Partial<BrandGroupEntity>): BrandGroupEntity {
+    return this.brandGroups.create(partial);
+  }
+
+  saveBrandGroup(group: BrandGroupEntity): Promise<BrandGroupEntity> {
+    return this.brandGroups.save(group);
+  }
+
+  findBrandGroup(id: string): Promise<BrandGroupEntity | null> {
+    return this.brandGroups.findOne({ where: { id } });
+  }
+
+  listGlobalCategories(brandGroupId: string): Promise<GlobalCategoryEntity[]> {
+    return this.globalCategories.find({
+      where: { brandGroupId },
+      order: { sortOrder: 'ASC', name: 'ASC' },
+    });
+  }
+
+  findGlobalCategory(brandGroupId: string, id: string): Promise<GlobalCategoryEntity | null> {
+    return this.globalCategories.findOne({ where: { id, brandGroupId } });
+  }
+
+  createGlobalCategory(partial: Partial<GlobalCategoryEntity>): GlobalCategoryEntity {
+    return this.globalCategories.create(partial);
+  }
+
+  saveGlobalCategory(category: GlobalCategoryEntity): Promise<GlobalCategoryEntity> {
+    return this.globalCategories.save(category);
+  }
+
+  listGlobalItems(brandGroupId: string): Promise<GlobalItemEntity[]> {
+    return this.globalItems.find({
+      where: { brandGroupId },
+      relations: ['globalCategory'],
+      order: { name: 'ASC' },
+    });
+  }
+
+  findGlobalItem(brandGroupId: string, id: string): Promise<GlobalItemEntity | null> {
+    return this.globalItems.findOne({ where: { id, brandGroupId }, relations: ['globalCategory'] });
+  }
+
+  createGlobalItem(partial: Partial<GlobalItemEntity>): GlobalItemEntity {
+    return this.globalItems.create(partial);
+  }
+
+  saveGlobalItem(item: GlobalItemEntity): Promise<GlobalItemEntity> {
+    return this.globalItems.save(item);
+  }
+
   listCategories(tenantId: string): Promise<CategoryEntity[]> {
     return this.categories.find({
       where: { tenantId },
@@ -35,6 +105,11 @@ export class CatalogBuilderRepository {
 
   findCategory(tenantId: string, id: string): Promise<CategoryEntity | null> {
     return this.categories.findOne({ where: { id, tenantId } });
+  }
+
+  listCategoriesByGlobalIds(tenantId: string, globalCategoryIds: string[]): Promise<CategoryEntity[]> {
+    if (!globalCategoryIds.length) return Promise.resolve([]);
+    return this.categories.find({ where: { tenantId, globalCategoryId: In(globalCategoryIds) } });
   }
 
   saveCategory(entity: CategoryEntity): Promise<CategoryEntity> {
@@ -55,14 +130,23 @@ export class CatalogBuilderRepository {
         tenantId,
         ...(categoryId ? { categoryId } : {}),
       },
+      relations: ['globalItem'],
       order: { sortOrder: 'ASC', name: 'ASC' },
+    });
+  }
+
+  listProductsByGlobalIds(tenantId: string, globalItemIds: string[]): Promise<ProductEntity[]> {
+    if (!globalItemIds.length) return Promise.resolve([]);
+    return this.products.find({
+      where: { tenantId, globalItemId: In(globalItemIds) },
+      relations: ['globalItem'],
     });
   }
 
   findProduct(tenantId: string, id: string): Promise<ProductEntity | null> {
     return this.products.findOne({
       where: { id, tenantId },
-      relations: ['variants'],
+      relations: ['variants', 'globalItem'],
     });
   }
 

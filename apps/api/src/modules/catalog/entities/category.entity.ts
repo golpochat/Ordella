@@ -18,6 +18,9 @@ export class CategoryEntity extends BaseTenantScopedEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
+  @Column({ name: 'global_category_id', type: 'uuid', nullable: true })
+  globalCategoryId!: string | null;
+
   @OneToMany(() => ProductEntity, (product) => product.category)
   products!: ProductEntity[];
 }

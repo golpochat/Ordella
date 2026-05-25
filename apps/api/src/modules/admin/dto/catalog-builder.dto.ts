@@ -120,6 +120,107 @@ export class CatalogItemCreateDto {
   modifierIds?: string[];
 }
 
+export class GlobalCategoryCreateDto {
+  @IsString()
+  @MaxLength(255)
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+}
+
+export class GlobalCategoryUpdateDto extends GlobalCategoryCreateDto {
+  @IsUUID()
+  id!: string;
+}
+
+export class GlobalItemCreateDto {
+  @IsString()
+  @MaxLength(255)
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  basePrice!: string;
+
+  @IsOptional()
+  @IsUUID()
+  globalCategoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  sku?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  barcode?: string;
+
+  @IsOptional()
+  @IsUUID()
+  taxCategoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  imageUrl?: string;
+
+  @IsOptional()
+  attributes?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class GlobalItemUpdateDto extends GlobalItemCreateDto {
+  @IsUUID()
+  id!: string;
+}
+
+export class LocalCatalogOverrideDto {
+  @IsUUID()
+  globalItemId!: string;
+
+  @IsOptional()
+  @IsUUID()
+  localItemId?: string;
+
+  @IsOptional()
+  @IsString()
+  overridePrice?: string;
+
+  @IsOptional()
+  @IsString()
+  overrideName?: string;
+
+  @IsOptional()
+  @IsString()
+  overrideDescription?: string;
+
+  @IsOptional()
+  overrideAttributes?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class LocalCatalogResetOverrideDto {
+  @IsUUID()
+  localItemId!: string;
+}
+
 export class CatalogItemUpdateDto extends CatalogItemCreateDto {
   @IsUUID()
   id!: string;

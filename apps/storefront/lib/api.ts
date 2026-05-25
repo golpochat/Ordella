@@ -48,6 +48,9 @@ export const onlineProductSchema = z.object({
   inventoryTrackingEnabled: z.boolean().optional(),
   stockLevel: z.number().int().nullable().optional(),
   isActive: z.boolean().optional(),
+  globalItemId: z.string().uuid().nullable().optional(),
+  catalogSource: z.enum(['local', 'inherited', 'overridden']).optional(),
+  attributes: z.record(z.unknown()).optional(),
   bundleItems: z.array(z.object({
     itemId: z.string().uuid(),
     name: z.string().optional(),

@@ -27,6 +27,18 @@ export class TenantEntity extends BaseTimestampsEntity {
   @Column({ name: 'tenant_type', type: 'varchar', length: 32, default: 'single-location' })
   tenantType!: TenantType;
 
+  @Column({ name: 'brand_group_id', type: 'uuid', nullable: true })
+  brandGroupId!: string | null;
+
+  @Column({ name: 'brand_name', type: 'varchar', length: 255, nullable: true })
+  brandName!: string | null;
+
+  @Column({ name: 'brand_logo', type: 'varchar', length: 2048, nullable: true })
+  brandLogo!: string | null;
+
+  @Column({ name: 'brand_theme_id', type: 'uuid', nullable: true })
+  brandThemeId!: string | null;
+
   @OneToMany(() => StoreEntity, (store) => store.tenant)
   stores!: StoreEntity[];
 

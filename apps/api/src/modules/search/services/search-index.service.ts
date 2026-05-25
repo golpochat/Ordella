@@ -269,19 +269,28 @@ export class SearchIndexService {
   }
 
   async indexItem(item: ProductEntity) {
+    const effectiveName = item.overrideName ?? item.globalItem?.name ?? item.name;
+    const effectiveDescription = item.overrideDescription ?? item.globalItem?.description ?? item.description;
+    const effectivePrice = item.overridePrice ?? item.globalItem?.basePrice ?? item.price;
     await this.upsertDocument({
       tenantId: item.tenantId,
       entityType: 'item',
       entityId: item.id,
-      title: item.name,
-      body: item.description,
-      keywords: [item.name, item.sku, item.barcode, item.category?.name, item.status, String(item.price)],
+      title: effectiveName,
+      body: effectiveDescription,
+      keywords: [effectiveName, item.sku, item.barcode, item.category?.name, item.status, String(effectivePrice)],
       metadata: {
         categoryId: item.categoryId,
         category: item.category?.name,
+        globalItemId: item.globalItemId,
+        catalogSource: item.globalItemId
+          ? item.overrideName || item.overrideDescription || item.overridePrice
+            ? 'overridden'
+            : 'inherited'
+          : 'local',
         sku: item.sku,
         barcode: item.barcode,
-        price: item.price,
+        price: effectivePrice,
         stockLevel: item.stockLevel,
         inventoryTrackingEnabled: item.inventoryTrackingEnabled,
         status: item.status,

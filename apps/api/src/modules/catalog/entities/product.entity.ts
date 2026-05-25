@@ -2,6 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm
 import { ProductStatus } from '../enums/product-status.enum';
 import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { CategoryEntity } from './category.entity';
+import { GlobalItemEntity } from './global-item.entity';
 import { VariantEntity } from './variant.entity';
 
 /** ERD §1.2 — products */
@@ -54,6 +55,25 @@ export class ProductEntity extends BaseTenantScopedEntity {
 
   @Column({ name: 'tax_category_id', type: 'uuid', nullable: true })
   taxCategoryId!: string | null;
+
+  @Column({ name: 'global_item_id', type: 'uuid', nullable: true })
+  globalItemId!: string | null;
+
+  @ManyToOne(() => GlobalItemEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'global_item_id' })
+  globalItem!: GlobalItemEntity | null;
+
+  @Column({ name: 'override_price', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  overridePrice!: string | null;
+
+  @Column({ name: 'override_name', type: 'varchar', length: 255, nullable: true })
+  overrideName!: string | null;
+
+  @Column({ name: 'override_description', type: 'text', nullable: true })
+  overrideDescription!: string | null;
+
+  @Column({ name: 'override_attributes', type: 'jsonb', default: () => "'{}'" })
+  overrideAttributes!: Record<string, unknown>;
 
   @OneToMany(() => VariantEntity, (variant) => variant.product)
   variants!: VariantEntity[];

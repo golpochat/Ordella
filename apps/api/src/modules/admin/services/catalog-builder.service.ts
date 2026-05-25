@@ -13,8 +13,16 @@ import {
   CatalogItemImageDto,
   CatalogItemUpdateDto,
   CatalogVariantDto,
+  GlobalCategoryCreateDto,
+  GlobalCategoryUpdateDto,
+  GlobalItemCreateDto,
+  GlobalItemUpdateDto,
+  LocalCatalogOverrideDto,
+  LocalCatalogResetOverrideDto,
 } from '../dto/catalog-builder.dto';
 import { CategoryEntity } from '../../catalog/entities/category.entity';
+import { GlobalCategoryEntity } from '../../catalog/entities/global-category.entity';
+import { GlobalItemEntity } from '../../catalog/entities/global-item.entity';
 import { ProductEntity } from '../../catalog/entities/product.entity';
 import { isPosChannelVisible, isOnlineChannelVisible } from '../../online/domain/online-pricing.util';
 import { SearchIndexService } from '../../search';
@@ -26,6 +34,32 @@ export type CatalogCategoryView = {
   description: string | null;
   sortOrder: number;
   isActive: boolean;
+  globalCategoryId?: string | null;
+};
+
+export type GlobalCategoryView = {
+  id: string;
+  brandGroupId: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+};
+
+export type GlobalItemView = {
+  id: string;
+  brandGroupId: string;
+  globalCategoryId: string | null;
+  name: string;
+  description: string | null;
+  basePrice: string;
+  sku: string | null;
+  barcode: string | null;
+  taxCategoryId: string | null;
+  imageUrl: string | null;
+  attributes: Record<string, unknown>;
+  isActive: boolean;
+  localItemId?: string | null;
+  overrideUsage?: number;
 };
 
 export type CatalogModifierOptionView = {
@@ -68,6 +102,14 @@ export type CatalogItemView = {
   channelVisibility: Record<string, boolean>;
   variants: CatalogVariantView[];
   modifiers: CatalogModifierView[];
+  globalItemId?: string | null;
+  globalCategoryId?: string | null;
+  catalogSource?: 'local' | 'inherited' | 'overridden';
+  baseName?: string | null;
+  baseDescription?: string | null;
+  basePrice?: string | null;
+  attributes?: Record<string, unknown>;
+  overrideAttributes?: Record<string, unknown>;
 };
 
 @Injectable()
@@ -77,7 +119,127 @@ export class CatalogBuilderService {
     private readonly searchIndex: SearchIndexService,
   ) {}
 
+  async listGlobalItems(tenantId: string): Promise<GlobalItemView[]> {
+    const group = await this.ensureBrandGroup(tenantId);
+    const items = await this.repository.listGlobalItems(group.id);
+    return Promise.all(items.map((item) => this.mapGlobalItemWithUsage(tenantId, item)));
+  }
+
+  async createGlobalItem(tenantId: string, dto: GlobalItemCreateDto): Promise<GlobalItemView> {
+    const group = await this.ensureBrandGroup(tenantId);
+    if (dto.globalCategoryId) {
+      await this.requireGlobalCategory(group.id, dto.globalCategoryId);
+    }
+    const saved = await this.repository.saveGlobalItem(
+      this.repository.createGlobalItem({
+        brandGroupId: group.id,
+        globalCategoryId: dto.globalCategoryId ?? null,
+        name: dto.name.trim(),
+        description: dto.description?.trim() ?? null,
+        basePrice: dto.basePrice,
+        sku: dto.sku?.trim() ?? null,
+        barcode: dto.barcode?.trim() ?? null,
+        taxCategoryId: dto.taxCategoryId ?? null,
+        imageUrl: dto.imageUrl ?? null,
+        attributes: dto.attributes ?? {},
+        isActive: dto.isActive ?? true,
+      }),
+    );
+    await this.ensureLocalProductForGlobalItem(tenantId, saved);
+    return this.mapGlobalItemWithUsage(tenantId, saved);
+  }
+
+  async updateGlobalItem(tenantId: string, dto: GlobalItemUpdateDto): Promise<GlobalItemView> {
+    const group = await this.ensureBrandGroup(tenantId);
+    const item = await this.requireGlobalItem(group.id, dto.id);
+    if (dto.globalCategoryId) {
+      await this.requireGlobalCategory(group.id, dto.globalCategoryId);
+    }
+    item.globalCategoryId = dto.globalCategoryId ?? null;
+    item.name = dto.name.trim();
+    item.description = dto.description?.trim() ?? null;
+    item.basePrice = dto.basePrice;
+    item.sku = dto.sku?.trim() ?? null;
+    item.barcode = dto.barcode?.trim() ?? null;
+    item.taxCategoryId = dto.taxCategoryId ?? null;
+    item.imageUrl = dto.imageUrl ?? null;
+    item.attributes = dto.attributes ?? {};
+    item.isActive = dto.isActive ?? true;
+    const saved = await this.repository.saveGlobalItem(item);
+    await this.ensureLocalProductForGlobalItem(tenantId, saved);
+    return this.mapGlobalItemWithUsage(tenantId, saved);
+  }
+
+  async listGlobalCategories(tenantId: string): Promise<GlobalCategoryView[]> {
+    const group = await this.ensureBrandGroup(tenantId);
+    const categories = await this.repository.listGlobalCategories(group.id);
+    return categories.map((category) => this.mapGlobalCategory(category));
+  }
+
+  async createGlobalCategory(tenantId: string, dto: GlobalCategoryCreateDto): Promise<GlobalCategoryView> {
+    const group = await this.ensureBrandGroup(tenantId);
+    const saved = await this.repository.saveGlobalCategory(
+      this.repository.createGlobalCategory({
+        brandGroupId: group.id,
+        name: dto.name.trim(),
+        description: dto.description?.trim() ?? null,
+        sortOrder: dto.sortOrder ?? 0,
+      }),
+    );
+    await this.ensureLocalCategoryForGlobalCategory(tenantId, saved);
+    return this.mapGlobalCategory(saved);
+  }
+
+  async updateGlobalCategory(tenantId: string, dto: GlobalCategoryUpdateDto): Promise<GlobalCategoryView> {
+    const group = await this.ensureBrandGroup(tenantId);
+    const category = await this.requireGlobalCategory(group.id, dto.id);
+    category.name = dto.name.trim();
+    category.description = dto.description?.trim() ?? null;
+    category.sortOrder = dto.sortOrder ?? 0;
+    const saved = await this.repository.saveGlobalCategory(category);
+    await this.ensureLocalCategoryForGlobalCategory(tenantId, saved);
+    return this.mapGlobalCategory(saved);
+  }
+
+  async listLocalCatalog(tenantId: string): Promise<CatalogItemView[]> {
+    await this.ensureInheritedLocalProducts(tenantId);
+    return this.listItems(tenantId);
+  }
+
+  async overrideLocalItem(tenantId: string, dto: LocalCatalogOverrideDto): Promise<CatalogItemView> {
+    const group = await this.ensureBrandGroup(tenantId);
+    const globalItem = await this.requireGlobalItem(group.id, dto.globalItemId);
+    let product = dto.localItemId
+      ? await this.requireProduct(tenantId, dto.localItemId)
+      : await this.ensureLocalProductForGlobalItem(tenantId, globalItem);
+    if (product.globalItemId !== globalItem.id) {
+      product.globalItemId = globalItem.id;
+    }
+    product.overridePrice = dto.overridePrice?.trim() || null;
+    product.overrideName = dto.overrideName?.trim() || null;
+    product.overrideDescription = dto.overrideDescription?.trim() || null;
+    product.overrideAttributes = dto.overrideAttributes ?? {};
+    if (dto.isActive !== undefined) {
+      product.status = dto.isActive ? ProductStatus.ACTIVE : ProductStatus.INACTIVE;
+    }
+    const saved = await this.repository.saveProduct(product);
+    await this.searchIndex.indexItem(saved);
+    return this.mapItem(tenantId, saved);
+  }
+
+  async resetLocalOverride(tenantId: string, dto: LocalCatalogResetOverrideDto): Promise<CatalogItemView> {
+    const product = await this.requireProduct(tenantId, dto.localItemId);
+    product.overridePrice = null;
+    product.overrideName = null;
+    product.overrideDescription = null;
+    product.overrideAttributes = {};
+    const saved = await this.repository.saveProduct(product);
+    await this.searchIndex.indexItem(saved);
+    return this.mapItem(tenantId, saved);
+  }
+
   async listCategories(tenantId: string): Promise<CatalogCategoryView[]> {
+    await this.ensureInheritedLocalCategories(tenantId);
     const rows = await this.repository.listCategories(tenantId);
     return rows.map((row) => this.mapCategory(row));
   }
@@ -117,6 +279,7 @@ export class CatalogBuilderService {
     tenantId: string,
     filters?: { categoryId?: string; channel?: string },
   ): Promise<CatalogItemView[]> {
+    await this.ensureInheritedLocalProducts(tenantId);
     let products = await this.repository.listProducts(tenantId, filters?.categoryId);
     if (filters?.channel === 'online') {
       products = products.filter((p) => isOnlineChannelVisible(p.channelVisibility));
@@ -255,13 +418,13 @@ export class CatalogBuilderService {
       id: product.id,
       tenantId: product.tenantId,
       categoryId: product.categoryId,
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      sku: product.sku,
-      barcode: product.barcode,
-      imageUrl: product.imageUrl,
-      isActive: this.repository.isProductActive(product),
+      name: product.overrideName ?? product.globalItem?.name ?? product.name,
+      description: product.overrideDescription ?? product.globalItem?.description ?? product.description,
+      price: product.overridePrice ?? product.globalItem?.basePrice ?? product.price,
+      sku: product.sku ?? product.globalItem?.sku ?? null,
+      barcode: product.barcode ?? product.globalItem?.barcode ?? null,
+      imageUrl: product.imageUrl ?? product.globalItem?.imageUrl ?? null,
+      isActive: this.repository.isProductActive(product) && product.globalItem?.isActive !== false,
       status: product.status,
       sortOrder: product.sortOrder,
       inventoryTrackingEnabled: product.inventoryTrackingEnabled,
@@ -269,6 +432,17 @@ export class CatalogBuilderService {
       channelVisibility: product.channelVisibility,
       variants: variants.map((v) => this.mapVariant(v)),
       modifiers,
+      globalItemId: product.globalItemId,
+      globalCategoryId: product.globalItem?.globalCategoryId ?? null,
+      catalogSource: this.catalogSource(product),
+      baseName: product.globalItem?.name ?? null,
+      baseDescription: product.globalItem?.description ?? null,
+      basePrice: product.globalItem?.basePrice ?? null,
+      attributes: {
+        ...(product.globalItem?.attributes ?? {}),
+        ...(product.overrideAttributes ?? {}),
+      },
+      overrideAttributes: product.overrideAttributes ?? {},
     };
   }
 
@@ -303,7 +477,157 @@ export class CatalogBuilderService {
       description: row.description,
       sortOrder: row.sortOrder,
       isActive: row.isActive,
+      globalCategoryId: row.globalCategoryId,
     };
+  }
+
+  private mapGlobalCategory(row: GlobalCategoryEntity): GlobalCategoryView {
+    return {
+      id: row.id,
+      brandGroupId: row.brandGroupId,
+      name: row.name,
+      description: row.description,
+      sortOrder: row.sortOrder,
+    };
+  }
+
+  private async mapGlobalItemWithUsage(tenantId: string, item: GlobalItemEntity): Promise<GlobalItemView> {
+    const local = (await this.repository.listProductsByGlobalIds(tenantId, [item.id]))[0];
+    return {
+      id: item.id,
+      brandGroupId: item.brandGroupId,
+      globalCategoryId: item.globalCategoryId,
+      name: item.name,
+      description: item.description,
+      basePrice: item.basePrice,
+      sku: item.sku,
+      barcode: item.barcode,
+      taxCategoryId: item.taxCategoryId,
+      imageUrl: item.imageUrl,
+      attributes: item.attributes ?? {},
+      isActive: item.isActive,
+      localItemId: local?.id ?? null,
+      overrideUsage: this.hasOverrides(local) ? 1 : 0,
+    };
+  }
+
+  private catalogSource(product: ProductEntity): CatalogItemView['catalogSource'] {
+    if (!product.globalItemId) return 'local';
+    return this.hasOverrides(product) ? 'overridden' : 'inherited';
+  }
+
+  private hasOverrides(product?: ProductEntity): boolean {
+    if (!product) return false;
+    return Boolean(
+      product.overrideName ||
+        product.overrideDescription ||
+        product.overridePrice ||
+        Object.keys(product.overrideAttributes ?? {}).length,
+    );
+  }
+
+  private async ensureBrandGroup(tenantId: string) {
+    const tenant = await this.repository.findTenant(tenantId);
+    if (!tenant) throwAdminResourceNotFound('tenant', tenantId);
+    if (tenant.brandGroupId) {
+      const existing = await this.repository.findBrandGroup(tenant.brandGroupId);
+      if (existing) return existing;
+    }
+    const saved = await this.repository.saveBrandGroup(
+      this.repository.createBrandGroup({
+        hqTenantId: tenantId,
+        name: tenant.brandName ?? tenant.name,
+        brandTenantIds: [tenantId],
+      }),
+    );
+    tenant.brandGroupId = saved.id;
+    tenant.brandName = tenant.brandName ?? tenant.name;
+    await this.repository.saveTenant(tenant);
+    return saved;
+  }
+
+  private async ensureInheritedLocalProducts(tenantId: string): Promise<void> {
+    const group = await this.ensureBrandGroup(tenantId);
+    await this.ensureInheritedLocalCategories(tenantId, group.id);
+    const globalItems = (await this.repository.listGlobalItems(group.id)).filter((item) => item.isActive);
+    const linked = await this.repository.listProductsByGlobalIds(
+      tenantId,
+      globalItems.map((item) => item.id),
+    );
+    const linkedIds = new Set(linked.map((item) => item.globalItemId));
+    for (const item of globalItems) {
+      if (linkedIds.has(item.id)) continue;
+      await this.ensureLocalProductForGlobalItem(tenantId, item);
+    }
+  }
+
+  private async ensureInheritedLocalCategories(tenantId: string, brandGroupId?: string): Promise<void> {
+    const group = brandGroupId ? await this.repository.findBrandGroup(brandGroupId) : await this.ensureBrandGroup(tenantId);
+    if (!group) return;
+    const globalCategories = await this.repository.listGlobalCategories(group.id);
+    const linked = await this.repository.listCategoriesByGlobalIds(
+      tenantId,
+      globalCategories.map((category) => category.id),
+    );
+    const linkedIds = new Set(linked.map((category) => category.globalCategoryId));
+    for (const category of globalCategories) {
+      if (linkedIds.has(category.id)) continue;
+      await this.ensureLocalCategoryForGlobalCategory(tenantId, category);
+    }
+  }
+
+  private async ensureLocalCategoryForGlobalCategory(
+    tenantId: string,
+    globalCategory: GlobalCategoryEntity,
+  ): Promise<CategoryEntity> {
+    const existing = (await this.repository.listCategoriesByGlobalIds(tenantId, [globalCategory.id]))[0];
+    if (existing) {
+      existing.name = globalCategory.name;
+      existing.description = globalCategory.description;
+      existing.sortOrder = globalCategory.sortOrder;
+      return this.repository.saveCategory(existing);
+    }
+    return this.repository.saveCategory(
+      this.repository.createCategory({
+        tenantId,
+        globalCategoryId: globalCategory.id,
+        name: globalCategory.name,
+        description: globalCategory.description,
+        sortOrder: globalCategory.sortOrder,
+        isActive: true,
+      }),
+    );
+  }
+
+  private async ensureLocalProductForGlobalItem(
+    tenantId: string,
+    globalItem: GlobalItemEntity,
+  ): Promise<ProductEntity> {
+    const existing = (await this.repository.listProductsByGlobalIds(tenantId, [globalItem.id]))[0];
+    if (existing) return existing;
+    const localCategory = globalItem.globalCategoryId
+      ? (await this.repository.listCategoriesByGlobalIds(tenantId, [globalItem.globalCategoryId]))[0]
+      : null;
+    return this.repository.saveProduct(
+      this.repository.createProduct({
+        tenantId,
+        globalItemId: globalItem.id,
+        categoryId: localCategory?.id ?? null,
+        name: globalItem.name,
+        description: globalItem.description,
+        price: globalItem.basePrice,
+        taxCategoryId: globalItem.taxCategoryId,
+        sku: globalItem.sku,
+        barcode: globalItem.barcode,
+        imageUrl: globalItem.imageUrl,
+        status: globalItem.isActive ? ProductStatus.ACTIVE : ProductStatus.INACTIVE,
+        sortOrder: 0,
+        inventoryTrackingEnabled: false,
+        stockLevel: null,
+        channelVisibility: { pos: true, online: true },
+        overrideAttributes: {},
+      }),
+    );
   }
 
   private mapVariant(row: { id: string; productId: string; name: string; priceDelta: string; sku: string | null }) {
@@ -319,6 +643,18 @@ export class CatalogBuilderService {
   private async requireCategory(tenantId: string, id: string): Promise<CategoryEntity> {
     const row = await this.repository.findCategory(tenantId, id);
     if (!row) throwAdminResourceNotFound('category', id);
+    return row;
+  }
+
+  private async requireGlobalCategory(brandGroupId: string, id: string): Promise<GlobalCategoryEntity> {
+    const row = await this.repository.findGlobalCategory(brandGroupId, id);
+    if (!row) throwAdminResourceNotFound('global category', id);
+    return row;
+  }
+
+  private async requireGlobalItem(brandGroupId: string, id: string): Promise<GlobalItemEntity> {
+    const row = await this.repository.findGlobalItem(brandGroupId, id);
+    if (!row) throwAdminResourceNotFound('global item', id);
     return row;
   }
 

@@ -30,6 +30,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
     const min = priceMin ? Number(priceMin) : null;
     const max = priceMax ? Number(priceMax) : null;
     let list = menu.products.filter((item) => {
+      if (item.isActive === false) return false;
       if (categoryId !== 'all' && item.categoryId !== categoryId) return false;
       if (inStockOnly && !isProductOrderable(item)) return false;
       const price = Number.parseFloat(item.price);
