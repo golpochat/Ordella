@@ -2,6 +2,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -39,4 +40,9 @@ export class CreateOrderNestedItemDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  priceOverride?: number;
 }

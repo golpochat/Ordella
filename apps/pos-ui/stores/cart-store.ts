@@ -3,6 +3,13 @@
 import { create } from 'zustand';
 import type { PosCatalogItem } from '@/lib/api';
 import { createOrPatchCart, type PosCart } from '@/lib/api';
+import {
+  clearOfflineOpenCart,
+  loadOfflineOpenCart,
+  loadOfflineSettings,
+  saveOfflineOpenCart,
+} from '@/lib/offline-db';
+import { getSession } from '@/lib/session';
 
 export type CartLineMeta = {
   productId: string;
@@ -41,6 +48,7 @@ type CartState = {
   discountFixed: number;
   setCatalog: (items: PosCatalogItem[]) => void;
   setFromServer: (cart: PosCart) => void;
+  hydrateOfflineCart: () => Promise<void>;
   addCatalogItem: (
     item: PosCatalogItem,
     options?: { variantId?: string; modifierOptionIds?: string[]; notes?: string },
@@ -134,6 +142,63 @@ function mergeServerCart(
   });
 }
 
+function isLocalCartId(cartId?: string): boolean {
+  return Boolean(cartId?.startsWith('local-'));
+}
+
+function browserIsOnline(): boolean {
+  return typeof navigator === 'undefined' ? true : navigator.onLine;
+}
+
+function createLocalCartId(): string {
+  return `local-${crypto.randomUUID()}`;
+}
+
+async function persistLocalCart(state: Pick<CartState, 'cartId' | 'lines' | 'discountPercent' | 'discountFixed'>): Promise<void> {
+  if (!state.cartId || !isLocalCartId(state.cartId)) return;
+  if (!state.lines.length) {
+    await clearOfflineOpenCart();
+    return;
+  }
+  await saveOfflineOpenCart({
+    id: state.cartId,
+    session: getSession(),
+    lines: state.lines,
+    discountPercent: state.discountPercent,
+    discountFixed: state.discountFixed,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+async function canSellTrackedStock(item: PosCatalogItem, existingQty: number): Promise<string | null> {
+  if (!item.inventoryTrackingEnabled) return null;
+  const settings = await loadOfflineSettings();
+  const stockLevel = item.stockLevel;
+
+  if (stockLevel === null || stockLevel === undefined) {
+    return settings.allowUnknownStockOfflineSales ? null : `${item.name} stock is unavailable offline`;
+  }
+
+  if (stockLevel <= 0 && !settings.allowOutOfStockOfflineSales) {
+    return `${item.name} is out of stock`;
+  }
+
+  if (!settings.allowOutOfStockOfflineSales && existingQty + 1 > stockLevel) {
+    return `Only ${stockLevel} available at this location`;
+  }
+
+  return null;
+}
+
+function mergeLocalLine(lines: CartLineMeta[], line: CartLineMeta): CartLineMeta[] {
+  const key = cartLineKey(line);
+  const existing = lines.find((entry) => cartLineKey(entry) === key);
+  if (!existing) return [...lines, line];
+  return lines.map((entry) =>
+    cartLineKey(entry) === key ? { ...entry, quantity: entry.quantity + line.quantity } : entry,
+  );
+}
+
 export const useCartStore = create<CartState>((set, get) => ({
   cartId: undefined,
   lines: [],
@@ -155,6 +220,18 @@ export const useCartStore = create<CartState>((set, get) => ({
       cartId: cart.cartId,
       lines: mergeServerCart(cart, get().catalogById, existing),
     });
+    void clearOfflineOpenCart();
+  },
+
+  hydrateOfflineCart: async () => {
+    const cart = await loadOfflineOpenCart();
+    if (!cart?.lines.length) return;
+    set({
+      cartId: cart.id,
+      lines: cart.lines,
+      discountPercent: cart.discountPercent,
+      discountFixed: cart.discountFixed,
+    });
   },
 
   addCatalogItem: async (item, options) => {
@@ -162,35 +239,44 @@ export const useCartStore = create<CartState>((set, get) => ({
       set({ error: 'Inactive item cannot be ordered' });
       return;
     }
-    if (item.inventoryTrackingEnabled && item.stockLevel !== null && item.stockLevel !== undefined) {
-      if (item.stockLevel < 1) {
-        set({ error: `${item.name} is out of stock` });
-        return;
-      }
-      const key = cartLineKey({
-        productId: item.id,
-        variantId: options?.variantId,
-        bundleId: item.bundleId,
-        modifierOptionIds: options?.modifierOptionIds,
-      });
-      const existingQty = get().lines.find((line) => cartLineKey(line) === key)?.quantity ?? 0;
-      if (existingQty + 1 > item.stockLevel) {
-        set({ error: `Only ${item.stockLevel} available at this location` });
-        return;
-      }
+    const key = cartLineKey({
+      productId: item.id,
+      variantId: options?.variantId,
+      bundleId: item.bundleId,
+      modifierOptionIds: options?.modifierOptionIds,
+    });
+    const existingQty = get().lines.find((line) => cartLineKey(line) === key)?.quantity ?? 0;
+    const stockError = await canSellTrackedStock(item, existingQty);
+    if (stockError) {
+      set({ error: stockError });
+      return;
     }
 
     set({ syncing: true, error: undefined });
+    const line = {
+      productId: item.id,
+      bundleId: item.bundleId,
+      quantity: 1,
+      variantId: options?.variantId,
+      modifierOptionIds: options?.modifierOptionIds,
+      notes: options?.notes,
+    };
+
+    const addLocal = async () => {
+      const current = get();
+      const meta = buildLineMeta(item, 1, options);
+      const nextCartId = isLocalCartId(current.cartId) ? current.cartId : createLocalCartId();
+      const nextLines = mergeLocalLine(current.lines, meta);
+      set({ cartId: nextCartId, lines: nextLines, error: undefined });
+      await persistLocalCart({ ...get(), cartId: nextCartId, lines: nextLines });
+    };
+
     try {
       const current = get();
-      const line = {
-        productId: item.id,
-        bundleId: item.bundleId,
-        quantity: 1,
-        variantId: options?.variantId,
-        modifierOptionIds: options?.modifierOptionIds,
-        notes: options?.notes,
-      };
+      if (!browserIsOnline() || isLocalCartId(current.cartId)) {
+        await addLocal();
+        return;
+      }
       const cart = await createOrPatchCart(
         current.cartId
           ? { cartId: current.cartId, action: 'add', item: line }
@@ -198,7 +284,11 @@ export const useCartStore = create<CartState>((set, get) => ({
       );
       get().setFromServer(cart);
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to add item' });
+      if (!browserIsOnline()) {
+        await addLocal();
+      } else {
+        set({ error: error instanceof Error ? error.message : 'Failed to add item' });
+      }
     } finally {
       set({ syncing: false });
     }
@@ -212,13 +302,21 @@ export const useCartStore = create<CartState>((set, get) => ({
     const line = get().lines.find((l) => cartLineKey(l) === lineKey);
     const cartId = get().cartId;
     if (!line || !cartId) return;
-    if (line.stockLevel !== null && line.stockLevel !== undefined && quantity > line.stockLevel) {
+    const settings = await loadOfflineSettings();
+    if (!settings.allowOutOfStockOfflineSales && line.stockLevel !== null && line.stockLevel !== undefined && quantity > line.stockLevel) {
       set({ error: `Only ${line.stockLevel} available at this location` });
       return;
     }
 
     set({ syncing: true, error: undefined });
     try {
+      if (!browserIsOnline() || isLocalCartId(cartId)) {
+        const lines = get().lines.map((l) => (cartLineKey(l) === lineKey ? { ...l, quantity } : l));
+        const nextCartId = isLocalCartId(cartId) ? cartId : createLocalCartId();
+        set({ cartId: nextCartId, lines });
+        await persistLocalCart({ ...get(), cartId: nextCartId, lines });
+        return;
+      }
       const cart = await createOrPatchCart({
         cartId,
         action: 'update',
@@ -232,7 +330,14 @@ export const useCartStore = create<CartState>((set, get) => ({
       });
       get().setFromServer(cart);
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to update quantity' });
+      if (!browserIsOnline()) {
+        const lines = get().lines.map((l) => (cartLineKey(l) === lineKey ? { ...l, quantity } : l));
+        const nextCartId = isLocalCartId(cartId) ? cartId : createLocalCartId();
+        set({ cartId: nextCartId, lines });
+        await persistLocalCart({ ...get(), cartId: nextCartId, lines });
+      } else {
+        set({ error: error instanceof Error ? error.message : 'Failed to update quantity' });
+      }
     } finally {
       set({ syncing: false });
     }
@@ -245,6 +350,13 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     set({ syncing: true, error: undefined });
     try {
+      if (!browserIsOnline() || isLocalCartId(cartId)) {
+        const lines = get().lines.filter((l) => cartLineKey(l) !== lineKey);
+        const nextCartId = isLocalCartId(cartId) ? cartId : createLocalCartId();
+        set({ cartId: lines.length ? nextCartId : undefined, lines });
+        await persistLocalCart({ ...get(), cartId: nextCartId, lines });
+        return;
+      }
       const cart = await createOrPatchCart({
         cartId,
         action: 'remove',
@@ -257,7 +369,14 @@ export const useCartStore = create<CartState>((set, get) => ({
       });
       get().setFromServer(cart);
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to remove item' });
+      if (!browserIsOnline()) {
+        const lines = get().lines.filter((l) => cartLineKey(l) !== lineKey);
+        const nextCartId = isLocalCartId(cartId) ? cartId : createLocalCartId();
+        set({ cartId: lines.length ? nextCartId : undefined, lines });
+        await persistLocalCart({ ...get(), cartId: nextCartId, lines });
+      } else {
+        set({ error: error instanceof Error ? error.message : 'Failed to remove item' });
+      }
     } finally {
       set({ syncing: false });
     }
@@ -270,6 +389,15 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     set({ syncing: true, error: undefined });
     try {
+      if (!browserIsOnline() || isLocalCartId(cartId)) {
+        const lines = get().lines.map((l) =>
+          cartLineKey(l) === lineKey ? { ...l, notes } : l,
+        );
+        const nextCartId = isLocalCartId(cartId) ? cartId : createLocalCartId();
+        set({ cartId: nextCartId, lines });
+        await persistLocalCart({ ...get(), cartId: nextCartId, lines });
+        return;
+      }
       const cart = await createOrPatchCart({
         cartId,
         action: 'update',
@@ -289,14 +417,29 @@ export const useCartStore = create<CartState>((set, get) => ({
         ),
       }));
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : 'Failed to update notes' });
+      if (!browserIsOnline()) {
+        const lines = get().lines.map((l) =>
+          cartLineKey(l) === lineKey ? { ...l, notes } : l,
+        );
+        const nextCartId = isLocalCartId(cartId) ? cartId : createLocalCartId();
+        set({ cartId: nextCartId, lines });
+        await persistLocalCart({ ...get(), cartId: nextCartId, lines });
+      } else {
+        set({ error: error instanceof Error ? error.message : 'Failed to update notes' });
+      }
     } finally {
       set({ syncing: false });
     }
   },
 
-  setDiscountPercent: (value) => set({ discountPercent: Math.max(0, Math.min(100, value)) }),
-  setDiscountFixed: (value) => set({ discountFixed: Math.max(0, value) }),
+  setDiscountPercent: (value) => {
+    set({ discountPercent: Math.max(0, Math.min(100, value)) });
+    void persistLocalCart(get());
+  },
+  setDiscountFixed: (value) => {
+    set({ discountFixed: Math.max(0, value) });
+    void persistLocalCart(get());
+  },
 
   clearCart: () => {
     set({
@@ -306,6 +449,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       discountPercent: 0,
       discountFixed: 0,
     });
+    void clearOfflineOpenCart();
   },
 
   lineCount: () => get().lines.reduce((sum, line) => sum + line.quantity, 0),

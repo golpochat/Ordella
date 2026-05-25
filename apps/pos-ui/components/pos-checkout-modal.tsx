@@ -26,7 +26,19 @@ import {
   type PosGiftCard,
   type PosLoyaltyCustomer,
 } from '@/lib/api';
-import { enqueueOfflineSale } from '@/lib/offline-queue';
+import {
+  DEFAULT_OFFLINE_SETTINGS,
+  applyOfflineInventorySale,
+  loadOfflineBootstrap,
+  loadOfflineSettings,
+  saveInventoryAdjustment,
+  saveLocalCustomer,
+  savePendingOfflineOrder,
+  type OfflineModeSettings,
+  type OfflineOrderPayload,
+} from '@/lib/offline-db';
+import { syncPendingOfflineWork } from '@/lib/offline-sync';
+import { getSession } from '@/lib/session';
 import { useCartStore } from '@/stores/cart-store';
 import { PosRecommendationsPanel } from '@/components/pos-recommendations-panel';
 
@@ -39,6 +51,7 @@ type PosCheckoutModalProps = {
 export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModalProps) {
   const router = useRouter();
   const cartId = useCartStore((s) => s.cartId);
+  const lines = useCartStore((s) => s.lines);
   const clearCart = useCartStore((s) => s.clearCart);
   const discountPercent = useCartStore((s) => s.discountPercent);
   const discountFixed = useCartStore((s) => s.discountFixed);
@@ -60,6 +73,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   const [orderNotes, setOrderNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offlineSettings, setOfflineSettings] = useState<OfflineModeSettings>(DEFAULT_OFFLINE_SETTINGS);
 
   useEffect(() => {
     if (!open) return;
@@ -69,6 +83,28 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       return;
     }
     const timeout = window.setTimeout(async () => {
+      if (!online) {
+        const bootstrap = await loadOfflineBootstrap();
+        const match =
+          bootstrap?.customers.find((customer) => {
+            const haystack = [customer.name, customer.phone, customer.email].filter(Boolean).join(' ').toLowerCase();
+            return haystack.includes(term.toLowerCase());
+          }) ?? null;
+        setSelectedCustomer(
+          match
+            ? {
+                id: match.id,
+                name: match.name,
+                phone: match.phone ?? null,
+                email: match.email ?? null,
+                pointsBalance: match.pointsBalance ?? 0,
+                storeCreditBalance: match.storeCreditBalance ?? '0.00',
+                lifetimeValue: '0.00',
+              }
+            : null,
+        );
+        return;
+      }
       try {
         const [match = null] = await searchLoyaltyCustomers(term);
         setSelectedCustomer(match);
@@ -84,10 +120,15 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       }
     }, 300);
     return () => window.clearTimeout(timeout);
-  }, [customerEmail, customerPhone, open]);
+  }, [customerEmail, customerPhone, online, open]);
 
   useEffect(() => {
-    if (!selectedCustomer) {
+    if (!open) return;
+    void loadOfflineSettings().then(setOfflineSettings);
+  }, [open]);
+
+  useEffect(() => {
+    if (!selectedCustomer || !online) {
       setCustomerOrders([]);
       setCustomerTags('');
       setCustomerNotes('');
@@ -96,10 +137,14 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
     void fetchLoyaltyCustomerOrders(selectedCustomer.id)
       .then((orders) => setCustomerOrders(orders.slice(0, 5)))
       .catch(() => setCustomerOrders([]));
-  }, [selectedCustomer]);
+  }, [online, selectedCustomer]);
 
   useEffect(() => {
     if (!open || giftCardCode.trim().length < 4) {
+      setGiftCard(null);
+      return;
+    }
+    if (!online) {
       setGiftCard(null);
       return;
     }
@@ -111,7 +156,130 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       }
     }, 300);
     return () => window.clearTimeout(timeout);
-  }, [giftCardCode, open]);
+  }, [giftCardCode, online, open]);
+
+  const buildOfflinePayload = async (): Promise<OfflineOrderPayload | null> => {
+    if (!lines.length) {
+      setError('Cart is empty');
+      return null;
+    }
+    if (!offlineSettings.enabled) {
+      setError('Offline mode is disabled for this location');
+      return null;
+    }
+    const session = getSession();
+    const bootstrap = await loadOfflineBootstrap();
+    if (bootstrap) {
+      const offlineAgeMinutes = (Date.now() - new Date(bootstrap.syncedAt).getTime()) / 60000;
+      if (offlineAgeMinutes > offlineSettings.maxOfflineDurationMinutes) {
+        setError('Offline mode lockout reached. Reconnect to refresh POS data.');
+        return null;
+      }
+    }
+    const staff = bootstrap?.staffPermissions.find((member) => member.staffId === session.cashierId);
+    if (bootstrap?.staffPermissions.length && !staff) {
+      setError('This staff member is not available for offline checkout.');
+      return null;
+    }
+    if (staff && (!staff.permissions.includes('pos:checkout') || !staff.permissions.includes('pos:payment'))) {
+      setError('This staff member does not have offline checkout permissions.');
+      return null;
+    }
+    if (paymentMethod === 'card' && !offlineSettings.allowOfflineCardPayments) {
+      setError('Offline card payments are disabled. Choose cash or wait for connection.');
+      return null;
+    }
+    if (giftCardCode && !giftCard) {
+      setError('Gift cards can only be used offline when the balance was cached first.');
+      return null;
+    }
+    if (giftCard && giftCardAmount && Number(giftCardAmount) > Number(giftCard.balance)) {
+      setError('Gift card amount exceeds cached balance.');
+      return null;
+    }
+    if (storeCreditAmount && !selectedCustomer) {
+      setError('Store credit requires a cached customer.');
+      return null;
+    }
+    if (
+      storeCreditAmount &&
+      selectedCustomer &&
+      Number(storeCreditAmount) > Number(selectedCustomer.storeCreditBalance)
+    ) {
+      setError('Store credit amount exceeds cached balance.');
+      return null;
+    }
+    if (
+      loyaltyRedeemPoints &&
+      selectedCustomer &&
+      Number(loyaltyRedeemPoints) > selectedCustomer.pointsBalance
+    ) {
+      setError('Loyalty redemption exceeds cached points.');
+      return null;
+    }
+
+    const now = new Date().toISOString();
+    const clientOrderId = crypto.randomUUID();
+    const subtotal = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
+    const discount = Math.min(
+      subtotal,
+      (discountPercent ? subtotal * (discountPercent / 100) : 0) + (discountFixed || 0),
+    );
+    const total = Math.max(0, subtotal - discount);
+    const localCustomerId =
+      !selectedCustomer && (customerName || customerPhone || customerEmail) ? `local-${crypto.randomUUID()}` : undefined;
+
+    if (localCustomerId) {
+      await saveLocalCustomer({
+        id: localCustomerId,
+        name: customerName || 'Offline customer',
+        phone: customerPhone || null,
+        email: customerEmail || null,
+      });
+    }
+
+    const flags = [
+      paymentMethod === 'card' ? 'offline_card_payment_requires_capture' : null,
+      paymentMethod === 'external' ? 'offline_external_payment_requires_review' : null,
+      giftCardCode ? 'offline_gift_card_redemption' : null,
+      storeCreditAmount ? 'offline_store_credit_redemption' : null,
+      loyaltyRedeemPoints ? 'offline_loyalty_redemption' : null,
+    ].filter(Boolean) as string[];
+
+    return {
+      clientOrderId,
+      session,
+      orderType,
+      paymentMethod,
+      lines,
+      orderNotes: orderNotes || undefined,
+      customer:
+        customerName || customerPhone || customerEmail || selectedCustomer || localCustomerId
+          ? {
+              name: customerName || selectedCustomer?.name,
+              phone: customerPhone || selectedCustomer?.phone || undefined,
+              email: customerEmail || selectedCustomer?.email || undefined,
+              customerId: selectedCustomer?.id,
+              localCustomerId,
+            }
+          : undefined,
+      loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
+      giftCardCode: giftCardCode || undefined,
+      giftCardAmount: giftCardAmount ? Number(giftCardAmount) : undefined,
+      storeCreditAmount: storeCreditAmount ? Number(storeCreditAmount) : undefined,
+      couponCode: couponCode || undefined,
+      discountPercent: discountPercent || undefined,
+      discountFixed: discountFixed || undefined,
+      totals: {
+        subtotal: subtotal.toFixed(2),
+        discountTotal: discount.toFixed(2),
+        tax: '0.00',
+        total: total.toFixed(2),
+      },
+      flags,
+      createdAt: now,
+    };
+  };
 
   const confirm = async () => {
     if (!cartId) {
@@ -144,12 +312,41 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       payload.customer.customerId = selectedCustomer?.id;
     }
 
-    if (!online) {
-      enqueueOfflineSale(payload);
+    if (!online || cartId.startsWith('local-')) {
+      const offlinePayload = await buildOfflinePayload();
+      if (!offlinePayload) {
+        setLoading(false);
+        return;
+      }
+      await savePendingOfflineOrder({
+        id: offlinePayload.clientOrderId,
+        createdAt: offlinePayload.createdAt,
+        updatedAt: offlinePayload.createdAt,
+        status: 'pending',
+        attempts: 0,
+        conflicts: [],
+        payload: offlinePayload,
+      });
+      await Promise.all(
+        offlinePayload.lines.map((line) =>
+          saveInventoryAdjustment({
+            id: `${offlinePayload.clientOrderId}-${line.productId}-${line.variantId ?? 'base'}`,
+            productId: line.productId,
+            quantityDelta: -line.quantity,
+            reason: 'offline_sale',
+            createdAt: offlinePayload.createdAt,
+            status: 'pending',
+          }),
+        ),
+      );
+      await applyOfflineInventorySale(offlinePayload.lines);
       clearCart();
       onOpenChange(false);
       setLoading(false);
-      setError('Order queued offline. Sync when back online.');
+      if (online) {
+        void syncPendingOfflineWork(offlineSettings);
+      }
+      router.push(`/receipt?orderId=${offlinePayload.clientOrderId}&offline=1`);
       return;
     }
 

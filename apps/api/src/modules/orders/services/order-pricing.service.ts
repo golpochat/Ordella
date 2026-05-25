@@ -32,6 +32,7 @@ export interface CalculateLineItemInput {
   modifierOptionIds?: string[];
   notes?: string | null;
   bundleId?: string | null;
+  priceOverride?: number;
 }
 
 @Injectable()
@@ -59,12 +60,18 @@ export class OrderPricingService {
     assertValidLineQuantity(quantity);
 
     const product = await this.resolveProduct(tenant, productId);
-    const unitPrice = await this.resolveUnitPriceForProduct(product, variantId);
+    const priceOverride = input.priceOverride;
+    const hasPriceOverride = priceOverride !== undefined;
+    const unitPrice = hasPriceOverride
+      ? formatMoney(priceOverride)
+      : await this.resolveUnitPriceForProduct(product, variantId);
     const modifiers = await this.resolveModifierSelections(modifierOptionIds);
-    const modifierTotal = formatMoney(sumMoney(modifiers.map((m) => m.priceDelta)));
-    const unitPriceWithModifiers = formatMoney(
-      parseMoney(unitPrice) + parseMoney(modifierTotal),
-    );
+    const modifierTotal = hasPriceOverride
+      ? formatMoney(0)
+      : formatMoney(sumMoney(modifiers.map((m) => m.priceDelta)));
+    const unitPriceWithModifiers = hasPriceOverride
+      ? unitPrice
+      : formatMoney(parseMoney(unitPrice) + parseMoney(modifierTotal));
     const lineSubtotal = formatMoney(parseMoney(unitPriceWithModifiers) * quantity);
 
     const lineTax = this.feeCalculator.calculateLineTax(
@@ -109,6 +116,7 @@ export class OrderPricingService {
           variantId: item.variantId,
           modifierOptionIds: item.modifierOptionIds,
           notes: item.notes,
+          priceOverride: item.priceOverride,
         },
         pricingContext,
       ));

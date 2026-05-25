@@ -2,10 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PosCatalogCategory, PosCatalogItem } from '@/lib/api';
-import { completeSale, listPosCatalog } from '@/lib/api';
+import { listPosCatalog } from '@/lib/api';
 import { loadCatalogCache, saveCatalogCache } from '@/lib/catalog-cache';
 import { getSession } from '@/lib/session';
-import { listOfflineSales, removeOfflineSale } from '@/lib/offline-queue';
+import {
+  countPendingOfflineOrders,
+  DEFAULT_OFFLINE_SETTINGS,
+  loadOfflineBootstrap,
+  loadOfflineSettings,
+  type OfflineModeSettings,
+} from '@/lib/offline-db';
+import {
+  recordConnectivityEvent,
+  refreshOfflineBootstrap,
+  syncPendingOfflineWork,
+} from '@/lib/offline-sync';
 import {
   Button,
   Card,
@@ -39,7 +50,8 @@ function isLowStock(item: PosCatalogItem): boolean {
 export function PosRegister({ initialCategories, initialItems }: PosRegisterProps) {
   const setCatalog = useCartStore((s) => s.setCatalog);
   const addCatalogItem = useCartStore((s) => s.addCatalogItem);
-  const syncing = useCartStore((s) => s.syncing);
+  const cartSyncing = useCartStore((s) => s.syncing);
+  const hydrateOfflineCart = useCartStore((s) => s.hydrateOfflineCart);
 
   const [categories, setCategories] = useState(initialCategories);
   const [items, setItems] = useState(initialItems);
@@ -50,6 +62,9 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [online, setOnline] = useState(true);
+  const [syncingOffline, setSyncingOffline] = useState(false);
+  const [pendingOrders, setPendingOrders] = useState(0);
+  const [offlineSettings, setOfflineSettings] = useState<OfflineModeSettings>(DEFAULT_OFFLINE_SETTINGS);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -57,8 +72,14 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
   }, [items, setCatalog]);
 
   useEffect(() => {
-    const onOnline = () => setOnline(true);
-    const onOffline = () => setOnline(false);
+    const onOnline = () => {
+      setOnline(true);
+      void recordConnectivityEvent(true);
+    };
+    const onOffline = () => {
+      setOnline(false);
+      void recordConnectivityEvent(false);
+    };
     setOnline(typeof navigator !== 'undefined' ? navigator.onLine : true);
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
@@ -68,33 +89,49 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
     };
   }, []);
 
+  useEffect(() => {
+    void hydrateOfflineCart();
+    void loadOfflineSettings().then(setOfflineSettings);
+    void countPendingOfflineOrders().then(setPendingOrders);
+  }, [hydrateOfflineCart]);
+
   const syncOfflineQueue = useCallback(async () => {
-    const queued = listOfflineSales();
-    if (!queued.length || !navigator.onLine) return;
-    let synced = 0;
-    for (const entry of queued) {
-      try {
-        await completeSale(entry.payload);
-        removeOfflineSale(entry.id);
-        synced += 1;
-      } catch {
-        break;
+    if (!navigator.onLine || syncingOffline) return;
+    setSyncingOffline(true);
+    try {
+      const settings = await loadOfflineSettings();
+      setOfflineSettings(settings);
+      const summary = await syncPendingOfflineWork(settings);
+      const count = await countPendingOfflineOrders();
+      setPendingOrders(count);
+      if (summary.synced > 0 || summary.requiresReview > 0 || summary.failed > 0) {
+        setSyncMessage(
+          `Synced ${summary.synced} offline order(s). ${summary.requiresReview} need review, ${summary.failed} failed.`,
+        );
       }
+    } finally {
+      setSyncingOffline(false);
     }
-    if (synced > 0) {
-      setSyncMessage(`Synced ${synced} offline order(s).`);
-    }
-  }, []);
+  }, [syncingOffline]);
 
   useEffect(() => {
     if (!online) return;
     void syncOfflineQueue();
   }, [online, syncOfflineQueue]);
 
+  useEffect(() => {
+    if (!online || !offlineSettings.enabled) return;
+    const interval = window.setInterval(() => {
+      void syncOfflineQueue();
+      void countPendingOfflineOrders().then(setPendingOrders);
+    }, Math.max(5, offlineSettings.autoSyncIntervalSeconds) * 1000);
+    return () => window.clearInterval(interval);
+  }, [offlineSettings, online, syncOfflineQueue]);
+
   const refreshCatalog = useCallback(async () => {
     try {
-      const session = getSession();
-      const catalog = await listPosCatalog(session.locationId || undefined);
+      const bootstrap = await refreshOfflineBootstrap();
+      const catalog = { categories: bootstrap.categories, items: bootstrap.items };
       setCategories(catalog.categories);
       setItems(catalog.items);
       saveCatalogCache({
@@ -103,28 +140,44 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
         cachedAt: new Date().toISOString(),
       });
     } catch {
+      const bootstrap = await loadOfflineBootstrap();
       const cached = loadCatalogCache();
-      if (cached) {
+      if (bootstrap) {
+        setCategories(bootstrap.categories);
+        setItems(bootstrap.items);
+      } else if (cached) {
         setCategories(cached.categories);
         setItems(cached.items);
+      } else {
+        const session = getSession();
+        const catalog = await listPosCatalog(session.locationId || undefined);
+        setCategories(catalog.categories);
+        setItems(catalog.items);
       }
     }
   }, []);
 
   useEffect(() => {
     if (!online) {
-      const cached = loadCatalogCache();
-      if (cached) {
-        setCategories(cached.categories);
-        setItems(cached.items);
-      }
+      void loadOfflineBootstrap().then((bootstrap) => {
+        const cached = loadCatalogCache();
+        if (bootstrap) {
+          setCategories(bootstrap.categories);
+          setItems(bootstrap.items);
+          setOfflineSettings(bootstrap.settings);
+        } else if (cached) {
+          setCategories(cached.categories);
+          setItems(cached.items);
+        }
+      });
     }
   }, [online]);
 
   const visibleItems = useMemo(() => {
     const q = search.trim().toLowerCase();
     return items.filter((item) => {
-      if (!item.isActive || !isInStock(item)) return false;
+      if (!item.isActive) return false;
+      if (!isInStock(item) && !offlineSettings.allowOutOfStockOfflineSales) return false;
       if (selectedCategory !== 'all' && item.categoryId !== selectedCategory) return false;
       if (!q) return true;
       return (
@@ -133,7 +186,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
         (item.barcode?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [items, selectedCategory, search]);
+  }, [items, offlineSettings.allowOutOfStockOfflineSales, selectedCategory, search]);
 
   const tryBarcodeAdd = (code: string) => {
     const trimmed = code.trim();
@@ -141,7 +194,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
     const match = items.find(
       (item) =>
         item.isActive &&
-        isInStock(item) &&
+        (isInStock(item) || offlineSettings.allowOutOfStockOfflineSales) &&
         (item.barcode === trimmed ||
           item.sku === trimmed ||
           item.variants.some((v) => v.sku === trimmed)),
@@ -211,7 +264,12 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
 
   return (
     <div className="flex h-screen flex-col">
-      <PosTopBar online={online} />
+      <PosTopBar online={online} syncing={syncingOffline} pendingOrders={pendingOrders} />
+      {!online ? (
+        <p className="bg-red-50 px-4 py-2 text-center text-sm font-medium text-red-800">
+          You are offline — orders will sync automatically when connection returns.
+        </p>
+      ) : null}
       {syncMessage ? (
         <p className="bg-muted px-4 py-1 text-center text-sm text-muted-foreground">{syncMessage}</p>
       ) : null}
@@ -284,7 +342,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                       <Button
                         type="button"
                         className="mt-3 h-12 text-base"
-                        disabled={syncing}
+                        disabled={cartSyncing}
                         onClick={() => tapItem(item)}
                       >
                         Add
@@ -352,7 +410,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               </div>
             </div>
           ))}
-          <Button type="button" className="h-12 w-full" disabled={!canAdd || syncing} onClick={confirmAdd}>
+          <Button type="button" className="h-12 w-full" disabled={!canAdd || cartSyncing} onClick={confirmAdd}>
             Add to cart
           </Button>
         </ModalContent>

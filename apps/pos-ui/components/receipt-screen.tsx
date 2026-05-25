@@ -16,21 +16,42 @@ import {
 } from '@shared-ui';
 import { getReceipt, type PosReceipt } from '@/lib/api';
 import { LiveOrderStatus } from '@/components/live-order-status';
+import { getOfflineOrder, type OfflinePendingOrder } from '@/lib/offline-db';
 
-export function ReceiptScreen({ orderId }: { orderId?: string }) {
+export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; offline?: boolean }) {
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
+  const [offlineOrder, setOfflineOrder] = useState<OfflinePendingOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!orderId) return;
+    if (offline) {
+      getOfflineOrder(orderId)
+        .then((order) => {
+          setOfflineOrder(order);
+          if (!order) setError('Pending offline receipt not found');
+        })
+        .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load offline receipt'));
+      return;
+    }
     getReceipt(orderId)
       .then(setReceipt)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Failed to load receipt'));
-  }, [orderId]);
+      .catch(async (e) => {
+        const local = await getOfflineOrder(orderId);
+        if (local) {
+          setOfflineOrder(local);
+          return;
+        }
+        setError(e instanceof Error ? e.message : 'Failed to load receipt');
+      });
+  }, [offline, orderId]);
 
   const totalQty = useMemo(
-    () => (receipt ? receipt.items.reduce((sum, i) => sum + i.quantity, 0) : 0),
-    [receipt],
+    () =>
+      receipt
+        ? receipt.items.reduce((sum, i) => sum + i.quantity, 0)
+        : offlineOrder?.payload.lines.reduce((sum, i) => sum + i.quantity, 0) ?? 0,
+    [offlineOrder, receipt],
   );
 
   return (
@@ -41,7 +62,49 @@ export function ReceiptScreen({ orderId }: { orderId?: string }) {
         </CardHeader>
         <CardContent>
           {error ? <p className="text-destructive">{error}</p> : null}
-          {!receipt ? <p>Loading…</p> : null}
+          {!receipt && !offlineOrder ? <p>Loading…</p> : null}
+          {offlineOrder ? (
+            <div className="space-y-4">
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                This receipt is pending sync. It will be finalized automatically when the connection returns.
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <p>Order: {offlineOrder.payload.clientOrderId.slice(0, 8)}</p>
+                <p>Status: Pending Sync</p>
+                <p>Cashier: {offlineOrder.payload.session.cashierId}</p>
+                <p>Terminal: {offlineOrder.payload.session.terminalId}</p>
+                <p>Shift: {offlineOrder.payload.session.shiftId}</p>
+                <p>Location: {offlineOrder.payload.session.locationId}</p>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Qty</TableHead>
+                    <TableHead>Price</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {offlineOrder.payload.lines.map((item, idx) => (
+                    <TableRow key={`${item.productId}-${idx}`}>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{item.unitPrice.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="space-y-1 text-sm">
+                <p>Total qty: {totalQty}</p>
+                <p>Subtotal: {offlineOrder.payload.totals.subtotal}</p>
+                {Number(offlineOrder.payload.totals.discountTotal) > 0 ? (
+                  <p>Discount: -{offlineOrder.payload.totals.discountTotal}</p>
+                ) : null}
+                <p>Tax: {offlineOrder.payload.totals.tax}</p>
+                <p className="text-lg font-semibold">Total: {offlineOrder.payload.totals.total}</p>
+              </div>
+            </div>
+          ) : null}
           {receipt ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-2 text-sm">

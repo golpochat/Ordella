@@ -10,13 +10,17 @@ import { PaymentsModule } from '../payments/payments.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { GiftCardsModule } from '../giftcards/giftcards.module';
 import { BundlesModule } from '../bundles';
-import { PosController } from './controllers';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { UserEntity } from '../auth/entities/user.entity';
+import { PosController, PosOfflineController } from './controllers';
 import { PosInventoryController } from './controllers/pos-inventory.controller';
+import { PosOfflineOrderSyncEntity } from './entities';
 import {
   CartService,
   PosCartFacade,
   PosCatalogService,
   PosFulfillmentService,
+  PosOfflineSyncService,
   PosOrderService,
   PosProductStockService,
 } from './services';
@@ -42,9 +46,10 @@ import {
     LoyaltyModule,
     GiftCardsModule,
     BundlesModule,
-    TypeOrmModule.forFeature([ProductEntity]),
+    NotificationsModule,
+    TypeOrmModule.forFeature([ProductEntity, PosOfflineOrderSyncEntity, UserEntity]),
   ],
-  controllers: [PosController, PosInventoryController],
+  controllers: [PosController, PosOfflineController, PosInventoryController],
   providers: [
     CartService,
     PosCartFacade,
@@ -52,6 +57,7 @@ import {
     PosCatalogService,
     PosFulfillmentService,
     PosProductStockService,
+    PosOfflineSyncService,
   ],
   exports: [CartService, PosOrderService, PosProductStockService],
 })

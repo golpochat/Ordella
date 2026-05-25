@@ -9,3 +9,4 @@ export * from './pos-checkout-response.dto';
 export * from './pos-payment-response.dto';
 export * from './pos-receipt-response.dto';
 export * from './pos-complete-sale.dto';
+export * from './pos-offline.dto';

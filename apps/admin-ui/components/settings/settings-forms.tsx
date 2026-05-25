@@ -8,7 +8,6 @@ import {
   updateDeliveryZones,
   updateOpeningHours,
   updatePaymentSettings,
-  updatePosSettings,
 } from '@/lib/api/admin/settings';
 import { SETTINGS_TABS } from '@/lib/navigation';
 import { getErrorMessage } from '@/lib/utils';
@@ -17,6 +16,7 @@ import { BrandingPanel } from './branding-panel';
 import { FulfillmentDisplayPanel } from './fulfillment-display-panel';
 import { DeliverySettingsPanel } from './delivery-settings-panel';
 import { StorefrontThemePanel } from './storefront-theme-panel';
+import { OfflineModePanel } from './offline-mode-panel';
 
 function SettingsSection({
   title,
@@ -69,7 +69,6 @@ export function SettingsForms() {
   const [hoursJson, setHoursJson] = useState('{"monday":{"open":"09:00","close":"22:00"}}');
   const [zonesJson, setZonesJson] = useState('[]');
   const [paymentJson, setPaymentJson] = useState('{}');
-  const [posJson, setPosJson] = useState('{}');
 
   return (
     <Tabs defaultValue={SETTINGS_TABS[0].id}>
@@ -144,18 +143,7 @@ export function SettingsForms() {
         </SettingsSection>
       </TabsContent>
       <TabsContent value="pos" className="mt-4">
-        <SettingsSection
-          title="POS settings"
-          onSave={async () => {
-            await updatePosSettings(api, JSON.parse(posJson) as Record<string, unknown>);
-          }}
-        >
-          <textarea
-            className="min-h-32 w-full rounded-md border border-input bg-background p-3 font-mono text-sm"
-            value={posJson}
-            onChange={(e) => setPosJson(e.target.value)}
-          />
-        </SettingsSection>
+        <OfflineModePanel />
       </TabsContent>
       <TabsContent value="fulfillment" className="mt-4">
         <FulfillmentDisplayPanel />

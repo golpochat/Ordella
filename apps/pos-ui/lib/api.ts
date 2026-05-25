@@ -203,12 +203,93 @@ const posCatalogBundleSchema = z.object({
   items: z.array(posCatalogItemSchema),
 });
 
+const offlineSettingsSchema = z.object({
+  enabled: z.boolean().default(true),
+  allowOfflineCardPayments: z.boolean().default(false),
+  allowOutOfStockOfflineSales: z.boolean().default(false),
+  allowUnknownStockOfflineSales: z.boolean().default(true),
+  maxOfflineDurationMinutes: z.number().int().min(1).default(720),
+  autoSyncIntervalSeconds: z.number().int().min(5).default(30),
+});
+
+const offlineInventorySnapshotSchema = z.object({
+  productId: z.string().uuid(),
+  stockLevel: z.number().int().nullable(),
+  stockStatus: z.string().nullable().optional(),
+  inventoryTrackingEnabled: z.boolean().optional(),
+  updatedAt: z.string().optional(),
+});
+
+const offlineCustomerSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  phone: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  pointsBalance: z.number().optional(),
+  storeCreditBalance: z.string().optional(),
+});
+
+const offlineStaffPermissionSchema = z.object({
+  staffId: z.string().uuid(),
+  role: z.string().nullable().optional(),
+  permissions: z.array(z.string()),
+  lastAuthenticatedAt: z.string().optional(),
+});
+
+const offlineBootstrapSchema = z.object({
+  categories: z.array(posCatalogCategorySchema),
+  items: z.array(posCatalogItemSchema),
+  taxes: z.array(z.unknown()).default([]),
+  discounts: z.array(z.unknown()).default([]),
+  bundles: z.array(z.unknown()).default([]),
+  inventory: z.array(offlineInventorySnapshotSchema).default([]),
+  customers: z.array(offlineCustomerSnapshotSchema).default([]),
+  staffPermissions: z.array(offlineStaffPermissionSchema).default([]),
+  settings: offlineSettingsSchema,
+  syncedAt: z.string(),
+});
+
+const offlineSyncResultSchema = z.object({
+  clientOrderId: z.string(),
+  orderId: z.string().uuid().optional(),
+  status: z.enum(['synced', 'requires_review', 'failed']),
+  conflicts: z.array(z.string()).default([]),
+  message: z.string().optional(),
+});
+
+const offlineSyncResponseSchema = z.object({
+  results: z.array(offlineSyncResultSchema),
+  syncedAt: z.string(),
+});
+
+export type PosOfflineBootstrap = z.infer<typeof offlineBootstrapSchema>;
+export type PosOfflineSyncResponse = z.infer<typeof offlineSyncResponseSchema>;
+
 export async function listPosCatalog(locationId?: string) {
   const data = await api.getData<unknown>('pos/catalog', {
     params: locationId ? { locationId } : undefined,
   });
   const parsed = posCatalogBundleSchema.parse(data);
   return parsed;
+}
+
+export async function getOfflineBootstrap(locationId?: string) {
+  const data = await api.getData<unknown>('pos/offline/bootstrap', {
+    params: locationId ? { locationId } : undefined,
+  });
+  return offlineBootstrapSchema.parse(data);
+}
+
+export async function syncOfflineOrders(body: { orders: unknown[]; events?: unknown[] }) {
+  const session = getSession();
+  const data = await api.postData<unknown>('pos/offline/sync-orders', { ...session, ...body });
+  return offlineSyncResponseSchema.parse(data);
+}
+
+export async function syncOfflineInventory(body: { adjustments: unknown[] }) {
+  const session = getSession();
+  const data = await api.postData<unknown>('pos/offline/sync-inventory', { ...session, ...body });
+  return z.object({ syncedAt: z.string(), inventory: z.array(offlineInventorySnapshotSchema) }).parse(data);
 }
 
 export async function fetchPosRecommendations(options: {
