@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
-import { createOnlineOrder } from '@/lib/api';
+import {
+  createOnlineOrder,
+  fetchLoyaltyCustomer,
+  fetchLoyaltySettings,
+  type PublicLoyaltyCustomer,
+} from '@/lib/api';
 import { createCheckoutSession } from '@/lib/payments-api';
 import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
 import { useBasketStore } from '@/stores/basket-store';
@@ -26,6 +31,14 @@ export function CheckoutForm() {
   const [instructions, setInstructions] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
+  const [loyaltyCustomer, setLoyaltyCustomer] = useState<PublicLoyaltyCustomer | null>(null);
+  const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
+  const [loyaltySettings, setLoyaltySettings] = useState<{
+    isEnabled: boolean;
+    redeemRate: string;
+    minRedeemPoints: number;
+    maxRedeemPercent: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,8 +46,34 @@ export function CheckoutForm() {
     hydrate();
   }, [hydrate]);
 
+  useEffect(() => {
+    void fetchLoyaltySettings().then(setLoyaltySettings).catch(() => setLoyaltySettings(null));
+  }, []);
+
+  useEffect(() => {
+    const term = email.trim() || phone.trim();
+    if (term.length < 3) {
+      setLoyaltyCustomer(null);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      void fetchLoyaltyCustomer({ email: email.trim() || undefined, phone: phone.trim() || undefined })
+        .then(setLoyaltyCustomer)
+        .catch(() => setLoyaltyCustomer(null));
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [email, phone]);
+
   const subtotal = useMemo(() => basketSubtotal(lines), [lines]);
   const totals = useMemo(() => calculateStorefrontTotals(subtotal), [subtotal]);
+  const loyaltyDiscount = useMemo(() => {
+    if (!loyaltyCustomer || !loyaltySettings?.isEnabled || !loyaltyRedeemPoints) return 0;
+    const requested = Math.min(Number(loyaltyRedeemPoints), loyaltyCustomer.pointsBalance);
+    if (requested < loyaltySettings.minRedeemPoints) return 0;
+    const value = requested * Number(loyaltySettings.redeemRate);
+    return Math.min(value, totals.total * (loyaltySettings.maxRedeemPercent / 100));
+  }, [loyaltyCustomer, loyaltyRedeemPoints, loyaltySettings, totals.total]);
+  const payableTotal = Math.max(0, totals.total - loyaltyDiscount);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,10 +127,11 @@ export function CheckoutForm() {
           notes: orderNotes.trim() || undefined,
           delivery,
           totals: {
-            grandTotal: totals.total.toFixed(2),
+            grandTotal: payableTotal.toFixed(2),
             subtotal: totals.subtotal.toFixed(2),
             taxTotal: totals.tax.toFixed(2),
           },
+          loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
         });
         window.location.href = session.url;
         return;
@@ -104,6 +144,7 @@ export function CheckoutForm() {
         items,
         notes: orderNotes.trim() || undefined,
         delivery,
+        loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
       });
       clearBasket();
       router.push(`/order/${order.id}?confirmed=1`);
@@ -146,6 +187,23 @@ export function CheckoutForm() {
               value={orderNotes}
               onChange={(e) => setOrderNotes(e.target.value)}
             />
+            {loyaltyCustomer && loyaltySettings?.isEnabled ? (
+              <div className="rounded-md border p-3 text-sm">
+                <p className="font-medium">Rewards available</p>
+                <p className="text-muted-foreground">{loyaltyCustomer.pointsBalance} points available</p>
+                <Input
+                  className="mt-2"
+                  placeholder={`Redeem points (minimum ${loyaltySettings.minRedeemPoints})`}
+                  value={loyaltyRedeemPoints}
+                  onChange={(e) => setLoyaltyRedeemPoints(e.target.value)}
+                />
+                {loyaltyDiscount > 0 ? (
+                  <p className="mt-2 text-muted-foreground">
+                    Discount applied: {formatMoney(loyaltyDiscount)}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -241,7 +299,7 @@ export function CheckoutForm() {
             </div>
             <div className="flex justify-between font-semibold">
               <span>Total (est.)</span>
-              <span>${formatMoney(totals.total)}</span>
+              <span>${formatMoney(payableTotal)}</span>
             </div>
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}

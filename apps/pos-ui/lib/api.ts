@@ -76,6 +76,17 @@ export type PosCheckout = z.infer<typeof checkoutSchema>;
 export type PosPayment = z.infer<typeof paymentSchema>;
 export type PosReceipt = z.infer<typeof receiptSchema>;
 
+const loyaltyCustomerSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  pointsBalance: z.number(),
+  lifetimeValue: z.string(),
+});
+
+export type PosLoyaltyCustomer = z.infer<typeof loyaltyCustomerSchema>;
+
 export async function listProducts() {
   const data = await api.getData<unknown[]>('admin/products');
   return z.array(productSchema).parse(data);
@@ -226,9 +237,15 @@ export async function completeSale(body: {
   orderType: 'pos' | 'pickup' | 'delivery';
   paymentMethod: 'cash' | 'card' | 'pos' | 'external';
   orderNotes?: string;
-  customer?: { name?: string; phone?: string; customerId?: string };
+  customer?: { name?: string; phone?: string; email?: string; customerId?: string };
+  loyaltyRedeemPoints?: number;
 }) {
   const session = getSession();
   const data = await api.postData<unknown>('pos/complete-sale', { ...session, ...body });
   return completeSaleSchema.parse(data);
+}
+
+export async function searchLoyaltyCustomers(q: string) {
+  const data = await api.getData<unknown[]>(`loyalty/customers?q=${encodeURIComponent(q)}`);
+  return z.array(loyaltyCustomerSchema).parse(data);
 }

@@ -177,7 +177,7 @@ export class OrderPricingService {
   ): DraftOrderTotals {
     const lineDiscountTotal = sumMoney(lines.map((line) => line.lineDiscount));
     const discountTotal = formatMoney(
-      parseMoney(promotionResult.discountTotal) + lineDiscountTotal,
+      parseMoney(draft.discountTotal) + parseMoney(promotionResult.discountTotal) + lineDiscountTotal,
     );
 
     const taxableSubtotal = Math.max(

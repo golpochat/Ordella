@@ -17,6 +17,7 @@ import {
 } from '../dto';
 import { PosPaymentMethod } from '../enums/pos-payment-method.enum';
 import { PosCompleteSaleDto } from '../dto/pos-complete-sale.dto';
+import { LoyaltyService } from '../../loyalty/services';
 import {
   throwPosCartAlreadyCheckedOut,
   throwPosContextMismatch,
@@ -38,6 +39,7 @@ export class PosOrderService {
     private readonly ordersService: OrdersService,
     private readonly paymentsService: PaymentsService,
     private readonly fulfillmentService: PosFulfillmentService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   async checkout(
@@ -56,6 +58,7 @@ export class PosOrderService {
       locationId: cart.locationId,
       orderType: dto.orderType ?? OrderType.POS,
       customerId: dto.customerId,
+      loyaltyRedeemPoints: dto.loyaltyRedeemPoints,
       items: cart.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,
@@ -90,6 +93,11 @@ export class PosOrderService {
     dto: PosCompleteSaleDto,
     user?: AuthenticatedUser,
   ): Promise<PosPaymentResponseDto & { orderNumber: string | null; subtotal: string; tax: string; total: string }> {
+    const customer =
+      dto.customer?.customerId
+        ? null
+        : await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer ?? {});
+    const customerId = dto.customer?.customerId ?? customer?.id;
     const checkout = await this.checkout(
       tenant,
       {
@@ -97,7 +105,8 @@ export class PosOrderService {
         terminalId: dto.terminalId,
         cashierId: dto.cashierId,
         shiftId: dto.shiftId,
-        customerId: dto.customer?.customerId,
+        customerId,
+        loyaltyRedeemPoints: dto.loyaltyRedeemPoints,
         orderType: dto.orderType,
         orderNotes: dto.orderNotes,
       },

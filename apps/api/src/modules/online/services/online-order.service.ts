@@ -27,6 +27,7 @@ import {
 import { OnlineOrderType } from '../enums/online-order-type.enum';
 import { OnlineOrderStatusResponseDto } from '../dto/online-order-status-response.dto';
 import { OnlinePaymentResponseDto } from '../dto/online-payment-response.dto';
+import { LoyaltyService } from '../../loyalty/services';
 
 @Injectable()
 export class OnlineOrderService {
@@ -39,16 +40,20 @@ export class OnlineOrderService {
     private readonly driverProfileRepository: DriverProfileRepository,
     private readonly kdsOrderQuery: KdsOrderQueryService,
     private readonly kdsBroadcast: KdsBroadcastService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   async createOnlineOrder(
     tenant: TenantContext,
     dto: CreateOnlineOrderDto,
   ): Promise<OrderResponseDto> {
+    const customer = await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
     const createDto: CreateOrderDto = {
       locationId: dto.locationId,
       orderType: this.mapOrderType(dto.orderType),
       paymentMethod: dto.paymentMethod ?? OrderPaymentMethod.CASH,
+      customerId: customer?.id,
+      loyaltyRedeemPoints: dto.loyaltyRedeemPoints,
       items: dto.items.map((item) => ({
         productId: item.itemId,
         variantId: item.variantId,

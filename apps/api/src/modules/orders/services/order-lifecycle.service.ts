@@ -31,6 +31,7 @@ import { OrderTransitionContext } from '../types/order-transition.context';
 import { OrderInventoryContext } from '../types/order-inventory.context';
 import { OrderPaymentContext } from '../types/order-payment.context';
 import { OrderDeliveryContext } from '../types/order-delivery.context';
+import { LoyaltyService } from '../../loyalty/services';
 
 @Injectable()
 export class OrderLifecycleService {
@@ -43,6 +44,7 @@ export class OrderLifecycleService {
     private readonly orderDeliveryService: OrderDeliveryService,
     private readonly orderNotificationService: OrderNotificationService,
     private readonly orderReportingService: OrderReportingService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   assertCanTransition(from: OrderStatus, to: OrderStatus): void {
@@ -147,6 +149,10 @@ export class OrderLifecycleService {
     }
 
     await this.runNonInventoryIntegrations(tenant, order, items, fromStatus, toStatus);
+
+    if (toStatus === OrderStatus.COMPLETED) {
+      await this.loyaltyService.earnForCompletedOrder(tenant, order);
+    }
 
     await this.orderNotificationService.notifyForStatus(
       tenant,

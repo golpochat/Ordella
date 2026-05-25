@@ -19,6 +19,7 @@ import { KdsModule } from './modules/kds/kds.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { BillingModule } from './modules/billing/billing.module';
     IntegrationsModule,
     ReportsModule,
     PromotionsModule,
+    LoyaltyModule,
     PosModule,
     OnlineModule,
     KdsModule,

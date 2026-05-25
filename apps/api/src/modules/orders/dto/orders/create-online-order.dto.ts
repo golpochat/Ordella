@@ -4,6 +4,7 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -108,4 +109,9 @@ export class CreateOnlineOrderDto {
   @IsOptional()
   @IsEnum(OrderPaymentMethod)
   paymentMethod?: OrderPaymentMethod;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  loyaltyRedeemPoints?: number;
 }

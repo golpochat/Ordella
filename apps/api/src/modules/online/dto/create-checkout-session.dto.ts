@@ -4,6 +4,7 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -120,4 +121,9 @@ export class CreateCheckoutSessionDto {
   @IsOptional()
   @IsString()
   currency?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  loyaltyRedeemPoints?: number;
 }

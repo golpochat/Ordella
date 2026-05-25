@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { TenantContext, AuthenticatedUser } from '../../../common/interfaces';
 import { CreateOrderDto } from '../dto';
@@ -25,6 +25,7 @@ import {
   mapDraftTotalsToOrderColumns,
 } from '../types/draft-order.types';
 import { OrderTransitionContext } from '../types/order-transition.context';
+import { LoyaltyService } from '../../loyalty/services';
 
 @Injectable()
 export class OrderCreationService {
@@ -35,6 +36,7 @@ export class OrderCreationService {
     private readonly orderPricingService: OrderPricingService,
     private readonly orderLifecycleService: OrderLifecycleService,
     private readonly orderDeliveryService: OrderDeliveryService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   async createOrder(
@@ -72,7 +74,25 @@ export class OrderCreationService {
         ? this.orderDeliveryService.toDeliveryDetailsSnapshot(dto.deliveryDetails)
         : null;
 
-    const draftTotals = this.orderPricingService.calculateOrderTotals(lines, pricingContext);
+    const baseTotals = this.orderPricingService.calculateOrderTotals(lines, pricingContext);
+    const loyaltyRedemption =
+      dto.customerId && dto.loyaltyRedeemPoints
+        ? await this.loyaltyService.quoteRedemption(tenant.tenantId, {
+            customerId: dto.customerId,
+            points: dto.loyaltyRedeemPoints,
+            orderTotal: baseTotals.grandTotal,
+          })
+        : null;
+
+    if (loyaltyRedemption && !loyaltyRedemption.allowed) {
+      throw new BadRequestException(loyaltyRedemption.message ?? 'Reward points cannot be redeemed');
+    }
+
+    const draftTotals = loyaltyRedemption?.allowed
+      ? this.orderPricingService.calculateOrderTotals(lines, pricingContext, {
+          discountTotal: loyaltyRedemption.discountAmount,
+        })
+      : baseTotals;
 
     const saved = await this.dataSource.transaction(async (manager) => {
       const ctx: OrderTransitionContext = { changedBy: user?.id ?? null, manager };
@@ -98,6 +118,15 @@ export class OrderCreationService {
       const persistedOrder = await this.orderRepository.save(order, manager);
       const items = await this.persistLineItems(persistedOrder.id, lines, manager);
       persistedOrder.items = items;
+
+      if (dto.customerId && loyaltyRedemption?.allowed) {
+        await this.loyaltyService.redeemForOrder(
+          tenant.tenantId,
+          dto.customerId,
+          loyaltyRedemption.points,
+          persistedOrder.id,
+        );
+      }
 
       await this.applyPromotionsAndUpdateOrder(
         pricingContext,

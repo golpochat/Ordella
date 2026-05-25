@@ -39,11 +39,13 @@ import {
 } from '../../integrations';
 import { InventoryCoreModule } from '../../../inventory/modules/inventory-core/inventory-core.module';
 import { NotificationsModule } from '../../../notifications/notifications.module';
+import { LoyaltyModule } from '../../../loyalty/loyalty.module';
 
 @Module({
   imports: [
     InventoryCoreModule,
     NotificationsModule,
+    LoyaltyModule,
     forwardRef(() => KdsModule),
     TypeOrmModule.forFeature([
       OrderEntity,

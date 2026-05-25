@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -24,6 +25,11 @@ class PosCustomerDto {
   @IsString()
   @MaxLength(32)
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  email?: string;
 
   @IsOptional()
   @IsUUID()
@@ -50,6 +56,11 @@ export class PosCompleteSaleDto extends PosContextDto {
   @IsString()
   @MaxLength(512)
   orderNotes?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  loyaltyRedeemPoints?: number;
 
   @IsOptional()
   @IsNumber()

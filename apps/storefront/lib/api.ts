@@ -293,6 +293,7 @@ export async function createOnlineOrder(body: {
   };
   notes?: string;
   paymentMethod?: 'cash' | 'card';
+  loyaltyRedeemPoints?: number;
 }) {
   const locationId = getLocationId();
   const data = await api.postData<unknown>('orders/create-online', {
@@ -300,4 +301,35 @@ export async function createOnlineOrder(body: {
     ...body,
   });
   return onlineOrderResponseSchema.parse(data);
+}
+
+const publicLoyaltyCustomerSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  pointsBalance: z.number(),
+  lifetimeValue: z.string(),
+});
+
+export type PublicLoyaltyCustomer = z.infer<typeof publicLoyaltyCustomerSchema>;
+
+export async function fetchLoyaltyCustomer(params: { email?: string; phone?: string }) {
+  const query = new URLSearchParams();
+  if (params.email) query.set('email', params.email);
+  if (params.phone) query.set('phone', params.phone);
+  const data = await api.getData<unknown | null>(`public/loyalty/customer?${query.toString()}`);
+  return data ? publicLoyaltyCustomerSchema.parse(data) : null;
+}
+
+const loyaltySettingsSchema = z.object({
+  isEnabled: z.boolean(),
+  redeemRate: z.string(),
+  minRedeemPoints: z.number(),
+  maxRedeemPercent: z.number(),
+});
+
+export async function fetchLoyaltySettings() {
+  const data = await api.getData<unknown>('public/loyalty/settings');
+  return loyaltySettingsSchema.parse(data);
 }

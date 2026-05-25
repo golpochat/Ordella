@@ -22,6 +22,8 @@ export interface StripeCheckoutPendingSnapshot {
   }>;
   grandTotal: string;
   currency: string;
+  customerId?: string;
+  loyaltyRedeemPoints?: number;
   fulfilledOrderId?: string;
   stripeSessionId?: string;
 }

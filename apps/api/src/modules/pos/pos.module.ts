@@ -7,6 +7,7 @@ import { InventoryModule } from '../inventory/inventory.module';
 import { KdsModule } from '../kds/kds.module';
 import { OrdersFeatureModule } from '../orders/modules/orders/orders-feature.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { PosController } from './controllers';
 import { PosInventoryController } from './controllers/pos-inventory.controller';
 import {
@@ -36,6 +37,7 @@ import {
     OrdersFeatureModule,
     PaymentsModule,
     InventoryModule,
+    LoyaltyModule,
     TypeOrmModule.forFeature([ProductEntity]),
   ],
   controllers: [PosController, PosInventoryController],

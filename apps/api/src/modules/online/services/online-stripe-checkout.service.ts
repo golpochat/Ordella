@@ -37,6 +37,7 @@ import { MenuQueryRepository } from '../repositories/menu-query.repository';
 import { OnlineOrderType } from '../enums/online-order-type.enum';
 import { CreateCheckoutSessionDto } from '../dto/create-checkout-session.dto';
 import { StripeCheckoutPendingStore } from './stripe-checkout-pending.store';
+import { LoyaltyService } from '../../loyalty/services';
 
 const DEFAULT_CURRENCY = 'EUR';
 const TOTAL_TOLERANCE = 0.02;
@@ -54,6 +55,7 @@ export class OnlineStripeCheckoutService {
     private readonly deliveryService: DeliveryService,
     private readonly kdsOrderQuery: KdsOrderQueryService,
     private readonly kdsBroadcast: KdsBroadcastService,
+    private readonly loyaltyService: LoyaltyService,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
   ) {}
@@ -88,8 +90,21 @@ export class OnlineStripeCheckoutService {
     }
 
     const computed = calculateOnlineTotals({ lines, orderType });
+    const customer = await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
+    const redemption =
+      customer && dto.loyaltyRedeemPoints
+        ? await this.loyaltyService.quoteRedemption(tenant.tenantId, {
+            customerId: customer.id,
+            points: dto.loyaltyRedeemPoints,
+            orderTotal: computed.grandTotal,
+          })
+        : null;
+    if (redemption && !redemption.allowed) {
+      throw new BadRequestException(redemption.message ?? 'Reward points cannot be redeemed');
+    }
+
     const clientTotal = parseMoney(dto.totals.grandTotal);
-    const serverTotal = parseMoney(computed.grandTotal);
+    const serverTotal = Math.max(0, parseMoney(computed.grandTotal) - parseMoney(redemption?.discountAmount ?? '0.00'));
     if (Math.abs(clientTotal - serverTotal) > TOTAL_TOLERANCE) {
       throw new BadRequestException('Order total does not match server calculation');
     }
@@ -102,6 +117,7 @@ export class OnlineStripeCheckoutService {
       locationId: dto.locationId,
       orderType: dto.orderType,
       customer: dto.customer,
+      customerId: customer?.id,
       delivery: dto.delivery,
       notes: dto.notes,
       items: dto.items.map((item) => ({
@@ -110,8 +126,9 @@ export class OnlineStripeCheckoutService {
         quantity: item.quantity,
         modifierOptionIds: item.modifiers,
       })),
-      grandTotal: computed.grandTotal,
+      grandTotal: serverTotal.toFixed(2),
       currency,
+      loyaltyRedeemPoints: redemption?.points,
     });
 
     if (!this.stripeClient.isConfigured()) {
@@ -298,6 +315,8 @@ export class OnlineStripeCheckoutService {
       locationId: pending.locationId,
       orderType: this.resolveOrderType(pending.orderType),
       paymentMethod: OrderPaymentMethod.CARD,
+      customerId: pending.customerId,
+      loyaltyRedeemPoints: pending.loyaltyRedeemPoints,
       items: pending.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,

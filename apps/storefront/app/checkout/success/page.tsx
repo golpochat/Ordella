@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { completeCheckoutSession } from '@/lib/payments-api';
 import { useBasketStore } from '@/stores/basket-store';
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const clearBasket = useBasketStore((s) => s.clearBasket);
@@ -63,5 +63,13 @@ export default function CheckoutSuccessPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={<p className="px-4 py-12 text-center text-sm text-muted-foreground">Confirming your payment...</p>}>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

@@ -18,6 +18,7 @@ import { PaymentsModule } from '../payments/payments.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { PromotionsModule } from '../promotions/promotions.module';
 import { DeliveriesModule } from '../deliveries/deliveries.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { PublicController } from './controllers';
 import { PublicCatalogController } from './controllers/public-catalog.controller';
 import { OrdersOnlinePublicController } from './controllers/orders-online-public.controller';
@@ -69,6 +70,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
     InventoryModule,
     PromotionsModule,
     DeliveriesModule,
+    LoyaltyModule,
   ],
   controllers: [
     PublicController,

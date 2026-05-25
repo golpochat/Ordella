@@ -3,8 +3,10 @@ import {
   ArrayMinSize,
   IsArray,
   IsEnum,
+  IsInt,
   IsOptional,
   IsUUID,
+  Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -18,6 +20,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsUUID()
   customerId?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  loyaltyRedeemPoints?: number;
 
   @IsUUID()
   locationId!: string;

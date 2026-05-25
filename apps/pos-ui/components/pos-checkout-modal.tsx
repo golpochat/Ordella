@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Button,
@@ -15,7 +15,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@shared-ui';
-import { checkoutCart, completeSale } from '@/lib/api';
+import { checkoutCart, completeSale, searchLoyaltyCustomers, type PosLoyaltyCustomer } from '@/lib/api';
 import { enqueueOfflineSale } from '@/lib/offline-queue';
 import { useCartStore } from '@/stores/cart-store';
 
@@ -33,9 +33,35 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'external'>('cash');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<PosLoyaltyCustomer | null>(null);
+  const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const term = customerPhone.trim() || customerEmail.trim();
+    if (term.length < 3) {
+      setSelectedCustomer(null);
+      return;
+    }
+    const timeout = window.setTimeout(async () => {
+      try {
+        const [match = null] = await searchLoyaltyCustomers(term);
+        setSelectedCustomer(match);
+        if (match) {
+          setCustomerName(match.name);
+          setCustomerPhone(match.phone ?? customerPhone);
+          setCustomerEmail(match.email ?? customerEmail);
+        }
+      } catch {
+        setSelectedCustomer(null);
+      }
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [customerEmail, customerPhone, open]);
 
   const confirm = async () => {
     if (!cartId) {
@@ -51,10 +77,16 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       paymentMethod,
       orderNotes: orderNotes || undefined,
       customer:
-        customerName || customerPhone
+        customerName || customerPhone || customerEmail || selectedCustomer
           ? { name: customerName || undefined, phone: customerPhone || undefined }
           : undefined,
+      loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
     };
+
+    if (payload.customer) {
+      payload.customer.email = customerEmail || undefined;
+      payload.customer.customerId = selectedCustomer?.id;
+    }
 
     if (!online) {
       enqueueOfflineSale(payload);
@@ -135,6 +167,24 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
           />
+          <Input
+            type="email"
+            placeholder="Customer email (optional)"
+            value={customerEmail}
+            onChange={(e) => setCustomerEmail(e.target.value)}
+          />
+          {selectedCustomer ? (
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">{selectedCustomer.name}</p>
+              <p className="text-muted-foreground">{selectedCustomer.pointsBalance} points available</p>
+              <Input
+                className="mt-2"
+                placeholder="Points to redeem (optional)"
+                value={loyaltyRedeemPoints}
+                onChange={(e) => setLoyaltyRedeemPoints(e.target.value)}
+              />
+            </div>
+          ) : null}
           <Input
             placeholder="Order notes (optional)"
             value={orderNotes}
