@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { ProductEntity } from '../../catalog/entities';
+import { InventorySyncLogEntity } from '../entities';
 import { StockItemEntity } from '../entities/stock-item.entity';
 import { StockMovementType } from '../enums/stock-movement-type.enum';
 import { StockMovementSource } from '../enums/stock-movement-source.enum';
@@ -52,6 +54,8 @@ export class InventoryService {
     private readonly lowStockAlertsService: LowStockAlertsService,
     private readonly autoReplenishmentService: AutoReplenishmentService,
     private readonly supplierOrderingService: SupplierOrderingService,
+    @InjectRepository(InventorySyncLogEntity)
+    private readonly syncLogs: Repository<InventorySyncLogEntity>,
   ) {}
 
   async getStock(
@@ -115,6 +119,7 @@ export class InventoryService {
       }
 
       item.quantityOnHand = nextOnHand;
+      item.lastSyncedAt = new Date();
       await this.stockItemRepository.save(item, manager);
 
       await this.stockAdjustmentRepository.append(
@@ -143,6 +148,7 @@ export class InventoryService {
       );
 
       this.runIntegrationHooks(item);
+      await this.recordSyncLog(tenantId, item.productId, null, dto.locationId, dto.delta, 'adjustment', manager);
       return this.toStockView(item);
     });
   }
@@ -177,6 +183,10 @@ export class InventoryService {
             quantityOnHand: '0.0000',
             quantityReserved: '0.0000',
             reorderLevel: null,
+            reorderPoint: null,
+            safetyStockLevel: null,
+            syncSource: 'warehouse',
+            lastSyncedAt: new Date(),
             isActive: true,
           },
           manager,
@@ -185,6 +195,8 @@ export class InventoryService {
 
       item.quantityOnHand = addQty(item.quantityOnHand, input.quantity);
       item.lastReceivedAt = new Date();
+      item.lastSyncedAt = new Date();
+      item.syncSource = 'warehouse';
       await this.stockItemRepository.save(item, manager);
 
       await this.recordMovement(
@@ -202,6 +214,7 @@ export class InventoryService {
       );
 
       this.runIntegrationHooks(item);
+      await this.recordSyncLog(input.tenantId, item.productId, null, input.locationId, input.quantity, 'receiving', manager);
       return this.toStockView(item);
     });
   }
@@ -264,6 +277,7 @@ export class InventoryService {
       }
 
       item.quantityReserved = addQty(item.quantityReserved, line.quantity);
+      item.lastSyncedAt = new Date();
       this.assertNonNegative(item);
 
       const reservation = await this.stockReservationRepository.create(
@@ -322,6 +336,7 @@ export class InventoryService {
 
       item.quantityOnHand = subtractQty(item.quantityOnHand, line.quantity);
       item.quantityReserved = subtractQty(item.quantityReserved, line.quantity);
+      item.lastSyncedAt = new Date();
       this.assertNonNegative(item);
 
       await this.stockItemRepository.save(item, manager);
@@ -378,6 +393,7 @@ export class InventoryService {
 
       const qty = parseQty(reservation.quantity);
       item.quantityReserved = subtractQty(item.quantityReserved, qty);
+      item.lastSyncedAt = new Date();
       this.assertNonNegative(item);
       await this.stockItemRepository.save(item, manager);
 
@@ -412,6 +428,7 @@ export class InventoryService {
 
       const item = await this.requireStockItem(context, line.productId, manager, true);
       item.quantityOnHand = addQty(item.quantityOnHand, line.quantity);
+      item.lastSyncedAt = new Date();
       this.assertNonNegative(item);
 
       await this.stockItemRepository.save(item, manager);
@@ -461,6 +478,27 @@ export class InventoryService {
     if (parseQty(item.quantityReserved) > parseQty(item.quantityOnHand)) {
       throwInsufficientStock(item.sku, parseQty(item.quantityOnHand), parseQty(item.quantityReserved));
     }
+  }
+
+  private async recordSyncLog(
+    tenantId: string,
+    itemId: string | null,
+    fromLocationId: string | null,
+    toLocationId: string | null,
+    quantity: number,
+    reason: 'transfer' | 'adjustment' | 'auto-sync' | 'sale' | 'receiving',
+    manager?: EntityManager,
+  ) {
+    await (manager ? manager.getRepository(InventorySyncLogEntity) : this.syncLogs).save(
+      (manager ? manager.getRepository(InventorySyncLogEntity) : this.syncLogs).create({
+        tenantId,
+        itemId,
+        fromLocationId,
+        toLocationId,
+        quantity: formatQty(Math.abs(quantity)),
+        reason,
+      }),
+    );
   }
 
   private assertLineQuantity(quantity: number): void {

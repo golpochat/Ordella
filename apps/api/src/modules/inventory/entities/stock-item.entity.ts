@@ -31,6 +31,18 @@ export class StockItemEntity extends BaseTenantScopedEntity {
   @Column({ name: 'reorder_level', type: 'decimal', precision: 14, scale: 4, nullable: true })
   reorderLevel!: string | null;
 
+  @Column({ name: 'sync_source', type: 'varchar', length: 32, default: 'store' })
+  syncSource!: 'store' | 'warehouse' | 'external';
+
+  @Column({ name: 'last_synced_at', type: 'timestamptz', nullable: true })
+  lastSyncedAt!: Date | null;
+
+  @Column({ name: 'safety_stock_level', type: 'decimal', precision: 14, scale: 4, nullable: true })
+  safetyStockLevel!: string | null;
+
+  @Column({ name: 'reorder_point', type: 'decimal', precision: 14, scale: 4, nullable: true })
+  reorderPoint!: string | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 

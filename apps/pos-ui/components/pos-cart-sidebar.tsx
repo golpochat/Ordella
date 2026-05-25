@@ -70,6 +70,11 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
                   {line.modifierLabels.length ? (
                     <p className="text-xs text-muted-foreground">{line.modifierLabels.join(', ')}</p>
                   ) : null}
+                  {line.stockLevel !== null && line.stockLevel !== undefined ? (
+                    <p className="text-xs text-muted-foreground">
+                      Available at this location: {line.stockLevel}
+                    </p>
+                  ) : null}
                   {line.sku ? (
                     <p className="text-xs text-muted-foreground">SKU {line.sku}</p>
                   ) : null}
@@ -89,7 +94,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
                   type="button"
                   variant="ghost"
                   className="h-10 shrink-0"
-                  disabled={syncing}
+                  disabled={syncing || (line.stockLevel !== null && line.stockLevel !== undefined && line.quantity >= line.stockLevel)}
                   onClick={() => removeLine(key)}
                 >
                   Remove

@@ -15,6 +15,8 @@ export type CartLineMeta = {
   sku?: string | null;
   unitPrice: number;
   quantity: number;
+  stockLevel?: number | null;
+  stockStatus?: string | null;
   notes?: string;
   bundleItems?: Array<{ itemId: string; name?: string; quantity: number; isOptional?: boolean }>;
 };
@@ -92,6 +94,8 @@ function buildLineMeta(
     sku: item.sku ?? variant?.sku,
     unitPrice: resolveUnitPrice(item, options?.variantId, options?.modifierOptionIds),
     quantity,
+    stockLevel: item.stockLevel ?? null,
+    stockStatus: item.stockStatus ?? null,
     notes: options?.notes,
     bundleItems: item.bundleItems,
   };
@@ -163,6 +167,17 @@ export const useCartStore = create<CartState>((set, get) => ({
         set({ error: `${item.name} is out of stock` });
         return;
       }
+      const key = cartLineKey({
+        productId: item.id,
+        variantId: options?.variantId,
+        bundleId: item.bundleId,
+        modifierOptionIds: options?.modifierOptionIds,
+      });
+      const existingQty = get().lines.find((line) => cartLineKey(line) === key)?.quantity ?? 0;
+      if (existingQty + 1 > item.stockLevel) {
+        set({ error: `Only ${item.stockLevel} available at this location` });
+        return;
+      }
     }
 
     set({ syncing: true, error: undefined });
@@ -197,6 +212,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     const line = get().lines.find((l) => cartLineKey(l) === lineKey);
     const cartId = get().cartId;
     if (!line || !cartId) return;
+    if (line.stockLevel !== null && line.stockLevel !== undefined && quantity > line.stockLevel) {
+      set({ error: `Only ${line.stockLevel} available at this location` });
+      return;
+    }
 
     set({ syncing: true, error: undefined });
     try {

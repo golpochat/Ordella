@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LocationEntity } from '../../../tenants/entities';
 import { NotificationsModule } from '../../../notifications/notifications.module';
-import { StockItemEntity, StockMovementEntity, StockTransferEntity, StockTransferLineEntity } from '../../entities';
+import { InventorySyncLogEntity, StockItemEntity, StockMovementEntity, StockTransferEntity, StockTransferLineEntity } from '../../entities';
 import { StockTransfersController } from '../../controllers';
 import { StockTransfersService } from '../../services';
 import { StockTransferRepository } from '../../repositories/stock-transfer.repository';
@@ -15,6 +15,7 @@ import { StockTransferRepository } from '../../repositories/stock-transfer.repos
       StockTransferLineEntity,
       StockItemEntity,
       StockMovementEntity,
+      InventorySyncLogEntity,
       LocationEntity,
     ]),
   ],

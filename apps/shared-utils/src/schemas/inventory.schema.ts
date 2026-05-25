@@ -23,6 +23,33 @@ export const inventoryListItemSchema = z.object({
 
 export type InventoryListItem = z.infer<typeof inventoryListItemSchema>;
 
+export const multiStoreInventoryItemSchema = inventoryListItemSchema.extend({
+  locationName: z.string(),
+  locationType: z.string(),
+  syncSource: z.string(),
+  lastSyncedAt: z.coerce.date().nullable().optional(),
+  safetyStockLevel: z.number().int().nullable().optional(),
+  incomingStock: z.string(),
+  inTransitStock: z.string(),
+  availableToSell: z.string(),
+  discrepancy: z.string().nullable().optional(),
+});
+
+export type MultiStoreInventoryItem = z.infer<typeof multiStoreInventoryItemSchema>;
+
+export const inventorySyncLogSchema = z.object({
+  id: z.string().uuid(),
+  tenantId: z.string().uuid(),
+  itemId: z.string().uuid().nullable(),
+  fromLocationId: z.string().uuid().nullable(),
+  toLocationId: z.string().uuid().nullable(),
+  quantity: z.string(),
+  reason: z.string(),
+  createdAt: z.coerce.date(),
+});
+
+export type InventorySyncLog = z.infer<typeof inventorySyncLogSchema>;
+
 export const inventoryItemSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),

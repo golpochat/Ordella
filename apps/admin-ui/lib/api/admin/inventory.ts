@@ -2,6 +2,8 @@ import type { ApiClient } from '@shared-utils';
 import {
   inventoryItemSchema,
   inventoryListItemSchema,
+  inventorySyncLogSchema,
+  multiStoreInventoryItemSchema,
   inventorySummarySchema,
   stockMovementSchema,
 } from '@shared-utils';
@@ -23,6 +25,39 @@ export async function listLowStock(api: ApiClient, params?: { locationId?: strin
 export async function getInventorySummary(api: ApiClient, params?: { locationId?: string }) {
   const data = await api.getData<unknown>('inventory/summary', { params });
   return inventorySummarySchema.parse(data);
+}
+
+export async function listMultiStoreInventory(
+  api: ApiClient,
+  params?: { locationId?: string; search?: string },
+) {
+  const data = await api.getData<unknown[]>('inventory/multi-store', { params });
+  return z.array(multiStoreInventoryItemSchema).parse(data);
+}
+
+export async function listInventorySyncLogs(api: ApiClient) {
+  const data = await api.getData<unknown[]>('inventory/logs');
+  return z.array(inventorySyncLogSchema).parse(data);
+}
+
+export async function runInventorySync(
+  api: ApiClient,
+  body: {
+    itemId?: string;
+    fromLocationId?: string;
+    toLocationId?: string;
+    quantity?: number;
+    reason?: 'transfer' | 'adjustment' | 'auto-sync' | 'sale' | 'receiving';
+  },
+) {
+  return api.postData<unknown>('inventory/sync', body);
+}
+
+export async function createInventorySnapshot(
+  api: ApiClient,
+  body: { locationId?: string; label?: string },
+) {
+  return api.postData<unknown>('inventory/snapshot', body);
 }
 
 export async function updateInventoryItem(

@@ -37,6 +37,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'bundles', label: 'Bundles & Combos', href: '/catalog/bundles', icon: Package },
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
+  { id: 'multi-store-inventory', label: 'Multi-Store Inventory', href: '/inventory/multi-store', icon: Warehouse },
   { id: 'warehouse', label: 'Warehouse Management', href: '/warehouse', icon: Boxes },
   { id: 'stock-transfers', label: 'Stock Transfers', href: '/warehouse/transfers', icon: Truck },
   { id: 'suppliers', label: 'Suppliers', href: '/suppliers', icon: Truck },
@@ -70,6 +71,7 @@ export const CATALOG_SUBNAV = [
 
 export const INVENTORY_SUBNAV = [
   { label: 'Stock levels', href: '/inventory' },
+  { label: 'Multi-store inventory', href: '/inventory/multi-store' },
   { label: 'Low stock', href: '/inventory/low-stock' },
   { label: 'Movements', href: '/inventory/movements' },
 ];

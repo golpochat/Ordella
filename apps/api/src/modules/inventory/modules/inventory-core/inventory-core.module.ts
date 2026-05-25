@@ -4,7 +4,10 @@ import { ProductEntity } from '../../../catalog/entities/product.entity';
 import { CategoryEntity } from '../../../catalog/entities/category.entity';
 import { OrderItemEntity } from '../../../orders/entities/order-item.entity';
 import { OrderEntity } from '../../../orders/entities/order.entity';
+import { LocationEntity } from '../../../tenants/entities';
 import {
+  InventorySnapshotEntity,
+  InventorySyncLogEntity,
   StockAdjustmentEntity,
   StockItemEntity,
   StockMovementEntity,
@@ -27,6 +30,8 @@ import {
   imports: [
     TypeOrmModule.forFeature([
       StockItemEntity,
+      InventorySnapshotEntity,
+      InventorySyncLogEntity,
       StockMovementEntity,
       StockAdjustmentEntity,
       StockReservationEntity,
@@ -34,6 +39,7 @@ import {
       CategoryEntity,
       OrderItemEntity,
       OrderEntity,
+      LocationEntity,
     ]),
   ],
   providers: [

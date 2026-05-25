@@ -1,4 +1,5 @@
 export * from './stock-adjustments/create-stock-adjustment.dto';
+export * from './inventory/inventory-sync.dto';
 export * from './stock-adjustments/stock-adjustment-response.dto';
 export * from './stock-items/create-stock-item.dto';
 export * from './stock-items/stock-item-response.dto';

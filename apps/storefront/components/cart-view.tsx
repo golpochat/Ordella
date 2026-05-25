@@ -59,6 +59,11 @@ export function CartView() {
                   {line.sku ? (
                     <p className="text-xs text-muted-foreground">SKU {line.sku}</p>
                   ) : null}
+                  {line.availableQuantity !== null && line.availableQuantity !== undefined ? (
+                    <p className="text-xs text-muted-foreground">
+                      Available at this location: {line.availableQuantity}
+                    </p>
+                  ) : null}
                   <p className="text-sm">${formatMoney(line.unitPrice)} each</p>
                   {line.purchaseType === 'subscription' ? (
                     <p className="text-xs font-medium text-primary">
@@ -96,6 +101,7 @@ export function CartView() {
                   type="button"
                   variant="outline"
                   className="h-11 w-11 text-lg"
+                  disabled={line.availableQuantity !== null && line.availableQuantity !== undefined && line.quantity >= line.availableQuantity}
                   onClick={() => updateQuantity(line.lineId, line.quantity + 1)}
                 >
                   +

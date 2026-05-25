@@ -17,6 +17,7 @@ export type BasketLineMeta = {
   sku?: string | null;
   unitPrice: number;
   quantity: number;
+  availableQuantity?: number | null;
   notes?: string;
   bundleItems?: Array<{ itemId: string; name?: string; quantity: number; isOptional?: boolean }>;
   purchaseType?: 'one_time' | 'subscription';
@@ -89,6 +90,7 @@ function buildLineMeta(
     sku: product.sku ?? variant?.sku,
     unitPrice: resolveUnitPrice(product, options?.variantId, options?.modifierOptionIds),
     quantity,
+    availableQuantity: product.availableQuantity ?? product.stockLevel ?? null,
     notes: options?.notes,
     bundleItems: product.bundleItems,
     purchaseType: options?.purchaseType,
@@ -148,6 +150,11 @@ export const useBasketStore = create<BasketState>((set, get) => ({
       subscriptionSchedule: options?.subscriptionSchedule,
     });
     const existing = get().lines.find((l) => lineKey(l) === key);
+    const available = product.availableQuantity ?? product.stockLevel ?? null;
+    if (available !== null && available !== undefined && existing && existing.quantity + 1 > available) {
+      set({ error: `Only ${available} available at this location` });
+      return;
+    }
     let next: BasketLineMeta[];
     if (existing) {
       next = get().lines.map((l) =>
@@ -163,6 +170,11 @@ export const useBasketStore = create<BasketState>((set, get) => ({
   updateQuantity: (lineId, quantity) => {
     if (quantity < 1) {
       set({ error: 'Quantity must be at least 1' });
+      return;
+    }
+    const currentLine = get().lines.find((line) => line.lineId === lineId);
+    if (currentLine?.availableQuantity !== null && currentLine?.availableQuantity !== undefined && quantity > currentLine.availableQuantity) {
+      set({ error: `Only ${currentLine.availableQuantity} available at this location` });
       return;
     }
     const next = get().lines.map((l) => (l.lineId === lineId ? { ...l, quantity } : l));

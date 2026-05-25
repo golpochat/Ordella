@@ -6,6 +6,7 @@ import { CategoryEntity } from '../../catalog/entities/category.entity';
 import { OrderItemEntity } from '../../orders/entities/order-item.entity';
 import { OrderEntity } from '../../orders/entities/order.entity';
 import { OrderStatus } from '../../orders/enums/order-status.enum';
+import { LocationEntity } from '../../tenants/entities';
 import { StockItemEntity } from '../entities/stock-item.entity';
 import { StockAdjustmentEntity } from '../entities/stock-adjustment.entity';
 import { computeStockHealth, stockLevelInt } from '../domain/stock-status.util';
@@ -28,6 +29,18 @@ export interface InventoryListRow {
   quantityReserved: string;
   quantityAvailable: string;
   updatedAt: Date;
+}
+
+export interface MultiStoreInventoryRow extends InventoryListRow {
+  locationName: string;
+  locationType: string;
+  syncSource: string;
+  lastSyncedAt: Date | null;
+  safetyStockLevel: number | null;
+  incomingStock: string;
+  inTransitStock: string;
+  availableToSell: string;
+  discrepancy: string | null;
 }
 
 @Injectable()
@@ -86,7 +99,7 @@ export class InventoryQueryRepository {
         'category.name AS "categoryName"',
         'stock.quantity_on_hand AS "quantityOnHand"',
         'stock.quantity_reserved AS "quantityReserved"',
-        'stock.reorder_level AS "reorderLevel"',
+        'COALESCE(stock.reorder_point, stock.reorder_level) AS "reorderLevel"',
         'stock.is_active AS "isActive"',
         'stock.updated_at AS "updatedAt"',
       ])
@@ -145,6 +158,106 @@ export class InventoryQueryRepository {
       limit: 500,
     });
     return all.filter((row) => row.status === 'low' || row.status === 'out');
+  }
+
+  async listMultiStoreInventory(
+    tenantId: string,
+    filter: { locationId?: string; search?: string; page?: number; limit?: number },
+  ): Promise<MultiStoreInventoryRow[]> {
+    const page = filter.page ?? 1;
+    const limit = filter.limit ?? 500;
+    const qb = this.stockRepository
+      .createQueryBuilder('stock')
+      .leftJoin(ProductEntity, 'product', 'product.id = stock.product_id')
+      .leftJoin(CategoryEntity, 'category', 'category.id = product.category_id')
+      .leftJoin(LocationEntity, 'location', 'location.id = stock.location_id')
+      .where('stock.tenant_id = :tenantId', { tenantId })
+      .orderBy('stock.name', 'ASC')
+      .addOrderBy('location.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (filter.locationId) qb.andWhere('stock.location_id = :locationId', { locationId: filter.locationId });
+    if (filter.search?.trim()) {
+      qb.andWhere('(LOWER(stock.name) LIKE :search OR LOWER(stock.sku) LIKE :search)', {
+        search: `%${filter.search.trim().toLowerCase()}%`,
+      });
+    }
+
+    const rows = await qb
+      .select([
+        'stock.id AS id',
+        'stock.tenant_id AS "tenantId"',
+        'stock.location_id AS "locationId"',
+        'stock.product_id AS "itemId"',
+        'stock.name AS name',
+        'stock.sku AS sku',
+        'product.category_id AS "categoryId"',
+        'category.name AS "categoryName"',
+        'location.name AS "locationName"',
+        'location.location_type AS "locationType"',
+        'stock.quantity_on_hand AS "quantityOnHand"',
+        'stock.quantity_reserved AS "quantityReserved"',
+        'COALESCE(stock.reorder_point, stock.reorder_level) AS "reorderLevel"',
+        'stock.safety_stock_level AS "safetyStockLevel"',
+        'stock.sync_source AS "syncSource"',
+        'stock.last_synced_at AS "lastSyncedAt"',
+        'stock.is_active AS "isActive"',
+        'stock.updated_at AS "updatedAt"',
+      ])
+      .getRawMany<{
+        id: string;
+        tenantId: string;
+        locationId: string;
+        itemId: string | null;
+        name: string;
+        sku: string;
+        categoryId: string | null;
+        categoryName: string | null;
+        locationName: string | null;
+        locationType: string | null;
+        quantityOnHand: string;
+        quantityReserved: string;
+        reorderLevel: string | null;
+        safetyStockLevel: string | null;
+        syncSource: string | null;
+        lastSyncedAt: Date | null;
+        isActive: boolean;
+        updatedAt: Date;
+      }>();
+
+    return rows.map((row) => {
+      const available = availableQty(row.quantityOnHand, row.quantityReserved);
+      const status = computeStockHealth(row.quantityOnHand, row.quantityReserved, row.reorderLevel, row.isActive ?? true);
+      const safety = row.safetyStockLevel !== null ? parseQty(row.safetyStockLevel) : null;
+      return {
+        id: row.id,
+        tenantId: row.tenantId,
+        locationId: row.locationId,
+        locationName: row.locationName ?? 'Location',
+        locationType: row.locationType ?? 'store',
+        itemId: row.itemId,
+        name: row.name,
+        sku: row.sku,
+        categoryId: row.categoryId,
+        categoryName: row.categoryName,
+        stockLevel: stockLevelInt(row.quantityOnHand, row.quantityReserved),
+        reorderPoint: row.reorderLevel !== null ? Math.floor(parseQty(row.reorderLevel)) : null,
+        safetyStockLevel: safety !== null ? Math.floor(safety) : null,
+        syncSource: row.syncSource ?? 'store',
+        lastSyncedAt: row.lastSyncedAt,
+        isActive: row.isActive ?? true,
+        status,
+        quantityOnHand: row.quantityOnHand,
+        quantityReserved: row.quantityReserved,
+        quantityAvailable: available.toFixed(4),
+        incomingStock: '0.0000',
+        inTransitStock: '0.0000',
+        availableToSell: Math.max(0, available - (safety ?? 0)).toFixed(4),
+        discrepancy: safety !== null && available < safety ? 'below_safety_stock' : null,
+        updatedAt: row.updatedAt,
+      };
+    });
   }
 
   async countByStatus(tenantId: string, locationId?: string) {
@@ -290,6 +403,10 @@ export class InventoryQueryRepository {
           quantityOnHand: String(Math.max(0, initial)),
           quantityReserved: '0',
           reorderLevel: null,
+          reorderPoint: null,
+          safetyStockLevel: null,
+          syncSource: 'store',
+          lastSyncedAt: new Date(),
           isActive: true,
         }),
       );

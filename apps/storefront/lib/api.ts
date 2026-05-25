@@ -204,9 +204,10 @@ const publicBundleSchema = z.object({
 });
 
 export async function fetchCatalog() {
+  const locationId = getLocationId();
   const [data, bundlesData] = await Promise.all([
-    api.getData<unknown>('catalog'),
-    api.getData<unknown[]>('public/bundles/list', { params: { locationId: getLocationId() } }).catch(() => []),
+    api.getData<unknown>('catalog', { params: { locationId } }),
+    api.getData<unknown[]>('public/bundles/list', { params: { locationId } }).catch(() => []),
   ]);
   const bundle = catalogBundleSchema.parse(data);
   const products = bundle.items.map(mapCatalogItemToProduct);

@@ -9,7 +9,7 @@ import { NotificationType } from '../../notifications/enums/notification-type.en
 import { NotificationsService } from '../../notifications/services';
 import { CreateStockTransferDto, ReceiveStockTransferDto, UpdateStockTransferDto, StockTransferResponseDto } from '../dto';
 import { addQty, availableQty, formatQty, parseQty, subtractQty } from '../domain/stock-quantity.util';
-import { StockItemEntity, StockMovementEntity, StockTransferEntity, StockTransferLineEntity } from '../entities';
+import { InventorySyncLogEntity, StockItemEntity, StockMovementEntity, StockTransferEntity, StockTransferLineEntity } from '../entities';
 import { StockMovementSource } from '../enums/stock-movement-source.enum';
 import { StockMovementType } from '../enums/stock-movement-type.enum';
 import { StockReferenceType } from '../enums/stock-reference-type.enum';
@@ -27,6 +27,8 @@ export class StockTransfersService {
     private readonly stockItems: Repository<StockItemEntity>,
     @InjectRepository(LocationEntity)
     private readonly locations: Repository<LocationEntity>,
+    @InjectRepository(InventorySyncLogEntity)
+    private readonly syncLogs: Repository<InventorySyncLogEntity>,
     private readonly notifications: NotificationsService,
   ) {}
 
@@ -66,8 +68,10 @@ export class StockTransfersService {
         if (status === StockTransferStatus.IN_TRANSIT) {
           this.assertAvailable(source, line.quantity);
           source.quantityOnHand = subtractQty(source.quantityOnHand, line.quantity);
+          source.lastSyncedAt = new Date();
           await manager.getRepository(StockItemEntity).save(source);
           await this.appendMovement(manager, tenant.tenantId, source.id, StockMovementType.OUT, line.quantity, entity.id, 'Transfer shipped');
+          await this.appendSyncLog(manager, tenant.tenantId, source.productId, entity.fromLocationId, entity.toLocationId, line.quantity);
           notification = 'shipped';
         }
         await manager.getRepository(StockTransferLineEntity).save(manager.getRepository(StockTransferLineEntity).create({
@@ -128,10 +132,12 @@ export class StockTransfersService {
         const source = await this.requireSourceStockItem(tenant.tenantId, entity.fromLocationId, line.stockItemId, manager, true);
         this.assertAvailable(source, quantity);
         source.quantityOnHand = subtractQty(source.quantityOnHand, quantity);
+        source.lastSyncedAt = new Date();
         await manager.getRepository(StockItemEntity).save(source);
         line.quantitySent = formatQty(quantity);
         await manager.getRepository(StockTransferLineEntity).save(line);
         await this.appendMovement(manager, tenant.tenantId, source.id, StockMovementType.OUT, quantity, entity.id, 'Transfer shipped');
+        await this.appendSyncLog(manager, tenant.tenantId, source.productId, entity.fromLocationId, entity.toLocationId, quantity);
       }
       entity.status = StockTransferStatus.IN_TRANSIT;
       entity.notes = notes ?? entity.notes;
@@ -160,10 +166,13 @@ export class StockTransfersService {
         if (!line.itemId) throw new BadRequestException('Transfer line is missing catalog item reference');
         const destination = await this.findOrCreateDestinationStockItem(tenant.tenantId, entity.toLocationId, line, manager);
         destination.quantityOnHand = addQty(destination.quantityOnHand, accepted);
+        destination.lastSyncedAt = new Date();
+        destination.syncSource = 'warehouse';
         await manager.getRepository(StockItemEntity).save(destination);
         line.quantityReceived = addQty(line.quantityReceived, accepted);
         await manager.getRepository(StockTransferLineEntity).save(line);
         await this.appendMovement(manager, tenant.tenantId, destination.id, StockMovementType.IN, accepted, entity.id, 'Transfer received');
+        await this.appendSyncLog(manager, tenant.tenantId, line.itemId, entity.fromLocationId, entity.toLocationId, accepted);
         receivedAny = true;
       }
       if (!receivedAny) throw new BadRequestException('No receivable transfer quantities were provided');
@@ -223,7 +232,11 @@ export class StockTransfersService {
       quantityOnHand: '0.0000',
       quantityReserved: '0.0000',
       reorderLevel: line.stockItem?.reorderLevel ?? null,
+      reorderPoint: line.stockItem?.reorderPoint ?? line.stockItem?.reorderLevel ?? null,
+      safetyStockLevel: line.stockItem?.safetyStockLevel ?? null,
       isActive: true,
+      syncSource: 'warehouse',
+      lastSyncedAt: new Date(),
     });
   }
 
@@ -238,6 +251,26 @@ export class StockTransfersService {
       referenceId: transferId,
       notes,
     }));
+  }
+
+  private async appendSyncLog(
+    manager: EntityManager,
+    tenantId: string,
+    itemId: string | null,
+    fromLocationId: string,
+    toLocationId: string,
+    quantity: number,
+  ) {
+    await (manager ? manager.getRepository(InventorySyncLogEntity) : this.syncLogs).save(
+      (manager ? manager.getRepository(InventorySyncLogEntity) : this.syncLogs).create({
+        tenantId,
+        itemId,
+        fromLocationId,
+        toLocationId,
+        quantity: formatQty(quantity),
+        reason: 'transfer',
+      }),
+    );
   }
 
   private async notify(tenantId: string, transfer: StockTransferEntity, event: 'created' | 'shipped' | 'received') {

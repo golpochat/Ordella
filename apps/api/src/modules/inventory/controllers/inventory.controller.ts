@@ -9,6 +9,7 @@ import { InventoryListQueryDto } from '../dto/inventory/inventory-list-query.dto
 import { UpdateInventoryItemDto } from '../dto/inventory/update-inventory-item.dto';
 import { InventoryAdjustDto } from '../dto/inventory/inventory-adjust.dto';
 import { InventoryBulkUpdateDto } from '../dto/inventory/inventory-bulk-update.dto';
+import { InventorySnapshotDto, InventorySyncDto } from '../dto/inventory/inventory-sync.dto';
 import { InventoryManagementService } from '../services/inventory-management.service';
 
 /** Retail inventory — per-location stock levels and adjustments */
@@ -42,6 +43,39 @@ export class InventoryController {
     @Query('locationId') locationId?: string,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.inventoryManagement.getSummary(tenant.tenantId, locationId);
+    return { success: true, data };
+  }
+
+  @Get('multi-store')
+  async multiStore(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: InventoryListQueryDto,
+  ): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.inventoryManagement.listMultiStore(tenant.tenantId, query);
+    return { success: true, data };
+  }
+
+  @Get('logs')
+  async logs(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.inventoryManagement.listLogs(tenant.tenantId);
+    return { success: true, data };
+  }
+
+  @Post('sync')
+  async sync(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: InventorySyncDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.inventoryManagement.sync(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Post('snapshot')
+  async snapshot(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: InventorySnapshotDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.inventoryManagement.createSnapshot(tenant.tenantId, dto);
     return { success: true, data };
   }
 
