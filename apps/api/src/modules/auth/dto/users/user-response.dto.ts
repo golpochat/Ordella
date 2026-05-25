@@ -5,7 +5,12 @@ export class UserResponseDto {
   tenantId!: string;
   name!: string;
   email!: string;
+  phone!: string | null;
   roleId!: string;
+  roleName!: string | null;
+  permissions!: string[];
+  assignedLocations!: string[];
+  isActive!: boolean;
   mfaEnabled!: boolean;
   status!: UserStatus;
   createdAt!: Date;

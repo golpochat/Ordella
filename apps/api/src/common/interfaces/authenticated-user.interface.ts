@@ -9,4 +9,5 @@ export interface AuthenticatedUser {
   roleName?: string;
   sessionId?: string;
   permissions: string[];
+  locationIds?: string[];
 }

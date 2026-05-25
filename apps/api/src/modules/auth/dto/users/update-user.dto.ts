@@ -1,4 +1,13 @@
-import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+} from 'class-validator';
 import { UserStatus } from '../../enums/user-status.enum';
 
 /** API Spec §1.6 PATCH /api/v1/users/{id} */
@@ -11,6 +20,10 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
   @IsOptional()
   @IsString()
@@ -28,4 +41,9 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(UserStatus)
   status?: UserStatus;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  assignedLocations?: string[];
 }

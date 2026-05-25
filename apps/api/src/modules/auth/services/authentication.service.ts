@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { resolveRolePermissions } from '../../../common/rbac/role-permissions';
 import { verifyPassword } from '../../onboarding/utils/password.util';
+import { UserLocationAssignmentEntity } from '../../tenants/entities/user-location-assignment.entity';
 import { UserEntity } from '../entities/user.entity';
 import { UserStatus } from '../enums/user-status.enum';
 import { CreateLoginDto } from '../dto';
@@ -24,6 +25,8 @@ export class AuthenticationService {
     private readonly onboardingRepository: OnboardingRepository,
     @InjectRepository(UserEntity)
     private readonly users: Repository<UserEntity>,
+    @InjectRepository(UserLocationAssignmentEntity)
+    private readonly userLocations: Repository<UserLocationAssignmentEntity>,
   ) {}
 
   async login(
@@ -81,6 +84,9 @@ export class AuthenticationService {
     const assigned = await this.onboardingRepository.getRolePermissions(user.roleId);
     const roleName = user.role?.name ?? 'unknown';
     const permissions = resolveRolePermissions(roleName, assigned);
+    const locationIds = await this.userLocations
+      .find({ where: { tenantId: user.tenantId, userId: user.id }, select: ['locationId'] })
+      .then((rows) => rows.map((row) => row.locationId));
 
     const accessToken = await this.jwtService.signAsync({
       sub: user.id,
@@ -89,6 +95,7 @@ export class AuthenticationService {
       roleId: user.roleId,
       roleName,
       permissions,
+      locationIds,
     });
 
     const refreshToken = await this.jwtService.signAsync(

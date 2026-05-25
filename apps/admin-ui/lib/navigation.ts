@@ -7,6 +7,7 @@ import {
   Percent,
   Settings,
   ShoppingCart,
+  Users,
   Warehouse,
 } from 'lucide-react';
 
@@ -23,6 +24,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
+  { id: 'staff', label: 'Staff', href: '/staff', icon: Users },
   { id: 'orders', label: 'Orders', href: '/orders', icon: ShoppingCart },
   { id: 'promotions', label: 'Promotions', href: '/promotions', icon: Percent },
   { id: 'reports', label: 'Reports', href: '/reports', icon: ClipboardList },

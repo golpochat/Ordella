@@ -15,6 +15,9 @@ export class UserEntity extends BaseTenantEntity {
   @Column({ type: 'varchar', length: 255 })
   email!: string;
 
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  phone!: string | null;
+
   @Column({ name: 'password_hash', type: 'varchar', length: 255 })
   passwordHash!: string;
 

@@ -4,6 +4,7 @@ export const SystemRoleNames = {
   MANAGER: 'manager',
   STAFF: 'staff',
   DRIVER: 'driver',
+  FULFILLMENT: 'fulfillment',
   CUSTOMER: 'customer',
 } as const;
 
@@ -12,6 +13,8 @@ export const DEFAULT_TENANT_ROLE_NAMES = [
   SystemRoleNames.OWNER,
   SystemRoleNames.MANAGER,
   SystemRoleNames.STAFF,
+  SystemRoleNames.DRIVER,
+  SystemRoleNames.FULFILLMENT,
 ] as const;
 
 export const OnboardingPermissionKeys = {
@@ -28,6 +31,21 @@ export const OnboardingPermissionKeys = {
 } as const;
 
 const CATALOG = [
+  'catalog.read',
+  'catalog.write',
+  'inventory.read',
+  'inventory.write',
+  'orders.read',
+  'orders.write',
+  'fulfillment.read',
+  'fulfillment.write',
+  'staff.read',
+  'staff.write',
+  'locations.read',
+  'locations.write',
+  'billing.read',
+  'billing.write',
+  'analytics.read',
   'tenants:read',
   'tenants:create',
   'tenants:update',
@@ -39,6 +57,8 @@ const CATALOG = [
   'roles:read',
   'roles:create',
   'roles:assign',
+  'roles:update',
+  'roles:delete',
   'permissions:read',
   'products:read',
   'products:create',
@@ -85,6 +105,25 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
   [SystemRoleNames.OWNER]: ['*'],
   [SystemRoleNames.ADMIN]: ['*'],
   [SystemRoleNames.MANAGER]: [
+    'catalog.read',
+    'catalog.write',
+    'inventory.read',
+    'inventory.write',
+    'orders.read',
+    'orders.write',
+    'fulfillment.read',
+    'fulfillment.write',
+    'staff.read',
+    'staff.write',
+    'locations.read',
+    'locations.write',
+    'analytics.read',
+    'admin:access',
+    'admin:products',
+    'admin:inventory',
+    'admin:orders',
+    'admin:reports',
+    'permissions:read',
     'products:read',
     'products:create',
     'products:update',
@@ -108,8 +147,13 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'kds:update',
     OnboardingPermissionKeys.ONBOARDING_READ,
     OnboardingPermissionKeys.STAFF_READ,
+    OnboardingPermissionKeys.STAFF_UPDATE,
   ],
   [SystemRoleNames.STAFF]: [
+    'orders.read',
+    'orders.write',
+    'fulfillment.read',
+    'fulfillment.write',
     'pos:access',
     'pos:cart',
     'pos:checkout',
@@ -123,6 +167,14 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'orders:create',
   ],
   [SystemRoleNames.DRIVER]: ['deliveries:read', 'deliveries:update'],
+  [SystemRoleNames.FULFILLMENT]: [
+    'fulfillment.read',
+    'fulfillment.write',
+    'kds:access',
+    'kds:read',
+    'kds:update',
+    'orders:read',
+  ],
   [SystemRoleNames.CUSTOMER]: [],
 };
 
@@ -140,6 +192,10 @@ export function permissionAllowed(userPermissions: string[], required: string): 
   if (userPermissions.includes(required)) {
     return true;
   }
+  const aliases = PERMISSION_ALIASES[required] ?? [];
+  if (aliases.some((alias) => userPermissions.includes(alias))) {
+    return true;
+  }
   if (
     userPermissions.includes('kds:access') &&
     (required === 'kds:read' || required === 'kds:update')
@@ -148,3 +204,40 @@ export function permissionAllowed(userPermissions: string[], required: string): 
   }
   return false;
 }
+
+const PERMISSION_ALIASES: Record<string, string[]> = {
+  'products:read': ['catalog.read'],
+  'products:create': ['catalog.write'],
+  'products:update': ['catalog.write'],
+  'products:delete': ['catalog.write'],
+  'categories:read': ['catalog.read'],
+  'categories:create': ['catalog.write'],
+  'categories:update': ['catalog.write'],
+  'inventory:read': ['inventory.read'],
+  'inventory:update': ['inventory.write'],
+  'admin:inventory': ['inventory.read', 'inventory.write'],
+  'orders:read': ['orders.read'],
+  'orders:create': ['orders.write'],
+  'orders:update': ['orders.write'],
+  'orders:cancel': ['orders.write'],
+  'kds:access': ['fulfillment.read'],
+  'kds:read': ['fulfillment.read'],
+  'kds:update': ['fulfillment.write'],
+  'locations:read': ['locations.read'],
+  'locations:create': ['locations.write'],
+  'locations:update': ['locations.write'],
+  'locations:delete': ['locations.write'],
+  'admin:reports': ['analytics.read'],
+  'reports:read': ['analytics.read'],
+  'tenant:billing:read': ['billing.read'],
+  'tenant:billing:update': ['billing.write'],
+  'users:read': ['staff.read'],
+  'users:create': ['staff.write'],
+  'users:update': ['staff.write'],
+  'users:delete': ['staff.write'],
+  'roles:read': ['staff.read'],
+  'roles:create': ['staff.write'],
+  'roles:update': ['staff.write'],
+  'roles:delete': ['staff.write'],
+  'roles:assign': ['staff.write'],
+};

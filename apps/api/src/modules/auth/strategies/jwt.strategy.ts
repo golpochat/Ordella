@@ -12,6 +12,7 @@ export interface JwtPayload {
   roleName?: string;
   sessionId?: string;
   permissions?: string[];
+  locationIds?: string[];
 }
 
 /**
@@ -37,6 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       roleName: payload.roleName,
       sessionId: payload.sessionId,
       permissions: payload.permissions ?? [],
+      locationIds: payload.locationIds ?? [],
     };
   }
 }

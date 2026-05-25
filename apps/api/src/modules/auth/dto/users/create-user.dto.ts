@@ -1,4 +1,12 @@
-import { IsBoolean, IsEmail, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+} from 'class-validator';
 
 /** API Spec §1.6 POST /api/v1/users */
 export class CreateUserDto {
@@ -8,6 +16,10 @@ export class CreateUserDto {
 
   @IsEmail()
   email!: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
   @IsString()
   @MinLength(8)
@@ -19,4 +31,9 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   mfaEnabled?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  assignedLocations?: string[];
 }

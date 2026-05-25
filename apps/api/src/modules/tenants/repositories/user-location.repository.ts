@@ -35,6 +35,21 @@ export class UserLocationRepository {
     await this.repository.save(rows);
   }
 
+  async replaceAssignmentsForUser(
+    tenantId: string,
+    userId: string,
+    locationIds: string[],
+  ): Promise<void> {
+    await this.repository.delete({ tenantId, userId });
+    if (locationIds.length === 0) {
+      return;
+    }
+    const rows = [...new Set(locationIds)].map((locationId) =>
+      this.repository.create({ tenantId, locationId, userId }),
+    );
+    await this.repository.save(rows);
+  }
+
   listLocationsForUser(tenantId: string, userId: string): Promise<string[]> {
     return this.repository
       .find({ where: { tenantId, userId }, select: ['locationId'] })

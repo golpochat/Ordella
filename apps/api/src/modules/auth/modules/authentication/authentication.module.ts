@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OnboardingDataModule } from '../../../onboarding/onboarding-data.module';
+import { UserLocationAssignmentEntity } from '../../../tenants/entities/user-location-assignment.entity';
 import { UserEntity } from '../../entities/user.entity';
 import { AuthenticationController } from '../../controllers';
 import { AuthenticationService } from '../../services';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity]), OnboardingDataModule],
+  imports: [TypeOrmModule.forFeature([UserEntity, UserLocationAssignmentEntity]), OnboardingDataModule],
   controllers: [AuthenticationController],
   providers: [AuthenticationService],
   exports: [AuthenticationService],

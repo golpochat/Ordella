@@ -36,6 +36,16 @@ export class RolesController {
     return { success: true, data };
   }
 
+  @Get('list')
+  @RequirePermissions('staff.read')
+  async list(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: FilterPaginationDto,
+  ): Promise<ApiSuccessResponse<RoleResponseDto[]>> {
+    const data = await this.rolesService.findAll(tenant, query);
+    return { success: true, data };
+  }
+
   @Post()
   @RequirePermissions('roles:create')
   async create(
@@ -43,6 +53,47 @@ export class RolesController {
     @Body() dto: CreateRoleDto,
   ): Promise<ApiSuccessResponse<RoleResponseDto>> {
     const data = await this.rolesService.create(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('create')
+  @RequirePermissions('staff.write')
+  async createAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: CreateRoleDto,
+  ): Promise<ApiSuccessResponse<RoleResponseDto>> {
+    const data = await this.rolesService.create(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('update')
+  @RequirePermissions('staff.write')
+  async updateAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: CreateRoleDto & UpdateRolePermissionsDto & { id: string },
+  ): Promise<ApiSuccessResponse<RoleResponseDto>> {
+    const { id, ...patch } = dto;
+    const data = await this.rolesService.update(tenant, id, patch);
+    return { success: true, data };
+  }
+
+  @Post('delete')
+  @RequirePermissions('staff.write')
+  async deleteAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: { id: string },
+  ): Promise<ApiSuccessResponse<null>> {
+    await this.rolesService.remove(tenant, dto.id);
+    return { success: true, data: null };
+  }
+
+  @Post('duplicate')
+  @RequirePermissions('staff.write')
+  async duplicateAlias(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: { id: string },
+  ): Promise<ApiSuccessResponse<RoleResponseDto>> {
+    const data = await this.rolesService.duplicate(tenant, dto.id);
     return { success: true, data };
   }
 

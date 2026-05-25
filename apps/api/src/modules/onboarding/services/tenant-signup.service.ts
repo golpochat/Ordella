@@ -229,6 +229,7 @@ export class TenantSignupService {
         roleId: ownerRoleId,
         roleName: SystemRoleNames.OWNER,
         permissions,
+        locationIds: [],
       });
       const refreshToken = await this.jwtService.signAsync(
         { sub: ownerUser.id, tenantId: tenant.id, type: 'refresh' },

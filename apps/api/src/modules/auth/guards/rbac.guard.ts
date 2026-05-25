@@ -23,7 +23,12 @@ export class RbacGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<{ [CURRENT_USER_KEY]?: AuthenticatedUser }>();
+    const request = context.switchToHttp().getRequest<{
+      [CURRENT_USER_KEY]?: AuthenticatedUser;
+      params?: Record<string, unknown>;
+      query?: Record<string, unknown>;
+      body?: Record<string, unknown>;
+    }>();
     const user = request[CURRENT_USER_KEY];
 
     if (!user) {
@@ -31,6 +36,44 @@ export class RbacGuard implements CanActivate {
     }
 
     const effective = resolveRolePermissions(user.roleName ?? '', user.permissions);
-    return required.every((permission) => permissionAllowed(effective, permission));
+    if (!required.every((permission) => permissionAllowed(effective, permission))) {
+      return false;
+    }
+
+    return this.canAccessRequestedLocation(request, user);
+  }
+
+  private canAccessRequestedLocation(
+    request: {
+      params?: Record<string, unknown>;
+      query?: Record<string, unknown>;
+      body?: Record<string, unknown>;
+    },
+    user: AuthenticatedUser,
+  ): boolean {
+    const assigned = user.locationIds ?? [];
+    if (assigned.length === 0 || user.roleName === 'owner' || user.roleName === 'admin') {
+      return true;
+    }
+
+    const requested = this.extractLocationId(request);
+    if (!requested) {
+      return true;
+    }
+
+    return assigned.includes(requested);
+  }
+
+  private extractLocationId(request: {
+    params?: Record<string, unknown>;
+    query?: Record<string, unknown>;
+    body?: Record<string, unknown>;
+  }): string | null {
+    const candidate =
+      request.params?.locationId ??
+      request.query?.locationId ??
+      request.body?.locationId;
+
+    return typeof candidate === 'string' && candidate.length > 0 ? candidate : null;
   }
 }
