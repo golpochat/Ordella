@@ -376,7 +376,7 @@ export class PaymentsService {
   }
 
   private assertValidAmount(amount: string): void {
-    if (parseAmount(amount) <= 0) {
+    if (parseAmount(amount) < 0) {
       throwInvalidPaymentAmount(amount);
     }
   }

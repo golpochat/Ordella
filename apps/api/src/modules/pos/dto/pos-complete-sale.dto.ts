@@ -63,6 +63,21 @@ export class PosCompleteSaleDto extends PosContextDto {
   loyaltyRedeemPoints?: number;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  giftCardCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  giftCardAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  storeCreditAmount?: number;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(100)

@@ -54,6 +54,9 @@ export class OnlineOrderService {
       paymentMethod: dto.paymentMethod ?? OrderPaymentMethod.CASH,
       customerId: customer?.id,
       loyaltyRedeemPoints: dto.loyaltyRedeemPoints,
+      giftCardCode: dto.giftCardCode,
+      giftCardAmount: dto.giftCardAmount,
+      storeCreditAmount: dto.storeCreditAmount,
       items: dto.items.map((item) => ({
         productId: item.itemId,
         variantId: item.variantId,

@@ -82,6 +82,7 @@ const loyaltyCustomerSchema = z.object({
   email: z.string().nullable(),
   phone: z.string().nullable(),
   pointsBalance: z.number(),
+  storeCreditBalance: z.string(),
   lifetimeValue: z.string(),
 });
 
@@ -239,6 +240,9 @@ export async function completeSale(body: {
   orderNotes?: string;
   customer?: { name?: string; phone?: string; email?: string; customerId?: string };
   loyaltyRedeemPoints?: number;
+  giftCardCode?: string;
+  giftCardAmount?: number;
+  storeCreditAmount?: number;
 }) {
   const session = getSession();
   const data = await api.postData<unknown>('pos/complete-sale', { ...session, ...body });
@@ -248,4 +252,19 @@ export async function completeSale(body: {
 export async function searchLoyaltyCustomers(q: string) {
   const data = await api.getData<unknown[]>(`loyalty/customers?q=${encodeURIComponent(q)}`);
   return z.array(loyaltyCustomerSchema).parse(data);
+}
+
+const giftCardSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  balance: z.string(),
+  currency: z.string(),
+  isActive: z.boolean(),
+});
+
+export type PosGiftCard = z.infer<typeof giftCardSchema>;
+
+export async function lookupGiftCard(code: string) {
+  const data = await api.getData<unknown>(`public/giftcards/lookup?code=${encodeURIComponent(code)}`);
+  return giftCardSchema.parse(data);
 }

@@ -15,7 +15,14 @@ import {
   TabsList,
   TabsTrigger,
 } from '@shared-ui';
-import { checkoutCart, completeSale, searchLoyaltyCustomers, type PosLoyaltyCustomer } from '@/lib/api';
+import {
+  checkoutCart,
+  completeSale,
+  lookupGiftCard,
+  searchLoyaltyCustomers,
+  type PosGiftCard,
+  type PosLoyaltyCustomer,
+} from '@/lib/api';
 import { enqueueOfflineSale } from '@/lib/offline-queue';
 import { useCartStore } from '@/stores/cart-store';
 
@@ -36,6 +43,10 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   const [customerEmail, setCustomerEmail] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<PosLoyaltyCustomer | null>(null);
   const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
+  const [storeCreditAmount, setStoreCreditAmount] = useState('');
+  const [giftCardCode, setGiftCardCode] = useState('');
+  const [giftCardAmount, setGiftCardAmount] = useState('');
+  const [giftCard, setGiftCard] = useState<PosGiftCard | null>(null);
   const [orderNotes, setOrderNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +74,21 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
     return () => window.clearTimeout(timeout);
   }, [customerEmail, customerPhone, open]);
 
+  useEffect(() => {
+    if (!open || giftCardCode.trim().length < 4) {
+      setGiftCard(null);
+      return;
+    }
+    const timeout = window.setTimeout(async () => {
+      try {
+        setGiftCard(await lookupGiftCard(giftCardCode));
+      } catch {
+        setGiftCard(null);
+      }
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [giftCardCode, open]);
+
   const confirm = async () => {
     if (!cartId) {
       setError('Cart is empty');
@@ -81,6 +107,9 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
           ? { name: customerName || undefined, phone: customerPhone || undefined }
           : undefined,
       loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
+      giftCardCode: giftCardCode || undefined,
+      giftCardAmount: giftCardAmount ? Number(giftCardAmount) : undefined,
+      storeCreditAmount: storeCreditAmount ? Number(storeCreditAmount) : undefined,
     };
 
     if (payload.customer) {
@@ -177,14 +206,43 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
             <div className="rounded-md border p-3 text-sm">
               <p className="font-medium">{selectedCustomer.name}</p>
               <p className="text-muted-foreground">{selectedCustomer.pointsBalance} points available</p>
+              <p className="text-muted-foreground">Store credit: {selectedCustomer.storeCreditBalance}</p>
               <Input
                 className="mt-2"
                 placeholder="Points to redeem (optional)"
                 value={loyaltyRedeemPoints}
                 onChange={(e) => setLoyaltyRedeemPoints(e.target.value)}
               />
+              <Input
+                className="mt-2"
+                placeholder="Store credit amount (optional)"
+                value={storeCreditAmount}
+                onChange={(e) => setStoreCreditAmount(e.target.value)}
+              />
             </div>
           ) : null}
+          <div className="rounded-md border p-3 text-sm">
+            <p className="font-medium">Gift card</p>
+            <Input
+              className="mt-2"
+              placeholder="Gift card code"
+              value={giftCardCode}
+              onChange={(e) => setGiftCardCode(e.target.value)}
+            />
+            {giftCard ? (
+              <>
+                <p className="mt-2 text-muted-foreground">
+                  Balance: {giftCard.balance} {giftCard.currency}
+                </p>
+                <Input
+                  className="mt-2"
+                  placeholder="Gift card amount to use"
+                  value={giftCardAmount}
+                  onChange={(e) => setGiftCardAmount(e.target.value)}
+                />
+              </>
+            ) : null}
+          </div>
           <Input
             placeholder="Order notes (optional)"
             value={orderNotes}

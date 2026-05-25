@@ -48,6 +48,9 @@ export async function createCheckoutSession(body: {
   totals: { grandTotal: string; subtotal?: string; taxTotal?: string };
   currency?: string;
   loyaltyRedeemPoints?: number;
+  giftCardCode?: string;
+  giftCardAmount?: number;
+  storeCreditAmount?: number;
 }) {
   const locationId = getLocationId();
   const data = await api.postData<unknown>('payments/checkout-session', {

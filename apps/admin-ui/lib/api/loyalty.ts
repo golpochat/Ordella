@@ -17,6 +17,7 @@ export type LoyaltyCustomer = {
   email: string | null;
   phone: string | null;
   pointsBalance: number;
+  storeCreditBalance: string;
   lifetimeValue: string;
   lastOrderAt: string | null;
   createdAt: string;

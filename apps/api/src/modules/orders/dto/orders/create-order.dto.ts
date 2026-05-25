@@ -4,8 +4,11 @@ import {
   IsArray,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
+  MaxLength,
   Min,
   ValidateIf,
   ValidateNested,
@@ -25,6 +28,21 @@ export class CreateOrderDto {
   @IsInt()
   @Min(1)
   loyaltyRedeemPoints?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  giftCardCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  giftCardAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  storeCreditAmount?: number;
 
   @IsUUID()
   locationId!: string;

@@ -20,6 +20,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
+import { GiftCardsModule } from './modules/giftcards/giftcards.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { LoyaltyModule } from './modules/loyalty/loyalty.module';
     ReportsModule,
     PromotionsModule,
     LoyaltyModule,
+    GiftCardsModule,
     PosModule,
     OnlineModule,
     KdsModule,

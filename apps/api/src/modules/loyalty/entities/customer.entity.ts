@@ -18,6 +18,9 @@ export class CustomerEntity extends BaseTenantScopedEntity {
   @Column({ name: 'points_balance', type: 'int', default: 0 })
   pointsBalance!: number;
 
+  @Column({ name: 'store_credit_balance', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  storeCreditBalance!: string;
+
   @Column({ name: 'lifetime_value', type: 'decimal', precision: 12, scale: 2, default: 0 })
   lifetimeValue!: string;
 

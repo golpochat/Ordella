@@ -126,4 +126,19 @@ export class CreateCheckoutSessionDto {
   @IsInt()
   @Min(1)
   loyaltyRedeemPoints?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  giftCardCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  giftCardAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  storeCreditAmount?: number;
 }

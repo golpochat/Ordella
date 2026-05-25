@@ -26,6 +26,8 @@ import {
 } from '../types/draft-order.types';
 import { OrderTransitionContext } from '../types/order-transition.context';
 import { LoyaltyService } from '../../loyalty/services';
+import { GiftCardsService } from '../../giftcards/services';
+import { formatMoney, parseMoney } from '../domain/order-totals.util';
 
 @Injectable()
 export class OrderCreationService {
@@ -37,6 +39,7 @@ export class OrderCreationService {
     private readonly orderLifecycleService: OrderLifecycleService,
     private readonly orderDeliveryService: OrderDeliveryService,
     private readonly loyaltyService: LoyaltyService,
+    private readonly giftCardsService: GiftCardsService,
   ) {}
 
   async createOrder(
@@ -88,11 +91,40 @@ export class OrderCreationService {
       throw new BadRequestException(loyaltyRedemption.message ?? 'Reward points cannot be redeemed');
     }
 
-    const draftTotals = loyaltyRedemption?.allowed
-      ? this.orderPricingService.calculateOrderTotals(lines, pricingContext, {
-          discountTotal: loyaltyRedemption.discountAmount,
-        })
-      : baseTotals;
+    let creditTotal = parseMoney(loyaltyRedemption?.discountAmount ?? '0.00');
+    const remainingAfterLoyalty = () =>
+      formatMoney(Math.max(0, parseMoney(baseTotals.grandTotal) - creditTotal));
+    const giftCardCredit =
+      dto.giftCardCode && dto.giftCardAmount
+        ? await this.giftCardsService.quoteGiftCard(
+            tenant.tenantId,
+            dto.giftCardCode,
+            dto.giftCardAmount,
+            remainingAfterLoyalty(),
+          )
+        : null;
+    creditTotal += parseMoney(giftCardCredit?.amount ?? '0.00');
+
+    if (dto.storeCreditAmount && !dto.customerId) {
+      throw new BadRequestException('Customer is required to use store credit');
+    }
+    const storeCredit =
+      dto.customerId && dto.storeCreditAmount
+        ? await this.giftCardsService.quoteStoreCredit(
+            tenant.tenantId,
+            dto.customerId,
+            dto.storeCreditAmount,
+            remainingAfterLoyalty(),
+          )
+        : null;
+    creditTotal += parseMoney(storeCredit?.amount ?? '0.00');
+
+    const draftTotals =
+      creditTotal > 0
+        ? this.orderPricingService.calculateOrderTotals(lines, pricingContext, {
+            discountTotal: formatMoney(creditTotal),
+          })
+        : baseTotals;
 
     const saved = await this.dataSource.transaction(async (manager) => {
       const ctx: OrderTransitionContext = { changedBy: user?.id ?? null, manager };
@@ -124,6 +156,24 @@ export class OrderCreationService {
           tenant.tenantId,
           dto.customerId,
           loyaltyRedemption.points,
+          persistedOrder.id,
+        );
+      }
+
+      if (giftCardCredit?.giftCardId) {
+        await this.giftCardsService.applyGiftCardRedemption(
+          tenant.tenantId,
+          giftCardCredit.giftCardId,
+          giftCardCredit.amount,
+          persistedOrder.id,
+        );
+      }
+
+      if (dto.customerId && storeCredit) {
+        await this.giftCardsService.applyStoreCreditRedemption(
+          tenant.tenantId,
+          dto.customerId,
+          storeCredit.amount,
           persistedOrder.id,
         );
       }

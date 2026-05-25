@@ -24,6 +24,9 @@ export interface StripeCheckoutPendingSnapshot {
   currency: string;
   customerId?: string;
   loyaltyRedeemPoints?: number;
+  giftCardCode?: string;
+  giftCardAmount?: number;
+  storeCreditAmount?: number;
   fulfilledOrderId?: string;
   stripeSessionId?: string;
 }

@@ -294,6 +294,9 @@ export async function createOnlineOrder(body: {
   notes?: string;
   paymentMethod?: 'cash' | 'card';
   loyaltyRedeemPoints?: number;
+  giftCardCode?: string;
+  giftCardAmount?: number;
+  storeCreditAmount?: number;
 }) {
   const locationId = getLocationId();
   const data = await api.postData<unknown>('orders/create-online', {
@@ -309,6 +312,7 @@ const publicLoyaltyCustomerSchema = z.object({
   email: z.string().nullable(),
   phone: z.string().nullable(),
   pointsBalance: z.number(),
+  storeCreditBalance: z.string(),
   lifetimeValue: z.string(),
 });
 
@@ -332,4 +336,38 @@ const loyaltySettingsSchema = z.object({
 export async function fetchLoyaltySettings() {
   const data = await api.getData<unknown>('public/loyalty/settings');
   return loyaltySettingsSchema.parse(data);
+}
+
+const publicGiftCardSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string(),
+  balance: z.string(),
+  currency: z.string(),
+  isActive: z.boolean(),
+});
+
+const creditTransactionSchema = z.object({
+  id: z.string().uuid(),
+  amount: z.string(),
+  type: z.string(),
+  orderId: z.string().uuid().nullable(),
+  createdAt: z.string(),
+});
+
+export type PublicGiftCard = z.infer<typeof publicGiftCardSchema>;
+export type PublicCreditTransaction = z.infer<typeof creditTransactionSchema>;
+
+export async function fetchGiftCard(code: string) {
+  const data = await api.getData<unknown>(`public/giftcards/lookup?code=${encodeURIComponent(code)}`);
+  return publicGiftCardSchema.parse(data);
+}
+
+export async function fetchCustomerGiftCards(customerId: string) {
+  const data = await api.getData<unknown[]>(`public/giftcards/list?customerId=${encodeURIComponent(customerId)}`);
+  return z.array(publicGiftCardSchema).parse(data);
+}
+
+export async function fetchStoreCreditHistory(customerId: string) {
+  const data = await api.getData<unknown[]>(`public/storecredit/history?customerId=${encodeURIComponent(customerId)}`);
+  return z.array(creditTransactionSchema).parse(data);
 }

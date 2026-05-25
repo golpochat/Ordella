@@ -38,6 +38,7 @@ import { OnlineOrderType } from '../enums/online-order-type.enum';
 import { CreateCheckoutSessionDto } from '../dto/create-checkout-session.dto';
 import { StripeCheckoutPendingStore } from './stripe-checkout-pending.store';
 import { LoyaltyService } from '../../loyalty/services';
+import { GiftCardsService } from '../../giftcards/services';
 
 const DEFAULT_CURRENCY = 'EUR';
 const TOTAL_TOLERANCE = 0.02;
@@ -56,6 +57,7 @@ export class OnlineStripeCheckoutService {
     private readonly kdsOrderQuery: KdsOrderQueryService,
     private readonly kdsBroadcast: KdsBroadcastService,
     private readonly loyaltyService: LoyaltyService,
+    private readonly giftCardsService: GiftCardsService,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
   ) {}
@@ -103,8 +105,31 @@ export class OnlineStripeCheckoutService {
       throw new BadRequestException(redemption.message ?? 'Reward points cannot be redeemed');
     }
 
+    let creditTotal = parseMoney(redemption?.discountAmount ?? '0.00');
+    const remainingTotal = () => Math.max(0, parseMoney(computed.grandTotal) - creditTotal).toFixed(2);
+    const giftCardCredit =
+      dto.giftCardCode && dto.giftCardAmount
+        ? await this.giftCardsService.quoteGiftCard(
+            tenant.tenantId,
+            dto.giftCardCode,
+            dto.giftCardAmount,
+            remainingTotal(),
+          )
+        : null;
+    creditTotal += parseMoney(giftCardCredit?.amount ?? '0.00');
+    const storeCredit =
+      customer && dto.storeCreditAmount
+        ? await this.giftCardsService.quoteStoreCredit(
+            tenant.tenantId,
+            customer.id,
+            dto.storeCreditAmount,
+            remainingTotal(),
+          )
+        : null;
+    creditTotal += parseMoney(storeCredit?.amount ?? '0.00');
+
     const clientTotal = parseMoney(dto.totals.grandTotal);
-    const serverTotal = Math.max(0, parseMoney(computed.grandTotal) - parseMoney(redemption?.discountAmount ?? '0.00'));
+    const serverTotal = Math.max(0, parseMoney(computed.grandTotal) - creditTotal);
     if (Math.abs(clientTotal - serverTotal) > TOTAL_TOLERANCE) {
       throw new BadRequestException('Order total does not match server calculation');
     }
@@ -129,6 +154,9 @@ export class OnlineStripeCheckoutService {
       grandTotal: serverTotal.toFixed(2),
       currency,
       loyaltyRedeemPoints: redemption?.points,
+      giftCardCode: giftCardCredit?.giftCardCode,
+      giftCardAmount: giftCardCredit ? parseMoney(giftCardCredit.amount) : undefined,
+      storeCreditAmount: storeCredit ? parseMoney(storeCredit.amount) : undefined,
     });
 
     if (!this.stripeClient.isConfigured()) {
@@ -317,6 +345,9 @@ export class OnlineStripeCheckoutService {
       paymentMethod: OrderPaymentMethod.CARD,
       customerId: pending.customerId,
       loyaltyRedeemPoints: pending.loyaltyRedeemPoints,
+      giftCardCode: pending.giftCardCode,
+      giftCardAmount: pending.giftCardAmount,
+      storeCreditAmount: pending.storeCreditAmount,
       items: pending.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,

@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   ClipboardList,
+  CreditCard,
   LayoutDashboard,
   MessageSquare,
   MapPin,
@@ -29,6 +30,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'staff', label: 'Staff', href: '/staff', icon: Users },
   { id: 'notifications', label: 'Notifications', href: '/notifications', icon: MessageSquare },
   { id: 'loyalty', label: 'Loyalty & Rewards', href: '/loyalty', icon: Gift },
+  { id: 'giftcards', label: 'Gift Cards & Store Credit', href: '/giftcards', icon: CreditCard },
   { id: 'orders', label: 'Orders', href: '/orders', icon: ShoppingCart },
   { id: 'promotions', label: 'Promotions', href: '/promotions', icon: Percent },
   { id: 'reports', label: 'Reports', href: '/reports', icon: ClipboardList },

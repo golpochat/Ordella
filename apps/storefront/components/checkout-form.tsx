@@ -6,8 +6,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
 import {
   createOnlineOrder,
+  fetchGiftCard,
   fetchLoyaltyCustomer,
   fetchLoyaltySettings,
+  type PublicGiftCard,
   type PublicLoyaltyCustomer,
 } from '@/lib/api';
 import { createCheckoutSession } from '@/lib/payments-api';
@@ -33,6 +35,10 @@ export function CheckoutForm() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [loyaltyCustomer, setLoyaltyCustomer] = useState<PublicLoyaltyCustomer | null>(null);
   const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
+  const [storeCreditAmount, setStoreCreditAmount] = useState('');
+  const [giftCardCode, setGiftCardCode] = useState('');
+  const [giftCardAmount, setGiftCardAmount] = useState('');
+  const [giftCard, setGiftCard] = useState<PublicGiftCard | null>(null);
   const [loyaltySettings, setLoyaltySettings] = useState<{
     isEnabled: boolean;
     redeemRate: string;
@@ -64,6 +70,17 @@ export function CheckoutForm() {
     return () => window.clearTimeout(timeout);
   }, [email, phone]);
 
+  useEffect(() => {
+    if (giftCardCode.trim().length < 4) {
+      setGiftCard(null);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      void fetchGiftCard(giftCardCode).then(setGiftCard).catch(() => setGiftCard(null));
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [giftCardCode]);
+
   const subtotal = useMemo(() => basketSubtotal(lines), [lines]);
   const totals = useMemo(() => calculateStorefrontTotals(subtotal), [subtotal]);
   const loyaltyDiscount = useMemo(() => {
@@ -73,7 +90,19 @@ export function CheckoutForm() {
     const value = requested * Number(loyaltySettings.redeemRate);
     return Math.min(value, totals.total * (loyaltySettings.maxRedeemPercent / 100));
   }, [loyaltyCustomer, loyaltyRedeemPoints, loyaltySettings, totals.total]);
-  const payableTotal = Math.max(0, totals.total - loyaltyDiscount);
+  const giftCardDiscount = useMemo(() => {
+    if (!giftCard || !giftCardAmount) return 0;
+    return Math.min(Number(giftCard.balance), Number(giftCardAmount), totals.total - loyaltyDiscount);
+  }, [giftCard, giftCardAmount, loyaltyDiscount, totals.total]);
+  const storeCreditDiscount = useMemo(() => {
+    if (!loyaltyCustomer || !storeCreditAmount) return 0;
+    return Math.min(
+      Number(loyaltyCustomer.storeCreditBalance),
+      Number(storeCreditAmount),
+      totals.total - loyaltyDiscount - giftCardDiscount,
+    );
+  }, [giftCardDiscount, loyaltyCustomer, loyaltyDiscount, storeCreditAmount, totals.total]);
+  const payableTotal = Math.max(0, totals.total - loyaltyDiscount - giftCardDiscount - storeCreditDiscount);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +143,7 @@ export function CheckoutForm() {
             }
           : undefined;
 
-      if (paymentMethod === 'card') {
+      if (paymentMethod === 'card' && payableTotal > 0) {
         const session = await createCheckoutSession({
           orderType,
           customer,
@@ -132,6 +161,9 @@ export function CheckoutForm() {
             taxTotal: totals.tax.toFixed(2),
           },
           loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
+          giftCardCode: giftCardCode || undefined,
+          giftCardAmount: giftCardAmount ? Number(giftCardAmount) : undefined,
+          storeCreditAmount: storeCreditAmount ? Number(storeCreditAmount) : undefined,
         });
         window.location.href = session.url;
         return;
@@ -145,6 +177,9 @@ export function CheckoutForm() {
         notes: orderNotes.trim() || undefined,
         delivery,
         loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
+        giftCardCode: giftCardCode || undefined,
+        giftCardAmount: giftCardAmount ? Number(giftCardAmount) : undefined,
+        storeCreditAmount: storeCreditAmount ? Number(storeCreditAmount) : undefined,
       });
       clearBasket();
       router.push(`/order/${order.id}?confirmed=1`);
@@ -191,11 +226,18 @@ export function CheckoutForm() {
               <div className="rounded-md border p-3 text-sm">
                 <p className="font-medium">Rewards available</p>
                 <p className="text-muted-foreground">{loyaltyCustomer.pointsBalance} points available</p>
+                <p className="text-muted-foreground">Store credit: {formatMoney(Number(loyaltyCustomer.storeCreditBalance))}</p>
                 <Input
                   className="mt-2"
                   placeholder={`Redeem points (minimum ${loyaltySettings.minRedeemPoints})`}
                   value={loyaltyRedeemPoints}
                   onChange={(e) => setLoyaltyRedeemPoints(e.target.value)}
+                />
+                <Input
+                  className="mt-2"
+                  placeholder="Store credit amount"
+                  value={storeCreditAmount}
+                  onChange={(e) => setStoreCreditAmount(e.target.value)}
                 />
                 {loyaltyDiscount > 0 ? (
                   <p className="mt-2 text-muted-foreground">
@@ -204,6 +246,33 @@ export function CheckoutForm() {
                 ) : null}
               </div>
             ) : null}
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Gift card</p>
+              <Input
+                className="mt-2"
+                placeholder="Gift card code"
+                value={giftCardCode}
+                onChange={(e) => setGiftCardCode(e.target.value)}
+              />
+              {giftCard ? (
+                <>
+                  <p className="mt-2 text-muted-foreground">
+                    Balance: {formatMoney(Number(giftCard.balance))}
+                  </p>
+                  <Input
+                    className="mt-2"
+                    placeholder="Gift card amount"
+                    value={giftCardAmount}
+                    onChange={(e) => setGiftCardAmount(e.target.value)}
+                  />
+                  {giftCardDiscount > 0 ? (
+                    <p className="mt-2 text-muted-foreground">
+                      Gift card applied: {formatMoney(giftCardDiscount)}
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
 
@@ -297,6 +366,18 @@ export function CheckoutForm() {
               <span>Tax (est.)</span>
               <span>${formatMoney(totals.tax)}</span>
             </div>
+            {giftCardDiscount > 0 ? (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Gift card</span>
+                <span>-${formatMoney(giftCardDiscount)}</span>
+              </div>
+            ) : null}
+            {storeCreditDiscount > 0 ? (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Store credit</span>
+                <span>-${formatMoney(storeCreditDiscount)}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between font-semibold">
               <span>Total (est.)</span>
               <span>${formatMoney(payableTotal)}</span>

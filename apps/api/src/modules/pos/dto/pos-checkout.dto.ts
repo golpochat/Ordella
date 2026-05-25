@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { OrderType } from '../../orders/enums/order-type.enum';
 import { PosContextDto } from './pos-context.dto';
 
@@ -15,6 +15,21 @@ export class PosCheckoutDto extends PosContextDto {
   @IsInt()
   @Min(1)
   loyaltyRedeemPoints?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  giftCardCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  giftCardAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  storeCreditAmount?: number;
 
   @IsOptional()
   @IsEnum(OrderType)

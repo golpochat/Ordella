@@ -40,12 +40,14 @@ import {
 import { InventoryCoreModule } from '../../../inventory/modules/inventory-core/inventory-core.module';
 import { NotificationsModule } from '../../../notifications/notifications.module';
 import { LoyaltyModule } from '../../../loyalty/loyalty.module';
+import { GiftCardsModule } from '../../../giftcards/giftcards.module';
 
 @Module({
   imports: [
     InventoryCoreModule,
     NotificationsModule,
     LoyaltyModule,
+    GiftCardsModule,
     forwardRef(() => KdsModule),
     TypeOrmModule.forFeature([
       OrderEntity,
