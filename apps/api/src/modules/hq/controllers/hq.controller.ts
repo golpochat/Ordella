@@ -117,6 +117,25 @@ export class HqController {
     return { success: true, data };
   }
 
+  @Get('warehouse/performance')
+  async warehousePerformance(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentUser() user?: AuthenticatedUser,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.hqService.warehousePerformance(tenant, user);
+    return { success: true, data };
+  }
+
+  @Get('warehouse/transfers')
+  async warehouseTransfers(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: HqQueryDto,
+    @CurrentUser() user?: AuthenticatedUser,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.hqService.transfersView(tenant, query, user);
+    return { success: true, data };
+  }
+
   @Post('franchisee/create')
   async createFranchisee(
     @CurrentTenant() tenant: TenantContext,

@@ -7,6 +7,7 @@ export type LocationListItem = {
   address: string | null;
   timezone: string;
   status: string;
+  locationType?: 'store' | 'warehouse' | 'dark_store' | 'distribution_center';
   phone: string;
   currency: string;
   slug: string | null;

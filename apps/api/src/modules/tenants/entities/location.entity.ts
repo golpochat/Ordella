@@ -1,5 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { LocationStatus } from '../enums/location-status.enum';
+import { LocationType } from '../enums/location-type.enum';
 import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { TenantEntity } from './tenant.entity';
 import { StoreEntity } from './store.entity';
@@ -35,6 +36,9 @@ export class LocationEntity extends BaseTenantScopedEntity {
 
   @Column({ type: 'varchar', length: 32, default: LocationStatus.CLOSED })
   status!: LocationStatus;
+
+  @Column({ name: 'location_type', type: 'varchar', length: 32, default: LocationType.STORE })
+  locationType!: LocationType;
 
   @OneToOne(() => LocationSettingsEntity, (settings) => settings.location)
   settings!: LocationSettingsEntity;

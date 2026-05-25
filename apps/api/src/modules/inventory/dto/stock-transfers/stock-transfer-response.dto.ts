@@ -9,6 +9,11 @@ export class StockTransferResponseDto {
   status!: StockTransferStatus;
   notes!: string | null;
   lines!: StockTransferLineResponseDto[];
+  fromLocationName?: string | null;
+  toLocationName?: string | null;
+  dispatchedAt?: Date | null;
+  receivedAt?: Date | null;
+  cancelledAt?: Date | null;
   createdAt!: Date;
   updatedAt!: Date | null;
 }

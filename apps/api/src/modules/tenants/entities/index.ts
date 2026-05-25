@@ -16,6 +16,7 @@ export { StoreEntity } from './store.entity';
 export { TenantEntity } from './tenant.entity';
 export { FranchiseGroupEntity } from './franchise-group.entity';
 export type { TenantType } from './tenant.entity';
+export { LocationType } from '../enums/location-type.enum';
 
 export const TENANTS_ENTITIES = [
   LocationOpeningHoursEntity,

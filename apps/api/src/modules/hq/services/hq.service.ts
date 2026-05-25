@@ -8,12 +8,13 @@ import { CustomerEntity } from '../../loyalty/entities';
 import { OrderEntity, OrderItemEntity } from '../../orders/entities';
 import { OrderStatus } from '../../orders/enums/order-status.enum';
 import { ProductEntity, CategoryEntity } from '../../catalog/entities';
-import { StockItemEntity } from '../../inventory/entities';
+import { StockItemEntity, StockTransferEntity } from '../../inventory/entities';
 import { availableQty } from '../../inventory/domain/stock-quantity.util';
 import { LocationEntity, TenantEntity, FranchiseGroupEntity } from '../../tenants/entities';
 import { TenantStatus } from '../../tenants/enums/tenant-status.enum';
 import { TenantSignupService } from '../../onboarding/services/tenant-signup.service';
 import { PurchaseOrderEntity, PurchaseOrderStatus, SupplierEntity } from '../../procurement/entities';
+import { WarehouseBinEntity, WarehousePickTaskEntity } from '../../warehouse/entities';
 import { CreateFranchiseeDto, HqQueryDto } from '../dto';
 
 const EXCLUDED_ORDER_STATUSES = [OrderStatus.CANCELLED, OrderStatus.FAILED];
@@ -41,6 +42,12 @@ export class HqService {
     private readonly suppliers: Repository<SupplierEntity>,
     @InjectRepository(PurchaseOrderEntity)
     private readonly purchaseOrders: Repository<PurchaseOrderEntity>,
+    @InjectRepository(StockTransferEntity)
+    private readonly stockTransfers: Repository<StockTransferEntity>,
+    @InjectRepository(WarehousePickTaskEntity)
+    private readonly warehousePickTasks: Repository<WarehousePickTaskEntity>,
+    @InjectRepository(WarehouseBinEntity)
+    private readonly warehouseBins: Repository<WarehouseBinEntity>,
     private readonly tenantSignup: TenantSignupService,
     private readonly auditLogs: AuditLogService,
   ) {}
@@ -290,6 +297,61 @@ export class HqService {
     return { rows, page, limit, total };
   }
 
+  async warehousePerformance(tenant: TenantContext, user?: AuthenticatedUser) {
+    const scope = await this.resolveScope(tenant.tenantId);
+    await this.audit(tenant, user, 'hq.view_warehouse_performance', { tenantIds: scope.tenantIds });
+    const [warehouses, transfers, picks, bins] = await Promise.all([
+      this.locations.find({ where: { tenantId: In(scope.tenantIds) } }),
+      this.stockTransfers.find({ where: { tenantId: In(scope.tenantIds) } }),
+      this.warehousePickTasks.find({ where: { tenantId: In(scope.tenantIds) } }),
+      this.warehouseBins.find({ relations: { zone: { warehouse: true }, contents: true } }),
+    ]);
+    const scopedBins = bins.filter((bin) => scope.tenantIds.includes(bin.zone?.warehouse?.tenantId));
+    const receivedTransfers = transfers.filter((transfer) => ['received', 'completed'].includes(String(transfer.status)));
+    return {
+      locations: warehouses.length,
+      transfersInTransit: transfers.filter((transfer) => transfer.status === 'in_transit').length,
+      transferAccuracy: transfers.length ? Number(((receivedTransfers.length / transfers.length) * 100).toFixed(2)) : 0,
+      pickAccuracy: picks.length ? Number(((picks.filter((pick) => pick.status === 'completed').length / picks.length) * 100).toFixed(2)) : 0,
+      openPickTasks: picks.filter((pick) => pick.status !== 'completed').length,
+      warehouseUtilization: this.binUtilization(scopedBins),
+      inboundVsOutbound: {
+        inbound: transfers.filter((transfer) => scope.tenantIds.includes(transfer.tenantId) && transfer.status === 'received').length,
+        outbound: transfers.filter((transfer) => transfer.status === 'in_transit').length,
+      },
+    };
+  }
+
+  async transfersView(tenant: TenantContext, query: HqQueryDto, user?: AuthenticatedUser) {
+    const scope = await this.resolveScope(tenant.tenantId);
+    await this.audit(tenant, user, 'hq.view_transfers', { tenantIds: scope.tenantIds, filters: query });
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 50;
+    const qb = this.stockTransfers
+      .createQueryBuilder('transfer')
+      .leftJoin(LocationEntity, 'fromLocation', 'fromLocation.id = transfer.from_location_id')
+      .leftJoin(LocationEntity, 'toLocation', 'toLocation.id = transfer.to_location_id')
+      .where('transfer.tenant_id IN (:...tenantIds)', { tenantIds: scope.tenantIds })
+      .orderBy('transfer.created_at', 'DESC');
+    if (query.status) qb.andWhere('transfer.status = :status', { status: query.status });
+    const total = await qb.clone().getCount();
+    const rows = await qb
+      .select([
+        'transfer.id AS id',
+        'transfer.tenant_id AS "tenantId"',
+        'transfer.from_location_id AS "fromLocationId"',
+        "COALESCE(fromLocation.name, 'Source') AS \"fromLocationName\"",
+        'transfer.to_location_id AS "toLocationId"',
+        "COALESCE(toLocation.name, 'Destination') AS \"toLocationName\"",
+        'transfer.status AS status',
+        'transfer.created_at AS "createdAt"',
+      ])
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany<Record<string, unknown>>();
+    return { rows, page, limit, total };
+  }
+
   async createFranchisee(tenant: TenantContext, dto: CreateFranchiseeDto, user?: AuthenticatedUser) {
     const scope = await this.resolveScope(tenant.tenantId);
     if (scope.currentTenant.tenantType === 'franchisee') {
@@ -428,6 +490,15 @@ export class HqService {
         status: Number(row.quantityOnHand ?? 0) <= 0 ? 'out_of_stock' : 'low',
       };
     });
+  }
+
+  private binUtilization(bins: WarehouseBinEntity[]) {
+    const capacity = bins.reduce((sum, bin) => sum + (bin.capacity ?? 0), 0);
+    const used = bins.reduce(
+      (sum, bin) => sum + (bin.contents ?? []).reduce((inner, item) => inner + Number(item.quantity), 0),
+      0,
+    );
+    return capacity > 0 ? Number(((used / capacity) * 100).toFixed(2)) : 0;
   }
 
   private async audit(tenant: TenantContext, user: AuthenticatedUser | undefined, action: string, metadata: Record<string, unknown>) {

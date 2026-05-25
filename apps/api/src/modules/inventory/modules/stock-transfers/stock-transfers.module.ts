@@ -1,15 +1,25 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { StockTransferEntity } from '../../entities';
-import { StockTransferLineEntity } from '../../entities';
+import { LocationEntity } from '../../../tenants/entities';
+import { NotificationsModule } from '../../../notifications/notifications.module';
+import { StockItemEntity, StockMovementEntity, StockTransferEntity, StockTransferLineEntity } from '../../entities';
 import { StockTransfersController } from '../../controllers';
 import { StockTransfersService } from '../../services';
 import { StockTransferRepository } from '../../repositories/stock-transfer.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([StockTransferEntity, StockTransferLineEntity])],
+  imports: [
+    NotificationsModule,
+    TypeOrmModule.forFeature([
+      StockTransferEntity,
+      StockTransferLineEntity,
+      StockItemEntity,
+      StockMovementEntity,
+      LocationEntity,
+    ]),
+  ],
   controllers: [StockTransfersController],
   providers: [StockTransfersService, StockTransferRepository],
-  exports: [],
+  exports: [StockTransfersService],
 })
 export class StockTransfersModule {}

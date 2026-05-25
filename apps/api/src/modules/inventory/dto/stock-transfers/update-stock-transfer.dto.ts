@@ -1,5 +1,6 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { StockTransferStatus } from '../../enums/stock-transfer-status.enum';
+import { ReceiveStockTransferLineDto } from './receive-stock-transfer.dto';
 
 export class UpdateStockTransferDto {
   @IsOptional()
@@ -9,4 +10,6 @@ export class UpdateStockTransferDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  lines?: ReceiveStockTransferLineDto[];
 }

@@ -2,12 +2,14 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsEnum,
   IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { CreateStockTransferLineDto } from './create-stock-transfer-line.dto';
+import { StockTransferStatus } from '../../enums/stock-transfer-status.enum';
 
 /** API Spec §4.3 POST /api/v1/stock-transfers */
 export class CreateStockTransferDto {
@@ -26,4 +28,8 @@ export class CreateStockTransferDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsEnum(StockTransferStatus)
+  status?: StockTransferStatus;
 }

@@ -11,6 +11,7 @@ export * from './stock-transfers/create-stock-transfer-line.dto';
 export * from './stock-transfers/create-stock-transfer.dto';
 export * from './stock-transfers/stock-transfer-line-response.dto';
 export * from './stock-transfers/stock-transfer-response.dto';
+export * from './stock-transfers/receive-stock-transfer.dto';
 export * from './stock-transfers/update-stock-transfer.dto';
 export * from './wastage/create-wastage-record.dto';
 export * from './wastage/wastage-record-response.dto';

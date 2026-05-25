@@ -19,6 +19,7 @@ import {
   Users,
   Truck,
   Warehouse,
+  Boxes,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -36,6 +37,8 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'bundles', label: 'Bundles & Combos', href: '/catalog/bundles', icon: Package },
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
+  { id: 'warehouse', label: 'Warehouse Management', href: '/warehouse', icon: Boxes },
+  { id: 'stock-transfers', label: 'Stock Transfers', href: '/warehouse/transfers', icon: Truck },
   { id: 'suppliers', label: 'Suppliers', href: '/suppliers', icon: Truck },
   { id: 'purchase-orders', label: 'Purchase Orders', href: '/purchase-orders', icon: ClipboardList },
   { id: 'staff', label: 'Staff', href: '/staff', icon: Users },
