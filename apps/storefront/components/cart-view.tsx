@@ -58,6 +58,11 @@ export function CartView() {
                     <p className="text-xs text-muted-foreground">SKU {line.sku}</p>
                   ) : null}
                   <p className="text-sm">${formatMoney(line.unitPrice)} each</p>
+                  {line.purchaseType === 'subscription' ? (
+                    <p className="text-xs font-medium text-primary">
+                      Recurring order: {line.subscriptionSchedule === 'biweekly' ? 'every 2 weeks' : line.subscriptionSchedule}
+                    </p>
+                  ) : null}
                 </div>
                 <Button type="button" variant="ghost" onClick={() => removeLine(line.lineId)}>
                   Remove

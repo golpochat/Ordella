@@ -121,6 +121,34 @@ export type CustomerOrderDetail = z.infer<typeof customerOrderDetailSchema>;
 export type CustomerProfile = z.infer<typeof customerProfileSchema>;
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
+export const customerSubscriptionSchema = z.object({
+  id: z.string().uuid(),
+  schedule: z.string(),
+  nextRunAt: z.string(),
+  status: z.string(),
+  totalPrice: z.string(),
+  items: z.array(
+    z.object({
+      id: z.string().uuid(),
+      itemId: z.string().uuid(),
+      quantity: z.number(),
+      variantId: z.string().nullable(),
+      modifiers: z.record(z.unknown()),
+    }),
+  ).default([]),
+  orders: z.array(
+    z.object({
+      id: z.string().uuid(),
+      orderId: z.string().uuid().nullable(),
+      runAt: z.string(),
+      status: z.string(),
+      failureReason: z.string().nullable().optional(),
+    }),
+  ).default([]),
+});
+
+export type CustomerSubscription = z.infer<typeof customerSubscriptionSchema>;
+
 export async function registerCustomer(body: {
   name: string;
   email: string;
@@ -186,6 +214,36 @@ export async function fetchCustomerProfile() {
   const api = createCustomerApiClient();
   const data = await api.getData<unknown>('public/customer/profile');
   return customerProfileSchema.parse(data);
+}
+
+export async function fetchCustomerSubscriptions() {
+  const api = createCustomerApiClient();
+  const data = await api.getData<unknown[]>('public/customer/subscriptions');
+  return z.array(customerSubscriptionSchema).parse(data);
+}
+
+export async function updateCustomerSubscription(
+  subscriptionId: string,
+  body: { schedule?: string; nextRunAt?: string; status?: string; items?: unknown[] },
+) {
+  const api = createCustomerApiClient();
+  const data = await api.patch<{ success: boolean; data: unknown }>(
+    `public/customer/subscriptions/${subscriptionId}`,
+    body,
+  );
+  return customerSubscriptionSchema.parse((data as { data: unknown }).data);
+}
+
+export async function pauseCustomerSubscription(subscriptionId: string) {
+  const api = createCustomerApiClient();
+  const data = await api.postData<unknown>(`public/customer/subscriptions/${subscriptionId}/pause`);
+  return customerSubscriptionSchema.parse(data);
+}
+
+export async function cancelCustomerSubscription(subscriptionId: string) {
+  const api = createCustomerApiClient();
+  const data = await api.postData<unknown>(`public/customer/subscriptions/${subscriptionId}/cancel`);
+  return customerSubscriptionSchema.parse(data);
 }
 
 export async function updateCustomerProfile(body: {

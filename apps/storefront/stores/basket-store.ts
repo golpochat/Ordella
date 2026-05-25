@@ -16,15 +16,19 @@ export type BasketLineMeta = {
   unitPrice: number;
   quantity: number;
   notes?: string;
+  purchaseType?: 'one_time' | 'subscription';
+  subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
 };
 
 function lineKey(line: {
   productId: string;
   variantId?: string;
   modifierOptionIds?: string[];
+  purchaseType?: 'one_time' | 'subscription';
+  subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
 }): string {
   const mods = [...(line.modifierOptionIds ?? [])].sort().join(',');
-  return `${line.productId}:${line.variantId ?? ''}:${mods}`;
+  return `${line.productId}:${line.variantId ?? ''}:${mods}:${line.purchaseType ?? 'one_time'}:${line.subscriptionSchedule ?? ''}`;
 }
 
 function resolveUnitPrice(
@@ -48,7 +52,13 @@ function resolveUnitPrice(
 function buildLineMeta(
   product: OnlineProduct,
   quantity: number,
-  options?: { variantId?: string; modifierOptionIds?: string[]; notes?: string },
+  options?: {
+    variantId?: string;
+    modifierOptionIds?: string[];
+    notes?: string;
+    purchaseType?: 'one_time' | 'subscription';
+    subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
+  },
 ): BasketLineMeta {
   const variant = product.variants.find((v) => v.id === options?.variantId);
   const modifierLabels: string[] = [];
@@ -71,6 +81,8 @@ function buildLineMeta(
     unitPrice: resolveUnitPrice(product, options?.variantId, options?.modifierOptionIds),
     quantity,
     notes: options?.notes,
+    purchaseType: options?.purchaseType,
+    subscriptionSchedule: options?.subscriptionSchedule,
   };
 }
 
@@ -81,7 +93,13 @@ type BasketState = {
   hydrate: () => void;
   addItem: (
     product: OnlineProduct,
-    options?: { variantId?: string; modifierOptionIds?: string[]; notes?: string },
+    options?: {
+      variantId?: string;
+      modifierOptionIds?: string[];
+      notes?: string;
+      purchaseType?: 'one_time' | 'subscription';
+      subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
+    },
   ) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
@@ -113,6 +131,8 @@ export const useBasketStore = create<BasketState>((set, get) => ({
       productId: product.id,
       variantId: options?.variantId,
       modifierOptionIds: options?.modifierOptionIds,
+      purchaseType: options?.purchaseType,
+      subscriptionSchedule: options?.subscriptionSchedule,
     });
     const existing = get().lines.find((l) => lineKey(l) === key);
     let next: BasketLineMeta[];

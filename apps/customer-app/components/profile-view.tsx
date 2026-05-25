@@ -239,6 +239,10 @@ export function ProfileView() {
         <Link href="/addresses">Manage addresses</Link>
       </Button>
 
+      <Button asChild variant="outline">
+        <Link href="/subscriptions">Manage subscriptions</Link>
+      </Button>
+
       <Button variant="destructive" onClick={signOut}>
         Sign out
       </Button>

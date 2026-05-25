@@ -16,6 +16,8 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
     product.variants[0]?.id,
   );
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [purchaseType, setPurchaseType] = useState<'one_time' | 'subscription'>('one_time');
+  const [subscriptionSchedule, setSubscriptionSchedule] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
 
   const displayPrice = useMemo(() => {
     const variant = product.variants.find((v) => v.id === selectedVariantId);
@@ -58,6 +60,8 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
     addItem(product, {
       variantId: selectedVariantId,
       modifierOptionIds: selectedOptions.length ? selectedOptions : undefined,
+      purchaseType,
+      subscriptionSchedule: purchaseType === 'subscription' ? subscriptionSchedule : undefined,
     });
     router.push('/cart');
   };
@@ -133,9 +137,42 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
             </div>
           ))}
 
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="font-medium">Subscribe & Save</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant={purchaseType === 'one_time' ? 'default' : 'outline'}
+                onClick={() => setPurchaseType('one_time')}
+              >
+                One-time purchase
+              </Button>
+              <Button
+                type="button"
+                variant={purchaseType === 'subscription' ? 'default' : 'outline'}
+                onClick={() => setPurchaseType('subscription')}
+              >
+                Subscribe
+              </Button>
+            </div>
+            {purchaseType === 'subscription' ? (
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Button type="button" variant={subscriptionSchedule === 'weekly' ? 'default' : 'outline'} onClick={() => setSubscriptionSchedule('weekly')}>
+                  Weekly
+                </Button>
+                <Button type="button" variant={subscriptionSchedule === 'biweekly' ? 'default' : 'outline'} onClick={() => setSubscriptionSchedule('biweekly')}>
+                  Every 2 weeks
+                </Button>
+                <Button type="button" variant={subscriptionSchedule === 'monthly' ? 'default' : 'outline'} onClick={() => setSubscriptionSchedule('monthly')}>
+                  Monthly
+                </Button>
+              </div>
+            ) : null}
+          </div>
+
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <Button type="button" className="h-12 w-full text-base" disabled={!canAdd} onClick={onAdd}>
-            Add to cart
+            {purchaseType === 'subscription' ? 'Add subscription to cart' : 'Add to cart'}
           </Button>
         </CardContent>
       </Card>

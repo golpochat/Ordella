@@ -16,6 +16,7 @@ import {
 } from '@/lib/api';
 import { createCheckoutSession } from '@/lib/payments-api';
 import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
+import { createSubscriptionCheckoutSession } from '@/lib/subscriptions-api';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function CheckoutForm() {
@@ -135,6 +136,8 @@ export function CheckoutForm() {
     );
   }, [giftCardDiscount, loyaltyCustomer, loyaltyDiscount, storeCreditAmount, totals.total]);
   const payableTotal = Math.max(0, totals.total - loyaltyDiscount - giftCardDiscount - storeCreditDiscount);
+  const subscriptionLines = lines.filter((line) => line.purchaseType === 'subscription');
+  const hasSubscriptionLines = subscriptionLines.length > 0;
 
   function selectAddress(address: StorefrontCustomerAddress) {
     setSelectedAddressId(address.id);
@@ -183,6 +186,41 @@ export function CheckoutForm() {
               instructions: instructions.trim() || undefined,
             }
           : undefined;
+
+      if (hasSubscriptionLines) {
+        if (!accountCustomerId) {
+          setError('Please sign in to create a subscription.');
+          return;
+        }
+        if (subscriptionLines.length !== lines.length) {
+          setError('Please check out subscription items separately from one-time items.');
+          return;
+        }
+        if (paymentMethod !== 'card') {
+          setError('Subscriptions require card checkout so future recurring orders can be processed.');
+          return;
+        }
+        const schedule = subscriptionLines[0]?.subscriptionSchedule ?? 'weekly';
+        if (subscriptionLines.some((line) => line.subscriptionSchedule !== schedule)) {
+          setError('Please use one subscription schedule per checkout.');
+          return;
+        }
+        const session = await createSubscriptionCheckoutSession({
+          schedule,
+          orderType: orderType === 'delivery' ? 'delivery' : 'pickup',
+          totalPrice: payableTotal,
+          deliveryDetails: delivery,
+          items: subscriptionLines.map((line) => ({
+            itemId: line.productId,
+            variantId: line.variantId,
+            quantity: line.quantity,
+            modifiers: { modifierOptionIds: line.modifierOptionIds ?? [] },
+          })),
+        });
+        clearBasket();
+        window.location.href = session.url;
+        return;
+      }
 
       if (paymentMethod === 'card' && payableTotal > 0) {
         const session = await createCheckoutSession({
@@ -388,6 +426,11 @@ export function CheckoutForm() {
             <CardTitle>Payment</CardTitle>
           </CardHeader>
           <CardContent>
+            {hasSubscriptionLines ? (
+              <p className="mb-3 rounded-md border p-3 text-sm text-muted-foreground">
+                Subscription checkout saves a card for future recurring orders.
+              </p>
+            ) : null}
             <Tabs
               value={paymentMethod}
               onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)}
@@ -418,6 +461,7 @@ export function CheckoutForm() {
                 <span>
                   {line.quantity}× {line.name}
                   {line.variantName ? ` (${line.variantName})` : ''}
+                  {line.purchaseType === 'subscription' ? ` · ${line.subscriptionSchedule}` : ''}
                 </span>
                 <span>${formatMoney(line.unitPrice * line.quantity)}</span>
               </li>
@@ -455,7 +499,9 @@ export function CheckoutForm() {
               ? paymentMethod === 'card'
                 ? 'Redirecting to payment…'
                 : 'Placing order…'
-              : paymentMethod === 'card'
+              : hasSubscriptionLines
+                ? 'Confirm subscription'
+                : paymentMethod === 'card'
                 ? 'Pay with card'
                 : 'Place order'}
           </Button>

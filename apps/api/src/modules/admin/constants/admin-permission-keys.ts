@@ -9,6 +9,8 @@ export const AdminPermissionKeys = {
   AUDIT_READ: 'audit.read',
   CRM_READ: 'crm.read',
   CRM_WRITE: 'crm.write',
+  SUBSCRIPTIONS_READ: 'subscriptions.read',
+  SUBSCRIPTIONS_WRITE: 'subscriptions.write',
   MARKETING_READ: 'marketing.read',
   MARKETING_WRITE: 'marketing.write',
 } as const;
