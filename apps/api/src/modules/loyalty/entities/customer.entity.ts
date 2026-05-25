@@ -30,11 +30,38 @@ export class CustomerEntity extends BaseTenantScopedEntity {
   @Column({ name: 'lifetime_value', type: 'decimal', precision: 12, scale: 2, default: 0 })
   lifetimeValue!: string;
 
+  @Column({ name: 'total_orders', type: 'int', default: 0 })
+  totalOrders!: number;
+
+  @Column({ name: 'avg_order_value', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  avgOrderValue!: string;
+
+  @Column({ name: 'first_order_at', type: 'timestamptz', nullable: true })
+  firstOrderAt!: Date | null;
+
   @Column({ name: 'last_order_at', type: 'timestamptz', nullable: true })
   lastOrderAt!: Date | null;
 
+  @Column({ name: 'preferred_location_id', type: 'uuid', nullable: true })
+  preferredLocationId!: string | null;
+
+  @Column({ type: 'text', array: true, default: () => "'{}'" })
+  tags!: string[];
+
+  @Column({ type: 'text', array: true, default: () => "'{}'" })
+  segments!: string[];
+
+  @Column({ name: 'staff_notes', type: 'text', nullable: true })
+  staffNotes!: string | null;
+
   @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
   lastLoginAt!: Date | null;
+
+  @Column({ name: 'marketing_email_opt_in', type: 'boolean', default: true })
+  marketingEmailOptIn!: boolean;
+
+  @Column({ name: 'marketing_sms_opt_in', type: 'boolean', default: false })
+  marketingSmsOptIn!: boolean;
 
   @OneToMany(() => LoyaltyTransactionEntity, (transaction) => transaction.customer)
   loyaltyTransactions!: LoyaltyTransactionEntity[];

@@ -22,6 +22,8 @@ export function ProfileView() {
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifySms, setNotifySms] = useState(false);
   const [notifyPush, setNotifyPush] = useState(true);
+  const [marketingEmail, setMarketingEmail] = useState(true);
+  const [marketingSms, setMarketingSms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -35,6 +37,8 @@ export function ProfileView() {
         setNotifyEmail(data.notificationPreferences.email);
         setNotifySms(data.notificationPreferences.sms);
         setNotifyPush(data.notificationPreferences.push);
+        setMarketingEmail(data.marketingEmailOptIn ?? data.notificationPreferences.marketingEmail ?? true);
+        setMarketingSms(data.marketingSmsOptIn ?? data.notificationPreferences.marketingSms ?? false);
       })
       .catch(() => {
         /* profile endpoint may be unimplemented */
@@ -54,7 +58,11 @@ export function ProfileView() {
           email: notifyEmail,
           sms: notifySms,
           push: notifyPush,
+            marketingEmail,
+            marketingSms,
         },
+          marketingEmailOptIn: marketingEmail,
+          marketingSmsOptIn: marketingSms,
       });
       setProfile(updated);
       setCustomerName(updated.name);
@@ -134,6 +142,24 @@ export function ProfileView() {
               Push notifications
             </label>
 
+            <p className="pt-2 text-sm font-medium">Marketing preferences</p>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={marketingEmail}
+                onChange={(e) => setMarketingEmail(e.target.checked)}
+              />
+              Promotional emails
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={marketingSms}
+                onChange={(e) => setMarketingSms(e.target.checked)}
+              />
+              Promotional SMS
+            </label>
+
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             {profile ? (
               <p className="text-xs text-muted-foreground">Profile ID: {profile.id}</p>
@@ -151,6 +177,11 @@ export function ProfileView() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <p className="font-medium">{profile?.loyaltyPoints ?? profile?.pointsBalance ?? 0} points</p>
+          <div className="grid gap-2 text-muted-foreground">
+            <p>Total orders: {profile?.totalOrders ?? 0}</p>
+            <p>Average order: ${profile?.avgOrderValue ?? '0.00'}</p>
+            <p>Order frequency: {profile?.orderFrequency ?? 'No orders yet'}</p>
+          </div>
           {profile?.loyaltyHistory?.length ? (
             <div className="space-y-1 text-muted-foreground">
               {profile.loyaltyHistory.slice(0, 5).map((row, index) => (

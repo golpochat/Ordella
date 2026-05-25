@@ -23,6 +23,8 @@ import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { GiftCardsModule } from './modules/giftcards/giftcards.module';
 import { CustomerAccountsModule } from './modules/customer-accounts';
 import { AuditModule } from './modules/audit';
+import { MarketingModule } from './modules/marketing';
+import { CrmModule } from './modules/crm';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { AuditModule } from './modules/audit';
     IntegrationsModule,
     ReportsModule,
     PromotionsModule,
+    MarketingModule,
+    CrmModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

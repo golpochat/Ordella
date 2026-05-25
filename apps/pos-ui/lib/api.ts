@@ -84,6 +84,12 @@ const loyaltyCustomerSchema = z.object({
   pointsBalance: z.number(),
   storeCreditBalance: z.string(),
   lifetimeValue: z.string(),
+  totalOrders: z.number().optional(),
+  avgOrderValue: z.string().optional(),
+  lastOrderAt: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  segments: z.array(z.string()).optional(),
+  staffNotes: z.string().nullable().optional(),
 });
 
 export type PosLoyaltyCustomer = z.infer<typeof loyaltyCustomerSchema>;
@@ -263,6 +269,11 @@ export async function completeSale(body: {
 export async function searchLoyaltyCustomers(q: string) {
   const data = await api.getData<unknown[]>(`loyalty/customers?q=${encodeURIComponent(q)}`);
   return z.array(loyaltyCustomerSchema).parse(data);
+}
+
+export async function updateCustomerCrm(body: { customerId: string; tags?: string[]; notes?: string }) {
+  const data = await api.postData<unknown>('crm/customers/tag', body);
+  return loyaltyCustomerSchema.parse(data);
 }
 
 export async function fetchLoyaltyCustomerOrders(customerId: string) {

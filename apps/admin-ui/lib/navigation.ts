@@ -5,6 +5,7 @@ import {
   CreditCard,
   FileClock,
   LayoutDashboard,
+  Megaphone,
   MessageSquare,
   MapPin,
   Package,
@@ -30,11 +31,13 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
   { id: 'staff', label: 'Staff', href: '/staff', icon: Users },
+  { id: 'crm', label: 'CRM', href: '/crm', icon: Users },
   { id: 'notifications', label: 'Notifications', href: '/notifications', icon: MessageSquare },
   { id: 'loyalty', label: 'Loyalty & Rewards', href: '/loyalty', icon: Gift },
   { id: 'giftcards', label: 'Gift Cards & Store Credit', href: '/giftcards', icon: CreditCard },
   { id: 'orders', label: 'Orders', href: '/orders', icon: ShoppingCart },
   { id: 'promotions', label: 'Promotions', href: '/promotions', icon: Percent },
+  { id: 'marketing', label: 'Marketing', href: '/marketing/campaigns', icon: Megaphone },
   { id: 'audit-logs', label: 'Audit Logs', href: '/audit-logs', icon: FileClock },
   { id: 'developer', label: 'Developer', href: '/developer', icon: Code2 },
   { id: 'reports', label: 'Reports', href: '/reports', icon: ClipboardList },
@@ -59,6 +62,17 @@ export const REPORTS_SUBNAV = [
   { label: 'Inventory', href: '/reports/inventory' },
   { label: 'Delivery', href: '/reports/delivery' },
   { label: 'Promotions', href: '/reports/promotions' },
+];
+
+export const MARKETING_SUBNAV = [
+  { label: 'Campaigns', href: '/marketing/campaigns' },
+  { label: 'Customer segments', href: '/marketing/segments' },
+];
+
+export const CRM_SUBNAV = [
+  { label: 'CRM dashboard', href: '/crm' },
+  { label: 'Customer segments', href: '/marketing/segments' },
+  { label: 'Marketing campaigns', href: '/marketing/campaigns' },
 ];
 
 export const SETTINGS_TABS = [

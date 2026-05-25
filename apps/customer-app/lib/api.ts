@@ -80,6 +80,13 @@ export const customerProfileSchema = z.object({
   pointsBalance: z.number().optional(),
   storeCreditBalance: z.string().optional(),
   lifetimeValue: z.string().optional(),
+  totalOrders: z.number().optional(),
+  avgOrderValue: z.string().optional(),
+  firstOrderAt: z.string().nullable().optional(),
+  lastOrderAt: z.string().nullable().optional(),
+  preferredLocationId: z.string().nullable().optional(),
+  orderFrequency: z.string().optional(),
+  segments: z.array(z.string()).optional(),
   loyaltyHistory: z.array(z.unknown()).optional(),
   storeCreditHistory: z.array(z.unknown()).optional(),
   giftCards: z.array(z.unknown()).optional(),
@@ -87,7 +94,11 @@ export const customerProfileSchema = z.object({
     email: z.boolean(),
     sms: z.boolean(),
     push: z.boolean(),
+    marketingEmail: z.boolean().optional(),
+    marketingSms: z.boolean().optional(),
   }),
+  marketingEmailOptIn: z.boolean().optional(),
+  marketingSmsOptIn: z.boolean().optional(),
 });
 
 export const orderStatusSchema = z.object({
@@ -182,6 +193,8 @@ export async function updateCustomerProfile(body: {
   email?: string;
   phone?: string;
   notificationPreferences?: Partial<CustomerProfile['notificationPreferences']>;
+  marketingEmailOptIn?: boolean;
+  marketingSmsOptIn?: boolean;
 }) {
   const api = createCustomerApiClient();
   const data = await api.patch<{ success: boolean; data: unknown }>('public/customer/profile', body);

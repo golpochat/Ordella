@@ -21,6 +21,7 @@ import {
   fetchLoyaltyCustomerOrders,
   lookupGiftCard,
   searchLoyaltyCustomers,
+  updateCustomerCrm,
   type PosCustomerOrder,
   type PosGiftCard,
   type PosLoyaltyCustomer,
@@ -45,6 +46,8 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   const [customerEmail, setCustomerEmail] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<PosLoyaltyCustomer | null>(null);
   const [customerOrders, setCustomerOrders] = useState<PosCustomerOrder[]>([]);
+  const [customerTags, setCustomerTags] = useState('');
+  const [customerNotes, setCustomerNotes] = useState('');
   const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
   const [storeCreditAmount, setStoreCreditAmount] = useState('');
   const [giftCardCode, setGiftCardCode] = useState('');
@@ -69,6 +72,8 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
           setCustomerName(match.name);
           setCustomerPhone(match.phone ?? customerPhone);
           setCustomerEmail(match.email ?? customerEmail);
+          setCustomerTags((match.tags ?? []).join(', '));
+          setCustomerNotes(match.staffNotes ?? '');
         }
       } catch {
         setSelectedCustomer(null);
@@ -80,6 +85,8 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   useEffect(() => {
     if (!selectedCustomer) {
       setCustomerOrders([]);
+      setCustomerTags('');
+      setCustomerNotes('');
       return;
     }
     void fetchLoyaltyCustomerOrders(selectedCustomer.id)
@@ -141,7 +148,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
 
     try {
       if (paymentMethod === 'card') {
-        const checkout = await checkoutCart(cartId);
+        const checkout = await checkoutCart(cartId, selectedCustomer?.id);
         onOpenChange(false);
         router.push(`/payment?orderId=${checkout.orderId}&method=card`);
         return;
@@ -155,6 +162,21 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       setError(e instanceof Error ? e.message : 'Checkout failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveCustomerCrm = async () => {
+    if (!selectedCustomer) return;
+    setError(null);
+    try {
+      const updated = await updateCustomerCrm({
+        customerId: selectedCustomer.id,
+        tags: customerTags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        notes: customerNotes,
+      });
+      setSelectedCustomer(updated);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save customer notes');
     }
   };
 
@@ -220,6 +242,31 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
               <p className="font-medium">{selectedCustomer.name}</p>
               <p className="text-muted-foreground">{selectedCustomer.pointsBalance} points available</p>
               <p className="text-muted-foreground">Store credit: {selectedCustomer.storeCreditBalance}</p>
+              <p className="text-muted-foreground">Lifetime value: {selectedCustomer.lifetimeValue}</p>
+              <p className="text-muted-foreground">
+                Last order: {selectedCustomer.lastOrderAt ? new Date(selectedCustomer.lastOrderAt).toLocaleDateString() : 'No orders'}
+              </p>
+              {selectedCustomer.tags?.length ? (
+                <p className="text-muted-foreground">Tags: {selectedCustomer.tags.join(', ')}</p>
+              ) : null}
+              {selectedCustomer.staffNotes ? (
+                <p className="text-muted-foreground">Notes: {selectedCustomer.staffNotes}</p>
+              ) : null}
+              <Input
+                className="mt-2"
+                placeholder="Customer tags, comma separated"
+                value={customerTags}
+                onChange={(e) => setCustomerTags(e.target.value)}
+              />
+              <Input
+                className="mt-2"
+                placeholder="Customer notes"
+                value={customerNotes}
+                onChange={(e) => setCustomerNotes(e.target.value)}
+              />
+              <Button type="button" variant="outline" className="mt-2" onClick={() => void saveCustomerCrm()}>
+                Save customer CRM
+              </Button>
               {customerOrders.length ? (
                 <div className="mt-3 space-y-1 border-t pt-3">
                   <p className="font-medium">Recent orders</p>

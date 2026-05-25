@@ -317,6 +317,10 @@ const publicLoyaltyCustomerSchema = z.object({
   pointsBalance: z.number(),
   storeCreditBalance: z.string(),
   lifetimeValue: z.string(),
+  totalOrders: z.number().optional(),
+  avgOrderValue: z.string().optional(),
+  lastOrderAt: z.string().nullable().optional(),
+  segments: z.array(z.string()).optional(),
 });
 
 export type PublicLoyaltyCustomer = z.infer<typeof publicLoyaltyCustomerSchema>;
@@ -394,6 +398,11 @@ const customerAccountSchema = z.object({
   pointsBalance: z.number().optional(),
   loyaltyPoints: z.number().optional(),
   storeCreditBalance: z.string().optional(),
+  lifetimeValue: z.string().optional(),
+  totalOrders: z.number().optional(),
+  avgOrderValue: z.string().optional(),
+  orderFrequency: z.string().optional(),
+  segments: z.array(z.string()).optional(),
   addresses: z.array(customerAddressSchema).optional(),
 });
 

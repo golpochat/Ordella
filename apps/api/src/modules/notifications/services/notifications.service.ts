@@ -399,6 +399,7 @@ const DEFAULT_TEMPLATES: Record<
       subject: 'Subscription payment failed',
       text: 'Your subscription payment failed. Please update your billing details.',
     },
+    marketing: { subject: '{{subject}}', text: '{{message}}', html: '<p>{{message}}</p>' },
     system: { subject: 'Business update', text: '{{message}}' },
   },
   [NotificationChannelType.SMS]: {
@@ -411,6 +412,7 @@ const DEFAULT_TEMPLATES: Record<
       text: 'Your delivery is on the way.',
     },
     system: { subject: 'Business update', text: '{{message}}' },
+    marketing: { subject: 'Promotion', text: '{{message}}' },
   },
   [NotificationChannelType.PUSH]: {
     new_order: { subject: 'New order received', text: 'New order received' },

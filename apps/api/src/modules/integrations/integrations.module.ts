@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RateLimitService } from '../../platform/security/rate-limit.service';
+import { AuditLogEntity } from '../audit/entities';
 import { AuthModule } from '../auth/auth.module';
 import { ProductEntity } from '../catalog/entities/product.entity';
 import { CategoryEntity } from '../catalog/entities/category.entity';
@@ -30,6 +32,7 @@ import { IntegrationPublicApiService, WebhooksService } from './services';
     AuthModule,
     TypeOrmModule.forFeature([
       ...INTEGRATIONS_ENTITIES,
+      AuditLogEntity,
       OrderEntity,
       ProductEntity,
       CategoryEntity,
@@ -47,6 +50,7 @@ import { IntegrationPublicApiService, WebhooksService } from './services';
   providers: [
     IntegrationPublicApiService,
     WebhooksService,
+    RateLimitService,
     {
       provide: APP_INTERCEPTOR,
       useClass: WebhookEventsInterceptor,

@@ -52,6 +52,15 @@ export default function AccountPage() {
               <Metric title="Points balance" value={customer.pointsBalance} />
               <Metric title="Store credit" value={customer.storeCreditBalance} />
               <Metric title="Lifetime value" value={customer.lifetimeValue} />
+              <Metric title="Total orders" value={customer.totalOrders ?? 0} />
+              <Metric title="Average order" value={customer.avgOrderValue ?? '0.00'} />
+              <Metric title="Last order" value={customer.lastOrderAt ? new Date(customer.lastOrderAt).toLocaleDateString() : 'No orders'} />
+            </div>
+          ) : null}
+          {customer?.segments?.length ? (
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Customer insights</p>
+              <p className="text-muted-foreground">{customer.segments.join(', ')}</p>
             </div>
           ) : null}
           {giftCards.length ? (

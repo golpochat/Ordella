@@ -145,6 +145,14 @@ export class CustomerAccountsService {
     }
     if (dto.name !== undefined) customer.name = dto.name.trim();
     if (dto.phone !== undefined) customer.phone = this.normalizePhone(dto.phone);
+    if (dto.marketingEmailOptIn !== undefined) customer.marketingEmailOptIn = dto.marketingEmailOptIn;
+    if (dto.marketingSmsOptIn !== undefined) customer.marketingSmsOptIn = dto.marketingSmsOptIn;
+    if (dto.notificationPreferences?.marketingEmail !== undefined) {
+      customer.marketingEmailOptIn = dto.notificationPreferences.marketingEmail;
+    }
+    if (dto.notificationPreferences?.marketingSms !== undefined) {
+      customer.marketingSmsOptIn = dto.notificationPreferences.marketingSms;
+    }
     return this.toProfile(await this.customers.save(customer));
   }
 
@@ -342,12 +350,32 @@ export class CustomerAccountsService {
       lastLoginAt: customer.lastLoginAt,
       lastOrderAt: customer.lastOrderAt,
       lifetimeValue: customer.lifetimeValue,
+      totalOrders: customer.totalOrders,
+      avgOrderValue: customer.avgOrderValue,
+      firstOrderAt: customer.firstOrderAt,
+      preferredLocationId: customer.preferredLocationId,
+      segments: customer.segments,
+      orderFrequency: this.orderFrequency(customer.firstOrderAt, customer.lastOrderAt, customer.totalOrders),
       notificationPreferences: {
         email: Boolean(customer.email),
         sms: Boolean(customer.phone),
         push: true,
+        marketingEmail: customer.marketingEmailOptIn,
+        marketingSms: customer.marketingSmsOptIn,
       },
+      marketingEmailOptIn: customer.marketingEmailOptIn,
+      marketingSmsOptIn: customer.marketingSmsOptIn,
     };
+  }
+
+  private orderFrequency(first: Date | null, last: Date | null, totalOrders: number): string {
+    if (totalOrders === 0) return 'no_orders';
+    if (totalOrders === 1 || !first || !last) return 'one_time';
+    const days = Math.max(1, (last.getTime() - first.getTime()) / 86_400_000);
+    const cadence = days / Math.max(1, totalOrders - 1);
+    if (cadence <= 7) return 'weekly';
+    if (cadence <= 31) return 'monthly';
+    return 'occasional';
   }
 
   private toAddress(address: CustomerAddressEntity) {
