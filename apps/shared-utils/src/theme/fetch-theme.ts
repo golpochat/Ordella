@@ -1,5 +1,5 @@
 import type { ApiClient } from '../api/client';
-import { getTheme, parseBrandingPayload } from './theme-registry';
+import { getTheme } from './theme-registry';
 import type { DomainResolveResult, TenantTheme } from './types';
 
 export async function fetchThemeByTenantId(
@@ -11,9 +11,9 @@ export async function fetchThemeByTenantId(
     logoUrl: string | null;
     iconUrl?: string | null;
     theme: Record<string, unknown>;
-  }>(`public/theme/${tenantId}`, { skipTenant: true });
+  }>(`themes/current`, { params: { tenantId }, skipTenant: true });
 
-  return parseBrandingPayload(data.tenantId, data);
+  return getTheme(data.tenantId, data);
 }
 
 export async function fetchThemeByDomain(

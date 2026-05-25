@@ -27,6 +27,7 @@ import { MarketingModule } from './modules/marketing';
 import { CrmModule } from './modules/crm';
 import { SubscriptionsModule } from './modules/subscriptions';
 import { BundlesModule } from './modules/bundles';
+import { ThemesModule } from './modules/themes';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { BundlesModule } from './modules/bundles';
     CrmModule,
     SubscriptionsModule,
     BundlesModule,
+    ThemesModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

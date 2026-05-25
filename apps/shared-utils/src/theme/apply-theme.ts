@@ -61,6 +61,7 @@ function contrastingForeground(hslComponents: string): string {
 export function applyThemeToElement(element: HTMLElement, theme: TenantTheme): void {
   const primary = toCssColor(theme.colors.primary);
   const secondary = toCssColor(theme.colors.secondary);
+  const accent = toCssColor(theme.colors.accent ?? theme.colors.secondary);
   const background = toCssColor(theme.colors.background);
   const surface = toCssColor(theme.colors.surface);
 
@@ -73,8 +74,8 @@ export function applyThemeToElement(element: HTMLElement, theme: TenantTheme): v
   element.style.setProperty('--card', surface);
   element.style.setProperty('--card-foreground', contrastingForeground(surface));
   element.style.setProperty('--muted', surface);
-  element.style.setProperty('--accent', secondary);
-  element.style.setProperty('--accent-foreground', contrastingForeground(secondary));
+  element.style.setProperty('--accent', accent);
+  element.style.setProperty('--accent-foreground', contrastingForeground(accent));
   element.style.setProperty('--border', secondary);
   element.style.setProperty('--input', secondary);
   element.style.setProperty('--ring', primary);
@@ -83,6 +84,10 @@ export function applyThemeToElement(element: HTMLElement, theme: TenantTheme): v
   element.style.setProperty('--font-size-sm', theme.typography.sm);
   element.style.setProperty('--font-size-md', theme.typography.md);
   element.style.setProperty('--font-size-lg', theme.typography.lg);
+  element.style.setProperty('--font-heading', theme.typography.headingFont ?? 'Inter, system-ui, sans-serif');
+  element.style.setProperty('--font-body', theme.typography.bodyFont ?? 'Inter, system-ui, sans-serif');
+  element.style.setProperty('--theme-card-radius', theme.layout?.cardStyle === 'square' ? '0.375rem' : '1rem');
+  element.style.setProperty('--theme-spacing', theme.layout?.spacingScale === 'compact' ? '0.75rem' : theme.layout?.spacingScale === 'spacious' ? '1.5rem' : '1rem');
 
   element.classList.toggle('dark', theme.preset === 'dark');
 }

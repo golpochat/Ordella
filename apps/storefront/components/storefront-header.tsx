@@ -20,25 +20,28 @@ export function StorefrontHeader() {
   const count = useBasketStore((s) => s.lineCount());
   const hydrate = useBasketStore((s) => s.hydrate);
   const theme = useTheme();
+  const brandName = theme.name ?? getBrandName();
+  const logoUrl = theme.assets?.logo ?? theme.logoUrl;
+  const centeredHeader = theme.layout?.headerLayout === 'centered';
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
   return (
     <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
+      <div className={`mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 ${centeredHeader ? 'md:justify-center' : ''}`}>
         <Link href="/" className="flex min-w-0 items-center gap-2.5">
-          {theme.logoUrl ? (
-            <img src={theme.logoUrl} alt="" className="h-9 w-9 rounded-md object-cover" />
+          {logoUrl ? (
+            <img src={logoUrl} alt="" className="h-9 w-9 rounded-md object-cover" />
           ) : (
             <Logo variant="mark" size="md" color="auto" />
           )}
           <span className="truncate text-lg font-bold tracking-tight sm:text-xl">
-            {getBrandName()}
+            {brandName}
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className={`hidden items-center gap-1 md:flex ${centeredHeader ? 'mx-4' : ''}`}>
           {nav.map((item) => (
             <Link
               key={item.href}

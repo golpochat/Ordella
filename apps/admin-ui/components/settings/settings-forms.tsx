@@ -16,6 +16,7 @@ import { BillingPanel } from './billing-panel';
 import { BrandingPanel } from './branding-panel';
 import { FulfillmentDisplayPanel } from './fulfillment-display-panel';
 import { DeliverySettingsPanel } from './delivery-settings-panel';
+import { StorefrontThemePanel } from './storefront-theme-panel';
 
 function SettingsSection({
   title,
@@ -84,6 +85,9 @@ export function SettingsForms() {
       </TabsContent>
       <TabsContent value="branding" className="mt-4">
         <BrandingPanel />
+      </TabsContent>
+      <TabsContent value="storefront-theme" className="mt-4">
+        <StorefrontThemePanel />
       </TabsContent>
       <TabsContent value="business" className="mt-4">
         <SettingsSection

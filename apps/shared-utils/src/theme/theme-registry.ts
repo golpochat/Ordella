@@ -1,18 +1,35 @@
 import { z } from 'zod';
 import { DARK_THEME_OVERRIDES, DEFAULT_THEME } from './default-theme';
-import type { TenantTheme, ThemePreset } from './types';
+import type { BaseTheme, HomepageSection, TenantTheme, ThemePreset } from './types';
 
 const themePresetSchema = z.enum(['light', 'dark', 'custom']);
+const baseThemeSchema = z.enum(['default', 'modern', 'minimal', 'bold']);
+const homepageSectionSchema = z.object({
+  type: z.enum(['hero', 'categories', 'featuredItems', 'banner', 'custom']),
+  enabled: z.boolean().optional(),
+  title: z.string().optional(),
+  subtitle: z.string().optional(),
+  ctaLabel: z.string().optional(),
+  href: z.string().optional(),
+  imageUrl: z.string().nullable().optional(),
+  limit: z.number().optional(),
+  html: z.string().optional(),
+});
 
 const tenantThemeSchema = z.object({
   tenantId: z.string().uuid().optional(),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  baseTheme: baseThemeSchema.optional(),
   preset: themePresetSchema.optional(),
   colors: z
     .object({
       primary: z.string().optional(),
       secondary: z.string().optional(),
+      accent: z.string().optional(),
       background: z.string().optional(),
       surface: z.string().optional(),
+      text: z.string().optional(),
     })
     .optional(),
   typography: z
@@ -20,6 +37,33 @@ const tenantThemeSchema = z.object({
       sm: z.string().optional(),
       md: z.string().optional(),
       lg: z.string().optional(),
+      headingFont: z.string().optional(),
+      bodyFont: z.string().optional(),
+      fontSizes: z.record(z.string()).optional(),
+    })
+    .optional(),
+  layout: z
+    .object({
+      cardStyle: z.enum(['rounded', 'square']).optional(),
+      spacingScale: z.enum(['compact', 'comfortable', 'spacious']).optional(),
+      buttonStyle: z.enum(['rounded', 'square', 'pill']).optional(),
+      headerLayout: z.enum(['centered', 'left-aligned']).optional(),
+    })
+    .optional(),
+  homepageSections: z.array(homepageSectionSchema).optional(),
+  assets: z
+    .object({
+      logo: z.string().nullable().optional(),
+      banner: z.string().nullable().optional(),
+      background: z.string().nullable().optional(),
+      favicon: z.string().nullable().optional(),
+    })
+    .optional(),
+  seo: z
+    .object({
+      metaTitle: z.string().optional(),
+      metaDescription: z.string().optional(),
+      openGraphImage: z.string().nullable().optional(),
     })
     .optional(),
   logoUrl: z.string().nullable().optional(),
@@ -32,9 +76,16 @@ export function mergeTheme(base: TenantTheme, override?: Partial<TenantTheme> | 
   const preset = (override.preset ?? base.preset) as ThemePreset;
   const merged: TenantTheme = {
     tenantId: override.tenantId ?? base.tenantId,
+    id: override.id ?? base.id,
+    name: override.name ?? base.name,
+    baseTheme: (override.baseTheme ?? base.baseTheme ?? 'default') as BaseTheme,
     preset,
     colors: { ...base.colors, ...(override.colors ?? {}) },
     typography: { ...base.typography, ...(override.typography ?? {}) },
+    layout: { ...(base.layout ?? {}), ...(override.layout ?? {}) },
+    homepageSections: override.homepageSections ?? base.homepageSections,
+    assets: { ...(base.assets ?? {}), ...(override.assets ?? {}) },
+    seo: { ...(base.seo ?? {}), ...(override.seo ?? {}) },
     logoUrl: override.logoUrl !== undefined ? override.logoUrl : base.logoUrl,
     iconUrl: override.iconUrl !== undefined ? override.iconUrl : base.iconUrl,
   };
@@ -57,13 +108,18 @@ export function getTheme(tenantId: string, raw?: unknown): TenantTheme {
     },
     {
       tenantId,
+      id: override.id,
+      name: override.name,
+      baseTheme: override.baseTheme,
       preset: override.preset,
       colors: override.colors
         ? {
             primary: override.colors.primary ?? DEFAULT_THEME.colors.primary,
             secondary: override.colors.secondary ?? DEFAULT_THEME.colors.secondary,
+            accent: override.colors.accent ?? DEFAULT_THEME.colors.accent,
             background: override.colors.background ?? DEFAULT_THEME.colors.background,
             surface: override.colors.surface ?? DEFAULT_THEME.colors.surface,
+            text: override.colors.text ?? DEFAULT_THEME.colors.text,
           }
         : undefined,
       typography: override.typography
@@ -71,10 +127,17 @@ export function getTheme(tenantId: string, raw?: unknown): TenantTheme {
             sm: override.typography.sm ?? DEFAULT_THEME.typography.sm,
             md: override.typography.md ?? DEFAULT_THEME.typography.md,
             lg: override.typography.lg ?? DEFAULT_THEME.typography.lg,
+            headingFont: override.typography.headingFont ?? DEFAULT_THEME.typography.headingFont,
+            bodyFont: override.typography.bodyFont ?? DEFAULT_THEME.typography.bodyFont,
+            fontSizes: override.typography.fontSizes ?? DEFAULT_THEME.typography.fontSizes,
           }
         : undefined,
-      logoUrl: override.logoUrl ?? null,
-      iconUrl: override.iconUrl ?? null,
+      layout: override.layout,
+      homepageSections: override.homepageSections as HomepageSection[] | undefined,
+      assets: override.assets,
+      seo: override.seo,
+      logoUrl: override.logoUrl ?? override.assets?.logo ?? null,
+      iconUrl: override.iconUrl ?? override.assets?.favicon ?? null,
     },
   );
 

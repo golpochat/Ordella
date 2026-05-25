@@ -86,6 +86,7 @@ export const CRM_SUBNAV = [
 export const SETTINGS_TABS = [
   { id: 'billing', label: 'Billing' },
   { id: 'branding', label: 'Branding' },
+  { id: 'storefront-theme', label: 'Storefront Theme' },
   { id: 'business', label: 'Business' },
   { id: 'hours', label: 'Opening hours' },
   { id: 'delivery', label: 'Delivery zones' },
