@@ -111,6 +111,11 @@ export class LocationsService {
           timezone: dto.timezone ?? DEFAULT_TIMEZONE,
           status: dto.status ?? LocationStatus.CLOSED,
           fulfillmentMode: dto.fulfillmentMode ?? 'storefront',
+          deliveryZones: dto.deliveryZones ?? [],
+          routingPriority: dto.routingPriority ?? 0,
+          fulfillmentCapacity: dto.fulfillmentCapacity ?? 20,
+          supportsDelivery: dto.supportsDelivery ?? true,
+          supportsPickup: dto.supportsPickup ?? true,
         }),
       );
 
@@ -157,6 +162,21 @@ export class LocationsService {
     }
     if (dto.fulfillmentMode !== undefined) {
       location.fulfillmentMode = dto.fulfillmentMode;
+    }
+    if (dto.deliveryZones !== undefined) {
+      location.deliveryZones = dto.deliveryZones;
+    }
+    if (dto.routingPriority !== undefined) {
+      location.routingPriority = dto.routingPriority;
+    }
+    if (dto.fulfillmentCapacity !== undefined) {
+      location.fulfillmentCapacity = dto.fulfillmentCapacity;
+    }
+    if (dto.supportsDelivery !== undefined) {
+      location.supportsDelivery = dto.supportsDelivery;
+    }
+    if (dto.supportsPickup !== undefined) {
+      location.supportsPickup = dto.supportsPickup;
     }
 
     await this.locationRepository.save(location);
@@ -344,6 +364,8 @@ export class LocationsService {
           phone: (settings.phone as string) ?? '',
           locationType: location.locationType,
           fulfillmentMode: location.fulfillmentMode,
+          supportsDelivery: location.supportsDelivery,
+          supportsPickup: location.supportsPickup,
         };
       }),
     );
@@ -387,6 +409,8 @@ export class LocationsService {
       phone: (merged.phone as string) ?? '',
       locationType: location.locationType,
       fulfillmentMode: location.fulfillmentMode,
+      supportsDelivery: location.supportsDelivery,
+      supportsPickup: location.supportsPickup,
     };
   }
 

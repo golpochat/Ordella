@@ -9,6 +9,11 @@ export type LocationListItem = {
   status: string;
   fulfillmentMode?: 'storefront' | 'pos' | 'dark_store' | 'micro_fulfillment';
   locationType?: 'store' | 'warehouse' | 'dark_store' | 'distribution_center';
+  deliveryZones?: unknown[];
+  routingPriority?: number;
+  fulfillmentCapacity?: number;
+  supportsDelivery?: boolean;
+  supportsPickup?: boolean;
   phone: string;
   currency: string;
   slug: string | null;
@@ -72,6 +77,12 @@ export async function updateLocation(
     timezone: string;
     currency: string;
     status: string;
+    fulfillmentMode: 'storefront' | 'pos' | 'dark_store' | 'micro_fulfillment';
+    deliveryZones: unknown[];
+    routingPriority: number;
+    fulfillmentCapacity: number;
+    supportsDelivery: boolean;
+    supportsPickup: boolean;
   }>,
 ): Promise<LocationDetail> {
   const api = createBrowserApiClient();

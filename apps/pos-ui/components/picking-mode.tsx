@@ -6,14 +6,18 @@ import {
   completePickingTask,
   createPickingTask,
   listPickingOrders,
+  listRoutingDecisions,
+  rescoreRouting,
   type PickingOrder,
   type PickingTask,
+  type PosRoutingDecision,
 } from '@/lib/api';
 import { getSession } from '@/lib/session';
 
 export function PickingMode() {
   const [orders, setOrders] = useState<PickingOrder[]>([]);
   const [tasks, setTasks] = useState<PickingTask[]>([]);
+  const [routingDecisions, setRoutingDecisions] = useState<PosRoutingDecision[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { locationId } = getSession();
@@ -21,8 +25,10 @@ export function PickingMode() {
   const load = useCallback(async () => {
     try {
       const nextOrders = await listPickingOrders(locationId || undefined);
+      const nextDecisions = await listRoutingDecisions(locationId || undefined).catch(() => []);
       setOrders(nextOrders);
       setTasks(nextOrders.map((order) => order.pickTask).filter(Boolean) as PickingTask[]);
+      setRoutingDecisions(nextDecisions);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load picking queue');
@@ -63,22 +69,39 @@ export function PickingMode() {
       </div>
 
       <div className="mt-5 space-y-3">
-        {orders.map((order) => (
+        {orders.map((order) => {
+          const routingDecision = routingDecisions.find((decision) => decision.orderId === order.id);
+          return (
           <div key={order.id} className="rounded-xl border bg-card p-4 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-lg font-semibold">Order {order.orderNumber ?? order.id.slice(0, 8)}</p>
                 <p className="text-sm text-muted-foreground">{order.itemCount} items · {order.status}</p>
+                <p className="text-sm text-muted-foreground">
+                  Fulfilled by: {routingDecision?.toLocation?.name ?? order.locationId.slice(0, 8)}
+                  {routingDecision?.estimatedDeliveryMinutes ? ` · ETA ${routingDecision.estimatedDeliveryMinutes} min` : ''}
+                </p>
+                {routingDecision?.reason ? <p className="text-xs text-muted-foreground">{routingDecision.reason}</p> : null}
               </div>
-              {!order.pickTask ? (
-                <Button disabled={loading} onClick={() => run(() => createPickingTask(order.id, locationId || undefined).then(() => undefined))}>
-                  Start pick
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={loading}
+                  onClick={() => run(() => rescoreRouting(order.id, order.locationId).then(() => undefined))}
+                >
+                  Re-score route
                 </Button>
-              ) : (
-                <Button disabled={loading || order.pickTask.status === 'completed'} onClick={() => run(() => completePickingTask(order.pickTask!.id).then(() => undefined))}>
-                  Mark picked
-                </Button>
-              )}
+                {!order.pickTask ? (
+                  <Button disabled={loading} onClick={() => run(() => createPickingTask(order.id, locationId || undefined).then(() => undefined))}>
+                    Start pick
+                  </Button>
+                ) : (
+                  <Button disabled={loading || order.pickTask.status === 'completed'} onClick={() => run(() => completePickingTask(order.pickTask!.id).then(() => undefined))}>
+                    Mark picked
+                  </Button>
+                )}
+              </div>
             </div>
             {order.pickTask?.lines.length ? (
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -91,7 +114,8 @@ export function PickingMode() {
               </div>
             ) : null}
           </div>
-        ))}
+          );
+        })}
         {orders.length === 0 ? <p className="text-sm text-muted-foreground">No dark-store orders are ready for picking.</p> : null}
       </div>
     </div>

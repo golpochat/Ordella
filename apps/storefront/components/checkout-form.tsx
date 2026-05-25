@@ -10,6 +10,8 @@ import {
   fetchCustomerAccount,
   fetchLoyaltyCustomer,
   fetchLoyaltySettings,
+  quoteRouting,
+  type RoutingQuote,
   type PublicGiftCard,
   type PublicLoyaltyCustomer,
   type StorefrontCustomerAddress,
@@ -55,6 +57,8 @@ export function CheckoutForm() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [routingQuote, setRoutingQuote] = useState<RoutingQuote | null>(null);
+  const [routingLoading, setRoutingLoading] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -116,6 +120,29 @@ export function CheckoutForm() {
     return () => window.clearTimeout(timeout);
   }, [giftCardCode]);
 
+  useEffect(() => {
+    if (orderType !== 'delivery' || !addressLine1.trim() || !city.trim() || lines.length === 0) {
+      setRoutingQuote(null);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      setRoutingLoading(true);
+      void quoteRouting({
+        orderType,
+        customerAddress: {
+          addressLine1: addressLine1.trim(),
+          city: city.trim(),
+          postalCode: postalCode.trim() || undefined,
+        },
+        items: lines.map((line) => ({ productId: line.productId, quantity: line.quantity })),
+      })
+        .then(setRoutingQuote)
+        .catch(() => setRoutingQuote(null))
+        .finally(() => setRoutingLoading(false));
+    }, 350);
+    return () => window.clearTimeout(timeout);
+  }, [addressLine1, city, lines, orderType, postalCode]);
+
   const subtotal = useMemo(() => basketSubtotal(lines), [lines]);
   const totals = useMemo(() => calculateStorefrontTotals(subtotal), [subtotal]);
   const loyaltyDiscount = useMemo(() => {
@@ -164,8 +191,31 @@ export function CheckoutForm() {
       setError('Delivery address and city are required');
       return;
     }
-
-    setLoading(true);
+    if (orderType === 'delivery') {
+      try {
+        const quote = await quoteRouting({
+          orderType,
+          customerAddress: {
+            addressLine1: addressLine1.trim(),
+            city: city.trim(),
+            postalCode: postalCode.trim() || undefined,
+          },
+          items: lines.map((line) => ({ productId: line.productId, quantity: line.quantity })),
+        });
+        setRoutingQuote(quote);
+        if (quote.canFulfill) {
+          setLoading(true);
+        } else {
+          setError('Delivery is not available for this address or basket.');
+          return;
+        }
+      } catch {
+        setError('Delivery is not available for this address or basket.');
+        return;
+      }
+    } else {
+      setLoading(true);
+    }
     try {
       const customer = {
         name: name.trim(),
@@ -470,7 +520,13 @@ export function CheckoutForm() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            Delivery orders may be fulfilled by the nearest dark store or micro-fulfillment location with stock.
+            {routingLoading
+              ? 'Checking delivery availability…'
+              : routingQuote?.canFulfill
+                ? `Fulfilled by: ${routingQuote.selectedLocationName ?? 'assigned location'} · ETA ${routingQuote.estimatedDeliveryMinutes ?? 'n/a'} min`
+                : orderType === 'delivery'
+                  ? 'Enter your delivery address to confirm availability and ETA.'
+                  : 'Delivery orders may be fulfilled by the nearest location with stock.'}
           </p>
           <ul className="space-y-2 text-sm">
             {lines.map((line) => (

@@ -45,6 +45,21 @@ export class LocationEntity extends BaseTenantScopedEntity {
   @Column({ name: 'fulfillment_mode', type: 'varchar', length: 32, default: 'storefront' })
   fulfillmentMode!: FulfillmentMode;
 
+  @Column({ name: 'delivery_zones', type: 'jsonb', default: () => "'[]'" })
+  deliveryZones!: unknown[];
+
+  @Column({ name: 'routing_priority', type: 'int', default: 0 })
+  routingPriority!: number;
+
+  @Column({ name: 'fulfillment_capacity', type: 'int', default: 20 })
+  fulfillmentCapacity!: number;
+
+  @Column({ name: 'supports_delivery', type: 'boolean', default: true })
+  supportsDelivery!: boolean;
+
+  @Column({ name: 'supports_pickup', type: 'boolean', default: true })
+  supportsPickup!: boolean;
+
   @OneToOne(() => LocationSettingsEntity, (settings) => settings.location)
   settings!: LocationSettingsEntity;
 

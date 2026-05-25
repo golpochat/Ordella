@@ -21,6 +21,7 @@ import { PromotionsModule } from '../promotions/promotions.module';
 import { DeliveriesModule } from '../deliveries/deliveries.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { GiftCardsModule } from '../giftcards/giftcards.module';
+import { RoutingModule } from '../routing';
 import { PublicController } from './controllers';
 import { PublicCatalogController } from './controllers/public-catalog.controller';
 import { OrdersOnlinePublicController } from './controllers/orders-online-public.controller';
@@ -76,6 +77,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
     DeliveriesModule,
     LoyaltyModule,
     GiftCardsModule,
+    RoutingModule,
   ],
   controllers: [
     PublicController,

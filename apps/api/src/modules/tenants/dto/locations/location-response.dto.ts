@@ -10,6 +10,11 @@ export class LocationResponseDto {
   timezone!: string;
   status!: LocationStatus;
   fulfillmentMode!: FulfillmentMode;
+  deliveryZones!: unknown[];
+  routingPriority!: number;
+  fulfillmentCapacity!: number;
+  supportsDelivery!: boolean;
+  supportsPickup!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
 }

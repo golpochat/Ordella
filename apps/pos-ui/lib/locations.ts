@@ -5,6 +5,10 @@ const locationSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   slug: z.string().nullable().optional(),
+  locationType: z.string().optional(),
+  fulfillmentMode: z.string().optional(),
+  supportsDelivery: z.boolean().optional(),
+  supportsPickup: z.boolean().optional(),
 });
 
 export async function fetchPosLocations() {

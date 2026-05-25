@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
 import { LocationStatus } from '../../enums/location-status.enum';
 
 const fulfillmentModes = ['storefront', 'pos', 'dark_store', 'micro_fulfillment'] as const;
@@ -40,4 +40,26 @@ export class CreateLocationDto {
   @IsOptional()
   @IsEnum(fulfillmentModes)
   fulfillmentMode?: 'storefront' | 'pos' | 'dark_store' | 'micro_fulfillment';
+
+  @IsOptional()
+  @IsArray()
+  deliveryZones?: unknown[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  routingPriority?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  fulfillmentCapacity?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  supportsDelivery?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  supportsPickup?: boolean;
 }

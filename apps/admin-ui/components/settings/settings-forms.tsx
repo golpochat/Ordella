@@ -18,6 +18,7 @@ import { DeliverySettingsPanel } from './delivery-settings-panel';
 import { StorefrontThemePanel } from './storefront-theme-panel';
 import { OfflineModePanel } from './offline-mode-panel';
 import { TaxCompliancePanel } from './tax-compliance-panel';
+import { OrderRoutingPanel } from './order-routing-panel';
 
 function SettingsSection({
   title,
@@ -128,6 +129,9 @@ export function SettingsForms() {
             onChange={(e) => setZonesJson(e.target.value)}
           />
         </SettingsSection>
+      </TabsContent>
+      <TabsContent value="order-routing" className="mt-4">
+        <OrderRoutingPanel />
       </TabsContent>
       <TabsContent value="payment" className="mt-4">
         <SettingsSection

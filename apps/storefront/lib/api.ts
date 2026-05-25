@@ -159,6 +159,10 @@ export const orderStatusSchema = z.object({
   total: z.string(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
+  fulfilledByLocationId: z.string().uuid().nullable().optional(),
+  fulfilledByLocationName: z.string().nullable().optional(),
+  routingReason: z.string().nullable().optional(),
+  estimatedDeliveryMinutes: z.number().nullable().optional(),
 });
 
 export type OnlineProduct = z.infer<typeof onlineProductSchema>;
@@ -167,6 +171,18 @@ export type OnlineBasket = z.infer<typeof onlineBasketSchema>;
 export type CheckoutResult = z.infer<typeof checkoutResultSchema>;
 export type PaymentResult = z.infer<typeof paymentResultSchema>;
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
+
+const routingQuoteSchema = z.object({
+  decisionId: z.string().uuid(),
+  selectedLocationId: z.string().uuid().nullable(),
+  selectedLocationName: z.string().nullable(),
+  reason: z.string(),
+  estimatedDeliveryMinutes: z.number().nullable(),
+  fallbackOptions: z.array(z.record(z.unknown())),
+  canFulfill: z.boolean(),
+});
+
+export type RoutingQuote = z.infer<typeof routingQuoteSchema>;
 
 const recommendationItemSchema = z.object({
   item: onlineProductSchema,
@@ -446,6 +462,22 @@ export async function submitPayment(body: {
 export async function fetchOrderStatus(orderId: string) {
   const data = await api.getData<unknown>(`public/order-status/${orderId}`);
   return orderStatusSchema.parse(data);
+}
+
+export async function quoteRouting(body: {
+  orderType: 'delivery' | 'pickup' | 'online' | 'in_store';
+  customerAddress?: {
+    addressLine1?: string;
+    city?: string;
+    postalCode?: string;
+  };
+  items: Array<{ productId: string; quantity: number }>;
+}) {
+  const data = await api.postData<unknown>('routing/decide', {
+    fromLocationId: getLocationId(),
+    ...body,
+  });
+  return routingQuoteSchema.parse(data);
 }
 
 export function isProductOrderable(product: OnlineProduct): boolean {

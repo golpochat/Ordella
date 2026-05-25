@@ -19,6 +19,11 @@ export function toLocationResponseDto(location: LocationEntity): LocationRespons
     timezone: location.timezone,
     status: location.status,
     fulfillmentMode: location.fulfillmentMode,
+    deliveryZones: location.deliveryZones ?? [],
+    routingPriority: location.routingPriority,
+    fulfillmentCapacity: location.fulfillmentCapacity,
+    supportsDelivery: location.supportsDelivery,
+    supportsPickup: location.supportsPickup,
     createdAt: location.createdAt,
     updatedAt: location.updatedAt,
   };

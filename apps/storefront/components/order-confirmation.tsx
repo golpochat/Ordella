@@ -49,7 +49,11 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
           <p>Payment: {status.paymentStatus}</p>
           <p>Order type: {labelOrderType(status.orderType)}</p>
           <p className="text-lg font-semibold">Total: ${status.total}</p>
-          <p className="text-muted-foreground">Fulfillment: picking and dispatch may be handled by a dark store or micro-fulfillment location.</p>
+          <p className="text-muted-foreground">
+            Fulfilled by: {status.fulfilledByLocationName ?? 'assigned location'}
+            {status.estimatedDeliveryMinutes ? ` · ETA ${status.estimatedDeliveryMinutes} min` : ''}
+          </p>
+          {status.routingReason ? <p className="text-muted-foreground">{status.routingReason}</p> : null}
           <p className="text-muted-foreground">{pickupOrDelivery}</p>
           <p className="text-muted-foreground">Hours: {getOpeningHours()}</p>
           <p className="text-muted-foreground">

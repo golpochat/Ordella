@@ -28,6 +28,7 @@ import { OnlineOrderType } from '../enums/online-order-type.enum';
 import { OnlineOrderStatusResponseDto } from '../dto/online-order-status-response.dto';
 import { OnlinePaymentResponseDto } from '../dto/online-payment-response.dto';
 import { LoyaltyService } from '../../loyalty/services';
+import { RoutingService } from '../../routing';
 
 @Injectable()
 export class OnlineOrderService {
@@ -41,6 +42,7 @@ export class OnlineOrderService {
     private readonly kdsOrderQuery: KdsOrderQueryService,
     private readonly kdsBroadcast: KdsBroadcastService,
     private readonly loyaltyService: LoyaltyService,
+    private readonly routingService: RoutingService,
   ) {}
 
   async createOnlineOrder(
@@ -50,8 +52,14 @@ export class OnlineOrderService {
     const customer = dto.customerId
       ? await this.loyaltyService.getCustomerProfile(tenant, dto.customerId)
       : await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
+    const routing = await this.routingService.decideForOrderInput(tenant, {
+      fromLocationId: dto.locationId,
+      orderType: dto.orderType,
+      customerAddress: dto.delivery,
+      items: dto.items.map((item) => ({ productId: item.itemId, quantity: item.quantity })),
+    });
     const createDto: CreateOrderDto = {
-      locationId: dto.locationId,
+      locationId: routing.selectedLocationId ?? dto.locationId,
       orderType: this.mapOrderType(dto.orderType),
       paymentMethod: dto.paymentMethod ?? OrderPaymentMethod.CASH,
       customerId: customer?.id,
@@ -83,6 +91,7 @@ export class OnlineOrderService {
     };
 
     const order = await this.ordersService.create(tenant, createDto);
+    await this.routingService.attachOrder(routing.decisionId, tenant.tenantId, order.id);
 
     const paymentContext = {
       tenantId: tenant.tenantId,
@@ -128,8 +137,14 @@ export class OnlineOrderService {
     }
 
     const checkout = basket.checkout;
+    const routing = await this.routingService.decideForOrderInput(tenant, {
+      fromLocationId: basket.locationId,
+      orderType: checkout.orderType as OnlineOrderType,
+      customerAddress: checkout.delivery,
+      items: basket.items.map((line) => ({ productId: line.productId, quantity: line.quantity })),
+    });
     const createDto: CreateOrderDto = {
-      locationId: basket.locationId,
+      locationId: routing.selectedLocationId ?? basket.locationId,
       orderType: this.mapOrderType(checkout.orderType as OnlineOrderType),
       customerId: dto.customerId,
       paymentMethod: dto.method,
@@ -158,6 +173,7 @@ export class OnlineOrderService {
     };
 
     const order = await this.ordersService.create(tenant, createDto);
+    await this.routingService.attachOrder(routing.decisionId, tenant.tenantId, order.id);
 
     const paymentContext = {
       ...checkout.paymentContext,
@@ -222,6 +238,7 @@ export class OnlineOrderService {
       throwOnlineOrderNotFound(orderId);
     }
 
+    const routingDecision = await this.routingService.findLatestForOrder(tenant.tenantId, orderId);
     const base = {
       orderId: order.id,
       orderNumber: order.orderNumber,
@@ -231,6 +248,10 @@ export class OnlineOrderService {
       total: order.total,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt?.toISOString() ?? null,
+      fulfilledByLocationId: routingDecision?.toLocationId ?? order.locationId,
+      fulfilledByLocationName: routingDecision?.toLocation?.name ?? null,
+      routingReason: routingDecision?.reason ?? null,
+      estimatedDeliveryMinutes: routingDecision?.estimatedDeliveryMinutes ?? null,
     };
 
     if (order.orderType !== OrderType.DELIVERY && order.orderType !== OrderType.PICKUP) {

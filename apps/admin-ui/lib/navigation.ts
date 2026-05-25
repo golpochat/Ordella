@@ -102,6 +102,7 @@ export const FRANCHISE_HQ_SUBNAV = [
   { label: 'Orders', href: '/franchise-hq/orders' },
   { label: 'Inventory', href: '/franchise-hq/inventory' },
   { label: 'Brand Catalog', href: '/franchise-hq/catalog' },
+  { label: 'Order Routing', href: '/franchise-hq/routing' },
   { label: 'Staff', href: '/franchise-hq/staff' },
 ];
 
@@ -112,6 +113,7 @@ export const SETTINGS_TABS = [
   { id: 'business', label: 'Business' },
   { id: 'hours', label: 'Opening hours' },
   { id: 'delivery', label: 'Delivery zones' },
+  { id: 'order-routing', label: 'Order Routing' },
   { id: 'payment', label: 'Payment' },
   { id: 'pos', label: 'POS' },
   { id: 'tax-compliance', label: 'Tax & Compliance' },

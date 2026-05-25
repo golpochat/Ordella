@@ -252,6 +252,19 @@ const pickingOrderSchema = z.object({
 export type PickingTask = z.infer<typeof pickingTaskSchema>;
 export type PickingOrder = z.infer<typeof pickingOrderSchema>;
 
+const routingDecisionSchema = z.object({
+  id: z.string().uuid(),
+  orderId: z.string().uuid().nullable(),
+  fromLocationId: z.string().uuid().nullable(),
+  toLocationId: z.string().uuid().nullable(),
+  reason: z.string(),
+  estimatedDeliveryMinutes: z.number().nullable(),
+  createdAt: z.string(),
+  toLocation: z.object({ id: z.string().uuid(), name: z.string() }).nullable().optional(),
+});
+
+export type PosRoutingDecision = z.infer<typeof routingDecisionSchema>;
+
 const posCatalogBundleSchema = z.object({
   categories: z.array(posCatalogCategorySchema),
   items: z.array(posCatalogItemSchema),
@@ -528,6 +541,22 @@ export async function listPickingOrders(locationId?: string) {
     params: { locationId: locationId || undefined },
   });
   return z.array(pickingOrderSchema).parse(data);
+}
+
+export async function listRoutingDecisions(locationId?: string) {
+  const data = await api.getData<unknown[]>('routing/decisions', {
+    params: { locationId: locationId || undefined },
+  });
+  return z.array(routingDecisionSchema).parse(data);
+}
+
+export async function rescoreRouting(orderId: string, fromLocationId?: string) {
+  const data = await api.postData<unknown>('routing/decide', {
+    orderId,
+    fromLocationId: fromLocationId || undefined,
+    orderType: 'delivery',
+  });
+  return data;
 }
 
 export async function createPickingTask(orderId: string, locationId?: string) {

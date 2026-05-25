@@ -15,4 +15,8 @@ export class OnlineOrderStatusResponseDto {
   driverStatus?: string | null;
   driverStatusLabel?: string | null;
   deliveryConfirmed?: boolean;
+  fulfilledByLocationId?: string | null;
+  fulfilledByLocationName?: string | null;
+  routingReason?: string | null;
+  estimatedDeliveryMinutes?: number | null;
 }
