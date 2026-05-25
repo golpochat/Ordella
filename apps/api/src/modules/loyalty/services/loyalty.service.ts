@@ -6,6 +6,7 @@ import { NotificationsService } from '../../notifications/services/notifications
 import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
 import { NotificationType } from '../../notifications/enums/notification-type.enum';
 import { OrderEntity } from '../../orders/entities/order.entity';
+import { OrderStatus } from '../../orders/enums/order-status.enum';
 import { parseMoney } from '../../orders/domain/order-totals.util';
 import {
   CustomerEntity,
@@ -44,6 +45,8 @@ export class LoyaltyService {
     private readonly transactions: Repository<LoyaltyTransactionEntity>,
     @InjectRepository(LoyaltySettingsEntity)
     private readonly settings: Repository<LoyaltySettingsEntity>,
+    @InjectRepository(OrderEntity)
+    private readonly orders: Repository<OrderEntity>,
     private readonly notifications: NotificationsService,
   ) {}
 
@@ -130,6 +133,16 @@ export class LoyaltyService {
       take: 100,
     });
     return Object.assign(customer, { transactions });
+  }
+
+  async getCustomerOrders(tenant: TenantContext, customerId: string): Promise<OrderEntity[]> {
+    const customer = await this.customers.findOne({ where: { id: customerId, tenantId: tenant.tenantId } });
+    if (!customer) throw new NotFoundException('Customer not found');
+    return this.orders.find({
+      where: { tenantId: tenant.tenantId, customerId },
+      order: { createdAt: 'DESC' },
+      take: 25,
+    });
   }
 
   async listTransactions(tenant: TenantContext, query: LoyaltyTransactionQueryDto): Promise<LoyaltyTransactionEntity[]> {
@@ -246,11 +259,20 @@ export class LoyaltyService {
   }
 
   async getAnalytics(tenant: TenantContext): Promise<Record<string, unknown>> {
-    const [issued, redeemed, customerCount, topCustomers] = await Promise.all([
+    const [issued, redeemed, customerCount, topCustomers, orderCustomerRows] = await Promise.all([
       this.transactions.sum('points', { tenantId: tenant.tenantId, type: LoyaltyTransactionType.EARN }),
       this.transactions.sum('points', { tenantId: tenant.tenantId, type: LoyaltyTransactionType.REDEEM }),
       this.customers.count({ where: { tenantId: tenant.tenantId } }),
       this.customers.find({ where: { tenantId: tenant.tenantId }, order: { pointsBalance: 'DESC', lifetimeValue: 'DESC' }, take: 5 }),
+      this.orders
+        .createQueryBuilder('order')
+        .select('order.customer_id', 'customerId')
+        .addSelect('COUNT(order.id)', 'orderCount')
+        .where('order.tenant_id = :tenantId', { tenantId: tenant.tenantId })
+        .andWhere('order.customer_id IS NOT NULL')
+        .andWhere('order.status != :cancelled', { cancelled: OrderStatus.CANCELLED })
+        .groupBy('order.customer_id')
+        .getRawMany<{ customerId: string; orderCount: string }>(),
     ]);
     const issuedPoints = issued ?? 0;
     const redeemedPoints = Math.abs(redeemed ?? 0);
@@ -261,14 +283,19 @@ export class LoyaltyService {
       .where('customer.tenant_id = :tenantId', { tenantId: tenant.tenantId })
       .getRawOne<{ value: string }>();
     const lifetimeValue = lifetimeValueResult?.value ?? '0.00';
+    const returningCustomers = orderCustomerRows.filter((row) => Number(row.orderCount) > 1).length;
+    const orderingCustomers = orderCustomerRows.length;
     return {
       totalPointsIssued: issuedPoints,
       totalPointsRedeemed: redeemedPoints,
       breakage: totalBalance ?? 0,
       customerCount,
-      repeatOrderRate: 0,
+      newCustomers: Math.max(customerCount - returningCustomers, 0),
+      returningCustomers,
+      repeatOrderRate: orderingCustomers ? Number(((returningCustomers / orderingCustomers) * 100).toFixed(2)) : 0,
       customerLifetimeValue: Number(lifetimeValue).toFixed(2),
       topLoyalCustomers: topCustomers,
+      topCustomers,
     };
   }
 

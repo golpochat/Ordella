@@ -1,11 +1,13 @@
-import { createApiClient } from '@shared-utils';
+import { createApiClient, createBrowserTokenStorage } from '@shared-utils';
 import { z } from 'zod';
 import { getApiBaseUrl, getLocationId, getTenantId } from './config';
 
+const tokenStorage = createBrowserTokenStorage();
+
 const api = createApiClient({
   baseUrl: getApiBaseUrl(),
-  getAccessToken: () => null,
-  getTenantId: () => getTenantId(),
+  getAccessToken: () => tokenStorage.getAccessToken(),
+  getTenantId: () => tokenStorage.getTenantId() ?? getTenantId(),
 });
 
 const modifierOptionSchema = z.object({
@@ -277,6 +279,7 @@ export type OnlineOrderResult = z.infer<typeof onlineOrderResponseSchema>;
 export async function createOnlineOrder(body: {
   orderType: 'delivery' | 'pickup' | 'online' | 'in_store';
   customer: { name: string; phone: string; email?: string };
+  customerId?: string;
   items: Array<{
     itemId: string;
     variantId?: string;
@@ -370,4 +373,34 @@ export async function fetchCustomerGiftCards(customerId: string) {
 export async function fetchStoreCreditHistory(customerId: string) {
   const data = await api.getData<unknown[]>(`public/storecredit/history?customerId=${encodeURIComponent(customerId)}`);
   return z.array(creditTransactionSchema).parse(data);
+}
+
+const customerAddressSchema = z.object({
+  id: z.string().uuid(),
+  label: z.string(),
+  addressLine1: z.string(),
+  addressLine2: z.string().optional(),
+  city: z.string(),
+  postalCode: z.string().optional(),
+  instructions: z.string().optional(),
+  isDefault: z.boolean(),
+});
+
+const customerAccountSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  pointsBalance: z.number().optional(),
+  loyaltyPoints: z.number().optional(),
+  storeCreditBalance: z.string().optional(),
+  addresses: z.array(customerAddressSchema).optional(),
+});
+
+export type StorefrontCustomerAccount = z.infer<typeof customerAccountSchema>;
+export type StorefrontCustomerAddress = z.infer<typeof customerAddressSchema>;
+
+export async function fetchCustomerAccount() {
+  const data = await api.getData<unknown>('public/customer/me');
+  return customerAccountSchema.parse(data);
 }

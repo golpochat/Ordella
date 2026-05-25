@@ -47,7 +47,9 @@ export class OnlineOrderService {
     tenant: TenantContext,
     dto: CreateOnlineOrderDto,
   ): Promise<OrderResponseDto> {
-    const customer = await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
+    const customer = dto.customerId
+      ? await this.loyaltyService.getCustomerProfile(tenant, dto.customerId)
+      : await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
     const createDto: CreateOrderDto = {
       locationId: dto.locationId,
       orderType: this.mapOrderType(dto.orderType),

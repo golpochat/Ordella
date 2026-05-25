@@ -7,10 +7,12 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, Tabs, TabsCont
 import {
   createOnlineOrder,
   fetchGiftCard,
+  fetchCustomerAccount,
   fetchLoyaltyCustomer,
   fetchLoyaltySettings,
   type PublicGiftCard,
   type PublicLoyaltyCustomer,
+  type StorefrontCustomerAddress,
 } from '@/lib/api';
 import { createCheckoutSession } from '@/lib/payments-api';
 import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
@@ -39,6 +41,9 @@ export function CheckoutForm() {
   const [giftCardCode, setGiftCardCode] = useState('');
   const [giftCardAmount, setGiftCardAmount] = useState('');
   const [giftCard, setGiftCard] = useState<PublicGiftCard | null>(null);
+  const [accountCustomerId, setAccountCustomerId] = useState<string | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<StorefrontCustomerAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loyaltySettings, setLoyaltySettings] = useState<{
     isEnabled: boolean;
     redeemRate: string;
@@ -54,6 +59,33 @@ export function CheckoutForm() {
 
   useEffect(() => {
     void fetchLoyaltySettings().then(setLoyaltySettings).catch(() => setLoyaltySettings(null));
+  }, []);
+
+  useEffect(() => {
+    void fetchCustomerAccount()
+      .then((account) => {
+        setAccountCustomerId(account.id);
+        setName(account.name);
+        setEmail(account.email);
+        setPhone(account.phone);
+        setSavedAddresses(account.addresses ?? []);
+        setLoyaltyCustomer({
+          id: account.id,
+          name: account.name,
+          email: account.email,
+          phone: account.phone,
+          pointsBalance: account.pointsBalance ?? account.loyaltyPoints ?? 0,
+          storeCreditBalance: account.storeCreditBalance ?? '0.00',
+          lifetimeValue: '0.00',
+        });
+        const defaultAddress = account.addresses?.find((address) => address.isDefault);
+        if (defaultAddress) {
+          selectAddress(defaultAddress);
+        }
+      })
+      .catch(() => {
+        /* guest checkout remains available */
+      });
   }, []);
 
   useEffect(() => {
@@ -104,6 +136,15 @@ export function CheckoutForm() {
   }, [giftCardDiscount, loyaltyCustomer, loyaltyDiscount, storeCreditAmount, totals.total]);
   const payableTotal = Math.max(0, totals.total - loyaltyDiscount - giftCardDiscount - storeCreditDiscount);
 
+  function selectAddress(address: StorefrontCustomerAddress) {
+    setSelectedAddressId(address.id);
+    setAddressLine1(address.addressLine1);
+    setAddressLine2(address.addressLine2 ?? '');
+    setCity(address.city);
+    setPostalCode(address.postalCode ?? '');
+    setInstructions(address.instructions ?? '');
+  }
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -146,6 +187,7 @@ export function CheckoutForm() {
       if (paymentMethod === 'card' && payableTotal > 0) {
         const session = await createCheckoutSession({
           orderType,
+          customerId: accountCustomerId ?? undefined,
           customer,
           items: items.map(({ itemId, variantId, modifiers, quantity }) => ({
             itemId,
@@ -172,6 +214,7 @@ export function CheckoutForm() {
       const order = await createOnlineOrder({
         orderType,
         paymentMethod: 'cash',
+        customerId: accountCustomerId ?? undefined,
         customer,
         items,
         notes: orderNotes.trim() || undefined,
@@ -291,6 +334,29 @@ export function CheckoutForm() {
                 <TabsTrigger value="in_store">In-store</TabsTrigger>
               </TabsList>
               <TabsContent value="delivery" className="mt-4 space-y-3">
+                {savedAddresses.length ? (
+                  <div className="space-y-1">
+                    <label htmlFor="saved-address" className="text-sm font-medium">
+                      Saved address
+                    </label>
+                    <select
+                      id="saved-address"
+                      className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      value={selectedAddressId}
+                      onChange={(event) => {
+                        const address = savedAddresses.find((item) => item.id === event.target.value);
+                        if (address) selectAddress(address);
+                      }}
+                    >
+                      <option value="">Enter a new address</option>
+                      {savedAddresses.map((address) => (
+                        <option key={address.id} value={address.id}>
+                          {address.label} · {address.addressLine1}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
                 <Input
                   placeholder="Address line 1 *"
                   value={addressLine1}

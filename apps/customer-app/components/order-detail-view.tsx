@@ -114,22 +114,45 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
           <CardContent className="space-y-2 text-sm">
             {order.items?.length ? (
               order.items.map((line) => (
-                <div key={line.id} className="flex justify-between">
-                  <span>
-                    {line.name} x{line.quantity}
-                  </span>
-                  <span>${line.price}</span>
+                <div key={line.id} className="space-y-1">
+                  <div className="flex justify-between">
+                    <span>
+                      {line.name} x{line.quantity}
+                    </span>
+                    <span>${line.price}</span>
+                  </div>
+                  {line.variantName ? (
+                    <p className="text-xs text-muted-foreground">Variant: {line.variantName}</p>
+                  ) : null}
+                  {line.notes ? <p className="text-xs text-muted-foreground">{line.notes}</p> : null}
                 </div>
               ))
             ) : (
               <p className="text-muted-foreground">Line items will appear when synced.</p>
             )}
+            {order.subtotal ? <p className="border-t pt-2">Subtotal: ${order.subtotal}</p> : null}
+            {order.tax ? <p>Tax: ${order.tax}</p> : null}
             <p className="border-t pt-2 font-medium">Total: ${order.total}</p>
             {order.delivery ? (
               <p className="text-muted-foreground">
                 Deliver to: {order.delivery.addressLine1}, {order.delivery.city}
               </p>
             ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {order?.statusTimeline?.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Order updates</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            {order.statusTimeline.map((step, index) => (
+              <p key={`${step.status}-${step.changedAt}-${index}`}>
+                {labelOrderStatus(step.status)} · {new Date(step.changedAt).toLocaleString()}
+              </p>
+            ))}
           </CardContent>
         </Card>
       ) : null}

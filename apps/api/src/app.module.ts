@@ -21,6 +21,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { GiftCardsModule } from './modules/giftcards/giftcards.module';
+import { CustomerAccountsModule } from './modules/customer-accounts';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { GiftCardsModule } from './modules/giftcards/giftcards.module';
     IntegrationsModule,
     ReportsModule,
     PromotionsModule,
+    CustomerAccountsModule,
     LoyaltyModule,
     GiftCardsModule,
     PosModule,

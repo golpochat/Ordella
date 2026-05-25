@@ -45,8 +45,11 @@ export const customerOrderDetailSchema = customerOrderSchema.extend({
       z.object({
         id: z.string().uuid(),
         name: z.string(),
+        variantName: z.string().nullable().optional(),
         quantity: z.number().int(),
         price: z.string(),
+        modifiers: z.array(z.unknown()).optional(),
+        notes: z.string().nullable().optional(),
       }),
     )
     .optional(),
@@ -57,6 +60,15 @@ export const customerOrderDetailSchema = customerOrderSchema.extend({
       instructions: z.string().optional(),
     })
     .optional(),
+  statusTimeline: z
+    .array(
+      z.object({
+        status: z.string(),
+        changedAt: z.string(),
+        reason: z.string().nullable().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export const customerProfileSchema = z.object({
@@ -64,6 +76,13 @@ export const customerProfileSchema = z.object({
   name: z.string(),
   email: z.string().email(),
   phone: z.string(),
+  loyaltyPoints: z.number().optional(),
+  pointsBalance: z.number().optional(),
+  storeCreditBalance: z.string().optional(),
+  lifetimeValue: z.string().optional(),
+  loyaltyHistory: z.array(z.unknown()).optional(),
+  storeCreditHistory: z.array(z.unknown()).optional(),
+  giftCards: z.array(z.unknown()).optional(),
   notificationPreferences: z.object({
     email: z.boolean(),
     sms: z.boolean(),
@@ -91,6 +110,17 @@ export type CustomerOrderDetail = z.infer<typeof customerOrderDetailSchema>;
 export type CustomerProfile = z.infer<typeof customerProfileSchema>;
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
+export async function registerCustomer(body: {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+}) {
+  const api = createCustomerApiClient();
+  const data = await api.postData<unknown>('public/customer/register', body);
+  return loginResponseSchema.parse(data);
+}
+
 export async function loginWithPassword(email: string, password: string) {
   const api = createCustomerApiClient();
   const data = await api.postData<unknown>('public/customer/login', { email, password });
@@ -106,6 +136,11 @@ export async function loginWithOtp(email: string, otp: string) {
   const api = createCustomerApiClient();
   const data = await api.postData<unknown>('public/customer/login', { email, otp });
   return loginResponseSchema.parse(data);
+}
+
+export async function requestPasswordReset(email: string) {
+  const api = createCustomerApiClient();
+  await api.post('public/customer/reset-password', { email });
 }
 
 export async function fetchCustomerOrders(filter?: 'active' | 'past') {

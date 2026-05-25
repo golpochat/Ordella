@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
-import { loginWithOtp, loginWithPassword, requestOtp } from '@/lib/api';
+import { loginWithPassword, registerCustomer, requestPasswordReset } from '@/lib/api';
 import { getTenantId } from '@/lib/config';
 import {
   setCustomerId,
@@ -13,11 +13,12 @@ import {
 
 export function LoginForm() {
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [otp, setOtp] = useState('');
   const [tenantId, setTenantId] = useState(getTenantId());
-  const [otpSent, setOtpSent] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -49,30 +50,36 @@ export function LoginForm() {
     }
   };
 
-  const onRequestOtp = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      tokenStorage.setTenantId(tenantId);
-      await requestOtp(email);
-      setOtpSent(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not send OTP');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onOtpLogin = async (event: React.FormEvent) => {
+  const onRegister = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
     setLoading(true);
     try {
       tokenStorage.setTenantId(tenantId);
-      const result = await loginWithOtp(email, otp);
+      const result = await registerCustomer({
+        name,
+        email,
+        phone: phone.trim() || undefined,
+        password,
+      });
       completeLogin(result);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'OTP login failed');
+      setError(e instanceof Error ? e.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onResetPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      tokenStorage.setTenantId(tenantId);
+      await requestPasswordReset(email);
+      setResetSent(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not request password reset');
     } finally {
       setLoading(false);
     }
@@ -101,8 +108,11 @@ export function LoginForm() {
             <TabsTrigger value="password" className="flex-1">
               Password
             </TabsTrigger>
-            <TabsTrigger value="otp" className="flex-1">
-              Email OTP
+            <TabsTrigger value="register" className="flex-1">
+              Register
+            </TabsTrigger>
+            <TabsTrigger value="reset" className="flex-1">
+              Reset
             </TabsTrigger>
           </TabsList>
 
@@ -139,43 +149,83 @@ export function LoginForm() {
             </form>
           </TabsContent>
 
-          <TabsContent value="otp" className="mt-4">
-            <form className="space-y-3" onSubmit={(e) => void onOtpLogin(e)}>
+          <TabsContent value="register" className="mt-4">
+            <form className="space-y-3" onSubmit={(e) => void onRegister(e)}>
               <div className="space-y-1">
-                <label htmlFor="otp-email" className="text-sm font-medium">
+                <label htmlFor="register-name" className="text-sm font-medium">
+                  Name
+                </label>
+                <Input
+                  id="register-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="register-email" className="text-sm font-medium">
                   Email
                 </label>
                 <Input
-                  id="otp-email"
+                  id="register-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
-              {!otpSent ? (
-                <Button type="button" className="w-full" disabled={loading} onClick={() => void onRequestOtp()}>
-                  Send OTP
-                </Button>
-              ) : (
-                <div className="space-y-1">
-                  <label htmlFor="otp-code" className="text-sm font-medium">
-                    One-time code
-                  </label>
-                  <Input
-                    id="otp-code"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
+              <div className="space-y-1">
+                <label htmlFor="register-phone" className="text-sm font-medium">
+                  Phone
+                </label>
+                <Input
+                  id="register-phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="register-password" className="text-sm font-medium">
+                  Password
+                </label>
+                <Input
+                  id="register-password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
               {error ? <p className="text-sm text-destructive">{error}</p> : null}
-              {otpSent ? (
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Verifying…' : 'Verify & sign in'}
-                </Button>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creating account…' : 'Create account'}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="reset" className="mt-4">
+            <form className="space-y-3" onSubmit={(e) => void onResetPassword(e)}>
+              <div className="space-y-1">
+                <label htmlFor="reset-email" className="text-sm font-medium">
+                  Email
+                </label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              {resetSent ? (
+                <p className="text-sm text-muted-foreground">
+                  If an account exists, a reset notification has been sent.
+                </p>
               ) : null}
+              {error ? <p className="text-sm text-destructive">{error}</p> : null}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Requesting…' : 'Request reset'}
+              </Button>
             </form>
           </TabsContent>
         </Tabs>

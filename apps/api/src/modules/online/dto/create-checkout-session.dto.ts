@@ -105,6 +105,10 @@ export class CreateCheckoutSessionDto {
   customer!: CheckoutSessionCustomerDto;
 
   @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => CheckoutSessionDeliveryDto)
   delivery?: CheckoutSessionDeliveryDto;

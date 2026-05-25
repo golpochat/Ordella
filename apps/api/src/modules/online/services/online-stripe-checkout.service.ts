@@ -92,7 +92,9 @@ export class OnlineStripeCheckoutService {
     }
 
     const computed = calculateOnlineTotals({ lines, orderType });
-    const customer = await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
+    const customer = dto.customerId
+      ? await this.loyaltyService.getCustomerProfile(tenant, dto.customerId)
+      : await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
     const redemption =
       customer && dto.loyaltyRedeemPoints
         ? await this.loyaltyService.quoteRedemption(tenant.tenantId, {

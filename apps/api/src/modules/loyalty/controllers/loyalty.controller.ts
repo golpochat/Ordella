@@ -62,6 +62,15 @@ export class LoyaltyController {
     return { success: true, data };
   }
 
+  @Get('customers/:id/orders')
+  async customerOrders(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.loyalty.getCustomerOrders(tenant, id);
+    return { success: true, data };
+  }
+
   @Post('adjust')
   async adjust(
     @CurrentTenant() tenant: TenantContext,

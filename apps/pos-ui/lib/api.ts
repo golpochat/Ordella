@@ -88,6 +88,17 @@ const loyaltyCustomerSchema = z.object({
 
 export type PosLoyaltyCustomer = z.infer<typeof loyaltyCustomerSchema>;
 
+const customerOrderSchema = z.object({
+  id: z.string().uuid(),
+  orderNumber: z.string().nullable(),
+  status: z.string(),
+  orderType: z.string(),
+  total: z.string(),
+  createdAt: z.string(),
+});
+
+export type PosCustomerOrder = z.infer<typeof customerOrderSchema>;
+
 export async function listProducts() {
   const data = await api.getData<unknown[]>('admin/products');
   return z.array(productSchema).parse(data);
@@ -252,6 +263,11 @@ export async function completeSale(body: {
 export async function searchLoyaltyCustomers(q: string) {
   const data = await api.getData<unknown[]>(`loyalty/customers?q=${encodeURIComponent(q)}`);
   return z.array(loyaltyCustomerSchema).parse(data);
+}
+
+export async function fetchLoyaltyCustomerOrders(customerId: string) {
+  const data = await api.getData<unknown[]>(`loyalty/customers/${customerId}/orders`);
+  return z.array(customerOrderSchema).parse(data);
 }
 
 const giftCardSchema = z.object({

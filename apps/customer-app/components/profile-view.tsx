@@ -7,6 +7,12 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared
 import { fetchCustomerProfile, updateCustomerProfile, type CustomerProfile } from '@/lib/api';
 import { clearCustomerSession, setCustomerName } from '@/lib/session';
 
+function getField(row: unknown, field: string): string | number | null {
+  if (!row || typeof row !== 'object') return null;
+  const value = (row as Record<string, unknown>)[field];
+  return typeof value === 'string' || typeof value === 'number' ? value : null;
+}
+
 export function ProfileView() {
   const router = useRouter();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
@@ -136,6 +142,65 @@ export function ProfileView() {
               {saving ? 'Saving…' : 'Save changes'}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Loyalty</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="font-medium">{profile?.loyaltyPoints ?? profile?.pointsBalance ?? 0} points</p>
+          {profile?.loyaltyHistory?.length ? (
+            <div className="space-y-1 text-muted-foreground">
+              {profile.loyaltyHistory.slice(0, 5).map((row, index) => (
+                <p key={String(getField(row, 'id') ?? index)}>
+                  {getField(row, 'type') ?? 'Activity'} · {getField(row, 'points') ?? 0} points
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No loyalty activity yet.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Store credit</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="font-medium">${profile?.storeCreditBalance ?? '0.00'} available</p>
+          {profile?.storeCreditHistory?.length ? (
+            <div className="space-y-1 text-muted-foreground">
+              {profile.storeCreditHistory.slice(0, 5).map((row, index) => (
+                <p key={String(getField(row, 'id') ?? index)}>
+                  {getField(row, 'type') ?? 'Activity'} · ${getField(row, 'amount') ?? '0.00'}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No store credit activity yet.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Gift cards</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          {profile?.giftCards?.length ? (
+            <div className="space-y-1 text-muted-foreground">
+              {profile.giftCards.map((row, index) => (
+                <p key={String(getField(row, 'id') ?? index)}>
+                  {getField(row, 'code') ?? 'Gift card'} · ${getField(row, 'balance') ?? '0.00'}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No linked gift cards yet.</p>
+          )}
         </CardContent>
       </Card>
 

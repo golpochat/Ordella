@@ -97,6 +97,10 @@ export class CreateOnlineOrderDto {
   customer!: CreateOnlineOrderCustomerDto;
 
   @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => CreateOnlineOrderDeliveryDto)
   delivery?: CreateOnlineOrderDeliveryDto;

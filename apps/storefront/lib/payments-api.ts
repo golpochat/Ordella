@@ -31,6 +31,7 @@ export async function fetchPaymentsConfig() {
 export async function createCheckoutSession(body: {
   orderType: 'delivery' | 'pickup' | 'in_store';
   customer: { name: string; phone: string; email?: string };
+  customerId?: string;
   items: Array<{
     itemId: string;
     variantId?: string;

@@ -18,8 +18,10 @@ import {
 import {
   checkoutCart,
   completeSale,
+  fetchLoyaltyCustomerOrders,
   lookupGiftCard,
   searchLoyaltyCustomers,
+  type PosCustomerOrder,
   type PosGiftCard,
   type PosLoyaltyCustomer,
 } from '@/lib/api';
@@ -42,6 +44,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<PosLoyaltyCustomer | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<PosCustomerOrder[]>([]);
   const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
   const [storeCreditAmount, setStoreCreditAmount] = useState('');
   const [giftCardCode, setGiftCardCode] = useState('');
@@ -73,6 +76,16 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
     }, 300);
     return () => window.clearTimeout(timeout);
   }, [customerEmail, customerPhone, open]);
+
+  useEffect(() => {
+    if (!selectedCustomer) {
+      setCustomerOrders([]);
+      return;
+    }
+    void fetchLoyaltyCustomerOrders(selectedCustomer.id)
+      .then((orders) => setCustomerOrders(orders.slice(0, 5)))
+      .catch(() => setCustomerOrders([]));
+  }, [selectedCustomer]);
 
   useEffect(() => {
     if (!open || giftCardCode.trim().length < 4) {
@@ -207,6 +220,18 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
               <p className="font-medium">{selectedCustomer.name}</p>
               <p className="text-muted-foreground">{selectedCustomer.pointsBalance} points available</p>
               <p className="text-muted-foreground">Store credit: {selectedCustomer.storeCreditBalance}</p>
+              {customerOrders.length ? (
+                <div className="mt-3 space-y-1 border-t pt-3">
+                  <p className="font-medium">Recent orders</p>
+                  {customerOrders.map((order) => (
+                    <p key={order.id} className="text-muted-foreground">
+                      {order.orderNumber ?? order.id.slice(0, 8)} · {order.status} · {order.total}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-muted-foreground">No previous orders found.</p>
+              )}
               <Input
                 className="mt-2"
                 placeholder="Points to redeem (optional)"
