@@ -22,6 +22,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { GiftCardsModule } from './modules/giftcards/giftcards.module';
 import { CustomerAccountsModule } from './modules/customer-accounts';
+import { AuditModule } from './modules/audit';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { CustomerAccountsModule } from './modules/customer-accounts';
     IntegrationsModule,
     ReportsModule,
     PromotionsModule,
+    AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,
     GiftCardsModule,

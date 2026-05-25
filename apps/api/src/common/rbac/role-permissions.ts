@@ -46,6 +46,7 @@ const CATALOG = [
   'billing.read',
   'billing.write',
   'analytics.read',
+  'audit.read',
   'notifications:read',
   'notifications:create',
   'notification-logs:read',

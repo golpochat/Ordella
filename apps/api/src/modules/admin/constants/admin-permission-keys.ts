@@ -6,4 +6,5 @@ export const AdminPermissionKeys = {
   PROMOTIONS: 'admin:promotions',
   REPORTS: 'admin:reports',
   SETTINGS: 'admin:settings',
+  AUDIT_READ: 'audit.read',
 } as const;
