@@ -77,6 +77,10 @@ export class CatalogItemCreateDto {
   categoryId?: string;
 
   @IsOptional()
+  @IsUUID()
+  taxCategoryId?: string;
+
+  @IsOptional()
   @IsString()
   @MaxLength(128)
   sku?: string;

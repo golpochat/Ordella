@@ -15,6 +15,10 @@ export class AdminUpdateProductDto {
   categoryId?: string | null;
 
   @IsOptional()
+  @IsUUID()
+  taxCategoryId?: string | null;
+
+  @IsOptional()
   @IsString()
   price?: string;
 

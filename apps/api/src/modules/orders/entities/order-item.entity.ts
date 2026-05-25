@@ -28,6 +28,9 @@ export class OrderItemEntity extends BaseTimestampsEntity {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   price!: string;
 
+  @Column({ name: 'tax_category_id', type: 'uuid', nullable: true })
+  taxCategoryId!: string | null;
+
   @Column({ type: 'text', nullable: true })
   notes!: string | null;
 }

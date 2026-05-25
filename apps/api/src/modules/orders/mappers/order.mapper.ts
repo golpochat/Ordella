@@ -6,6 +6,23 @@ import { OrderResponseDto } from '../dto/orders/order-response.dto';
 import { OrderItemResponseDto } from '../dto/order-items/order-item-response.dto';
 import { OrderStatusHistoryResponseDto } from '../dto/order-status-history/order-status-history-response.dto';
 import { OrderEventResponseDto } from '../dto/order-events/order-event-response.dto';
+import { OrderTaxLineEntity } from '../../tax/entities/order-tax-line.entity';
+
+export function toOrderTaxLineResponseDto(entity: OrderTaxLineEntity) {
+  return {
+    id: entity.id,
+    taxName: entity.taxName,
+    taxType: entity.taxType,
+    priceMode: entity.priceMode,
+    taxRate: entity.taxRate,
+    taxableAmount: entity.taxableAmount,
+    taxAmount: entity.taxAmount,
+    jurisdiction: entity.jurisdiction,
+    taxRuleId: entity.taxRuleId,
+    taxCategoryId: entity.taxCategoryId,
+    orderItemId: entity.orderItemId,
+  };
+}
 
 export function toOrderItemResponseDto(entity: OrderItemEntity): OrderItemResponseDto {
   return {
@@ -13,6 +30,7 @@ export function toOrderItemResponseDto(entity: OrderItemEntity): OrderItemRespon
     orderId: entity.orderId,
     productId: entity.productId,
     variantId: entity.variantId,
+    taxCategoryId: entity.taxCategoryId,
     quantity: entity.quantity,
     price: entity.price,
     notes: entity.notes,
@@ -42,6 +60,7 @@ export function toOrderResponseDto(
     appliedPromotions: entity.appliedPromotions ?? [],
     orderNumber: entity.orderNumber,
     deliveryDetails: entity.deliveryDetails,
+    taxLines: entity.taxLines?.map(toOrderTaxLineResponseDto) ?? [],
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
   };

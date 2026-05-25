@@ -92,6 +92,15 @@ export class PosOrderService {
       subtotal: order.subtotal,
       discountTotal: order.discountTotal,
       tax: order.tax,
+      taxLines: order.taxLines?.map((line) => ({
+        taxName: line.taxName,
+        taxType: line.taxType,
+        priceMode: line.priceMode,
+        taxRate: line.taxRate,
+        taxableAmount: line.taxableAmount,
+        taxAmount: line.taxAmount,
+        jurisdiction: line.jurisdiction,
+      })) ?? [],
       total: order.total,
       appliedPromotions: order.appliedPromotions,
     };
@@ -101,7 +110,14 @@ export class PosOrderService {
     tenant: TenantContext,
     dto: PosCompleteSaleDto,
     user?: AuthenticatedUser,
-  ): Promise<PosPaymentResponseDto & { orderNumber: string | null; subtotal: string; discountTotal: string; tax: string; total: string }> {
+  ): Promise<PosPaymentResponseDto & {
+    orderNumber: string | null;
+    subtotal: string;
+    discountTotal: string;
+    tax: string;
+    taxLines: PosCheckoutResponseDto['taxLines'];
+    total: string;
+  }> {
     const customer =
       dto.customer?.customerId
         ? null
@@ -146,6 +162,7 @@ export class PosOrderService {
       subtotal: checkout.subtotal,
       discountTotal: checkout.discountTotal,
       tax: checkout.tax,
+      taxLines: checkout.taxLines,
       total: checkout.total,
     };
   }
@@ -229,6 +246,15 @@ export class PosOrderService {
       subtotal: order.subtotal,
       discountTotal: order.discountTotal,
       tax: order.tax,
+      taxLines: order.taxLines?.map((line) => ({
+        taxName: line.taxName,
+        taxType: line.taxType,
+        priceMode: line.priceMode,
+        taxRate: line.taxRate,
+        taxableAmount: line.taxableAmount,
+        taxAmount: line.taxAmount,
+        jurisdiction: line.jurisdiction,
+      })) ?? [],
       total: order.total,
       appliedPromotions: order.appliedPromotions,
       items: (order.items ?? []).map((item) => ({

@@ -31,6 +31,7 @@ export class ProductAdminService {
       name: dto.name,
       description: dto.description ?? null,
       categoryId: dto.categoryId ?? null,
+      taxCategoryId: dto.taxCategoryId ?? null,
       price: dto.price,
       status: dto.status ?? ProductStatus.DRAFT,
       sortOrder: dto.sortOrder ?? 0,
@@ -48,6 +49,7 @@ export class ProductAdminService {
     if (dto.name !== undefined) product.name = dto.name;
     if (dto.description !== undefined) product.description = dto.description;
     if (dto.categoryId !== undefined) product.categoryId = dto.categoryId;
+    if (dto.taxCategoryId !== undefined) product.taxCategoryId = dto.taxCategoryId;
     if (dto.price !== undefined) product.price = dto.price;
     if (dto.status !== undefined) product.status = dto.status;
     if (dto.sortOrder !== undefined) product.sortOrder = dto.sortOrder;

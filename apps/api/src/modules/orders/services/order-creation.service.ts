@@ -29,6 +29,7 @@ import { LoyaltyService } from '../../loyalty/services';
 import { GiftCardsService } from '../../giftcards/services';
 import { formatMoney, parseMoney } from '../domain/order-totals.util';
 import { SearchIndexService } from '../../search';
+import { TaxCalculationService } from '../../tax';
 
 @Injectable()
 export class OrderCreationService {
@@ -42,6 +43,7 @@ export class OrderCreationService {
     private readonly loyaltyService: LoyaltyService,
     private readonly giftCardsService: GiftCardsService,
     private readonly searchIndex: SearchIndexService,
+    private readonly taxCalculationService: TaxCalculationService,
   ) {}
 
   async createOrder(
@@ -190,6 +192,7 @@ export class OrderCreationService {
       }
 
       await this.applyPromotionsAndUpdateOrder(
+        tenant,
         pricingContext,
         persistedOrder,
         items,
@@ -223,6 +226,7 @@ export class OrderCreationService {
   }
 
   private async applyPromotionsAndUpdateOrder(
+    tenant: TenantContext,
     pricingContext: ReturnType<OrderPricingService['buildPricingContext']>,
     order: OrderEntity,
     items: OrderItemEntity[],
@@ -238,6 +242,34 @@ export class OrderCreationService {
       items,
       order,
       couponCode,
+    );
+
+    const tax = await this.taxCalculationService.calculateOrderTax({
+      tenant,
+      locationId: order.locationId,
+      lines,
+      items,
+      discountTotal: finalTotals.discountTotal,
+      deliveryFee: finalTotals.deliveryFee,
+      serviceChargeTotal: finalTotals.serviceChargeTotal,
+    });
+    finalTotals.taxTotal = tax.taxTotal;
+    finalTotals.grandTotal = formatMoney(
+      Math.max(
+        0,
+        parseMoney(finalTotals.subtotal) -
+          parseMoney(finalTotals.discountTotal) +
+          parseMoney(tax.chargeableTaxTotal) +
+          parseMoney(finalTotals.serviceChargeTotal) +
+          parseMoney(finalTotals.deliveryFee),
+      ),
+    );
+    await this.taxCalculationService.replaceOrderTaxLines(
+      tenant.tenantId,
+      order.locationId,
+      order.id,
+      tax.lines,
+      manager,
     );
 
     const columns = mapDraftTotalsToOrderColumns(finalTotals);
@@ -268,6 +300,7 @@ export class OrderCreationService {
           bundleId: line.bundleId ?? null,
           quantity: line.quantity,
           price: line.unitPriceWithModifiers,
+          taxCategoryId: line.taxCategoryId ?? null,
           notes: line.notes,
         },
         manager,

@@ -117,6 +117,15 @@ export type OfflineOrderPayload = {
     subtotal: string;
     discountTotal: string;
     tax: string;
+    taxLines?: Array<{
+      taxName: string;
+      taxType: string;
+      priceMode: string;
+      taxRate: string;
+      taxableAmount: string;
+      taxAmount: string;
+      jurisdiction: string;
+    }>;
     total: string;
   };
   flags: string[];

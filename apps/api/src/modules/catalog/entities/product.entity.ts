@@ -52,6 +52,9 @@ export class ProductEntity extends BaseTenantScopedEntity {
   @Column({ name: 'stock_level', type: 'int', nullable: true })
   stockLevel!: number | null;
 
+  @Column({ name: 'tax_category_id', type: 'uuid', nullable: true })
+  taxCategoryId!: string | null;
+
   @OneToMany(() => VariantEntity, (variant) => variant.product)
   variants!: VariantEntity[];
 }

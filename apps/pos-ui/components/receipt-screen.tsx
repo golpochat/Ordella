@@ -100,7 +100,15 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
                 {Number(offlineOrder.payload.totals.discountTotal) > 0 ? (
                   <p>Discount: -{offlineOrder.payload.totals.discountTotal}</p>
                 ) : null}
-                <p>Tax: {offlineOrder.payload.totals.tax}</p>
+                {(offlineOrder.payload.totals.taxLines ?? []).length ? (
+                  offlineOrder.payload.totals.taxLines?.map((line) => (
+                    <p key={`${line.taxName}-${line.taxAmount}`}>
+                      {line.taxName} ({line.taxRate}%): {line.taxAmount}
+                    </p>
+                  ))
+                ) : (
+                  <p>Tax: {offlineOrder.payload.totals.tax}</p>
+                )}
                 <p className="text-lg font-semibold">Total: {offlineOrder.payload.totals.total}</p>
               </div>
             </div>
@@ -146,7 +154,15 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
                     ))}
                   </>
                 ) : null}
-                <p>Tax: {receipt.tax}</p>
+                {receipt.taxLines.length ? (
+                  receipt.taxLines.map((line) => (
+                    <p key={`${line.taxName}-${line.taxAmount}`}>
+                      {line.taxName} ({Number(line.taxRate).toFixed(2)}%, {line.priceMode}): {line.taxAmount}
+                    </p>
+                  ))
+                ) : (
+                  <p>Tax: {receipt.tax}</p>
+                )}
                 <p className="text-lg font-semibold">Total: {receipt.total}</p>
               </div>
             </div>

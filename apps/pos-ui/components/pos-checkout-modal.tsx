@@ -38,6 +38,7 @@ import {
   type OfflineOrderPayload,
 } from '@/lib/offline-db';
 import { syncPendingOfflineWork } from '@/lib/offline-sync';
+import { calculatePosTotals } from '@/lib/pos-pricing';
 import { getSession } from '@/lib/session';
 import { useCartStore } from '@/stores/cart-store';
 import { PosRecommendationsPanel } from '@/components/pos-recommendations-panel';
@@ -225,7 +226,8 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       subtotal,
       (discountPercent ? subtotal * (discountPercent / 100) : 0) + (discountFixed || 0),
     );
-    const total = Math.max(0, subtotal - discount);
+    const estimate = calculatePosTotals({ subtotal, discountPercent, discountFixed });
+    const total = estimate.total;
     const localCustomerId =
       !selectedCustomer && (customerName || customerPhone || customerEmail) ? `local-${crypto.randomUUID()}` : undefined;
 
@@ -273,7 +275,16 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       totals: {
         subtotal: subtotal.toFixed(2),
         discountTotal: discount.toFixed(2),
-        tax: '0.00',
+        tax: estimate.tax.toFixed(2),
+        taxLines: estimate.taxBreakdown.map((line) => ({
+          taxName: line.taxName,
+          taxType: 'sales_tax',
+          priceMode: line.priceMode,
+          taxRate: line.taxRate.toFixed(4),
+          taxableAmount: line.taxableAmount.toFixed(2),
+          taxAmount: line.taxAmount.toFixed(2),
+          jurisdiction: 'offline',
+        })),
         total: total.toFixed(2),
       },
       flags,

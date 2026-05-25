@@ -17,6 +17,16 @@ const posCartLineSchema = z.object({
   notes: z.string().optional(),
 });
 
+const taxLineSchema = z.object({
+  taxName: z.string(),
+  taxType: z.string(),
+  priceMode: z.string(),
+  taxRate: z.string(),
+  taxableAmount: z.string(),
+  taxAmount: z.string(),
+  jurisdiction: z.string(),
+});
+
 export const posCartSchema = z.object({
   cartId: z.string().uuid(),
   terminalId: z.string().uuid(),
@@ -36,6 +46,7 @@ const checkoutSchema = z.object({
   subtotal: z.string(),
   discountTotal: z.string().optional(),
   tax: z.string(),
+  taxLines: z.array(taxLineSchema).optional().default([]),
   total: z.string(),
   appliedPromotions: z.array(z.object({
     promotionId: z.string().uuid(),
@@ -65,6 +76,7 @@ const receiptSchema = z.object({
   subtotal: z.string(),
   discountTotal: z.string().optional(),
   tax: z.string(),
+  taxLines: z.array(taxLineSchema).optional().default([]),
   total: z.string(),
   appliedPromotions: z.array(z.object({
     promotionId: z.string().uuid(),
@@ -444,6 +456,7 @@ const completeSaleSchema = paymentSchema.extend({
   subtotal: z.string(),
   discountTotal: z.string().optional(),
   tax: z.string(),
+  taxLines: z.array(taxLineSchema).optional().default([]),
   total: z.string(),
 });
 

@@ -10,6 +10,16 @@ export class PosReceiptLineDto {
   notes!: string | null;
 }
 
+export class PosReceiptTaxLineDto {
+  taxName!: string;
+  taxType!: string;
+  priceMode!: string;
+  taxRate!: string;
+  taxableAmount!: string;
+  taxAmount!: string;
+  jurisdiction!: string;
+}
+
 export class PosReceiptResponseDto {
   orderId!: string;
   orderNumber!: string | null;
@@ -23,6 +33,7 @@ export class PosReceiptResponseDto {
   subtotal!: string;
   discountTotal!: string;
   tax!: string;
+  taxLines!: PosReceiptTaxLineDto[];
   total!: string;
   appliedPromotions!: Array<{ promotionId: string; code?: string | null; discountAmount: string }>;
   items!: PosReceiptLineDto[];

@@ -3,6 +3,7 @@ export class OrderItemResponseDto {
   orderId!: string;
   productId!: string;
   variantId!: string | null;
+  taxCategoryId!: string | null;
   quantity!: number;
   price!: string;
   notes!: string | null;

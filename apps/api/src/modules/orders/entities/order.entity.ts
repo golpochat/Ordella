@@ -8,6 +8,7 @@ import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { OrderItemEntity } from './order-item.entity';
 import { OrderStatusHistoryEntity } from './order-status-history.entity';
 import { OrderEventEntity } from './order-event.entity';
+import { OrderTaxLineEntity } from '../../tax/entities/order-tax-line.entity';
 
 /** ERD §1.4 — orders */
 @Entity('orders')
@@ -69,4 +70,7 @@ export class OrderEntity extends BaseTenantScopedEntity {
 
   @OneToMany(() => OrderEventEntity, (event) => event.order)
   events!: OrderEventEntity[];
+
+  @OneToMany(() => OrderTaxLineEntity, (taxLine) => taxLine.order)
+  taxLines!: OrderTaxLineEntity[];
 }

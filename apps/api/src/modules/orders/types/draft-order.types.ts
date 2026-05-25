@@ -9,6 +9,7 @@ export interface LineItemModifierSelection {
 export interface CalculatedLineItem {
   productId: string;
   categoryId?: string | null;
+  taxCategoryId?: string | null;
   variantId: string | null;
   bundleId?: string | null;
   quantity: number;

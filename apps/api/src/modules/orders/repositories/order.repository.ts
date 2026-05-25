@@ -45,7 +45,7 @@ export class OrderRepository {
   ): Promise<OrderEntity | null> {
     return this.repo(manager).findOne({
       where: { id, tenantId },
-      relations: ['items'],
+      relations: ['items', 'taxLines'],
     });
   }
 

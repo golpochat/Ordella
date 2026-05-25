@@ -13,6 +13,10 @@ export class AdminCreateProductDto {
   @IsUUID()
   categoryId?: string;
 
+  @IsOptional()
+  @IsUUID()
+  taxCategoryId?: string;
+
   @IsString()
   price!: string;
 

@@ -13,10 +13,18 @@ export function basketSubtotal(lines: BasketLineMeta[]): number {
 export function calculateStorefrontTotals(subtotal: number): {
   subtotal: number;
   tax: number;
+  taxBreakdown: Array<{ taxName: string; taxRate: number; taxableAmount: number; taxAmount: number; priceMode: 'exclusive' }>;
   total: number;
 } {
   const tax = subtotal * STOREFRONT_TAX_RATE;
-  return { subtotal, tax, total: subtotal + tax };
+  return {
+    subtotal,
+    tax,
+    taxBreakdown: subtotal > 0
+      ? [{ taxName: 'Standard tax', taxRate: STOREFRONT_TAX_RATE * 100, taxableAmount: subtotal, taxAmount: tax, priceMode: 'exclusive' }]
+      : [],
+    total: subtotal + tax,
+  };
 }
 
 export function formatMoney(amount: number): string {

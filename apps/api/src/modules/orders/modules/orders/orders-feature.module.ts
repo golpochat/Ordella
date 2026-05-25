@@ -44,6 +44,7 @@ import { LoyaltyModule } from '../../../loyalty/loyalty.module';
 import { GiftCardsModule } from '../../../giftcards/giftcards.module';
 import { PromotionsCoreModule } from '../../../promotions/modules/promotions-core/promotions-core.module';
 import { SearchModule } from '../../../search';
+import { TaxModule } from '../../../tax';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { SearchModule } from '../../../search';
     GiftCardsModule,
     PromotionsCoreModule,
     SearchModule,
+    TaxModule,
     forwardRef(() => KdsModule),
     TypeOrmModule.forFeature([
       OrderEntity,

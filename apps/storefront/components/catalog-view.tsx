@@ -273,7 +273,7 @@ function CatalogItemCard({
           ) : null}
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-semibold">${product.price}</span>
+          <span className="font-semibold">${product.price} <span className="text-xs font-normal text-muted-foreground">tax calculated at checkout</span></span>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
         </div>
         <div className="flex gap-2">

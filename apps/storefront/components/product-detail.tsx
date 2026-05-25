@@ -84,6 +84,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
           {product.description ? <p className="text-muted-foreground">{product.description}</p> : null}
           {product.sku ? <p className="text-sm text-muted-foreground">SKU {product.sku}</p> : null}
           <p className="text-xl font-semibold">${displayPrice}</p>
+          <p className="text-xs text-muted-foreground">Tax is calculated at checkout based on fulfillment location.</p>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
           {product.inventoryTrackingEnabled &&
           product.availableQuantity !== null &&

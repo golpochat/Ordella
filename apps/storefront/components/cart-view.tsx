@@ -127,10 +127,12 @@ export function CartView() {
           <span>Subtotal</span>
           <span>${formatMoney(totals.subtotal)}</span>
         </div>
-        <div className="flex justify-between">
-          <span>Tax (est.)</span>
-          <span>${formatMoney(totals.tax)}</span>
-        </div>
+        {totals.taxBreakdown.map((line) => (
+          <div key={line.taxName} className="flex justify-between">
+            <span>{line.taxName} ({line.taxRate.toFixed(2)}%, {line.priceMode} est.)</span>
+            <span>${formatMoney(line.taxAmount)}</span>
+          </div>
+        ))}
         <div className="flex justify-between text-lg font-bold">
           <span>Total (est.)</span>
           <span>${formatMoney(totals.total)}</span>

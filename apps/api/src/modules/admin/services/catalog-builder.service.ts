@@ -139,6 +139,7 @@ export class CatalogBuilderService {
         name: dto.name.trim(),
         description: dto.description?.trim() ?? null,
         categoryId: dto.categoryId ?? null,
+        taxCategoryId: dto.taxCategoryId ?? null,
         price: dto.price,
         sku: dto.sku?.trim() ?? null,
         barcode: dto.barcode?.trim() ?? null,
@@ -161,6 +162,7 @@ export class CatalogBuilderService {
     if (dto.name !== undefined) product.name = dto.name.trim();
     if (dto.description !== undefined) product.description = dto.description?.trim() ?? null;
     if (dto.categoryId !== undefined) product.categoryId = dto.categoryId ?? null;
+    if (dto.taxCategoryId !== undefined) product.taxCategoryId = dto.taxCategoryId ?? null;
     if (dto.price !== undefined) product.price = dto.price;
     if (dto.sku !== undefined) product.sku = dto.sku?.trim() ?? null;
     if (dto.barcode !== undefined) product.barcode = dto.barcode?.trim() ?? null;

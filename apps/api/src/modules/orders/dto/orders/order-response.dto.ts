@@ -5,6 +5,20 @@ import { OrderPaymentMethod } from '../../enums/order-payment-method.enum';
 import { OrderDeliveryDetails } from '../../types/order-delivery-details.types';
 import { OrderItemResponseDto } from '../order-items/order-item-response.dto';
 
+export class OrderTaxLineResponseDto {
+  id!: string;
+  taxName!: string;
+  taxType!: string;
+  priceMode!: string;
+  taxRate!: string;
+  taxableAmount!: string;
+  taxAmount!: string;
+  jurisdiction!: string;
+  taxRuleId!: string | null;
+  taxCategoryId!: string | null;
+  orderItemId!: string | null;
+}
+
 export class OrderResponseDto {
   id!: string;
   tenantId!: string;
@@ -20,6 +34,7 @@ export class OrderResponseDto {
   total!: string;
   promotionIds!: string[];
   appliedPromotions!: Array<{ promotionId: string; code?: string | null; discountAmount: string }>;
+  taxLines!: OrderTaxLineResponseDto[];
   orderNumber!: string | null;
   deliveryDetails!: OrderDeliveryDetails | null;
   items?: OrderItemResponseDto[];

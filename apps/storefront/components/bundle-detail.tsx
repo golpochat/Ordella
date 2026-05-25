@@ -28,6 +28,7 @@ export function BundleDetail({ bundle }: { bundle: OnlineProduct }) {
             <h1 className="text-3xl font-bold">{bundle.name}</h1>
             {bundle.description ? <p className="text-muted-foreground">{bundle.description}</p> : null}
             <p className="text-xl font-semibold">${bundle.price}</p>
+            <p className="text-xs text-muted-foreground">Tax is calculated at checkout based on fulfillment location.</p>
           </div>
 
           <div className="rounded-lg border p-4">

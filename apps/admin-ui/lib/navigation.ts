@@ -112,5 +112,6 @@ export const SETTINGS_TABS = [
   { id: 'delivery', label: 'Delivery zones' },
   { id: 'payment', label: 'Payment' },
   { id: 'pos', label: 'POS' },
+  { id: 'tax-compliance', label: 'Tax & Compliance' },
   { id: 'fulfillment', label: 'Fulfillment display' },
 ] as const;

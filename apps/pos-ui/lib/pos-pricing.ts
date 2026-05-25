@@ -1,4 +1,4 @@
-/** Flat tax rate for POS MVP (10%) */
+/** Fallback tax rate used before server-configured tax rules are synced to the client. */
 export const POS_TAX_RATE = 0.1;
 
 export function parseMoney(value: string | number): number {
@@ -21,6 +21,7 @@ export function calculatePosTotals(input: PosTotalsInput): {
   discount: number;
   taxable: number;
   tax: number;
+  taxBreakdown: Array<{ taxName: string; taxRate: number; taxableAmount: number; taxAmount: number; priceMode: 'exclusive' }>;
   total: number;
 } {
   const subtotal = Math.max(0, input.subtotal);
@@ -33,5 +34,14 @@ export function calculatePosTotals(input: PosTotalsInput): {
   const taxable = Math.max(0, subtotal - discount);
   const tax = taxable * POS_TAX_RATE;
   const total = taxable + tax;
-  return { subtotal, discount, taxable, tax, total };
+  return {
+    subtotal,
+    discount,
+    taxable,
+    tax,
+    taxBreakdown: taxable > 0
+      ? [{ taxName: 'Standard tax', taxRate: POS_TAX_RATE * 100, taxableAmount: taxable, taxAmount: tax, priceMode: 'exclusive' }]
+      : [],
+    total,
+  };
 }

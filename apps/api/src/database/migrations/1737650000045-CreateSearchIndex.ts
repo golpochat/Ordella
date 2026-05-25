@@ -18,12 +18,26 @@ export class CreateSearchIndex1737650000045 implements MigrationInterface {
         source_updated_at TIMESTAMPTZ NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NULL,
-        search_vector TSVECTOR GENERATED ALWAYS AS (
-          setweight(to_tsvector('simple', coalesce(title, '')), 'A') ||
-          setweight(to_tsvector('simple', coalesce(body, '')), 'B') ||
-          setweight(to_tsvector('simple', array_to_string(keywords, ' ')), 'C')
-        ) STORED
+        search_vector TSVECTOR NOT NULL DEFAULT ''
       );
+
+      CREATE OR REPLACE FUNCTION search_index_update_vector()
+      RETURNS trigger AS $$
+      BEGIN
+        NEW.search_vector :=
+          setweight(to_tsvector('simple', coalesce(NEW.title, '')), 'A') ||
+          setweight(to_tsvector('simple', coalesce(NEW.body, '')), 'B') ||
+          setweight(to_tsvector('simple', coalesce(array_to_string(NEW.keywords, ' '), '')), 'C');
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      DROP TRIGGER IF EXISTS trg_search_index_update_vector ON search_index;
+      CREATE TRIGGER trg_search_index_update_vector
+        BEFORE INSERT OR UPDATE OF title, body, keywords
+        ON search_index
+        FOR EACH ROW
+        EXECUTE FUNCTION search_index_update_vector();
 
       CREATE UNIQUE INDEX IF NOT EXISTS idx_search_index_tenant_entity
         ON search_index(tenant_id, entity_type, entity_id);
@@ -48,6 +62,8 @@ export class CreateSearchIndex1737650000045 implements MigrationInterface {
       DROP INDEX IF EXISTS idx_search_index_tenant_updated;
       DROP INDEX IF EXISTS idx_search_index_tenant_type;
       DROP INDEX IF EXISTS idx_search_index_tenant_entity;
+      DROP TRIGGER IF EXISTS trg_search_index_update_vector ON search_index;
+      DROP FUNCTION IF EXISTS search_index_update_vector();
       DROP TABLE IF EXISTS search_index;
     `);
   }

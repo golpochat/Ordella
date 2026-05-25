@@ -83,6 +83,7 @@ export class OrderPricingService {
     return {
       productId,
       categoryId: product.categoryId,
+      taxCategoryId: product.taxCategoryId,
       variantId: variantId ?? null,
       bundleId: input.bundleId ?? null,
       quantity,
