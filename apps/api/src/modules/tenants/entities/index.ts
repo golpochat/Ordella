@@ -4,6 +4,7 @@ import { LocationEntity } from './location.entity';
 import { StoreEntity } from './store.entity';
 import { TenantEntity } from './tenant.entity';
 import { UserLocationAssignmentEntity } from './user-location-assignment.entity';
+import { FranchiseGroupEntity } from './franchise-group.entity';
 
 export { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 export { UserLocationAssignmentEntity } from './user-location-assignment.entity';
@@ -13,6 +14,8 @@ export { LocationSettingsEntity } from './location-settings.entity';
 export { LocationEntity } from './location.entity';
 export { StoreEntity } from './store.entity';
 export { TenantEntity } from './tenant.entity';
+export { FranchiseGroupEntity } from './franchise-group.entity';
+export type { TenantType } from './tenant.entity';
 
 export const TENANTS_ENTITIES = [
   LocationOpeningHoursEntity,
@@ -21,4 +24,5 @@ export const TENANTS_ENTITIES = [
   StoreEntity,
   TenantEntity,
   UserLocationAssignmentEntity,
+  FranchiseGroupEntity,
 ];

@@ -29,6 +29,7 @@ import { SubscriptionsModule } from './modules/subscriptions';
 import { BundlesModule } from './modules/bundles';
 import { ThemesModule } from './modules/themes';
 import { RecommendationsModule } from './modules/recommendations';
+import { HqModule } from './modules/hq';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { RecommendationsModule } from './modules/recommendations';
     BundlesModule,
     ThemesModule,
     RecommendationsModule,
+    HqModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

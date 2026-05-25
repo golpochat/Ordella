@@ -6,6 +6,7 @@ export const AdminPermissionKeys = {
   PROMOTIONS: 'admin:promotions',
   REPORTS: 'admin:reports',
   SETTINGS: 'admin:settings',
+  FRANCHISE_HQ: 'admin:franchise-hq',
   AUDIT_READ: 'audit.read',
   CRM_READ: 'crm.read',
   CRM_WRITE: 'crm.write',

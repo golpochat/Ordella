@@ -5,6 +5,7 @@ export const SystemRoleNames = {
   STAFF: 'staff',
   DRIVER: 'driver',
   FULFILLMENT: 'fulfillment',
+  FRANCHISE_HQ: 'FranchiseHQ',
   CUSTOMER: 'customer',
 } as const;
 
@@ -15,6 +16,7 @@ export const DEFAULT_TENANT_ROLE_NAMES = [
   SystemRoleNames.STAFF,
   SystemRoleNames.DRIVER,
   SystemRoleNames.FULFILLMENT,
+  SystemRoleNames.FRANCHISE_HQ,
 ] as const;
 
 export const OnboardingPermissionKeys = {
@@ -119,6 +121,12 @@ const CATALOG = [
   'admin:promotions',
   'admin:reports',
   'admin:settings',
+  'admin:franchise-hq',
+  'hq.analytics.read',
+  'hq.orders.read',
+  'hq.inventory.read',
+  'hq.staff.read',
+  'hq.franchisees.create',
   'locations:read',
   'locations:create',
   'locations:update',
@@ -163,6 +171,11 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'admin:inventory',
     'admin:orders',
     'admin:reports',
+    'admin:franchise-hq',
+    'hq.analytics.read',
+    'hq.orders.read',
+    'hq.inventory.read',
+    'hq.staff.read',
     'permissions:read',
     'notifications:read',
     'notifications:create',
@@ -224,6 +237,21 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'kds:read',
     'kds:update',
     'orders:read',
+  ],
+  [SystemRoleNames.FRANCHISE_HQ]: [
+    'admin:access',
+    'admin:reports',
+    'admin:franchise-hq',
+    'hq.analytics.read',
+    'hq.orders.read',
+    'hq.inventory.read',
+    'hq.staff.read',
+    'hq.franchisees.create',
+    'analytics.read',
+    'orders:read',
+    'inventory:read',
+    'staff.read',
+    'locations:read',
   ],
   [SystemRoleNames.CUSTOMER]: [],
 };

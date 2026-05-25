@@ -15,6 +15,7 @@ import {
   Settings,
   ShoppingCart,
   Sparkles,
+  Building2,
   Users,
   Warehouse,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ export type NavItem = {
 
 export const DASHBOARD_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Analytics', href: '/dashboard', icon: LayoutDashboard },
+  { id: 'franchise-hq', label: 'Franchise HQ', href: '/franchise-hq/dashboard', icon: Building2 },
   { id: 'locations', label: 'Locations', href: '/locations', icon: MapPin },
   { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },
   { id: 'bundles', label: 'Bundles & Combos', href: '/catalog/bundles', icon: Package },
@@ -83,6 +85,14 @@ export const CRM_SUBNAV = [
   { label: 'CRM dashboard', href: '/crm' },
   { label: 'Customer segments', href: '/marketing/segments' },
   { label: 'Marketing campaigns', href: '/marketing/campaigns' },
+];
+
+export const FRANCHISE_HQ_SUBNAV = [
+  { label: 'Overview', href: '/franchise-hq/dashboard' },
+  { label: 'Locations', href: '/franchise-hq/locations' },
+  { label: 'Orders', href: '/franchise-hq/orders' },
+  { label: 'Inventory', href: '/franchise-hq/inventory' },
+  { label: 'Staff', href: '/franchise-hq/staff' },
 ];
 
 export const SETTINGS_TABS = [
