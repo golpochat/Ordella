@@ -39,6 +39,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
   { id: 'multi-store-inventory', label: 'Multi-Store Inventory', href: '/inventory/multi-store', icon: Warehouse },
+  { id: 'replenishment', label: 'Replenishment', href: '/replenishment', icon: Repeat },
   { id: 'warehouse', label: 'Warehouse Management', href: '/warehouse', icon: Boxes },
   { id: 'picking-mode', label: 'Picking Mode', href: '/warehouse/picking', icon: Boxes },
   { id: 'stock-transfers', label: 'Stock Transfers', href: '/warehouse/transfers', icon: Truck },
@@ -77,6 +78,7 @@ export const INVENTORY_SUBNAV = [
   { label: 'Multi-store inventory', href: '/inventory/multi-store' },
   { label: 'Low stock', href: '/inventory/low-stock' },
   { label: 'Movements', href: '/inventory/movements' },
+  { label: 'Replenishment', href: '/replenishment' },
 ];
 
 export const REPORTS_SUBNAV = [
@@ -106,6 +108,7 @@ export const FRANCHISE_HQ_SUBNAV = [
   { label: 'Inventory', href: '/franchise-hq/inventory' },
   { label: 'Reports', href: '/franchise-hq/reports' },
   { label: 'Forecasting', href: '/franchise-hq/forecasting' },
+  { label: 'Replenishment', href: '/franchise-hq/replenishment' },
   { label: 'Brand Catalog', href: '/franchise-hq/catalog' },
   { label: 'Order Routing', href: '/franchise-hq/routing' },
   { label: 'Staff', href: '/franchise-hq/staff' },
