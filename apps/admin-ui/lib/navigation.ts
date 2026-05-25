@@ -20,6 +20,7 @@ import {
   Truck,
   Warehouse,
   Boxes,
+  TrendingUp,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -56,6 +57,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'audit-logs', label: 'Audit Logs', href: '/audit-logs', icon: FileClock },
   { id: 'developer', label: 'Developer', href: '/developer', icon: Code2 },
   { id: 'reports', label: 'Reports', href: '/reports', icon: ClipboardList },
+  { id: 'forecasting', label: 'Forecasting', href: '/forecasting', icon: TrendingUp },
   { id: 'settings', label: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -103,6 +105,7 @@ export const FRANCHISE_HQ_SUBNAV = [
   { label: 'Orders', href: '/franchise-hq/orders' },
   { label: 'Inventory', href: '/franchise-hq/inventory' },
   { label: 'Reports', href: '/franchise-hq/reports' },
+  { label: 'Forecasting', href: '/franchise-hq/forecasting' },
   { label: 'Brand Catalog', href: '/franchise-hq/catalog' },
   { label: 'Order Routing', href: '/franchise-hq/routing' },
   { label: 'Staff', href: '/franchise-hq/staff' },

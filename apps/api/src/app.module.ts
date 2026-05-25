@@ -35,6 +35,7 @@ import { WarehouseModule } from './modules/warehouse';
 import { SearchModule } from './modules/search';
 import { TaxModule } from './modules/tax';
 import { RoutingModule } from './modules/routing';
+import { ForecastModule } from './modules/forecast';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { RoutingModule } from './modules/routing';
     SearchModule,
     TaxModule,
     RoutingModule,
+    ForecastModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,
