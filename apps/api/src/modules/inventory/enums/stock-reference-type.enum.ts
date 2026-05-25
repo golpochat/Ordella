@@ -5,4 +5,5 @@ export enum StockReferenceType {
   ADJUSTMENT = 'adjustment',
   WASTAGE = 'wastage',
   MANUAL = 'manual',
+  PURCHASE_ORDER = 'purchase_order',
 }

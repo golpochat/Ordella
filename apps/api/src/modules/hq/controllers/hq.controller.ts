@@ -98,6 +98,25 @@ export class HqController {
     return { success: true, data };
   }
 
+  @Get('procurement/suppliers')
+  async supplierPerformance(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentUser() user?: AuthenticatedUser,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.hqService.supplierPerformance(tenant, user);
+    return { success: true, data };
+  }
+
+  @Get('procurement/purchase-orders')
+  async purchaseOrders(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: HqQueryDto,
+    @CurrentUser() user?: AuthenticatedUser,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.hqService.purchaseOrdersView(tenant, query, user);
+    return { success: true, data };
+  }
+
   @Post('franchisee/create')
   async createFranchisee(
     @CurrentTenant() tenant: TenantContext,

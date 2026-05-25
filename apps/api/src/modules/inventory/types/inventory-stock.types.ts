@@ -23,5 +23,18 @@ export interface RecordMovementInput {
   delta: number;
   source: import('../enums/stock-movement-source.enum').StockMovementSource;
   orderId?: string | null;
+  referenceType?: import('../enums/stock-reference-type.enum').StockReferenceType | null;
+  referenceId?: string | null;
   notes?: string | null;
+}
+
+export interface ReceiveStockInput {
+  tenantId: string;
+  locationId: string;
+  productId: string;
+  quantity: number;
+  referenceId?: string | null;
+  notes?: string | null;
+  sku?: string | null;
+  name?: string | null;
 }

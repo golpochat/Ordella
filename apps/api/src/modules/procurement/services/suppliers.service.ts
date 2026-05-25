@@ -1,0 +1,84 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UpsertSupplierDto } from '../dto';
+import { SupplierEntity, SupplierItemEntity } from '../entities';
+
+@Injectable()
+export class SuppliersService {
+  constructor(
+    @InjectRepository(SupplierEntity)
+    private readonly suppliers: Repository<SupplierEntity>,
+    @InjectRepository(SupplierItemEntity)
+    private readonly supplierItems: Repository<SupplierItemEntity>,
+  ) {}
+
+  list(tenantId: string) {
+    return this.suppliers.find({
+      where: { tenantId },
+      relations: { items: { item: true } },
+      order: { name: 'ASC' },
+    });
+  }
+
+  async get(tenantId: string, id: string) {
+    const supplier = await this.suppliers.findOne({
+      where: { tenantId, id },
+      relations: { items: { item: true } },
+    });
+    if (!supplier) throw new NotFoundException('Supplier not found');
+    return supplier;
+  }
+
+  async create(tenantId: string, dto: UpsertSupplierDto) {
+    const supplier = await this.suppliers.save(this.suppliers.create({
+      tenantId,
+      name: dto.name,
+      contactName: dto.contactName ?? null,
+      email: dto.email ?? null,
+      phone: dto.phone ?? null,
+      address: dto.address ?? null,
+      notes: dto.notes ?? null,
+      isActive: dto.isActive ?? true,
+    }));
+    await this.replaceItems(supplier.id, dto.items ?? []);
+    return this.get(tenantId, supplier.id);
+  }
+
+  async update(tenantId: string, dto: UpsertSupplierDto) {
+    if (!dto.id) throw new NotFoundException('Supplier not found');
+    const supplier = await this.get(tenantId, dto.id);
+    supplier.name = dto.name ?? supplier.name;
+    supplier.contactName = dto.contactName ?? null;
+    supplier.email = dto.email ?? null;
+    supplier.phone = dto.phone ?? null;
+    supplier.address = dto.address ?? null;
+    supplier.notes = dto.notes ?? null;
+    supplier.isActive = dto.isActive ?? supplier.isActive;
+    await this.suppliers.save(supplier);
+    if (dto.items) {
+      await this.replaceItems(supplier.id, dto.items);
+    }
+    return this.get(tenantId, supplier.id);
+  }
+
+  async disable(tenantId: string, id: string) {
+    const supplier = await this.get(tenantId, id);
+    supplier.isActive = false;
+    await this.suppliers.save(supplier);
+    return this.get(tenantId, id);
+  }
+
+  private async replaceItems(supplierId: string, items: NonNullable<UpsertSupplierDto['items']>) {
+    await this.supplierItems.delete({ supplierId });
+    if (!items.length) return;
+    await this.supplierItems.save(items.map((item) => this.supplierItems.create({
+      supplierId,
+      itemId: item.itemId,
+      costPrice: item.costPrice.toFixed(2),
+      sku: item.sku ?? null,
+      leadTimeDays: item.leadTimeDays ?? 0,
+      minOrderQty: item.minOrderQty ?? 1,
+    })));
+  }
+}

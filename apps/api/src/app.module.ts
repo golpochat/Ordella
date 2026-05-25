@@ -30,6 +30,7 @@ import { BundlesModule } from './modules/bundles';
 import { ThemesModule } from './modules/themes';
 import { RecommendationsModule } from './modules/recommendations';
 import { HqModule } from './modules/hq';
+import { ProcurementModule } from './modules/procurement';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { HqModule } from './modules/hq';
     ThemesModule,
     RecommendationsModule,
     HqModule,
+    ProcurementModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

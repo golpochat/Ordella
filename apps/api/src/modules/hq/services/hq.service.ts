@@ -13,6 +13,7 @@ import { availableQty } from '../../inventory/domain/stock-quantity.util';
 import { LocationEntity, TenantEntity, FranchiseGroupEntity } from '../../tenants/entities';
 import { TenantStatus } from '../../tenants/enums/tenant-status.enum';
 import { TenantSignupService } from '../../onboarding/services/tenant-signup.service';
+import { PurchaseOrderEntity, PurchaseOrderStatus, SupplierEntity } from '../../procurement/entities';
 import { CreateFranchiseeDto, HqQueryDto } from '../dto';
 
 const EXCLUDED_ORDER_STATUSES = [OrderStatus.CANCELLED, OrderStatus.FAILED];
@@ -36,6 +37,10 @@ export class HqService {
     private readonly stockItems: Repository<StockItemEntity>,
     @InjectRepository(UserEntity)
     private readonly users: Repository<UserEntity>,
+    @InjectRepository(SupplierEntity)
+    private readonly suppliers: Repository<SupplierEntity>,
+    @InjectRepository(PurchaseOrderEntity)
+    private readonly purchaseOrders: Repository<PurchaseOrderEntity>,
     private readonly tenantSignup: TenantSignupService,
     private readonly auditLogs: AuditLogService,
   ) {}
@@ -212,6 +217,77 @@ export class HqService {
       limit,
       total,
     };
+  }
+
+  async supplierPerformance(tenant: TenantContext, user?: AuthenticatedUser) {
+    const scope = await this.resolveScope(tenant.tenantId);
+    await this.audit(tenant, user, 'hq.view_supplier_performance', { tenantIds: scope.tenantIds });
+    const [suppliers, orders] = await Promise.all([
+      this.suppliers.find({ where: { tenantId: In(scope.tenantIds) }, relations: { items: true } }),
+      this.purchaseOrders.find({ where: { tenantId: In(scope.tenantIds) }, relations: { supplier: true } }),
+    ]);
+    const delayedOrders = orders.filter((order) =>
+      order.expectedDeliveryDate &&
+      ![PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.CANCELLED].includes(order.status) &&
+      new Date(order.expectedDeliveryDate) < new Date(),
+    ).length;
+    const received = orders.filter((order) => order.status === PurchaseOrderStatus.RECEIVED);
+    const onTime = received.filter((order) =>
+      !order.expectedDeliveryDate || (order.receivedAt && order.receivedAt <= new Date(order.expectedDeliveryDate)),
+    ).length;
+    return {
+      totalSuppliers: suppliers.length,
+      activeSuppliers: suppliers.filter((supplier) => supplier.isActive).length,
+      openPurchaseOrders: orders.filter((order) => ![PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.CANCELLED].includes(order.status)).length,
+      delayedOrders,
+      onTimeDeliveryRate: received.length ? Number(((onTime / received.length) * 100).toFixed(2)) : 0,
+      topSuppliers: suppliers.map((supplier) => ({
+        supplierId: supplier.id,
+        tenantId: supplier.tenantId,
+        name: supplier.name,
+        itemsSupplied: supplier.items?.length ?? 0,
+        purchaseOrders: orders.filter((order) => order.supplierId === supplier.id).length,
+        volume: orders
+          .filter((order) => order.supplierId === supplier.id)
+          .reduce((sum, order) => sum + Number(order.totalCost), 0)
+          .toFixed(2),
+      })).sort((a, b) => Number(b.volume) - Number(a.volume)),
+    };
+  }
+
+  async purchaseOrdersView(tenant: TenantContext, query: HqQueryDto, user?: AuthenticatedUser) {
+    const scope = await this.resolveScope(tenant.tenantId);
+    await this.audit(tenant, user, 'hq.view_purchase_orders', { tenantIds: scope.tenantIds, filters: query });
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 50;
+    const qb = this.purchaseOrders
+      .createQueryBuilder('po')
+      .leftJoin(SupplierEntity, 'supplier', 'supplier.id = po.supplier_id')
+      .leftJoin(LocationEntity, 'location', 'location.id = po.location_id')
+      .leftJoin(TenantEntity, 'tenant', 'tenant.id = po.tenant_id')
+      .where('po.tenant_id IN (:...tenantIds)', { tenantIds: scope.tenantIds })
+      .orderBy('po.created_at', 'DESC');
+    if (query.locationId) qb.andWhere('po.location_id = :locationId', { locationId: query.locationId });
+    if (query.status) qb.andWhere('po.status = :status', { status: query.status });
+    const total = await qb.clone().getCount();
+    const rows = await qb
+      .select([
+        'po.id AS id',
+        'po.tenant_id AS "tenantId"',
+        "COALESCE(tenant.name, 'Franchisee') AS \"tenantName\"",
+        'po.supplier_id AS "supplierId"',
+        "COALESCE(supplier.name, 'Supplier') AS \"supplierName\"",
+        'po.location_id AS "locationId"',
+        "COALESCE(location.name, 'Unknown location') AS \"locationName\"",
+        'po.status AS status',
+        'po.total_cost AS "totalCost"',
+        'po.expected_delivery_date AS "expectedDeliveryDate"',
+        'po.created_at AS "createdAt"',
+      ])
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getRawMany<Record<string, unknown>>();
+    return { rows, page, limit, total };
   }
 
   async createFranchisee(tenant: TenantContext, dto: CreateFranchiseeDto, user?: AuthenticatedUser) {

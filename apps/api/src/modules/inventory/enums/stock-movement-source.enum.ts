@@ -4,4 +4,5 @@ export enum StockMovementSource {
   MANUAL = 'manual',
   ADJUSTMENT = 'adjustment',
   SYSTEM = 'system',
+  PURCHASE_ORDER = 'purchase_order',
 }

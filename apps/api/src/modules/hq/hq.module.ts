@@ -8,6 +8,7 @@ import { StockItemEntity } from '../inventory/entities';
 import { CustomerEntity } from '../loyalty/entities';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { OrderEntity, OrderItemEntity } from '../orders/entities';
+import { PurchaseOrderEntity, SupplierEntity } from '../procurement/entities';
 import { FranchiseGroupEntity, LocationEntity, TenantEntity } from '../tenants/entities';
 import { HqController } from './controllers';
 import { HqService } from './services';
@@ -28,6 +29,8 @@ import { HqService } from './services';
       UserEntity,
       ProductEntity,
       CategoryEntity,
+      SupplierEntity,
+      PurchaseOrderEntity,
     ]),
   ],
   controllers: [HqController],

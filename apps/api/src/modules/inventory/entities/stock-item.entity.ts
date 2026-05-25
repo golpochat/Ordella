@@ -33,4 +33,7 @@ export class StockItemEntity extends BaseTenantScopedEntity {
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
+
+  @Column({ name: 'last_received_at', type: 'timestamptz', nullable: true })
+  lastReceivedAt!: Date | null;
 }

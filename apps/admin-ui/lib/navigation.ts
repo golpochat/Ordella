@@ -17,6 +17,7 @@ import {
   Sparkles,
   Building2,
   Users,
+  Truck,
   Warehouse,
 } from 'lucide-react';
 
@@ -35,6 +36,8 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'bundles', label: 'Bundles & Combos', href: '/catalog/bundles', icon: Package },
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
+  { id: 'suppliers', label: 'Suppliers', href: '/suppliers', icon: Truck },
+  { id: 'purchase-orders', label: 'Purchase Orders', href: '/purchase-orders', icon: ClipboardList },
   { id: 'staff', label: 'Staff', href: '/staff', icon: Users },
   { id: 'crm', label: 'CRM', href: '/crm', icon: Users },
   { id: 'notifications', label: 'Notifications', href: '/notifications', icon: MessageSquare },

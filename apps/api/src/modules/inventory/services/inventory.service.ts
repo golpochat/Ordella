@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
+import { ProductEntity } from '../../catalog/entities';
 import { StockItemEntity } from '../entities/stock-item.entity';
 import { StockMovementType } from '../enums/stock-movement-type.enum';
 import { StockMovementSource } from '../enums/stock-movement-source.enum';
@@ -31,6 +32,7 @@ import {
   InventoryDeductResult,
   InventoryReserveResult,
   InventoryStockView,
+  ReceiveStockInput,
   RecordMovementInput,
 } from '../types/inventory-stock.types';
 import {
@@ -145,6 +147,65 @@ export class InventoryService {
     });
   }
 
+  async receiveStock(input: ReceiveStockInput): Promise<InventoryStockView> {
+    this.assertLineQuantity(input.quantity);
+
+    return this.dataSource.transaction(async (manager) => {
+      let item = await this.stockItemRepository.findByProductForTenant(
+        input.tenantId,
+        input.locationId,
+        input.productId,
+        manager,
+        true,
+      );
+
+      if (!item) {
+        const product = await manager.getRepository(ProductEntity).findOne({
+          where: { id: input.productId, tenantId: input.tenantId },
+        });
+        if (!product) {
+          throwInventoryItemNotFound(input.productId, input.locationId);
+        }
+        item = this.stockItemRepository.create(
+          {
+            tenantId: input.tenantId,
+            locationId: input.locationId,
+            productId: input.productId,
+            name: input.name ?? product.name,
+            sku: input.sku ?? product.sku ?? product.id.slice(0, 8),
+            unit: 'each',
+            quantityOnHand: '0.0000',
+            quantityReserved: '0.0000',
+            reorderLevel: null,
+            isActive: true,
+          },
+          manager,
+        );
+      }
+
+      item.quantityOnHand = addQty(item.quantityOnHand, input.quantity);
+      item.lastReceivedAt = new Date();
+      await this.stockItemRepository.save(item, manager);
+
+      await this.recordMovement(
+        {
+          tenantId: input.tenantId,
+          stockItemId: item.id,
+          type: StockMovementType.IN,
+          delta: input.quantity,
+          source: StockMovementSource.PURCHASE_ORDER,
+          referenceType: StockReferenceType.PURCHASE_ORDER,
+          referenceId: input.referenceId ?? null,
+          notes: input.notes ?? null,
+        },
+        manager,
+      );
+
+      this.runIntegrationHooks(item);
+      return this.toStockView(item);
+    });
+  }
+
   async recordMovement(
     input: RecordMovementInput,
     manager?: EntityManager,
@@ -157,8 +218,8 @@ export class InventoryService {
         type: input.type,
         quantity: absQuantity,
         source: input.source,
-        referenceType: input.orderId ? StockReferenceType.ORDER : null,
-        referenceId: input.orderId ?? null,
+        referenceType: input.referenceType ?? (input.orderId ? StockReferenceType.ORDER : null),
+        referenceId: input.referenceId ?? input.orderId ?? null,
         notes: input.notes ?? null,
       },
       manager,
