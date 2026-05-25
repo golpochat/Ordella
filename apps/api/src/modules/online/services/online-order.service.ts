@@ -5,8 +5,6 @@ import { OrderStatus } from '../../orders/enums/order-status.enum';
 import { OrderType } from '../../orders/enums/order-type.enum';
 import { OrderPaymentMethod } from '../../orders/enums/order-payment-method.enum';
 import { OrdersService } from '../../orders/services/orders.service';
-import { InventoryService } from '../../inventory/services/inventory.service';
-import { InventoryOrderContext } from '../../inventory/types/inventory-order.context';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { DeliveryService } from '../../deliveries/services/delivery.service';
 import { DeliveryTaskRepository } from '../../deliveries/repositories/delivery-task.repository';
@@ -18,7 +16,6 @@ import {
 import { DeliveryTaskStatus } from '../../deliveries/enums/delivery-task-status.enum';
 import { KdsBroadcastService } from '../../kds/services/kds-broadcast.service';
 import { KdsOrderQueryService } from '../../kds/services/kds-order-query.service';
-import { PosProductStockService } from '../../pos/services/pos-product-stock.service';
 import { CreateOnlineOrderDto } from '../../orders/dto/orders/create-online-order.dto';
 import { BasketService } from './basket.service';
 import { OnlinePaymentDto } from '../dto/online-payment.dto';
@@ -36,14 +33,12 @@ export class OnlineOrderService {
   constructor(
     private readonly basketService: BasketService,
     private readonly ordersService: OrdersService,
-    private readonly inventoryService: InventoryService,
     private readonly paymentsService: PaymentsService,
     private readonly deliveryService: DeliveryService,
     private readonly deliveryTaskRepository: DeliveryTaskRepository,
     private readonly driverProfileRepository: DriverProfileRepository,
     private readonly kdsOrderQuery: KdsOrderQueryService,
     private readonly kdsBroadcast: KdsBroadcastService,
-    private readonly productStockService: PosProductStockService,
   ) {}
 
   async createOnlineOrder(
@@ -75,7 +70,6 @@ export class OnlineOrderService {
     };
 
     const order = await this.ordersService.create(tenant, createDto);
-    await this.inventoryService.reserve(this.toInventoryContext(tenant.tenantId, order));
 
     const paymentContext = {
       tenantId: tenant.tenantId,
@@ -90,15 +84,6 @@ export class OnlineOrderService {
     if (capture.status !== 'captured') {
       throwOnlinePaymentFailed(capture.failureReason);
     }
-
-    await this.inventoryService.deduct(this.toInventoryContext(tenant.tenantId, order));
-    await this.productStockService.decrementForOrder(
-      tenant.tenantId,
-      (order.items ?? []).map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    );
 
     const updated = await this.ordersService.update(tenant, order.id, {
       status: OrderStatus.ACCEPTED,
@@ -158,8 +143,6 @@ export class OnlineOrderService {
 
     const order = await this.ordersService.create(tenant, createDto);
 
-    await this.inventoryService.reserve(this.toInventoryContext(tenant.tenantId, order));
-
     const paymentContext = {
       ...checkout.paymentContext,
       tenantId: tenant.tenantId,
@@ -191,16 +174,9 @@ export class OnlineOrderService {
     this.basketService.linkOrder(dto.sessionId, order.id);
     this.basketService.clearBasket(dto.sessionId);
 
-    await this.inventoryService.deduct(this.toInventoryContext(tenant.tenantId, order));
-    await this.productStockService.decrementForOrder(
-      tenant.tenantId,
-      (order.items ?? []).map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    );
-
-    const refreshed = await this.ordersService.findOne(tenant, order.id);
+    const refreshed = await this.ordersService.update(tenant, order.id, {
+      status: OrderStatus.ACCEPTED,
+    });
     await this.routeToFulfillment(tenant.tenantId, refreshed.id);
 
     return {
@@ -292,18 +268,4 @@ export class OnlineOrderService {
     return OrderType.ONLINE;
   }
 
-  private toInventoryContext(
-    tenantId: string,
-    order: { id: string; locationId: string; items?: Array<{ productId: string; quantity: number }> },
-  ): InventoryOrderContext {
-    return {
-      tenantId,
-      orderId: order.id,
-      locationId: order.locationId,
-      lines: (order.items ?? []).map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    };
-  }
 }

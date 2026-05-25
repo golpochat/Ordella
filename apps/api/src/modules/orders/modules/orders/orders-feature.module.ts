@@ -37,9 +37,11 @@ import {
   PromotionsService,
   ReportingService,
 } from '../../integrations';
+import { InventoryCoreModule } from '../../../inventory/modules/inventory-core/inventory-core.module';
 
 @Module({
   imports: [
+    InventoryCoreModule,
     forwardRef(() => KdsModule),
     TypeOrmModule.forFeature([
       OrderEntity,

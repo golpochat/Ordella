@@ -36,6 +36,7 @@ export interface OnlineProductView {
   sku: string | null;
   imageUrl: string | null;
   availableQuantity: number | null;
+  isOutOfStock: boolean;
   inventoryTrackingEnabled: boolean;
   variants: OnlineVariantView[];
   modifiers: OnlineModifierView[];

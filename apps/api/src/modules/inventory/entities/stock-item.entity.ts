@@ -30,4 +30,7 @@ export class StockItemEntity extends BaseTenantScopedEntity {
 
   @Column({ name: 'reorder_level', type: 'decimal', precision: 14, scale: 4, nullable: true })
   reorderLevel!: string | null;
+
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive!: boolean;
 }

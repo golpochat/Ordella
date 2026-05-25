@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { PosRegister } from '@/components/pos-register';
 import { loadCatalogCache, saveCatalogCache } from '@/lib/catalog-cache';
 import { listPosCatalog, type PosCatalogCategory, type PosCatalogItem } from '@/lib/api';
+import { getSession } from '@/lib/session';
 
 export default function HomePage() {
   const [categories, setCategories] = useState<PosCatalogCategory[]>([]);
@@ -19,7 +20,8 @@ export default function HomePage() {
       setReady(true);
     }
 
-    listPosCatalog()
+    const { locationId } = getSession();
+    listPosCatalog(locationId || undefined)
       .then((catalog) => {
         setCategories(catalog.categories);
         setItems(catalog.items);

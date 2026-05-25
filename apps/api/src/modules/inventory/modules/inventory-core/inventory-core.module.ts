@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProductEntity } from '../../../catalog/entities/product.entity';
+import { CategoryEntity } from '../../../catalog/entities/category.entity';
+import { OrderItemEntity } from '../../../orders/entities/order-item.entity';
+import { OrderEntity } from '../../../orders/entities/order.entity';
 import {
   StockAdjustmentEntity,
   StockItemEntity,
@@ -7,10 +11,12 @@ import {
   StockReservationEntity,
 } from '../../entities';
 import { InventoryService } from '../../services/inventory.service';
+import { InventoryManagementService } from '../../services/inventory-management.service';
 import { StockItemRepository } from '../../repositories/stock-item.repository';
 import { StockMovementRepository } from '../../repositories/stock-movement.repository';
 import { StockAdjustmentRepository } from '../../repositories/stock-adjustment.repository';
 import { StockReservationRepository } from '../../repositories/stock-reservation.repository';
+import { InventoryQueryRepository } from '../../repositories/inventory-query.repository';
 import {
   AutoReplenishmentService,
   LowStockAlertsService,
@@ -24,10 +30,16 @@ import {
       StockMovementEntity,
       StockAdjustmentEntity,
       StockReservationEntity,
+      ProductEntity,
+      CategoryEntity,
+      OrderItemEntity,
+      OrderEntity,
     ]),
   ],
   providers: [
     InventoryService,
+    InventoryManagementService,
+    InventoryQueryRepository,
     StockItemRepository,
     StockMovementRepository,
     StockAdjustmentRepository,
@@ -36,6 +48,6 @@ import {
     AutoReplenishmentService,
     SupplierOrderingService,
   ],
-  exports: [InventoryService],
+  exports: [InventoryService, InventoryManagementService, InventoryQueryRepository],
 })
 export class InventoryCoreModule {}

@@ -16,7 +16,9 @@ export class MenuQueryService {
 
   async getPublicMenu(tenantId: string, locationId: string): Promise<OnlinePublicMenuView> {
     const categories = await this.getCategories(tenantId);
-    const products = await this.getProductsWithModifiers(tenantId, locationId);
+    const products = (await this.getProductsWithModifiers(tenantId, locationId)).filter(
+      (product) => !product.isOutOfStock,
+    );
     return { categories, products };
   }
 
@@ -88,14 +90,19 @@ export class MenuQueryService {
   ): OnlineProductView {
     let availableQuantity: number | null = null;
     if (product.inventoryTrackingEnabled) {
-      if (product.stockLevel !== null && product.stockLevel !== undefined) {
+      if (locationStock !== undefined) {
+        availableQuantity = Math.max(0, Math.floor(locationStock));
+      } else if (product.stockLevel !== null && product.stockLevel !== undefined) {
         availableQuantity = product.stockLevel;
-      } else if (locationStock !== undefined) {
-        availableQuantity = locationStock;
       }
     } else if (locationStock !== undefined) {
-      availableQuantity = locationStock;
+      availableQuantity = Math.max(0, Math.floor(locationStock));
     }
+
+    const isOutOfStock =
+      product.inventoryTrackingEnabled &&
+      availableQuantity !== null &&
+      availableQuantity <= 0;
 
     return {
       id: product.id,
@@ -107,6 +114,7 @@ export class MenuQueryService {
       sku: product.sku,
       imageUrl: product.imageUrl,
       availableQuantity,
+      isOutOfStock,
       inventoryTrackingEnabled: product.inventoryTrackingEnabled,
       variants: variants.map(
         (v): OnlineVariantView => ({

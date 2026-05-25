@@ -6,6 +6,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiSuccessResponse } from '../../../common/interfaces';
@@ -42,8 +43,9 @@ export class PosController {
   @RequirePermissions(PosPermissionKeys.POS_CATALOG)
   async catalog(
     @CurrentTenant() tenant: TenantContext,
+    @Query('locationId') locationId?: string,
   ): Promise<ApiSuccessResponse<{ categories: unknown[]; items: unknown[] }>> {
-    const data = await this.posCatalogService.getCatalog(tenant.tenantId);
+    const data = await this.posCatalogService.getCatalog(tenant.tenantId, locationId);
     return { success: true, data };
   }
 

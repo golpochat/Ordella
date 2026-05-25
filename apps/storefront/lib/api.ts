@@ -40,6 +40,7 @@ export const onlineProductSchema = z.object({
   barcode: z.string().nullable().optional(),
   imageUrl: z.string().nullable().optional(),
   availableQuantity: z.number().nullable().optional(),
+  isOutOfStock: z.boolean().optional(),
   inventoryTrackingEnabled: z.boolean().optional(),
   stockLevel: z.number().int().nullable().optional(),
   isActive: z.boolean().optional(),
@@ -248,6 +249,7 @@ export async function fetchOrderStatus(orderId: string) {
 
 export function isProductOrderable(product: OnlineProduct): boolean {
   if (product.isActive === false) return false;
+  if (product.isOutOfStock) return false;
   if (product.inventoryTrackingEnabled) {
     const qty = product.availableQuantity ?? product.stockLevel;
     return qty !== null && qty !== undefined && qty > 0;

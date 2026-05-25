@@ -17,13 +17,10 @@ import { OrderType } from '../../orders/enums/order-type.enum';
 import { OrderPaymentMethod } from '../../orders/enums/order-payment-method.enum';
 import { OrdersService } from '../../orders/services/orders.service';
 import { parseMoney, formatMoney } from '../../orders/domain/order-totals.util';
-import { InventoryService } from '../../inventory/services/inventory.service';
-import { InventoryOrderContext } from '../../inventory/types/inventory-order.context';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { DeliveryService } from '../../deliveries/services/delivery.service';
 import { KdsBroadcastService } from '../../kds/services/kds-broadcast.service';
 import { KdsOrderQueryService } from '../../kds/services/kds-order-query.service';
-import { PosProductStockService } from '../../pos/services/pos-product-stock.service';
 import { LocationEntity } from '../../tenants/entities/location.entity';
 import {
   calculateOnlineTotals,
@@ -54,11 +51,9 @@ export class OnlineStripeCheckoutService {
     private readonly menuRepository: MenuQueryRepository,
     private readonly ordersService: OrdersService,
     private readonly paymentsService: PaymentsService,
-    private readonly inventoryService: InventoryService,
     private readonly deliveryService: DeliveryService,
     private readonly kdsOrderQuery: KdsOrderQueryService,
     private readonly kdsBroadcast: KdsBroadcastService,
-    private readonly productStockService: PosProductStockService,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
   ) {}
@@ -324,7 +319,6 @@ export class OnlineStripeCheckoutService {
     };
 
     const order = await this.ordersService.create(tenant, createDto);
-    await this.inventoryService.reserve(this.toInventoryContext(tenantId, order));
 
     const paymentContext = {
       tenantId,
@@ -341,15 +335,6 @@ export class OnlineStripeCheckoutService {
     if (capture.status !== 'captured') {
       throwOnlinePaymentFailed(capture.failureReason);
     }
-
-    await this.inventoryService.deduct(this.toInventoryContext(tenantId, order));
-    await this.productStockService.decrementForOrder(
-      tenantId,
-      (order.items ?? []).map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    );
 
     const updated = await this.ordersService.update(tenant, order.id, {
       status: OrderStatus.ACCEPTED,
@@ -483,18 +468,4 @@ export class OnlineStripeCheckoutService {
     }
   }
 
-  private toInventoryContext(
-    tenantId: string,
-    order: { id: string; locationId: string; items?: Array<{ productId: string; quantity: number }> },
-  ): InventoryOrderContext {
-    return {
-      tenantId,
-      orderId: order.id,
-      locationId: order.locationId,
-      lines: (order.items ?? []).map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    };
-  }
 }

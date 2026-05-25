@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PosCatalogCategory, PosCatalogItem } from '@/lib/api';
 import { completeSale, listPosCatalog } from '@/lib/api';
 import { loadCatalogCache, saveCatalogCache } from '@/lib/catalog-cache';
+import { getSession } from '@/lib/session';
 import { listOfflineSales, removeOfflineSale } from '@/lib/offline-queue';
 import {
   Button,
@@ -26,8 +27,13 @@ type PosRegisterProps = {
 };
 
 function isInStock(item: PosCatalogItem): boolean {
+  if (item.isOutOfStock) return false;
   if (!item.inventoryTrackingEnabled) return true;
   return item.stockLevel === null || item.stockLevel === undefined || item.stockLevel > 0;
+}
+
+function isLowStock(item: PosCatalogItem): boolean {
+  return item.stockStatus === 'low';
 }
 
 export function PosRegister({ initialCategories, initialItems }: PosRegisterProps) {
@@ -87,7 +93,8 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
 
   const refreshCatalog = useCallback(async () => {
     try {
-      const catalog = await listPosCatalog();
+      const session = getSession();
+      const catalog = await listPosCatalog(session.locationId || undefined);
       setCategories(catalog.categories);
       setItems(catalog.items);
       saveCatalogCache({
@@ -257,6 +264,9 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                         <p className="text-sm text-muted-foreground">${item.price}</p>
                         {item.sku ? (
                           <p className="mt-1 text-xs text-muted-foreground">SKU {item.sku}</p>
+                        ) : null}
+                        {isLowStock(item) ? (
+                          <p className="mt-1 text-xs font-medium text-amber-600">Low stock</p>
                         ) : null}
                       </div>
                       <Button

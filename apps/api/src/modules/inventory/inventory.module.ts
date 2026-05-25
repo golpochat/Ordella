@@ -9,6 +9,7 @@ import { StockTransfersModule } from './modules/stock-transfers/stock-transfers.
 import { StockReservationsModule } from './modules/stock-reservations/stock-reservations.module';
 import { WastageRecordsModule } from './modules/wastage-records/wastage-records.module';
 import { InventoryCoreModule } from './modules/inventory-core/inventory-core.module';
+import { InventoryController } from './controllers/inventory.controller';
 
 /**
  * Inventory domain — SRS §4, API Spec §4.
@@ -29,6 +30,7 @@ import { InventoryCoreModule } from './modules/inventory-core/inventory-core.mod
     WastageRecordsModule,
     InventoryCoreModule,
   ],
+  controllers: [InventoryController],
   exports: [InventoryCoreModule],
 })
 export class InventoryModule {}

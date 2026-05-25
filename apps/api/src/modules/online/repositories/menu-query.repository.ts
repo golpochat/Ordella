@@ -145,6 +145,7 @@ export class MenuQueryRepository {
         tenantId,
         locationId,
         productId: In(productIds),
+        isActive: true,
       },
     });
 
@@ -154,7 +155,7 @@ export class MenuQueryRepository {
         continue;
       }
       const available = availableQty(row.quantityOnHand, row.quantityReserved);
-      stockMap.set(row.productId, (stockMap.get(row.productId) ?? 0) + available);
+      stockMap.set(row.productId, available);
     }
     return stockMap;
   }

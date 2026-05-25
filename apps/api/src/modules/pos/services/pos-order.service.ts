@@ -5,8 +5,6 @@ import { OrderResponseDto } from '../../orders/dto';
 import { OrderStatus } from '../../orders/enums/order-status.enum';
 import { OrderType } from '../../orders/enums/order-type.enum';
 import { OrdersService } from '../../orders/services/orders.service';
-import { InventoryService } from '../../inventory/services/inventory.service';
-import { InventoryOrderContext } from '../../inventory/types/inventory-order.context';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { PaymentOrderContext } from '../../payments/types/payment-order.context';
 import { CartService } from './cart.service';
@@ -26,8 +24,6 @@ import {
   throwPosPaymentFailed,
 } from '../domain/pos-domain.errors';
 import { PosFulfillmentService } from './pos-fulfillment.service';
-import { PosProductStockService } from './pos-product-stock.service';
-
 const DEFAULT_CURRENCY = 'USD';
 
 @Injectable()
@@ -41,9 +37,7 @@ export class PosOrderService {
     private readonly cartService: CartService,
     private readonly ordersService: OrdersService,
     private readonly paymentsService: PaymentsService,
-    private readonly inventoryService: InventoryService,
     private readonly fulfillmentService: PosFulfillmentService,
-    private readonly productStockService: PosProductStockService,
   ) {}
 
   async checkout(
@@ -72,8 +66,6 @@ export class PosOrderService {
     };
 
     const order = await this.ordersService.create(tenant, createDto, user);
-
-    await this.inventoryService.reserve(this.toInventoryContext(tenant.tenantId, order));
 
     this.cartService.linkOrder(tenant.tenantId, cart.id, order.id);
     this.receiptContext.set(order.id, {
@@ -124,15 +116,6 @@ export class PosOrderService {
       user,
     );
 
-    const order = await this.ordersService.findOne(tenant, checkout.orderId);
-    await this.productStockService.decrementForOrder(
-      tenant.tenantId,
-      (order.items ?? []).map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
-    );
-
     return {
       ...payment,
       orderNumber: checkout.orderNumber,
@@ -175,8 +158,6 @@ export class PosOrderService {
     if (paymentResult.status !== 'captured') {
       throwPosPaymentFailed(paymentResult.failureReason);
     }
-
-    await this.inventoryService.deduct(this.toInventoryContext(tenant.tenantId, order));
 
     const updated = await this.ordersService.update(
       tenant,
@@ -232,21 +213,6 @@ export class PosOrderService {
       })),
       paidAt: ctx.paidAt,
       createdAt: order.createdAt.toISOString(),
-    };
-  }
-
-  private toInventoryContext(
-    tenantId: string,
-    order: OrderResponseDto,
-  ): InventoryOrderContext {
-    return {
-      tenantId,
-      orderId: order.id,
-      locationId: order.locationId,
-      lines: (order.items ?? []).map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-      })),
     };
   }
 

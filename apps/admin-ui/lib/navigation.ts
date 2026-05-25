@@ -37,6 +37,7 @@ export const PRODUCTS_SUBNAV = [
 
 export const INVENTORY_SUBNAV = [
   { label: 'Stock levels', href: '/inventory' },
+  { label: 'Low stock', href: '/inventory/low-stock' },
   { label: 'Movements', href: '/inventory/movements' },
 ];
 

@@ -113,6 +113,8 @@ export const posCatalogItemSchema = z.object({
   isActive: z.boolean(),
   inventoryTrackingEnabled: z.boolean(),
   stockLevel: z.number().int().nullable().optional(),
+  stockStatus: z.enum(['ok', 'low', 'out']).optional(),
+  isOutOfStock: z.boolean().optional(),
   variants: z.array(catalogVariantSchema).default([]),
   modifiers: z.array(catalogModifierSchema).default([]),
 });
@@ -131,8 +133,10 @@ const posCatalogBundleSchema = z.object({
   items: z.array(posCatalogItemSchema),
 });
 
-export async function listPosCatalog() {
-  const data = await api.getData<unknown>('pos/catalog');
+export async function listPosCatalog(locationId?: string) {
+  const data = await api.getData<unknown>('pos/catalog', {
+    params: locationId ? { locationId } : undefined,
+  });
   const parsed = posCatalogBundleSchema.parse(data);
   return parsed;
 }

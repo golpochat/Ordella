@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InventoryService as CoreInventoryService } from '../../inventory/services/inventory.service';
+import { InventoryOrderContext } from '../../inventory/types/inventory-order.context';
 import { OrderInventoryContext } from '../types/order-inventory.context';
 
 export interface InventoryReserveResult {
@@ -9,41 +11,36 @@ export interface InventoryDeductResult {
   movementIds: string[];
 }
 
-/** Placeholder for InventoryModule — no stock persistence in Orders domain. */
+/** Bridges order lifecycle to core per-location stock_items inventory. */
 @Injectable()
 export class InventoryService {
-  private readonly logger = new Logger(InventoryService.name);
+  constructor(private readonly core: CoreInventoryService) {}
 
-  /** Soft-reserve stock while order is pending (not a permanent deduction). */
-  async reserve(context: OrderInventoryContext): Promise<InventoryReserveResult> {
-    this.logger.debug(
-      `[placeholder] InventoryService.reserve tenant=${context.tenant.tenantId} order=${context.order.id} lines=${context.items.length} status=${context.toStatus}`,
-    );
-    return { reservationIds: [] };
+  reserve(context: OrderInventoryContext): Promise<InventoryReserveResult> {
+    return this.core.reserve(this.toCoreContext(context));
   }
 
-  /**
-   * Permanent stock deduction when order is confirmed.
-   * Replaces an existing soft reservation (CONFIRMED = {@link OrderStatus.ACCEPTED}).
-   */
-  async deduct(context: OrderInventoryContext): Promise<InventoryDeductResult> {
-    this.logger.debug(
-      `[placeholder] InventoryService.deduct tenant=${context.tenant.tenantId} order=${context.order.id} from=${context.fromStatus} lines=${context.items.length}`,
-    );
-    return { movementIds: [] };
+  deduct(context: OrderInventoryContext): Promise<InventoryDeductResult> {
+    return this.core.deduct(this.toCoreContext(context));
   }
 
-  /** Release soft reservation or restore deducted stock on cancel. */
-  async releaseOrRestore(context: OrderInventoryContext): Promise<void> {
-    this.logger.debug(
-      `[placeholder] InventoryService.releaseOrRestore tenant=${context.tenant.tenantId} order=${context.order.id} from=${context.fromStatus} to=${context.toStatus}`,
-    );
+  releaseOrRestore(context: OrderInventoryContext): Promise<void> {
+    return this.core.releaseOrRestore(this.toCoreContext(context));
   }
 
-  /** Placeholder — restore stock after a refund. */
-  async restoreForRefund(context: OrderInventoryContext): Promise<void> {
-    this.logger.debug(
-      `[placeholder] InventoryService.restoreForRefund tenant=${context.tenant.tenantId} order=${context.order.id} from=${context.fromStatus}`,
-    );
+  restoreForRefund(context: OrderInventoryContext): Promise<void> {
+    return this.core.restoreForRefund(this.toCoreContext(context));
+  }
+
+  private toCoreContext(context: OrderInventoryContext): InventoryOrderContext {
+    return {
+      tenantId: context.tenant.tenantId,
+      orderId: context.order.id,
+      locationId: context.order.locationId,
+      lines: context.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    };
   }
 }
