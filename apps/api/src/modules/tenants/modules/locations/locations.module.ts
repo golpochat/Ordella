@@ -14,10 +14,12 @@ import { LocationRepository } from '../../repositories/location.repository';
 import { LocationSettingsRepository } from '../../repositories/location-settings.repository';
 import { LocationOpeningHoursRepository } from '../../repositories/location-opening-hours.repository';
 import { UserLocationRepository } from '../../repositories/user-location.repository';
+import { SearchModule } from '../../../search';
 
 @Module({
   imports: [
     BillingModule,
+    SearchModule,
     TypeOrmModule.forFeature([
       LocationEntity,
       LocationSettingsEntity,

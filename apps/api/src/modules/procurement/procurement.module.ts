@@ -8,12 +8,14 @@ import { LocationEntity } from '../tenants/entities';
 import { PurchaseOrdersController, SuppliersController } from './controllers';
 import { PROCUREMENT_ENTITIES } from './entities';
 import { PurchaseOrdersService, SuppliersService } from './services';
+import { SearchModule } from '../search';
 
 @Module({
   imports: [
     AuthModule,
     InventoryModule,
     NotificationsModule,
+    SearchModule,
     TypeOrmModule.forFeature([
       ...PROCUREMENT_ENTITIES,
       ProductEntity,

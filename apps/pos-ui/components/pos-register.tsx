@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PosCatalogCategory, PosCatalogItem } from '@/lib/api';
-import { listPosCatalog } from '@/lib/api';
+import { listPosCatalog, searchPosItems } from '@/lib/api';
 import { loadCatalogCache, saveCatalogCache } from '@/lib/catalog-cache';
 import { getSession } from '@/lib/session';
 import {
@@ -57,6 +57,10 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
   const [items, setItems] = useState(initialItems);
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [search, setSearch] = useState('');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [semanticItemIds, setSemanticItemIds] = useState<string[] | null>(null);
   const [pickerItem, setPickerItem] = useState<PosCatalogItem | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>();
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
@@ -175,18 +179,39 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
 
   const visibleItems = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return items.filter((item) => {
+    const min = priceMin ? Number(priceMin) : null;
+    const max = priceMax ? Number(priceMax) : null;
+    let list = items.filter((item) => {
       if (!item.isActive) return false;
       if (!isInStock(item) && !offlineSettings.allowOutOfStockOfflineSales) return false;
+      if (inStockOnly && !isInStock(item)) return false;
       if (selectedCategory !== 'all' && item.categoryId !== selectedCategory) return false;
+      const price = Number.parseFloat(item.price);
+      if (min !== null && price < min) return false;
+      if (max !== null && price > max) return false;
+      if (semanticItemIds && !semanticItemIds.includes(item.id)) return false;
       if (!q) return true;
       return (
         item.name.toLowerCase().includes(q) ||
+        (item.description?.toLowerCase().includes(q) ?? false) ||
         (item.sku?.toLowerCase().includes(q) ?? false) ||
         (item.barcode?.toLowerCase().includes(q) ?? false)
       );
     });
-  }, [items, offlineSettings.allowOutOfStockOfflineSales, selectedCategory, search]);
+    if (semanticItemIds) {
+      list = [...list].sort((a, b) => semanticItemIds.indexOf(a.id) - semanticItemIds.indexOf(b.id));
+    }
+    return list;
+  }, [
+    inStockOnly,
+    items,
+    offlineSettings.allowOutOfStockOfflineSales,
+    priceMax,
+    priceMin,
+    selectedCategory,
+    semanticItemIds,
+    search,
+  ]);
 
   const tryBarcodeAdd = (code: string) => {
     const trimmed = code.trim();
@@ -210,9 +235,29 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
   };
 
   const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    setSemanticItemIds(null);
     if (e.key === 'Enter') {
       e.preventDefault();
       tryBarcodeAdd(search);
+    }
+  };
+
+  const runSemanticSearch = async () => {
+    const q = search.trim();
+    if (!q || !online) return;
+    try {
+      const result = await searchPosItems({
+        q,
+        categoryId: selectedCategory === 'all' ? undefined : selectedCategory,
+        priceMin: priceMin ? Number(priceMin) : undefined,
+        priceMax: priceMax ? Number(priceMax) : undefined,
+        inStockOnly,
+        semantic: true,
+      });
+      setSemanticItemIds(result.results.map((entry) => entry.entityId));
+      setSyncMessage(`AI search ranked ${result.total} product result(s).`);
+    } catch {
+      setSemanticItemIds(null);
     }
   };
 
@@ -280,9 +325,39 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               className="h-12 max-w-md flex-1 text-base"
               placeholder="Search name, SKU, or scan barcode…"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setSemanticItemIds(null);
+              }}
               onKeyDown={onSearchKeyDown}
             />
+            <Input
+              className="h-12 w-28"
+              type="number"
+              min={0}
+              placeholder="Min price"
+              value={priceMin}
+              onChange={(e) => setPriceMin(e.target.value)}
+            />
+            <Input
+              className="h-12 w-28"
+              type="number"
+              min={0}
+              placeholder="Max price"
+              value={priceMax}
+              onChange={(e) => setPriceMax(e.target.value)}
+            />
+            <label className="flex h-12 items-center gap-2 rounded-md border px-3 text-sm">
+              <input
+                type="checkbox"
+                checked={inStockOnly}
+                onChange={(e) => setInStockOnly(e.target.checked)}
+              />
+              In stock
+            </label>
+            <Button type="button" variant="outline" className="h-12" disabled={!online || !search.trim()} onClick={() => void runSemanticSearch()}>
+              AI search
+            </Button>
             <Button type="button" variant="outline" className="h-12" onClick={() => void refreshCatalog()}>
               Refresh catalog
             </Button>

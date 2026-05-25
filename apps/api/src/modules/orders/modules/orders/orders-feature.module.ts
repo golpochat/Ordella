@@ -43,6 +43,7 @@ import { NotificationsModule } from '../../../notifications/notifications.module
 import { LoyaltyModule } from '../../../loyalty/loyalty.module';
 import { GiftCardsModule } from '../../../giftcards/giftcards.module';
 import { PromotionsCoreModule } from '../../../promotions/modules/promotions-core/promotions-core.module';
+import { SearchModule } from '../../../search';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { PromotionsCoreModule } from '../../../promotions/modules/promotions-cor
     LoyaltyModule,
     GiftCardsModule,
     PromotionsCoreModule,
+    SearchModule,
     forwardRef(() => KdsModule),
     TypeOrmModule.forFeature([
       OrderEntity,

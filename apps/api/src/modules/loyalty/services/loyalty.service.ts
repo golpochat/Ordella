@@ -22,6 +22,7 @@ import {
   UpdateLoyaltySettingsDto,
   UpsertCustomerDto,
 } from '../dto';
+import { SearchIndexService } from '../../search';
 
 export type LoyaltyCustomerInput = {
   name?: string;
@@ -48,6 +49,7 @@ export class LoyaltyService {
     @InjectRepository(OrderEntity)
     private readonly orders: Repository<OrderEntity>,
     private readonly notifications: NotificationsService,
+    private readonly searchIndex: SearchIndexService,
   ) {}
 
   async getSettings(tenantId: string): Promise<LoyaltySettingsEntity> {
@@ -70,6 +72,7 @@ export class LoyaltyService {
   async upsertCustomer(tenant: TenantContext, dto: UpsertCustomerDto): Promise<CustomerEntity> {
     const customer = await this.findOrCreateCustomer(tenant.tenantId, dto, true);
     if (!customer) throw new BadRequestException('Customer details are required');
+    await this.searchIndex.indexCustomer(customer);
     return customer;
   }
 
@@ -91,11 +94,13 @@ export class LoyaltyService {
       if (name && (!existing.name || existing.name === 'Guest customer')) existing.name = name;
       if (email && !existing.email) existing.email = email;
       if (phone && !existing.phone) existing.phone = phone;
-      return this.customers.save(existing);
+      const saved = await this.customers.save(existing);
+      await this.searchIndex.indexCustomer(saved);
+      return saved;
     }
 
     const name = input.name?.trim() || email || phone || 'Guest customer';
-    return this.customers.save(
+    const saved = await this.customers.save(
       this.customers.create({
         tenantId,
         name,
@@ -103,6 +108,8 @@ export class LoyaltyService {
         phone,
       }),
     );
+    await this.searchIndex.indexCustomer(saved);
+    return saved;
   }
 
   async searchCustomers(tenant: TenantContext, query: CustomerSearchDto): Promise<CustomerEntity[]> {
@@ -209,6 +216,7 @@ export class LoyaltyService {
     customer.lifetimeValue = (parseMoney(customer.lifetimeValue) + total).toFixed(2);
     customer.lastOrderAt = new Date();
     await this.customers.save(customer);
+    await this.searchIndex.indexCustomer(customer);
 
     if (points > 0) {
       await this.transactions.save(this.transactions.create({
@@ -231,6 +239,7 @@ export class LoyaltyService {
     if (customer.pointsBalance < points) throw new BadRequestException('Not enough points available');
     customer.pointsBalance -= points;
     await this.customers.save(customer);
+    await this.searchIndex.indexCustomer(customer);
     const transaction = await this.transactions.save(this.transactions.create({
       tenantId,
       customerId,
@@ -249,6 +258,7 @@ export class LoyaltyService {
     if (nextBalance < 0) throw new BadRequestException('Adjustment would make points negative');
     customer.pointsBalance = nextBalance;
     await this.customers.save(customer);
+    await this.searchIndex.indexCustomer(customer);
     return this.transactions.save(this.transactions.create({
       tenantId: tenant.tenantId,
       customerId: customer.id,

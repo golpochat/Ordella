@@ -8,6 +8,7 @@ import { availableQty, formatQty, parseQty, subtractQty } from '../../inventory/
 import { LocationEntity, LocationType } from '../../tenants/entities';
 import { CompletePickTaskDto, MoveWarehouseBinItemDto, UpdatePickTaskDto, UpsertWarehouseBinDto, UpsertWarehouseZoneDto } from '../dto';
 import { WarehouseBinEntity, WarehouseBinItemEntity, WarehousePickTaskEntity, WarehouseZoneEntity } from '../entities';
+import { SearchIndexService } from '../../search';
 
 @Injectable()
 export class WarehouseService {
@@ -26,6 +27,7 @@ export class WarehouseService {
     private readonly binItems: Repository<WarehouseBinItemEntity>,
     @InjectRepository(WarehousePickTaskEntity)
     private readonly pickTasks: Repository<WarehousePickTaskEntity>,
+    private readonly searchIndex: SearchIndexService,
   ) {}
 
   async dashboard(tenant: TenantContext) {
@@ -89,7 +91,10 @@ export class WarehouseService {
     entity.zoneId = dto.zoneId;
     entity.code = dto.code;
     entity.capacity = dto.capacity ?? null;
-    return this.bins.save(entity);
+    const saved = await this.bins.save(entity);
+    const indexed = await this.requireBin(tenant.tenantId, saved.id);
+    await this.searchIndex.indexBin(indexed);
+    return saved;
   }
 
   async moveItem(tenant: TenantContext, dto: MoveWarehouseBinItemDto) {
@@ -106,6 +111,8 @@ export class WarehouseService {
     destination ??= this.binItems.create({ binId: toBin.id, itemId: dto.itemId, quantity: '0.0000' });
     destination.quantity = formatQty(parseQty(destination.quantity) + dto.quantity);
     await this.binItems.save(destination);
+    await this.searchIndex.indexBin(await this.requireBin(tenant.tenantId, fromBin.id));
+    await this.searchIndex.indexBin(await this.requireBin(tenant.tenantId, toBin.id));
     return this.listBins(tenant);
   }
 

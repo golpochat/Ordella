@@ -8,11 +8,13 @@ import { LocationEntity } from '../tenants/entities';
 import { PicksController, TransfersController, WarehouseController } from './controllers';
 import { WAREHOUSE_ENTITIES } from './entities';
 import { WarehouseService } from './services';
+import { SearchModule } from '../search';
 
 @Module({
   imports: [
     AuthModule,
     StockTransfersModule,
+    SearchModule,
     TypeOrmModule.forFeature([
       ...WAREHOUSE_ENTITIES,
       LocationEntity,

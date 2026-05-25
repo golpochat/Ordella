@@ -17,6 +17,7 @@ import {
 import { CategoryEntity } from '../../catalog/entities/category.entity';
 import { ProductEntity } from '../../catalog/entities/product.entity';
 import { isPosChannelVisible, isOnlineChannelVisible } from '../../online/domain/online-pricing.util';
+import { SearchIndexService } from '../../search';
 
 export type CatalogCategoryView = {
   id: string;
@@ -71,7 +72,10 @@ export type CatalogItemView = {
 
 @Injectable()
 export class CatalogBuilderService {
-  constructor(private readonly repository: CatalogBuilderRepository) {}
+  constructor(
+    private readonly repository: CatalogBuilderRepository,
+    private readonly searchIndex: SearchIndexService,
+  ) {}
 
   async listCategories(tenantId: string): Promise<CatalogCategoryView[]> {
     const rows = await this.repository.listCategories(tenantId);
@@ -88,6 +92,7 @@ export class CatalogBuilderService {
         isActive: dto.isActive ?? true,
       }),
     );
+    await this.searchIndex.indexCategory(saved);
     return this.mapCategory(saved);
   }
 
@@ -97,12 +102,15 @@ export class CatalogBuilderService {
     if (dto.description !== undefined) row.description = dto.description?.trim() ?? null;
     if (dto.sortOrder !== undefined) row.sortOrder = dto.sortOrder;
     if (dto.isActive !== undefined) row.isActive = dto.isActive;
-    return this.mapCategory(await this.repository.saveCategory(row));
+    const saved = await this.repository.saveCategory(row);
+    await this.searchIndex.indexCategory(saved);
+    return this.mapCategory(saved);
   }
 
   async deleteCategory(tenantId: string, dto: CatalogCategoryDeleteDto): Promise<void> {
     await this.requireCategory(tenantId, dto.id);
     await this.repository.deleteCategory(tenantId, dto.id);
+    await this.searchIndex.removeDocument(tenantId, 'category', dto.id);
   }
 
   async listItems(
@@ -120,6 +128,7 @@ export class CatalogBuilderService {
 
   async getItem(tenantId: string, itemId: string): Promise<CatalogItemView> {
     const product = await this.requireProduct(tenantId, itemId);
+    await this.searchIndex.indexItem(product);
     return this.mapItem(tenantId, product);
   }
 
@@ -167,18 +176,21 @@ export class CatalogBuilderService {
     if (dto.modifierIds !== undefined) {
       await this.repository.replaceProductModifiers(tenantId, saved.id, dto.modifierIds);
     }
+    await this.searchIndex.indexItem(saved);
     return this.mapItem(tenantId, saved);
   }
 
   async deleteItem(tenantId: string, dto: CatalogItemDeleteDto): Promise<void> {
     await this.requireProduct(tenantId, dto.id);
     await this.repository.deleteProduct(tenantId, dto.id);
+    await this.searchIndex.removeDocument(tenantId, 'item', dto.id);
   }
 
   async uploadItemImage(tenantId: string, dto: CatalogItemImageDto): Promise<CatalogItemView> {
     const product = await this.requireProduct(tenantId, dto.itemId);
     product.imageUrl = dto.imageUrl;
     const saved = await this.repository.saveProduct(product);
+    await this.searchIndex.indexItem(saved);
     return this.mapItem(tenantId, saved);
   }
 

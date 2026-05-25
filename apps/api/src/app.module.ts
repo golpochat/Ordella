@@ -32,6 +32,7 @@ import { RecommendationsModule } from './modules/recommendations';
 import { HqModule } from './modules/hq';
 import { ProcurementModule } from './modules/procurement';
 import { WarehouseModule } from './modules/warehouse';
+import { SearchModule } from './modules/search';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { WarehouseModule } from './modules/warehouse';
     HqModule,
     ProcurementModule,
     WarehouseModule,
+    SearchModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

@@ -4,6 +4,7 @@ import { getOnboardingProgress, getSetupStatus } from '@/lib/api/onboarding';
 import { PageHeader } from '@/components/ui/page-header';
 import { GettingStartedPanel } from '@/components/dashboard/getting-started-panel';
 import { AnalyticsDashboardPanel } from '@/components/analytics/analytics-dashboard-panel';
+import { AdvancedSearchPanel } from '@/components/search/advanced-search-panel';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { getErrorMessage } from '@/lib/utils';
 
@@ -35,6 +36,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       />
       {setupError ? <ApiErrorBanner message={setupError} /> : null}
       {showGettingStarted ? <GettingStartedPanel /> : null}
+      <div className="mb-6">
+        <AdvancedSearchPanel />
+      </div>
       <Suspense fallback={<p className="text-sm text-muted-foreground">Loading analytics…</p>}>
         <AnalyticsDashboardPanel searchParams={searchParams} />
       </Suspense>

@@ -10,6 +10,7 @@ import { AdminUpdateProductDto } from '../dto/admin-update-product.dto';
 import { AdminCreateCategoryDto } from '../dto/admin-create-category.dto';
 import { AdminCreateModifierDto } from '../dto/admin-create-modifier.dto';
 import { AdminCreateModifierOptionDto } from '../dto/admin-create-modifier-option.dto';
+import { SearchIndexService } from '../../search';
 
 @Injectable()
 export class ProductAdminService {
@@ -17,6 +18,7 @@ export class ProductAdminService {
     private readonly productRepository: AdminProductRepository,
     private readonly catalogRepository: AdminCatalogRepository,
     private readonly orderQueryRepository: AdminOrderQueryRepository,
+    private readonly searchIndex: SearchIndexService,
   ) {}
 
   listProducts(tenantId: string, filter: AdminProductListFilter) {
@@ -34,7 +36,9 @@ export class ProductAdminService {
       sortOrder: dto.sortOrder ?? 0,
       channelVisibility: dto.channelVisibility ?? {},
     });
-    return this.productRepository.save(product);
+    const saved = await this.productRepository.save(product);
+    await this.searchIndex.indexItem(saved);
+    return saved;
   }
 
   async updateProduct(tenantId: string, productId: string, dto: AdminUpdateProductDto) {
@@ -49,14 +53,18 @@ export class ProductAdminService {
     if (dto.sortOrder !== undefined) product.sortOrder = dto.sortOrder;
     if (dto.channelVisibility !== undefined) product.channelVisibility = dto.channelVisibility;
 
-    return this.productRepository.save(product);
+    const saved = await this.productRepository.save(product);
+    await this.searchIndex.indexItem(saved);
+    return saved;
   }
 
   async archiveProduct(tenantId: string, productId: string) {
     const product = await this.requireProduct(tenantId, productId);
     await this.assertSafeProductChange(tenantId, productId);
     product.status = ProductStatus.INACTIVE;
-    return this.productRepository.save(product);
+    const saved = await this.productRepository.save(product);
+    await this.searchIndex.indexItem(saved);
+    return saved;
   }
 
   listCategories(tenantId: string) {
@@ -69,7 +77,9 @@ export class ProductAdminService {
       name: dto.name,
       sortOrder: dto.sortOrder ?? 0,
     });
-    return this.catalogRepository.saveCategory(category);
+    const saved = await this.catalogRepository.saveCategory(category);
+    await this.searchIndex.indexCategory(saved);
+    return saved;
   }
 
   listModifiers(tenantId: string) {

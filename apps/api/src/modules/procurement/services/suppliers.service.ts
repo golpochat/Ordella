@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpsertSupplierDto } from '../dto';
 import { SupplierEntity, SupplierItemEntity } from '../entities';
+import { SearchIndexService } from '../../search';
 
 @Injectable()
 export class SuppliersService {
@@ -11,6 +12,7 @@ export class SuppliersService {
     private readonly suppliers: Repository<SupplierEntity>,
     @InjectRepository(SupplierItemEntity)
     private readonly supplierItems: Repository<SupplierItemEntity>,
+    private readonly searchIndex: SearchIndexService,
   ) {}
 
   list(tenantId: string) {
@@ -42,7 +44,9 @@ export class SuppliersService {
       isActive: dto.isActive ?? true,
     }));
     await this.replaceItems(supplier.id, dto.items ?? []);
-    return this.get(tenantId, supplier.id);
+    const saved = await this.get(tenantId, supplier.id);
+    await this.searchIndex.indexSupplier(saved);
+    return saved;
   }
 
   async update(tenantId: string, dto: UpsertSupplierDto) {
@@ -59,14 +63,18 @@ export class SuppliersService {
     if (dto.items) {
       await this.replaceItems(supplier.id, dto.items);
     }
-    return this.get(tenantId, supplier.id);
+    const saved = await this.get(tenantId, supplier.id);
+    await this.searchIndex.indexSupplier(saved);
+    return saved;
   }
 
   async disable(tenantId: string, id: string) {
     const supplier = await this.get(tenantId, id);
     supplier.isActive = false;
     await this.suppliers.save(supplier);
-    return this.get(tenantId, id);
+    const saved = await this.get(tenantId, id);
+    await this.searchIndex.indexSupplier(saved);
+    return saved;
   }
 
   private async replaceItems(supplierId: string, items: NonNullable<UpsertSupplierDto['items']>) {

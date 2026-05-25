@@ -40,6 +40,7 @@ import { LocationOpeningHoursRepository } from '../repositories/location-opening
 import { LocationSettingsRepository } from '../repositories/location-settings.repository';
 import { LocationRepository } from '../repositories/location.repository';
 import { UserLocationRepository } from '../repositories/user-location.repository';
+import { SearchIndexService } from '../../search';
 
 @Injectable()
 export class LocationsService {
@@ -56,6 +57,7 @@ export class LocationsService {
     private readonly orderRepository: Repository<OrderEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private readonly searchIndex: SearchIndexService,
   ) {}
 
   async findAll(
@@ -122,6 +124,7 @@ export class LocationsService {
       return saved;
     });
 
+    await this.searchIndex.indexLocation(location);
     return this.buildDetail(tenant.tenantId, location.id);
   }
 
@@ -153,6 +156,7 @@ export class LocationsService {
     }
 
     await this.locationRepository.save(location);
+    await this.searchIndex.indexLocation(location);
 
     const patch: Record<string, unknown> = {};
     if (dto.phone !== undefined) {
@@ -179,6 +183,8 @@ export class LocationsService {
     });
     if (orderCount > 0) {
       await this.locationRepository.updateStatus(tenant.tenantId, id, LocationStatus.CLOSED);
+      const closed = await this.locationRepository.findByIdForTenant(tenant.tenantId, id);
+      if (closed) await this.searchIndex.indexLocation(closed);
       return;
     }
 
@@ -186,6 +192,7 @@ export class LocationsService {
     if (!deleted) {
       throw new NotFoundException('Location not found');
     }
+    await this.searchIndex.removeDocument(tenant.tenantId, 'location', id);
   }
 
   async updateStatus(
@@ -201,6 +208,7 @@ export class LocationsService {
     if (!updated) {
       throw new NotFoundException('Location not found');
     }
+    await this.searchIndex.indexLocation(updated);
     return toLocationResponseDto(updated);
   }
 

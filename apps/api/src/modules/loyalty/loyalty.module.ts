@@ -6,9 +6,10 @@ import { OrderEntity } from '../orders/entities/order.entity';
 import { LOYALTY_ENTITIES } from './entities';
 import { LoyaltyController, PublicLoyaltyController } from './controllers';
 import { LoyaltyService } from './services';
+import { SearchModule } from '../search';
 
 @Module({
-  imports: [AuthModule, NotificationsModule, TypeOrmModule.forFeature([...LOYALTY_ENTITIES, OrderEntity])],
+  imports: [AuthModule, NotificationsModule, SearchModule, TypeOrmModule.forFeature([...LOYALTY_ENTITIES, OrderEntity])],
   controllers: [LoyaltyController, PublicLoyaltyController],
   providers: [LoyaltyService],
   exports: [LoyaltyService, TypeOrmModule],

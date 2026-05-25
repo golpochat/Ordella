@@ -42,6 +42,7 @@ import {
   LowStockAlertsService,
   SupplierOrderingService,
 } from '../integrations';
+import { SearchIndexService } from '../../search';
 
 @Injectable()
 export class InventoryService {
@@ -54,6 +55,7 @@ export class InventoryService {
     private readonly lowStockAlertsService: LowStockAlertsService,
     private readonly autoReplenishmentService: AutoReplenishmentService,
     private readonly supplierOrderingService: SupplierOrderingService,
+    private readonly searchIndex: SearchIndexService,
     @InjectRepository(InventorySyncLogEntity)
     private readonly syncLogs: Repository<InventorySyncLogEntity>,
   ) {}
@@ -149,6 +151,7 @@ export class InventoryService {
 
       this.runIntegrationHooks(item);
       await this.recordSyncLog(tenantId, item.productId, null, dto.locationId, dto.delta, 'adjustment', manager);
+      await this.searchIndex.indexInventoryItem(item);
       return this.toStockView(item);
     });
   }
@@ -215,6 +218,7 @@ export class InventoryService {
 
       this.runIntegrationHooks(item);
       await this.recordSyncLog(input.tenantId, item.productId, null, input.locationId, input.quantity, 'receiving', manager);
+      await this.searchIndex.indexInventoryItem(item);
       return this.toStockView(item);
     });
   }

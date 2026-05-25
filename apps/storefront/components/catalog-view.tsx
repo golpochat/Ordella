@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
 import type { OnlineMenu, OnlineProduct } from '@/lib/api';
-import { isProductOrderable } from '@/lib/api';
+import { isProductOrderable, searchStorefrontItems } from '@/lib/api';
 import { useBasketStore } from '@/stores/basket-store';
 
 type SortKey = 'name' | 'price-asc' | 'price-desc';
@@ -18,21 +18,36 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
 
   const [categoryId, setCategoryId] = useState(initialCategory);
   const [search, setSearch] = useState('');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sort, setSort] = useState<SortKey>('name');
+  const [semanticProductIds, setSemanticProductIds] = useState<string[] | null>(null);
+  const [searchMessage, setSearchMessage] = useState<string | null>(null);
 
   const products = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const min = priceMin ? Number(priceMin) : null;
+    const max = priceMax ? Number(priceMax) : null;
     let list = menu.products.filter((item) => {
       if (categoryId !== 'all' && item.categoryId !== categoryId) return false;
       if (inStockOnly && !isProductOrderable(item)) return false;
+      const price = Number.parseFloat(item.price);
+      if (min !== null && price < min) return false;
+      if (max !== null && price > max) return false;
+      if (semanticProductIds && !semanticProductIds.includes(item.id)) return false;
       if (!q) return true;
       return (
         item.name.toLowerCase().includes(q) ||
+        (item.description?.toLowerCase().includes(q) ?? false) ||
         (item.sku?.toLowerCase().includes(q) ?? false) ||
         (item.barcode?.toLowerCase().includes(q) ?? false)
       );
     });
+
+    if (semanticProductIds) {
+      return [...list].sort((a, b) => semanticProductIds.indexOf(a.id) - semanticProductIds.indexOf(b.id));
+    }
 
     list = [...list].sort((a, b) => {
       if (sort === 'price-asc') {
@@ -44,9 +59,10 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
       return a.name.localeCompare(b.name);
     });
     return list;
-  }, [menu.products, categoryId, search, inStockOnly, sort]);
+  }, [menu.products, categoryId, search, priceMin, priceMax, inStockOnly, semanticProductIds, sort]);
 
   const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    setSemanticProductIds(null);
     if (e.key !== 'Enter') return;
     const trimmed = search.trim();
     if (!trimmed) return;
@@ -63,18 +79,66 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
     }
   };
 
+  const runSemanticSearch = async () => {
+    const q = search.trim();
+    if (!q) return;
+    try {
+      const result = await searchStorefrontItems({
+        q,
+        categoryId: categoryId === 'all' ? undefined : categoryId,
+        priceMin: priceMin ? Number(priceMin) : undefined,
+        priceMax: priceMax ? Number(priceMax) : undefined,
+        inStockOnly,
+        semantic: true,
+      });
+      setSemanticProductIds(result.results.map((entry) => entry.entityId));
+      setSearchMessage(`AI search found ${result.total} product result(s).`);
+    } catch {
+      setSemanticProductIds(null);
+      setSearchMessage('AI search is unavailable, showing local product matches.');
+    }
+  };
+
+  const predictions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return menu.products
+      .filter((item) => item.name.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q))
+      .slice(0, 5);
+  }, [menu.products, search]);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       <h1 className="mb-4 text-3xl font-bold">Catalog</h1>
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+      {searchMessage ? <p className="mb-4 text-sm text-muted-foreground">{searchMessage}</p> : null}
 
       <div className="mb-6 flex flex-col gap-3 lg:flex-row">
         <Input
           className="h-12 flex-1 text-base"
           placeholder="Search name, SKU, or scan barcode…"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setSemanticProductIds(null);
+          }}
           onKeyDown={onSearchKeyDown}
+        />
+        <Input
+          className="h-12 lg:w-28"
+          type="number"
+          min={0}
+          placeholder="Min price"
+          value={priceMin}
+          onChange={(e) => setPriceMin(e.target.value)}
+        />
+        <Input
+          className="h-12 lg:w-28"
+          type="number"
+          min={0}
+          placeholder="Max price"
+          value={priceMax}
+          onChange={(e) => setPriceMax(e.target.value)}
         />
         <select
           className="h-12 rounded-md border bg-background px-3 text-sm"
@@ -94,6 +158,21 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
           />
           In stock only
         </label>
+        <Button type="button" variant="outline" className="h-12" disabled={!search.trim()} onClick={() => void runSemanticSearch()}>
+          AI search
+        </Button>
+      </div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {['vegan options', 'breakfast products', 'cheap items under 10', 'best sellers'].map((term) => (
+          <Button key={term} type="button" size="sm" variant="outline" onClick={() => setSearch(term)}>
+            {term}
+          </Button>
+        ))}
+        {predictions.map((product) => (
+          <Button key={product.id} type="button" size="sm" variant="ghost" onClick={() => setSearch(product.name)}>
+            {product.name}
+          </Button>
+        ))}
       </div>
 
       <div className="flex min-h-[50vh] gap-4">

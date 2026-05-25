@@ -176,6 +176,25 @@ const recommendationResponseSchema = z.object({
 export type RecommendationItem = z.infer<typeof recommendationItemSchema>;
 export type RecommendationResponse = z.infer<typeof recommendationResponseSchema>;
 
+const searchResultSchema = z.object({
+  entityType: z.string(),
+  entityId: z.string().uuid(),
+  title: z.string(),
+  body: z.string().nullable().optional(),
+  metadata: z.record(z.unknown()).default({}),
+  relevance: z.number().optional(),
+  semanticScore: z.number().optional(),
+});
+
+const searchResponseSchema = z.object({
+  results: z.array(searchResultSchema),
+  total: z.number(),
+  query: z.string(),
+  generatedAt: z.string(),
+});
+
+export type StorefrontSearchResult = z.infer<typeof searchResultSchema>;
+
 const catalogBundleSchema = z.object({
   categories: z.array(
     z.object({
@@ -219,6 +238,31 @@ export async function fetchCatalog() {
       ...bundles.map((catalogBundle) => mapBundleToProduct(catalogBundle, products)),
     ],
   } satisfies OnlineMenu;
+}
+
+export async function searchStorefrontItems(options: {
+  q?: string;
+  categoryId?: string;
+  priceMin?: number;
+  priceMax?: number;
+  inStockOnly?: boolean;
+  semantic?: boolean;
+  limit?: number;
+}) {
+  const path = options.semantic ? 'search/semantic' : 'search';
+  const data = await api.getData<unknown>(path, {
+    params: {
+      q: options.q,
+      entityType: 'item',
+      locationId: getLocationId(),
+      categoryId: options.categoryId,
+      priceMin: options.priceMin,
+      priceMax: options.priceMax,
+      inStockOnly: options.inStockOnly,
+      limit: options.limit ?? 50,
+    },
+  });
+  return searchResponseSchema.parse(data);
 }
 
 function mapCatalogItemToProduct(item: z.infer<typeof onlineProductSchema>): OnlineProduct {

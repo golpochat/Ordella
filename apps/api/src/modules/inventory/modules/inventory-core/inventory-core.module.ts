@@ -25,9 +25,11 @@ import {
   LowStockAlertsService,
   SupplierOrderingService,
 } from '../../integrations';
+import { SearchModule } from '../../../search';
 
 @Module({
   imports: [
+    SearchModule,
     TypeOrmModule.forFeature([
       StockItemEntity,
       InventorySnapshotEntity,

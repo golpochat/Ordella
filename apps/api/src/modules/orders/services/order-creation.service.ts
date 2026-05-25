@@ -28,6 +28,7 @@ import { OrderTransitionContext } from '../types/order-transition.context';
 import { LoyaltyService } from '../../loyalty/services';
 import { GiftCardsService } from '../../giftcards/services';
 import { formatMoney, parseMoney } from '../domain/order-totals.util';
+import { SearchIndexService } from '../../search';
 
 @Injectable()
 export class OrderCreationService {
@@ -40,6 +41,7 @@ export class OrderCreationService {
     private readonly orderDeliveryService: OrderDeliveryService,
     private readonly loyaltyService: LoyaltyService,
     private readonly giftCardsService: GiftCardsService,
+    private readonly searchIndex: SearchIndexService,
   ) {}
 
   async createOrder(
@@ -214,6 +216,9 @@ export class OrderCreationService {
     });
 
     const withItems = await this.orderRepository.findByIdWithItems(tenant.tenantId, saved.id);
+    if (withItems) {
+      await this.searchIndex.indexOrder(withItems);
+    }
     return toOrderResponseDto(withItems!, true);
   }
 

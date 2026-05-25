@@ -265,6 +265,25 @@ const offlineSyncResponseSchema = z.object({
 export type PosOfflineBootstrap = z.infer<typeof offlineBootstrapSchema>;
 export type PosOfflineSyncResponse = z.infer<typeof offlineSyncResponseSchema>;
 
+const searchResultSchema = z.object({
+  entityType: z.string(),
+  entityId: z.string().uuid(),
+  title: z.string(),
+  body: z.string().nullable().optional(),
+  metadata: z.record(z.unknown()).default({}),
+  relevance: z.number().optional(),
+  semanticScore: z.number().optional(),
+});
+
+const searchResponseSchema = z.object({
+  results: z.array(searchResultSchema),
+  total: z.number(),
+  query: z.string(),
+  generatedAt: z.string(),
+});
+
+export type PosSearchResult = z.infer<typeof searchResultSchema>;
+
 export async function listPosCatalog(locationId?: string) {
   const data = await api.getData<unknown>('pos/catalog', {
     params: locationId ? { locationId } : undefined,
@@ -290,6 +309,33 @@ export async function syncOfflineInventory(body: { adjustments: unknown[] }) {
   const session = getSession();
   const data = await api.postData<unknown>('pos/offline/sync-inventory', { ...session, ...body });
   return z.object({ syncedAt: z.string(), inventory: z.array(offlineInventorySnapshotSchema) }).parse(data);
+}
+
+export async function searchPosItems(options: {
+  q?: string;
+  categoryId?: string;
+  priceMin?: number;
+  priceMax?: number;
+  inStockOnly?: boolean;
+  semantic?: boolean;
+  limit?: number;
+}) {
+  const session = getSession();
+  const path = options.semantic ? 'search/semantic' : 'search';
+  const data = await api.getData<unknown>(path, {
+    params: {
+      q: options.q,
+      entityType: 'item',
+      locationId: session.locationId || undefined,
+      categoryId: options.categoryId,
+      priceMin: options.priceMin,
+      priceMax: options.priceMax,
+      inStockOnly: options.inStockOnly,
+      sort: options.semantic ? 'relevance' : undefined,
+      limit: options.limit ?? 50,
+    },
+  });
+  return searchResponseSchema.parse(data);
 }
 
 export async function fetchPosRecommendations(options: {
