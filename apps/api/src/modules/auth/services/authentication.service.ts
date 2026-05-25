@@ -47,7 +47,7 @@ export class AuthenticationService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    return this.issueTokens(user);
+    return this.issueTokensForUser(user);
   }
 
   pinLogin(_tenant: TenantContext | undefined, _dto: CreatePinLoginDto): Promise<LoginResponseDto> {
@@ -66,7 +66,7 @@ export class AuthenticationService {
       if (!user || user.status !== UserStatus.ACTIVE) {
         throw new UnauthorizedException('Invalid refresh token');
       }
-      return this.issueTokens(user);
+      return this.issueTokensForUser(user);
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -80,7 +80,7 @@ export class AuthenticationService {
     throw new UnauthorizedException('MFA is not configured');
   }
 
-  private async issueTokens(user: UserEntity): Promise<LoginResponseDto> {
+  async issueTokensForUser(user: UserEntity): Promise<LoginResponseDto> {
     const assigned = await this.onboardingRepository.getRolePermissions(user.roleId);
     const roleName = user.role?.name ?? 'unknown';
     const permissions = resolveRolePermissions(roleName, assigned);

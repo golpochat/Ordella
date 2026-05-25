@@ -13,6 +13,9 @@ export class UserResponseDto {
   isActive!: boolean;
   mfaEnabled!: boolean;
   status!: UserStatus;
+  externalId!: string | null;
+  federatedRoles!: string[];
+  lastLoginAt!: Date | null;
   createdAt!: Date;
   updatedAt!: Date;
 }

@@ -4,6 +4,8 @@ import { PermissionEntity } from './permission.entity';
 import { RolePermissionEntity } from './role-permission.entity';
 import { RoleEntity } from './role.entity';
 import { SessionEntity } from './session.entity';
+import { SsoProviderEntity } from './sso-provider.entity';
+import { SsoRoleMappingEntity } from './sso-role-mapping.entity';
 import { UserDeviceEntity } from './user-device.entity';
 import { UserEntity } from './user.entity';
 
@@ -14,6 +16,8 @@ export { PermissionEntity } from './permission.entity';
 export { RolePermissionEntity } from './role-permission.entity';
 export { RoleEntity } from './role.entity';
 export { SessionEntity } from './session.entity';
+export { SsoProviderEntity } from './sso-provider.entity';
+export { SsoRoleMappingEntity } from './sso-role-mapping.entity';
 export { UserDeviceEntity } from './user-device.entity';
 export { UserEntity } from './user.entity';
 
@@ -24,6 +28,8 @@ export const AUTH_ENTITIES = [
   RolePermissionEntity,
   RoleEntity,
   SessionEntity,
+  SsoProviderEntity,
+  SsoRoleMappingEntity,
   UserDeviceEntity,
   UserEntity,
 ];

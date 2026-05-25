@@ -34,6 +34,15 @@ export class UserEntity extends BaseTenantEntity {
   @Column({ name: 'mfa_enabled', type: 'boolean', default: false })
   mfaEnabled!: boolean;
 
+  @Column({ name: 'external_id', type: 'varchar', length: 255, nullable: true })
+  externalId!: string | null;
+
+  @Column({ name: 'federated_roles', type: 'jsonb', default: () => "'[]'" })
+  federatedRoles!: string[];
+
+  @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
+  lastLoginAt!: Date | null;
+
   @Column({ type: 'varchar', length: 32, default: UserStatus.ACTIVE })
   status!: UserStatus;
 

@@ -124,6 +124,7 @@ export const SETTINGS_TABS = [
   { id: 'hours', label: 'Opening hours' },
   { id: 'delivery', label: 'Delivery zones' },
   { id: 'order-routing', label: 'Order Routing' },
+  { id: 'enterprise-sso', label: 'Enterprise SSO' },
   { id: 'payment', label: 'Payment' },
   { id: 'pos', label: 'POS' },
   { id: 'tax-compliance', label: 'Tax & Compliance' },

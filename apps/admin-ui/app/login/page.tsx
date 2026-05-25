@@ -19,6 +19,8 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
   const errorMessage =
     searchParams.error === 'tenant_required'
       ? 'Select a tenant to continue.'
+      : searchParams.error?.startsWith('sso')
+        ? 'SSO sign-in could not be completed. Use email and password or contact your administrator.'
       : undefined;
 
   return (

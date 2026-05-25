@@ -13,6 +13,10 @@ import { ApiKeysModule } from './modules/api-keys/api-keys.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RbacGuard } from './guards/rbac.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuditLogEntity } from '../audit/entities';
+import { TenantMembershipEntity } from '../onboarding/entities';
+import { SsoController } from './controllers';
+import { SsoConfigCryptoService, SsoService } from './services';
 
 /**
  * Auth domain module — Authentication Service (architecture blueprint §2.2).
@@ -27,7 +31,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature(AUTH_ENTITIES),
+    TypeOrmModule.forFeature([...AUTH_ENTITIES, AuditLogEntity, TenantMembershipEntity]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       global: true,
@@ -47,7 +51,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     SessionsModule,
     ApiKeysModule,
   ],
-  providers: [JwtStrategy, JwtAuthGuard, RbacGuard],
-  exports: [JwtModule, JwtAuthGuard, RbacGuard, ApiKeysModule],
+  controllers: [SsoController],
+  providers: [JwtStrategy, JwtAuthGuard, RbacGuard, SsoService, SsoConfigCryptoService],
+  exports: [JwtModule, JwtAuthGuard, RbacGuard, ApiKeysModule, SsoService],
 })
 export class AuthModule {}

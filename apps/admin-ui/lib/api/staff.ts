@@ -12,6 +12,9 @@ export type StaffMember = {
   assignedLocations: string[];
   isActive: boolean;
   status: string;
+  externalId?: string | null;
+  federatedRoles?: string[];
+  lastLoginAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };

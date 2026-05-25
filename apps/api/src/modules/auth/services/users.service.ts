@@ -230,6 +230,9 @@ export class UsersService {
       isActive: user.status === UserStatus.ACTIVE,
       mfaEnabled: user.mfaEnabled,
       status: user.status,
+      externalId: user.externalId,
+      federatedRoles: user.federatedRoles ?? [],
+      lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

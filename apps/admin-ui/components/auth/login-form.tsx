@@ -46,6 +46,34 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     }
   }
 
+  async function onSsoLogin() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/sso/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, redirectUrl: `${window.location.origin}/api/auth/sso/callback` }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((body as { message?: string }).message ?? 'Unable to start SSO');
+        return;
+      }
+      const authorizationUrl = (body as { authorizationUrl?: string }).authorizationUrl;
+      if (!authorizationUrl) {
+        setError('SSO provider is not configured');
+        return;
+      }
+      browserTokenStorage.setTenantId(tenantId);
+      window.location.assign(authorizationUrl);
+    } catch {
+      setError('Unable to reach the SSO provider');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <div className="space-y-2">
@@ -89,6 +117,9 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? 'Signing in…' : 'Sign in'}
+      </Button>
+      <Button type="button" variant="outline" className="w-full" disabled={loading || !tenantId} onClick={onSsoLogin}>
+        Login with SSO
       </Button>
     </form>
   );

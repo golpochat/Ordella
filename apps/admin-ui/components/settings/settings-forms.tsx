@@ -19,6 +19,7 @@ import { StorefrontThemePanel } from './storefront-theme-panel';
 import { OfflineModePanel } from './offline-mode-panel';
 import { TaxCompliancePanel } from './tax-compliance-panel';
 import { OrderRoutingPanel } from './order-routing-panel';
+import { EnterpriseSsoPanel } from './enterprise-sso-panel';
 
 function SettingsSection({
   title,
@@ -132,6 +133,9 @@ export function SettingsForms() {
       </TabsContent>
       <TabsContent value="order-routing" className="mt-4">
         <OrderRoutingPanel />
+      </TabsContent>
+      <TabsContent value="enterprise-sso" className="mt-4">
+        <EnterpriseSsoPanel />
       </TabsContent>
       <TabsContent value="payment" className="mt-4">
         <SettingsSection

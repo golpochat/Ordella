@@ -13,6 +13,7 @@ export * from './roles/create-role.dto';
 export * from './roles/role-response.dto';
 export * from './roles/update-role-permissions.dto';
 export * from './sessions/session-response.dto';
+export * from './sso.dto';
 export * from './users/create-user.dto';
 export * from './users/update-user.dto';
 export * from './users/user-response.dto';

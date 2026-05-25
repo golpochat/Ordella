@@ -217,6 +217,7 @@ export function StaffManagementPanel() {
                 <TableHead>Name</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Assigned locations</TableHead>
+                <TableHead>Login</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -235,6 +236,11 @@ export function StaffManagementPanel() {
                       : member.assignedLocations
                           .map((id) => locationNameById.get(id) ?? id)
                           .join(', ')}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={member.externalId ? 'default' : 'secondary'}>
+                      {member.externalId ? 'SSO provisioned' : 'Password'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={member.isActive ? 'secondary' : 'destructive'}>
