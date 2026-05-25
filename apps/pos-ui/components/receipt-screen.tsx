@@ -73,6 +73,16 @@ export function ReceiptScreen({ orderId }: { orderId?: string }) {
               <div className="space-y-1 text-sm">
                 <p>Total qty: {totalQty}</p>
                 <p>Subtotal: {receipt.subtotal}</p>
+                {Number(receipt.discountTotal ?? 0) > 0 ? (
+                  <>
+                    <p>Discount: -{receipt.discountTotal}</p>
+                    {receipt.appliedPromotions?.map((promotion) => (
+                      <p key={promotion.promotionId} className="text-muted-foreground">
+                        Promotion {promotion.code ?? promotion.promotionId.slice(0, 8)}: -{promotion.discountAmount}
+                      </p>
+                    ))}
+                  </>
+                ) : null}
                 <p>Tax: {receipt.tax}</p>
                 <p className="text-lg font-semibold">Total: {receipt.total}</p>
               </div>

@@ -39,6 +39,8 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   const router = useRouter();
   const cartId = useCartStore((s) => s.cartId);
   const clearCart = useCartStore((s) => s.clearCart);
+  const discountPercent = useCartStore((s) => s.discountPercent);
+  const discountFixed = useCartStore((s) => s.discountFixed);
   const [orderType, setOrderType] = useState<'pos' | 'pickup' | 'delivery'>('pos');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'external'>('cash');
   const [customerName, setCustomerName] = useState('');
@@ -51,6 +53,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
   const [storeCreditAmount, setStoreCreditAmount] = useState('');
   const [giftCardCode, setGiftCardCode] = useState('');
+  const [couponCode, setCouponCode] = useState('');
   const [giftCardAmount, setGiftCardAmount] = useState('');
   const [giftCard, setGiftCard] = useState<PosGiftCard | null>(null);
   const [orderNotes, setOrderNotes] = useState('');
@@ -130,6 +133,9 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       giftCardCode: giftCardCode || undefined,
       giftCardAmount: giftCardAmount ? Number(giftCardAmount) : undefined,
       storeCreditAmount: storeCreditAmount ? Number(storeCreditAmount) : undefined,
+      couponCode: couponCode || undefined,
+      discountPercent: discountPercent || undefined,
+      discountFixed: discountFixed || undefined,
     };
 
     if (payload.customer) {
@@ -148,7 +154,12 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
 
     try {
       if (paymentMethod === 'card') {
-        const checkout = await checkoutCart(cartId, selectedCustomer?.id);
+        const checkout = await checkoutCart(cartId, {
+          customerId: selectedCustomer?.id,
+          couponCode: couponCode || undefined,
+          discountPercent: discountPercent || undefined,
+          discountFixed: discountFixed || undefined,
+        });
         onOpenChange(false);
         router.push(`/payment?orderId=${checkout.orderId}&method=card`);
         return;
@@ -319,6 +330,11 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
             placeholder="Order notes (optional)"
             value={orderNotes}
             onChange={(e) => setOrderNotes(e.target.value)}
+          />
+          <Input
+            placeholder="Coupon code (optional)"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
           />
 
           {!online ? (

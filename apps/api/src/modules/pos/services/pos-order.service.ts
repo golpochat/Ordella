@@ -62,6 +62,9 @@ export class PosOrderService {
       giftCardCode: dto.giftCardCode,
       giftCardAmount: dto.giftCardAmount,
       storeCreditAmount: dto.storeCreditAmount,
+      couponCode: dto.couponCode,
+      discountPercent: dto.discountPercent,
+      discountFixed: dto.discountFixed,
       items: cart.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,
@@ -87,8 +90,10 @@ export class PosOrderService {
       orderId: order.id,
       orderNumber: order.orderNumber,
       subtotal: order.subtotal,
+      discountTotal: order.discountTotal,
       tax: order.tax,
       total: order.total,
+      appliedPromotions: order.appliedPromotions,
     };
   }
 
@@ -96,7 +101,7 @@ export class PosOrderService {
     tenant: TenantContext,
     dto: PosCompleteSaleDto,
     user?: AuthenticatedUser,
-  ): Promise<PosPaymentResponseDto & { orderNumber: string | null; subtotal: string; tax: string; total: string }> {
+  ): Promise<PosPaymentResponseDto & { orderNumber: string | null; subtotal: string; discountTotal: string; tax: string; total: string }> {
     const customer =
       dto.customer?.customerId
         ? null
@@ -114,6 +119,9 @@ export class PosOrderService {
         giftCardCode: dto.giftCardCode,
         giftCardAmount: dto.giftCardAmount,
         storeCreditAmount: dto.storeCreditAmount,
+        couponCode: dto.couponCode,
+        discountPercent: dto.discountPercent,
+        discountFixed: dto.discountFixed,
         orderType: dto.orderType,
         orderNotes: dto.orderNotes,
       },
@@ -136,6 +144,7 @@ export class PosOrderService {
       ...payment,
       orderNumber: checkout.orderNumber,
       subtotal: checkout.subtotal,
+      discountTotal: checkout.discountTotal,
       tax: checkout.tax,
       total: checkout.total,
     };
@@ -218,8 +227,10 @@ export class PosOrderService {
       status: order.status,
       paymentStatus: order.paymentStatus,
       subtotal: order.subtotal,
+      discountTotal: order.discountTotal,
       tax: order.tax,
       total: order.total,
+      appliedPromotions: order.appliedPromotions,
       items: (order.items ?? []).map((item) => ({
         productId: item.productId,
         variantId: item.variantId,

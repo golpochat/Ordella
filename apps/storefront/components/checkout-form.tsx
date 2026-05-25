@@ -40,6 +40,7 @@ export function CheckoutForm() {
   const [loyaltyRedeemPoints, setLoyaltyRedeemPoints] = useState('');
   const [storeCreditAmount, setStoreCreditAmount] = useState('');
   const [giftCardCode, setGiftCardCode] = useState('');
+  const [couponCode, setCouponCode] = useState('');
   const [giftCardAmount, setGiftCardAmount] = useState('');
   const [giftCard, setGiftCard] = useState<PublicGiftCard | null>(null);
   const [accountCustomerId, setAccountCustomerId] = useState<string | null>(null);
@@ -238,6 +239,7 @@ export function CheckoutForm() {
             quantity,
           })),
           notes: orderNotes.trim() || undefined,
+          couponCode: couponCode.trim() || undefined,
           delivery,
           totals: {
             grandTotal: payableTotal.toFixed(2),
@@ -260,6 +262,7 @@ export function CheckoutForm() {
         customer,
         items,
         notes: orderNotes.trim() || undefined,
+        couponCode: couponCode.trim() || undefined,
         delivery,
         loyaltyRedeemPoints: loyaltyRedeemPoints ? Number(loyaltyRedeemPoints) : undefined,
         giftCardCode: giftCardCode || undefined,
@@ -306,6 +309,11 @@ export function CheckoutForm() {
               placeholder="Order notes (optional)"
               value={orderNotes}
               onChange={(e) => setOrderNotes(e.target.value)}
+            />
+            <Input
+              placeholder="Coupon code (optional)"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
             />
             {loyaltyCustomer && loyaltySettings?.isEnabled ? (
               <div className="rounded-md border p-3 text-sm">

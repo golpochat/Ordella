@@ -58,7 +58,8 @@ export class OrderPricingService {
 
     assertValidLineQuantity(quantity);
 
-    const unitPrice = await this.resolveUnitPrice(tenant, productId, variantId);
+    const product = await this.resolveProduct(tenant, productId);
+    const unitPrice = await this.resolveUnitPriceForProduct(product, variantId);
     const modifiers = await this.resolveModifierSelections(modifierOptionIds);
     const modifierTotal = formatMoney(sumMoney(modifiers.map((m) => m.priceDelta)));
     const unitPriceWithModifiers = formatMoney(
@@ -74,6 +75,7 @@ export class OrderPricingService {
 
     return {
       productId,
+      categoryId: product.categoryId,
       variantId: variantId ?? null,
       bundleId: input.bundleId ?? null,
       quantity,
@@ -229,6 +231,7 @@ export class OrderPricingService {
     lines: CalculatedLineItem[],
     items: OrderItemEntity[],
     order?: OrderEntity,
+    couponCode?: string,
   ): Promise<DraftOrderTotals> {
     const promotionResult = await this.promotionsService.applyPromotions({
       tenant: context.tenant,
@@ -237,6 +240,9 @@ export class OrderPricingService {
       lines,
       draftTotals: draft,
       action: 'apply',
+      couponCode,
+      locationId: context.locationId,
+      orderType: context.orderType,
     });
 
     return this.mergePromotionResult(draft, promotionResult, context, lines);
@@ -316,18 +322,23 @@ export class OrderPricingService {
     }));
   }
 
-  private async resolveUnitPrice(
+  private async resolveProduct(
     tenant: TenantContext,
     productId: string,
-    variantId?: string | null,
-  ): Promise<string> {
+  ): Promise<ProductEntity> {
     const product = await this.productRepository.findOne({
       where: { id: productId, tenantId: tenant.tenantId },
     });
     if (!product) {
       throw new NotFoundException(`Product ${productId} not found`);
     }
+    return product;
+  }
 
+  private async resolveUnitPriceForProduct(
+    product: ProductEntity,
+    variantId?: string | null,
+  ): Promise<string> {
     let unitAmount = parseMoney(product.price);
 
     if (variantId) {

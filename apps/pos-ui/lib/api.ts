@@ -34,8 +34,14 @@ const checkoutSchema = z.object({
   orderId: z.string().uuid(),
   orderNumber: z.string().nullable(),
   subtotal: z.string(),
+  discountTotal: z.string().optional(),
   tax: z.string(),
   total: z.string(),
+  appliedPromotions: z.array(z.object({
+    promotionId: z.string().uuid(),
+    code: z.string().nullable().optional(),
+    discountAmount: z.string(),
+  })).optional(),
 });
 
 const paymentSchema = z.object({
@@ -57,8 +63,14 @@ const receiptSchema = z.object({
   status: z.string(),
   paymentStatus: z.string(),
   subtotal: z.string(),
+  discountTotal: z.string().optional(),
   tax: z.string(),
   total: z.string(),
+  appliedPromotions: z.array(z.object({
+    promotionId: z.string().uuid(),
+    code: z.string().nullable().optional(),
+    discountAmount: z.string(),
+  })).optional(),
   items: z.array(
     z.object({
       productId: z.string().uuid(),
@@ -207,9 +219,12 @@ export async function createOrPatchCart(
   return posCartSchema.parse(data);
 }
 
-export async function checkoutCart(cartId: string, customerId?: string) {
+export async function checkoutCart(
+  cartId: string,
+  options: { customerId?: string; couponCode?: string; discountPercent?: number; discountFixed?: number } = {},
+) {
   const session = getSession();
-  const data = await api.postData<unknown>('pos/checkout', { ...session, cartId, customerId });
+  const data = await api.postData<unknown>('pos/checkout', { ...session, cartId, ...options });
   return checkoutSchema.parse(data);
 }
 
@@ -254,6 +269,7 @@ export async function getReceipt(orderId: string) {
 const completeSaleSchema = paymentSchema.extend({
   orderNumber: z.string().nullable(),
   subtotal: z.string(),
+  discountTotal: z.string().optional(),
   tax: z.string(),
   total: z.string(),
 });
@@ -270,6 +286,9 @@ export async function completeSale(body: {
   giftCardCode?: string;
   giftCardAmount?: number;
   storeCreditAmount?: number;
+  couponCode?: string;
+  discountPercent?: number;
+  discountFixed?: number;
 }) {
   const session = getSession();
   const data = await api.postData<unknown>('pos/complete-sale', { ...session, ...body });

@@ -5,4 +5,7 @@ export enum RuleType {
   CATEGORY_IN_CART = 'category_in_cart',
   CUSTOMER_SEGMENT = 'customer_segment',
   TIME_WINDOW = 'time_window',
+  LOCATION = 'location',
+  CHANNEL = 'channel',
+  FIRST_ORDER = 'first_order',
 }

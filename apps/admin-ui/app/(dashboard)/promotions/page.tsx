@@ -19,8 +19,8 @@ export default async function PromotionsPage() {
   return (
     <>
       <PageHeader
-        title="Promotions"
-        description="Discount rules and coupon codes"
+        title="Promotions & Discounts"
+        description="Build automatic discounts, coupon codes, BXGY offers, thresholds, and channel-specific rules."
         action={{ label: 'New promotion', href: '/promotions/new' }}
       />
       {error ? <ApiErrorBanner message={error} /> : null}

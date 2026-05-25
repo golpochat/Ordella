@@ -68,6 +68,11 @@ export class PosCompleteSaleDto extends PosContextDto {
   giftCardCode?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  couponCode?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(0.01)
   giftCardAmount?: number;

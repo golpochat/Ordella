@@ -44,6 +44,21 @@ export class CreateOrderDto {
   @Min(0.01)
   storeCreditAmount?: number;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  couponCode?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountPercent?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountFixed?: number;
+
   @IsUUID()
   locationId!: string;
 

@@ -11,6 +11,10 @@ export interface PromotionOrderDraftContext {
   orderId?: string | null;
   customerId?: string | null;
   couponCode?: string | null;
+  locationId?: string | null;
+  channel?: 'pos' | 'online' | 'both';
+  orderType?: string | null;
+  isFirstOrder?: boolean;
   subtotal: string;
   taxTotal: string;
   deliveryFee: string;

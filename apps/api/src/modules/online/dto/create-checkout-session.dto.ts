@@ -127,6 +127,11 @@ export class CreateCheckoutSessionDto {
   @MaxLength(512)
   notes?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  couponCode?: string;
+
   @ValidateNested()
   @Type(() => CheckoutSessionTotalsDto)
   totals!: CheckoutSessionTotalsDto;

@@ -1,9 +1,24 @@
-import { IsBoolean, IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { PromotionType } from '../../promotions/enums/promotion-type.enum';
 
 export class AdminCreatePromotionDto {
   @IsString()
   name!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsEnum(PromotionType)
   type!: PromotionType;
@@ -22,6 +37,43 @@ export class AdminCreatePromotionDto {
   @IsOptional()
   @IsString()
   code?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  buyQuantity?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  getQuantity?: number;
+
+  @IsOptional()
+  @IsString()
+  minSpend?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  applicableLocations?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  applicableCategories?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  applicableItems?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  autoApply?: boolean;
+
+  @IsOptional()
+  @IsIn(['pos', 'online', 'both'])
+  channel?: 'pos' | 'online' | 'both';
 
   @IsOptional()
   @IsInt()

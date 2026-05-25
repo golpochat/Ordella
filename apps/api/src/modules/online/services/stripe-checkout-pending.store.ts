@@ -14,6 +14,7 @@ export interface StripeCheckoutPendingSnapshot {
     instructions?: string;
   };
   notes?: string;
+  couponCode?: string;
   items: Array<{
     productId: string;
     variantId?: string;

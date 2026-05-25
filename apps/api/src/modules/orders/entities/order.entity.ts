@@ -46,6 +46,15 @@ export class OrderEntity extends BaseTenantScopedEntity {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   total!: string;
 
+  @Column({ name: 'discount_total', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  discountTotal!: string;
+
+  @Column({ name: 'promotion_ids', type: 'uuid', array: true, default: () => "'{}'" })
+  promotionIds!: string[];
+
+  @Column({ name: 'applied_promotions', type: 'jsonb', default: () => "'[]'" })
+  appliedPromotions!: Array<{ promotionId: string; code?: string | null; discountAmount: string }>;
+
   @Column({ name: 'order_number', type: 'varchar', length: 32, nullable: true })
   orderNumber!: string | null;
 

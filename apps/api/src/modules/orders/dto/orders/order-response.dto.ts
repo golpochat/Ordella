@@ -15,8 +15,11 @@ export class OrderResponseDto {
   paymentStatus!: OrderPaymentStatus;
   paymentMethod!: OrderPaymentMethod | null;
   subtotal!: string;
+  discountTotal!: string;
   tax!: string;
   total!: string;
+  promotionIds!: string[];
+  appliedPromotions!: Array<{ promotionId: string; code?: string | null; discountAmount: string }>;
   orderNumber!: string | null;
   deliveryDetails!: OrderDeliveryDetails | null;
   items?: OrderItemResponseDto[];

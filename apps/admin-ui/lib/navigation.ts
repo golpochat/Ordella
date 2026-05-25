@@ -39,7 +39,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'giftcards', label: 'Gift Cards & Store Credit', href: '/giftcards', icon: CreditCard },
   { id: 'orders', label: 'Orders', href: '/orders', icon: ShoppingCart },
   { id: 'subscriptions', label: 'Subscriptions', href: '/subscriptions', icon: Repeat },
-  { id: 'promotions', label: 'Promotions', href: '/promotions', icon: Percent },
+  { id: 'promotions', label: 'Promotions & Discounts', href: '/promotions', icon: Percent },
   { id: 'marketing', label: 'Marketing', href: '/marketing/campaigns', icon: Megaphone },
   { id: 'audit-logs', label: 'Audit Logs', href: '/audit-logs', icon: FileClock },
   { id: 'developer', label: 'Developer', href: '/developer', icon: Code2 },

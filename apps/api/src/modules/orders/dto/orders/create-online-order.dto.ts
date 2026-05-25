@@ -120,6 +120,11 @@ export class CreateOnlineOrderDto {
   notes?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  couponCode?: string;
+
+  @IsOptional()
   @IsEnum(OrderPaymentMethod)
   paymentMethod?: OrderPaymentMethod;
 

@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { PromotionEntity } from '../entities';
-import { PromotionType } from '../enums/promotion-type.enum';
 
 @Injectable()
 export class PromotionRepository {
@@ -38,7 +37,7 @@ export class PromotionRepository {
     manager?: EntityManager,
   ): Promise<PromotionEntity[]> {
     return this.repo(manager).find({
-      where: { tenantId, type: PromotionType.AUTOMATIC, isActive: true },
+      where: { tenantId, isActive: true },
       order: { createdAt: 'DESC' },
     });
   }

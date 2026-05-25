@@ -20,6 +20,8 @@ export function PromotionsTable({ promotions }: { promotions: Promotion[] }) {
           <TableHead>Name</TableHead>
           <TableHead>Type</TableHead>
           <TableHead>Value</TableHead>
+          <TableHead>Channel</TableHead>
+          <TableHead>Validity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -30,6 +32,12 @@ export function PromotionsTable({ promotions }: { promotions: Promotion[] }) {
             <TableCell className="font-medium">{promo.name}</TableCell>
             <TableCell>{promo.type}</TableCell>
             <TableCell>{promo.value}</TableCell>
+            <TableCell>{promo.channel ?? 'both'}</TableCell>
+            <TableCell>
+              {promo.startDate ? new Date(promo.startDate).toLocaleDateString() : 'Now'}
+              {' - '}
+              {promo.endDate ? new Date(promo.endDate).toLocaleDateString() : 'No end'}
+            </TableCell>
             <TableCell>
               <Badge variant={promo.isActive ? 'default' : 'secondary'}>
                 {promo.isActive ? 'Active' : 'Inactive'}

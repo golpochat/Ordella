@@ -4,4 +4,5 @@ export enum ActionType {
   FIXED_DISCOUNT = 'fixed_discount',
   FREE_ITEM = 'free_item',
   FREE_DELIVERY = 'free_delivery',
+  BUY_X_GET_Y = 'buy_x_get_y',
 }

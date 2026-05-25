@@ -20,6 +20,6 @@ export class PromotionConditionEntity extends BaseTimestampsEntity {
   @Column({ type: 'varchar', length: 16, default: 'eq' })
   operator!: string;
 
-  @Column({ type: 'jsonb', default: {} })
+  @Column({ name: 'value', type: 'jsonb', default: {} })
   ruleConfig!: Record<string, unknown>;
 }

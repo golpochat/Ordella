@@ -12,7 +12,6 @@ import {
   throwCouponNotFound,
   throwExpiredPromotion,
   throwInactivePromotion,
-  throwIncompatiblePromotionStacking,
   throwPromotionNotYetActive,
   throwPromotionRulesNotMet,
 } from '../domain/promotion-domain.errors';
@@ -52,7 +51,7 @@ export class PromotionsService {
     const candidates = await this.resolveCandidates(context);
     const applied: AppliedPromotionResult[] = [];
     let discountTotal = 0;
-    let hasNonStackable = false;
+    let bestNonStackable: AppliedPromotionResult | null = null;
 
     for (const promotion of candidates) {
       this.assertPromotionSchedulable(promotion);
@@ -68,6 +67,10 @@ export class PromotionsService {
         }
       }
 
+      if (!this.matchesPromotionScope(promotion, context)) {
+        continue;
+      }
+
       if (!(await this.evaluateRules(promotion, context))) {
         if (promotion.type === PromotionType.COUPON) {
           throwPromotionRulesNotMet(promotion.id);
@@ -76,28 +79,29 @@ export class PromotionsService {
       }
 
       const stackable = this.isStackable(promotion);
-      if (!stackable && hasNonStackable) {
-        throwIncompatiblePromotionStacking();
-      }
-      if (!stackable && applied.length > 0) {
-        throwIncompatiblePromotionStacking();
-      }
 
       const discount = await this.applyActions(promotion, context);
       if (discount <= 0) {
         continue;
       }
 
-      if (!stackable) {
-        hasNonStackable = true;
-      }
-
-      discountTotal += discount;
-      applied.push({
+      const result = {
         promotionId: promotion.id,
         code: promotion.code,
         discountAmount: formatAmount(discount),
-      });
+      };
+
+      if (stackable) {
+        discountTotal += discount;
+        applied.push(result);
+      } else if (!bestNonStackable || discount > parseAmount(bestNonStackable.discountAmount)) {
+        bestNonStackable = result;
+      }
+    }
+
+    if (bestNonStackable) {
+      discountTotal += parseAmount(bestNonStackable.discountAmount);
+      applied.push(bestNonStackable);
     }
 
     const cappedDiscount = Math.min(discountTotal, parseAmount(context.subtotal));
@@ -109,36 +113,40 @@ export class PromotionsService {
       deliveryFee: parseAmount(context.deliveryFee),
     });
 
-    await this.dataSource.transaction(async (manager) => {
-      for (const item of applied) {
-        await this.recordApplication(
-          context.tenantId,
-          item.promotionId,
-          context.orderId ?? null,
-          context.customerId ?? null,
-          item.discountAmount,
-          { couponCode: item.code ?? null },
-          manager,
-        );
+    if (context.orderId) {
+      await this.dataSource.transaction(async (manager) => {
+        for (const item of applied) {
+          await this.recordApplication(
+            context.tenantId,
+            item.promotionId,
+            context.orderId ?? null,
+            context.customerId ?? null,
+            item.discountAmount,
+            { couponCode: item.code ?? null, channel: context.channel ?? 'both' },
+            manager,
+          );
 
-        const promo = await this.promotionRepository.findByIdForTenant(
-          context.tenantId,
-          item.promotionId,
-          manager,
-        );
-        if (promo) {
-          promo.usageCount += 1;
-          await this.promotionRepository.save(promo, manager);
+          const promo = await this.promotionRepository.findByIdForTenant(
+            context.tenantId,
+            item.promotionId,
+            manager,
+          );
+          if (promo) {
+            promo.usageCount += 1;
+            await this.promotionRepository.save(promo, manager);
+          }
         }
-      }
-    });
+      });
+    }
 
-    for (const item of applied) {
-      this.loyaltyPointsService.accrueForApplication(
-        context.tenantId,
-        context.customerId ?? null,
-        parseAmount(item.discountAmount),
-      );
+    if (context.orderId) {
+      for (const item of applied) {
+        this.loyaltyPointsService.accrueForApplication(
+          context.tenantId,
+          context.customerId ?? null,
+          parseAmount(item.discountAmount),
+        );
+      }
     }
 
     return {
@@ -204,8 +212,7 @@ export class PromotionsService {
       promotion.actions ?? (await this.actionRepository.findByPromotionId(promotion.id));
 
     if (actions.length === 0) {
-      const legacy = parseAmount(promotion.value);
-      return legacy > 0 ? legacy : 0;
+      return this.applyPromotionType(promotion, context);
     }
 
     let total = 0;
@@ -275,6 +282,35 @@ export class PromotionsService {
     return candidates;
   }
 
+  private matchesPromotionScope(
+    promotion: PromotionEntity,
+    context: PromotionOrderDraftContext,
+  ): boolean {
+    const autoApply = promotion.autoApply ?? promotion.type === PromotionType.AUTOMATIC;
+    if (!autoApply && promotion.code !== context.couponCode) {
+      return false;
+    }
+    if (promotion.channel !== 'both' && context.channel && promotion.channel !== context.channel) {
+      return false;
+    }
+    if (promotion.applicableLocations?.length && context.locationId) {
+      if (!promotion.applicableLocations.includes(context.locationId)) return false;
+    }
+    if (promotion.applicableItems?.length) {
+      if (!context.lines.some((line) => promotion.applicableItems.includes(line.productId))) return false;
+    }
+    if (promotion.applicableCategories?.length) {
+      if (!context.lines.some((line) => line.categoryId && promotion.applicableCategories.includes(line.categoryId))) return false;
+    }
+    if (promotion.minSpend && parseAmount(context.subtotal) < parseAmount(promotion.minSpend)) {
+      return false;
+    }
+    if ((promotion.metadata as { firstOrderOnly?: boolean })?.firstOrderOnly && !context.isFirstOrder) {
+      return false;
+    }
+    return true;
+  }
+
   private assertPromotionSchedulable(promotion: PromotionEntity): void {
     const label = promotion.code ?? promotion.id;
 
@@ -342,6 +378,19 @@ export class PromotionsService {
         return minutes >= startMin || minutes <= endMin;
       }
 
+      case RuleType.LOCATION: {
+        const locationIds = this.asStringArray(config.locationIds ?? config.locationId);
+        return !locationIds.length || (context.locationId ? locationIds.includes(context.locationId) : false);
+      }
+
+      case RuleType.CHANNEL: {
+        const channel = String(config.channel ?? 'both');
+        return channel === 'both' || channel === context.channel;
+      }
+
+      case RuleType.FIRST_ORDER:
+        return context.isFirstOrder === true;
+
       default:
         return true;
     }
@@ -365,9 +414,78 @@ export class PromotionsService {
       case ActionType.FREE_DELIVERY: {
         return parseAmount(context.deliveryFee);
       }
+      case ActionType.BUY_X_GET_Y: {
+        const buyQuantity = Number(config.buyQuantity ?? 0);
+        const getQuantity = Number(config.getQuantity ?? 0);
+        if (!buyQuantity || !getQuantity) return 0;
+        return this.calculateBxgyDiscount(context, buyQuantity, getQuantity);
+      }
       default:
         return 0;
     }
+  }
+
+  private applyPromotionType(
+    promotion: PromotionEntity,
+    context: PromotionOrderDraftContext,
+  ): number {
+    const subtotal = parseAmount(context.subtotal);
+    const value = parseAmount(promotion.value);
+    switch (promotion.type) {
+      case PromotionType.PERCENTAGE:
+      case PromotionType.CATEGORY:
+      case PromotionType.TIME_BASED:
+        return (this.scopedSubtotal(promotion, context) * value) / 100;
+      case PromotionType.BXGY:
+        return this.calculateBxgyDiscount(
+          context,
+          promotion.buyQuantity ?? 0,
+          promotion.getQuantity ?? 0,
+          promotion,
+        );
+      case PromotionType.FIXED:
+      case PromotionType.THRESHOLD:
+      case PromotionType.COUPON:
+      case PromotionType.AUTOMATIC:
+      default:
+        return Math.min(value, subtotal);
+    }
+  }
+
+  private scopedSubtotal(promotion: PromotionEntity, context: PromotionOrderDraftContext): number {
+    const scoped = context.lines.filter((line) => {
+      const itemMatch = !promotion.applicableItems?.length || promotion.applicableItems.includes(line.productId);
+      const categoryMatch =
+        !promotion.applicableCategories?.length ||
+        (line.categoryId ? promotion.applicableCategories.includes(line.categoryId) : false);
+      return itemMatch && categoryMatch;
+    });
+    const lines = scoped.length ? scoped : context.lines;
+    return lines.reduce((sum, line) => sum + parseAmount(line.lineSubtotal), 0);
+  }
+
+  private calculateBxgyDiscount(
+    context: PromotionOrderDraftContext,
+    buyQuantity: number,
+    getQuantity: number,
+    promotion?: PromotionEntity,
+  ): number {
+    const eligible = context.lines.filter((line) => {
+      if (promotion?.applicableItems?.length && !promotion.applicableItems.includes(line.productId)) return false;
+      if (
+        promotion?.applicableCategories?.length &&
+        (!line.categoryId || !promotion.applicableCategories.includes(line.categoryId))
+      ) {
+        return false;
+      }
+      return true;
+    });
+    return eligible.reduce((sum, line) => {
+      const groupSize = buyQuantity + getQuantity;
+      const freeUnits = groupSize > 0 ? Math.floor(line.quantity / groupSize) * getQuantity : 0;
+      const unitPrice = line.quantity > 0 ? parseAmount(line.lineSubtotal) / line.quantity : 0;
+      return sum + freeUnits * unitPrice;
+    }, 0);
   }
 
   private isStackable(promotion: PromotionEntity): boolean {
@@ -384,6 +502,12 @@ export class PromotionsService {
       return null;
     }
     return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+  }
+
+  private asStringArray(value: unknown): string[] {
+    if (Array.isArray(value)) return value.map(String).filter(Boolean);
+    if (!value) return [];
+    return [String(value)];
   }
 
   private emptyResult(context: PromotionOrderDraftContext): ApplyPromotionsResult {

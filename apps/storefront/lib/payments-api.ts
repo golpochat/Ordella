@@ -48,6 +48,7 @@ export async function createCheckoutSession(body: {
     instructions?: string;
   };
   notes?: string;
+  couponCode?: string;
   totals: { grandTotal: string; subtotal?: string; taxTotal?: string };
   currency?: string;
   loyaltyRedeemPoints?: number;

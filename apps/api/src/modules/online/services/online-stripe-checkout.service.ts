@@ -40,6 +40,7 @@ import { StripeCheckoutPendingStore } from './stripe-checkout-pending.store';
 import { LoyaltyService } from '../../loyalty/services';
 import { GiftCardsService } from '../../giftcards/services';
 import { BundleEntity, BundlePriceType } from '../../bundles/entities';
+import { PromotionsService } from '../../promotions/services/promotions.service';
 
 const DEFAULT_CURRENCY = 'EUR';
 const TOTAL_TOLERANCE = 0.02;
@@ -59,6 +60,7 @@ export class OnlineStripeCheckoutService {
     private readonly kdsBroadcast: KdsBroadcastService,
     private readonly loyaltyService: LoyaltyService,
     private readonly giftCardsService: GiftCardsService,
+    private readonly promotionsService: PromotionsService,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
     @InjectRepository(BundleEntity)
@@ -96,7 +98,29 @@ export class OnlineStripeCheckoutService {
       this.assertDeliveryDetails(dto.delivery);
     }
 
-    const computed = calculateOnlineTotals({ lines, orderType });
+    const baseComputed = calculateOnlineTotals({ lines, orderType });
+    const promotionResult = await this.promotionsService.applyPromotions({
+      tenantId: tenant.tenantId,
+      couponCode: dto.couponCode ?? null,
+      locationId: dto.locationId,
+      channel: 'online',
+      orderType,
+      subtotal: baseComputed.subtotal,
+      taxTotal: baseComputed.taxTotal,
+      deliveryFee: baseComputed.deliveryFee,
+      serviceChargeTotal: baseComputed.serviceChargeTotal,
+      lines: lines.map((line) => ({
+        productId: line.productId,
+        quantity: line.quantity,
+        lineSubtotal: line.lineSubtotal,
+        categoryId: line.categoryId,
+      })),
+    });
+    const computed = calculateOnlineTotals({
+      lines,
+      orderType,
+      discountTotal: promotionResult.discountTotal,
+    });
     const customer = dto.customerId
       ? await this.loyaltyService.getCustomerProfile(tenant, dto.customerId)
       : await this.loyaltyService.findOrCreateCustomer(tenant.tenantId, dto.customer);
@@ -152,6 +176,7 @@ export class OnlineStripeCheckoutService {
       customerId: customer?.id,
       delivery: dto.delivery,
       notes: dto.notes,
+      couponCode: dto.couponCode,
       items: dto.items.map((item) => ({
         productId: item.itemId,
         variantId: item.variantId,
@@ -357,6 +382,7 @@ export class OnlineStripeCheckoutService {
       giftCardCode: pending.giftCardCode,
       giftCardAmount: pending.giftCardAmount,
       storeCreditAmount: pending.storeCreditAmount,
+      couponCode: pending.couponCode,
       items: pending.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,

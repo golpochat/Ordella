@@ -30,6 +30,12 @@ export class AdminPromotionsController {
     return { success: true, data };
   }
 
+  @Get('analytics')
+  async analytics(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.promotionsAdminService.analytics(tenant.tenantId);
+    return { success: true, data };
+  }
+
   @Post()
   async create(
     @CurrentTenant() tenant: TenantContext,
@@ -64,6 +70,15 @@ export class AdminPromotionsController {
     @Param('promotionId', ParseUUIDPipe) promotionId: string,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.promotionsAdminService.deactivatePromotion(tenant.tenantId, promotionId);
+    return { success: true, data };
+  }
+
+  @Post(':promotionId/duplicate')
+  async duplicate(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('promotionId', ParseUUIDPipe) promotionId: string,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.promotionsAdminService.duplicatePromotion(tenant.tenantId, promotionId);
     return { success: true, data };
   }
 

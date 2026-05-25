@@ -340,8 +340,14 @@ const onlineOrderResponseSchema = z.object({
   status: z.string(),
   paymentStatus: z.string(),
   subtotal: z.string(),
+  discountTotal: z.string().optional(),
   tax: z.string(),
   total: z.string(),
+  appliedPromotions: z.array(z.object({
+    promotionId: z.string().uuid(),
+    code: z.string().nullable().optional(),
+    discountAmount: z.string(),
+  })).optional(),
   items: z.array(z.unknown()).optional(),
 });
 
@@ -368,6 +374,7 @@ export async function createOnlineOrder(body: {
     instructions?: string;
   };
   notes?: string;
+  couponCode?: string;
   paymentMethod?: 'cash' | 'card';
   loyaltyRedeemPoints?: number;
   giftCardCode?: string;

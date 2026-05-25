@@ -62,4 +62,38 @@ export class AdminPromotionRepository {
       totalDiscount: totalDiscount.toFixed(2),
     };
   }
+
+  async getAnalytics(tenantId: string): Promise<{
+    usageCount: number;
+    discountCost: string;
+    revenueInfluenced: string;
+    conversionRateUplift: number;
+    topPromotions: Array<{ promotionId: string; usageCount: number; discountCost: string }>;
+  }> {
+    const rows = await this.applicationRepository.find({ where: { tenantId } });
+    const byPromotion = new Map<string, { usageCount: number; discountCost: number }>();
+    let discountCost = 0;
+    for (const row of rows) {
+      const amount = parseFloat(row.discountAmount);
+      discountCost += amount;
+      const current = byPromotion.get(row.promotionId) ?? { usageCount: 0, discountCost: 0 };
+      current.usageCount += 1;
+      current.discountCost += amount;
+      byPromotion.set(row.promotionId, current);
+    }
+    return {
+      usageCount: rows.length,
+      discountCost: discountCost.toFixed(2),
+      revenueInfluenced: '0.00',
+      conversionRateUplift: 0,
+      topPromotions: [...byPromotion.entries()]
+        .map(([promotionId, value]) => ({
+          promotionId,
+          usageCount: value.usageCount,
+          discountCost: value.discountCost.toFixed(2),
+        }))
+        .sort((a, b) => b.usageCount - a.usageCount)
+        .slice(0, 10),
+    };
+  }
 }

@@ -59,6 +59,7 @@ export class OnlineOrderService {
       giftCardCode: dto.giftCardCode,
       giftCardAmount: dto.giftCardAmount,
       storeCreditAmount: dto.storeCreditAmount,
+      couponCode: dto.couponCode,
       items: dto.items.map((item) => ({
         productId: item.itemId,
         variantId: item.variantId,
@@ -132,6 +133,7 @@ export class OnlineOrderService {
       orderType: this.mapOrderType(checkout.orderType as OnlineOrderType),
       customerId: dto.customerId,
       paymentMethod: dto.method,
+      couponCode: basket.couponCode,
       items: basket.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,

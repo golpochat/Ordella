@@ -118,6 +118,12 @@ export class OrderCreationService {
           )
         : null;
     creditTotal += parseMoney(storeCredit?.amount ?? '0.00');
+    if (dto.discountPercent) {
+      creditTotal += parseMoney(baseTotals.subtotal) * (dto.discountPercent / 100);
+    }
+    if (dto.discountFixed) {
+      creditTotal += dto.discountFixed;
+    }
 
     const draftTotals =
       creditTotal > 0
@@ -144,6 +150,9 @@ export class OrderCreationService {
           total: columns.total,
           orderNumber: generateOrderNumber(),
           deliveryDetails,
+          discountTotal: draftTotals.discountTotal,
+          promotionIds: draftTotals.promotionIds,
+          appliedPromotions: draftTotals.appliedPromotions,
         },
         manager,
       );
@@ -184,6 +193,7 @@ export class OrderCreationService {
         items,
         lines,
         draftTotals,
+        dto.couponCode,
         manager,
       );
 
@@ -213,6 +223,7 @@ export class OrderCreationService {
     items: OrderItemEntity[],
     lines: CalculatedLineItem[],
     draftTotals: DraftOrderTotals,
+    couponCode: string | undefined,
     manager: EntityManager,
   ): Promise<DraftOrderTotals> {
     const finalTotals = await this.orderPricingService.applyPromotionsAndRecalculate(
@@ -221,12 +232,16 @@ export class OrderCreationService {
       lines,
       items,
       order,
+      couponCode,
     );
 
     const columns = mapDraftTotalsToOrderColumns(finalTotals);
     order.subtotal = columns.subtotal;
     order.tax = columns.tax;
     order.total = columns.total;
+    order.discountTotal = finalTotals.discountTotal;
+    order.promotionIds = finalTotals.promotionIds;
+    order.appliedPromotions = finalTotals.appliedPromotions;
     await this.orderRepository.save(order, manager);
 
     return finalTotals;

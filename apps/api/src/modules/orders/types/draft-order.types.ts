@@ -8,6 +8,7 @@ export interface LineItemModifierSelection {
 /** Priced order line before order-level fees and promotions. */
 export interface CalculatedLineItem {
   productId: string;
+  categoryId?: string | null;
   variantId: string | null;
   bundleId?: string | null;
   quantity: number;
@@ -28,7 +29,7 @@ export interface CalculatedLineItem {
 
 export interface AppliedPromotion {
   promotionId: string;
-  code?: string;
+  code?: string | null;
   discountAmount: string;
 }
 

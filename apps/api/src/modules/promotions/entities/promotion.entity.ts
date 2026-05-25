@@ -15,6 +15,9 @@ export class PromotionEntity extends BaseTenantScopedEntity {
   @Column({ type: 'varchar', length: 128 })
   name!: string;
 
+  @Column({ type: 'text', nullable: true })
+  description!: string | null;
+
   @Column({ type: 'varchar', length: 32 })
   type!: PromotionType;
 
@@ -32,6 +35,30 @@ export class PromotionEntity extends BaseTenantScopedEntity {
 
   @Column({ type: 'varchar', length: 64, nullable: true })
   code!: string | null;
+
+  @Column({ name: 'buy_quantity', type: 'int', nullable: true })
+  buyQuantity!: number | null;
+
+  @Column({ name: 'get_quantity', type: 'int', nullable: true })
+  getQuantity!: number | null;
+
+  @Column({ name: 'min_spend', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  minSpend!: string | null;
+
+  @Column({ name: 'applicable_locations', type: 'uuid', array: true, default: () => "'{}'" })
+  applicableLocations!: string[];
+
+  @Column({ name: 'applicable_categories', type: 'uuid', array: true, default: () => "'{}'" })
+  applicableCategories!: string[];
+
+  @Column({ name: 'applicable_items', type: 'uuid', array: true, default: () => "'{}'" })
+  applicableItems!: string[];
+
+  @Column({ name: 'auto_apply', type: 'boolean', default: true })
+  autoApply!: boolean;
+
+  @Column({ type: 'varchar', length: 16, default: 'both' })
+  channel!: 'pos' | 'online' | 'both';
 
   @Column({ name: 'usage_limit', type: 'int', nullable: true })
   usageLimit!: number | null;

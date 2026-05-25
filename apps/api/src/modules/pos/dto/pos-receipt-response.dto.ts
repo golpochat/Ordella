@@ -21,8 +21,10 @@ export class PosReceiptResponseDto {
   status!: OrderStatus;
   paymentStatus!: OrderPaymentStatus;
   subtotal!: string;
+  discountTotal!: string;
   tax!: string;
   total!: string;
+  appliedPromotions!: Array<{ promotionId: string; code?: string | null; discountAmount: string }>;
   items!: PosReceiptLineDto[];
   paidAt!: string | null;
   createdAt!: string;

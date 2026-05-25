@@ -33,3 +33,8 @@ export async function deactivatePromotion(api: ApiClient, promotionId: string) {
   const data = await api.postData<unknown>(`admin/promotions/${promotionId}/deactivate`);
   return promotionSchema.parse(data);
 }
+
+export async function duplicatePromotion(api: ApiClient, promotionId: string) {
+  const data = await api.postData<unknown>(`admin/promotions/${promotionId}/duplicate`);
+  return promotionSchema.parse(data);
+}

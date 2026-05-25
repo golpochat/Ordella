@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import type { Promotion } from '@shared-utils';
 import { Button } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
-import { activatePromotion, deactivatePromotion } from '@/lib/api/admin/promotions';
+import { activatePromotion, deactivatePromotion, duplicatePromotion } from '@/lib/api/admin/promotions';
 
 export function PromotionActions({ promotion }: { promotion: Promotion }) {
   const router = useRouter();
@@ -19,9 +19,20 @@ export function PromotionActions({ promotion }: { promotion: Promotion }) {
     router.refresh();
   }
 
+  async function duplicate() {
+    const api = createBrowserApiClient();
+    await duplicatePromotion(api, promotion.id);
+    router.refresh();
+  }
+
   return (
-    <Button variant="secondary" size="sm" onClick={toggle}>
-      {promotion.isActive ? 'Deactivate' : 'Activate'}
-    </Button>
+    <>
+      <Button variant="outline" size="sm" onClick={duplicate}>
+        Duplicate
+      </Button>
+      <Button variant="secondary" size="sm" onClick={toggle}>
+        {promotion.isActive ? 'Disable' : 'Activate'}
+      </Button>
+    </>
   );
 }
