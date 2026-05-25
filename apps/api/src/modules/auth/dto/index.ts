@@ -1,5 +1,6 @@
 export * from './api-keys/api-key-response.dto';
 export * from './api-keys/create-api-key.dto';
+export * from './api-keys/rotate-api-key.dto';
 export * from './authentication/create-login.dto';
 export * from './authentication/create-logout.dto';
 export * from './authentication/create-mfa-verify.dto';

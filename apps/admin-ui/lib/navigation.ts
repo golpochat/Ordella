@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   ClipboardList,
+  Code2,
   CreditCard,
   FileClock,
   LayoutDashboard,
@@ -35,6 +36,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'orders', label: 'Orders', href: '/orders', icon: ShoppingCart },
   { id: 'promotions', label: 'Promotions', href: '/promotions', icon: Percent },
   { id: 'audit-logs', label: 'Audit Logs', href: '/audit-logs', icon: FileClock },
+  { id: 'developer', label: 'Developer', href: '/developer', icon: Code2 },
   { id: 'reports', label: 'Reports', href: '/reports', icon: ClipboardList },
   { id: 'settings', label: 'Settings', href: '/settings', icon: Settings },
 ];

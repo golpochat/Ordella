@@ -48,6 +48,6 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     ApiKeysModule,
   ],
   providers: [JwtStrategy, JwtAuthGuard, RbacGuard],
-  exports: [JwtModule, JwtAuthGuard, RbacGuard],
+  exports: [JwtModule, JwtAuthGuard, RbacGuard, ApiKeysModule],
 })
 export class AuthModule {}

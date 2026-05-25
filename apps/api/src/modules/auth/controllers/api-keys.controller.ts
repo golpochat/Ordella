@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -18,7 +19,7 @@ import { TenantGuard } from '../../../common/guards';
 import { JwtAuthGuard } from '../guards';
 import { RbacGuard } from '../guards';
 import { RequirePermissions } from '../decorators';
-import { CreateApiKeyDto } from '../dto';
+import { CreateApiKeyDto, RotateApiKeyDto } from '../dto';
 import { ApiKeyResponseDto } from '../dto';
 import { FilterPaginationDto } from '../dto';
 import { ApiKeysService } from '../services';
@@ -57,5 +58,26 @@ export class ApiKeysController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
     await this.apiKeysService.remove(tenant, id);
+  }
+
+  @Post(':id/revoke')
+  @RequirePermissions('api-keys:delete')
+  async revoke(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiSuccessResponse<ApiKeyResponseDto>> {
+    const data = await this.apiKeysService.revoke(tenant, id);
+    return { success: true, data };
+  }
+
+  @Patch(':id/rotate')
+  @RequirePermissions('api-keys:create')
+  async rotate(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RotateApiKeyDto,
+  ): Promise<ApiSuccessResponse<ApiKeyResponseDto>> {
+    const data = await this.apiKeysService.rotate(tenant, id, dto);
+    return { success: true, data };
   }
 }

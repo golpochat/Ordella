@@ -13,7 +13,28 @@ export class ApiKeyRepository extends BaseTenantRepository<ApiKeyEntity> {
     super(repository);
   }
 
-  // TODO: findByPrefix(prefix)
-  // TODO: listForTenant(tenantId)
-  // TODO: revokeForTenant(tenantId, id)
+  findByPrefix(prefix: string): Promise<ApiKeyEntity | null> {
+    return this.repository.findOne({ where: { keyPrefix: prefix } });
+  }
+
+  listForTenant(tenantId: string, skip = 0, take = 50): Promise<ApiKeyEntity[]> {
+    return this.repository.find({
+      where: { tenantId },
+      order: { createdAt: 'DESC' },
+      skip,
+      take,
+    });
+  }
+
+  findByIdForTenant(tenantId: string, id: string): Promise<ApiKeyEntity | null> {
+    return this.repository.findOne({ where: { id, tenantId } });
+  }
+
+  save(key: ApiKeyEntity): Promise<ApiKeyEntity> {
+    return this.repository.save(key);
+  }
+
+  create(partial: Partial<ApiKeyEntity>): ApiKeyEntity {
+    return this.repository.create(partial);
+  }
 }

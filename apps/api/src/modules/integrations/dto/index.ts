@@ -9,3 +9,4 @@ export * from './integrations/create-integration-app.dto';
 export * from './integrations/create-integration-webhook.dto';
 export * from './integrations/integration-app-response.dto';
 export * from './integrations/update-integration.dto';
+export * from './webhooks/webhook.dto';
