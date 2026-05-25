@@ -7,6 +7,7 @@ import { createOrPatchCart, type PosCart } from '@/lib/api';
 export type CartLineMeta = {
   productId: string;
   variantId?: string;
+  bundleId?: string;
   modifierOptionIds?: string[];
   name: string;
   variantName?: string;
@@ -15,15 +16,17 @@ export type CartLineMeta = {
   unitPrice: number;
   quantity: number;
   notes?: string;
+  bundleItems?: Array<{ itemId: string; name?: string; quantity: number; isOptional?: boolean }>;
 };
 
 export function cartLineKey(line: {
   productId: string;
   variantId?: string;
+  bundleId?: string;
   modifierOptionIds?: string[];
 }): string {
   const mods = [...(line.modifierOptionIds ?? [])].sort().join(',');
-  return `${line.productId}:${line.variantId ?? ''}:${mods}`;
+  return `${line.productId}:${line.variantId ?? ''}:${line.bundleId ?? ''}:${mods}`;
 }
 
 type CartState = {
@@ -81,6 +84,7 @@ function buildLineMeta(
   return {
     productId: item.id,
     variantId: options?.variantId,
+    bundleId: item.bundleId,
     modifierOptionIds: options?.modifierOptionIds,
     name: item.name,
     variantName: variant?.name,
@@ -89,6 +93,7 @@ function buildLineMeta(
     unitPrice: resolveUnitPrice(item, options?.variantId, options?.modifierOptionIds),
     quantity,
     notes: options?.notes,
+    bundleItems: item.bundleItems,
   };
 }
 
@@ -106,6 +111,7 @@ function mergeServerCart(
         prev ?? {
           productId: serverLine.productId,
           variantId: serverLine.variantId,
+          bundleId: serverLine.bundleId,
           modifierOptionIds: serverLine.modifierOptionIds,
           name: serverLine.productId,
           modifierLabels: [],
@@ -164,6 +170,7 @@ export const useCartStore = create<CartState>((set, get) => ({
       const current = get();
       const line = {
         productId: item.id,
+        bundleId: item.bundleId,
         quantity: 1,
         variantId: options?.variantId,
         modifierOptionIds: options?.modifierOptionIds,
@@ -199,6 +206,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         item: {
           productId: line.productId,
           variantId: line.variantId,
+          bundleId: line.bundleId,
           quantity,
           modifierOptionIds: line.modifierOptionIds,
         },
@@ -224,6 +232,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         item: {
           productId: line.productId,
           variantId: line.variantId,
+          bundleId: line.bundleId,
           quantity: 1,
         },
       });
@@ -248,6 +257,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         item: {
           productId: line.productId,
           variantId: line.variantId,
+          bundleId: line.bundleId,
           quantity: line.quantity,
           modifierOptionIds: line.modifierOptionIds,
           notes,

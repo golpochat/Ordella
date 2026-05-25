@@ -9,6 +9,7 @@ export interface LineItemModifierSelection {
 export interface CalculatedLineItem {
   productId: string;
   variantId: string | null;
+  bundleId?: string | null;
   quantity: number;
   /** Base catalog unit price (product + variant delta). */
   unitPrice: string;

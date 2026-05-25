@@ -165,6 +165,7 @@ function CatalogItemCard({
 }) {
   const orderable = isProductOrderable(product);
   const hasOptions = product.variants.length > 0 || product.modifiers.length > 0;
+  const isBundle = product.itemType === 'bundle';
 
   return (
     <Card className={!orderable ? 'opacity-80' : undefined}>
@@ -179,9 +180,17 @@ function CatalogItemCard({
           </div>
         ) : null}
         <div>
-          <p className="text-lg font-semibold leading-tight">{product.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-lg font-semibold leading-tight">{product.name}</p>
+            {isBundle ? <Badge>Bundle & Save</Badge> : null}
+          </div>
           {product.description ? (
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{product.description}</p>
+          ) : null}
+          {product.bundleItems?.length ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Includes {product.bundleItems.map((item) => item.name).filter(Boolean).join(', ')}
+            </p>
           ) : null}
         </div>
         <div className="flex items-center justify-between">
@@ -190,7 +199,7 @@ function CatalogItemCard({
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" className="h-11 flex-1">
-            <Link href={`/product/${product.id}`}>Details</Link>
+            <Link href={isBundle ? `/bundle/${product.id}` : `/product/${product.id}`}>Details</Link>
           </Button>
           <Button
             type="button"

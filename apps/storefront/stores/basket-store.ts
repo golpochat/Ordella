@@ -8,6 +8,8 @@ export type BasketLineMeta = {
   lineId: string;
   productId: string;
   variantId?: string;
+  bundleId?: string;
+  selectedBundleItemIds?: string[];
   modifierOptionIds?: string[];
   name: string;
   variantName?: string;
@@ -16,6 +18,7 @@ export type BasketLineMeta = {
   unitPrice: number;
   quantity: number;
   notes?: string;
+  bundleItems?: Array<{ itemId: string; name?: string; quantity: number; isOptional?: boolean }>;
   purchaseType?: 'one_time' | 'subscription';
   subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
 };
@@ -23,12 +26,15 @@ export type BasketLineMeta = {
 function lineKey(line: {
   productId: string;
   variantId?: string;
+  bundleId?: string;
+  selectedBundleItemIds?: string[];
   modifierOptionIds?: string[];
   purchaseType?: 'one_time' | 'subscription';
   subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
 }): string {
   const mods = [...(line.modifierOptionIds ?? [])].sort().join(',');
-  return `${line.productId}:${line.variantId ?? ''}:${mods}:${line.purchaseType ?? 'one_time'}:${line.subscriptionSchedule ?? ''}`;
+  const selectedBundleItems = [...(line.selectedBundleItemIds ?? [])].sort().join(',');
+  return `${line.productId}:${line.variantId ?? ''}:${line.bundleId ?? ''}:${selectedBundleItems}:${mods}:${line.purchaseType ?? 'one_time'}:${line.subscriptionSchedule ?? ''}`;
 }
 
 function resolveUnitPrice(
@@ -55,6 +61,7 @@ function buildLineMeta(
   options?: {
     variantId?: string;
     modifierOptionIds?: string[];
+    selectedBundleItemIds?: string[];
     notes?: string;
     purchaseType?: 'one_time' | 'subscription';
     subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
@@ -73,6 +80,8 @@ function buildLineMeta(
     lineId: crypto.randomUUID(),
     productId: product.id,
     variantId: options?.variantId,
+    bundleId: product.bundleId,
+    selectedBundleItemIds: options?.selectedBundleItemIds,
     modifierOptionIds: options?.modifierOptionIds,
     name: product.name,
     variantName: variant?.name,
@@ -81,6 +90,7 @@ function buildLineMeta(
     unitPrice: resolveUnitPrice(product, options?.variantId, options?.modifierOptionIds),
     quantity,
     notes: options?.notes,
+    bundleItems: product.bundleItems,
     purchaseType: options?.purchaseType,
     subscriptionSchedule: options?.subscriptionSchedule,
   };
@@ -96,6 +106,7 @@ type BasketState = {
     options?: {
       variantId?: string;
       modifierOptionIds?: string[];
+      selectedBundleItemIds?: string[];
       notes?: string;
       purchaseType?: 'one_time' | 'subscription';
       subscriptionSchedule?: 'weekly' | 'biweekly' | 'monthly';
@@ -130,6 +141,8 @@ export const useBasketStore = create<BasketState>((set, get) => ({
     const key = lineKey({
       productId: product.id,
       variantId: options?.variantId,
+      bundleId: product.bundleId,
+      selectedBundleItemIds: options?.selectedBundleItemIds,
       modifierOptionIds: options?.modifierOptionIds,
       purchaseType: options?.purchaseType,
       subscriptionSchedule: options?.subscriptionSchedule,

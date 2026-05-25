@@ -9,6 +9,7 @@ import { OrdersFeatureModule } from '../orders/modules/orders/orders-feature.mod
 import { PaymentsModule } from '../payments/payments.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { GiftCardsModule } from '../giftcards/giftcards.module';
+import { BundlesModule } from '../bundles';
 import { PosController } from './controllers';
 import { PosInventoryController } from './controllers/pos-inventory.controller';
 import {
@@ -40,6 +41,7 @@ import {
     InventoryModule,
     LoyaltyModule,
     GiftCardsModule,
+    BundlesModule,
     TypeOrmModule.forFeature([ProductEntity]),
   ],
   controllers: [PosController, PosInventoryController],

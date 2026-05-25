@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductEntity } from '../../../catalog/entities/product.entity';
 import { VariantEntity } from '../../../catalog/entities/variant.entity';
 import { ModifierOptionEntity } from '../../../catalog/entities/modifier-option.entity';
+import { BundleEntity } from '../../../bundles/entities/bundle.entity';
 import { OrderEntity } from '../../entities';
 import { OrderItemEntity } from '../../entities';
 import { OrderItemsController } from '../../controllers';
@@ -23,6 +24,7 @@ import { PromotionsService } from '../../integrations';
       ProductEntity,
       VariantEntity,
       ModifierOptionEntity,
+      BundleEntity,
     ]),
   ],
   controllers: [OrderItemsController],

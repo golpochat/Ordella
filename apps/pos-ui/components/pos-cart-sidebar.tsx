@@ -74,6 +74,16 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
                     <p className="text-xs text-muted-foreground">SKU {line.sku}</p>
                   ) : null}
                   <p className="text-sm">${formatMoney(line.unitPrice)} each</p>
+                  {line.bundleId && line.bundleItems?.length ? (
+                    <details className="mt-2 text-xs text-muted-foreground">
+                      <summary className="cursor-pointer font-medium text-foreground">Bundle breakdown</summary>
+                      <div className="mt-1 space-y-1">
+                        {line.bundleItems.map((item) => (
+                          <p key={item.itemId}>{item.quantity}x {item.name ?? 'Catalog item'}</p>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
                 </div>
                 <Button
                   type="button"

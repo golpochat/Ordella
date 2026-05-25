@@ -33,6 +33,8 @@ const onlineVariantSchema = z.object({
 
 export const onlineProductSchema = z.object({
   id: z.string().uuid(),
+  itemType: z.enum(['product', 'bundle']).default('product'),
+  bundleId: z.string().uuid().optional(),
   name: z.string(),
   description: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable(),
@@ -46,6 +48,12 @@ export const onlineProductSchema = z.object({
   inventoryTrackingEnabled: z.boolean().optional(),
   stockLevel: z.number().int().nullable().optional(),
   isActive: z.boolean().optional(),
+  bundleItems: z.array(z.object({
+    itemId: z.string().uuid(),
+    name: z.string().optional(),
+    quantity: z.number().int(),
+    isOptional: z.boolean().optional(),
+  })).optional(),
   variants: z.array(onlineVariantSchema).default([]),
   modifiers: z.array(modifierSchema).default([]),
 });
@@ -158,12 +166,36 @@ const catalogBundleSchema = z.object({
   items: z.array(onlineProductSchema),
 });
 
+const publicBundleSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  priceType: z.enum(['fixed', 'discounted', 'dynamic']),
+  fixedPrice: z.string().nullable().optional(),
+  discountAmount: z.string().nullable().optional(),
+  discountPercent: z.string().nullable().optional(),
+  isActive: z.boolean(),
+  items: z.array(z.object({
+    itemId: z.string().uuid(),
+    quantity: z.number().int(),
+    isOptional: z.boolean().optional(),
+  })).default([]),
+});
+
 export async function fetchCatalog() {
-  const data = await api.getData<unknown>('catalog');
+  const [data, bundlesData] = await Promise.all([
+    api.getData<unknown>('catalog'),
+    api.getData<unknown[]>('public/bundles/list', { params: { locationId: getLocationId() } }).catch(() => []),
+  ]);
   const bundle = catalogBundleSchema.parse(data);
+  const products = bundle.items.map(mapCatalogItemToProduct);
+  const bundles = z.array(publicBundleSchema).parse(bundlesData);
   return {
     categories: bundle.categories,
-    products: bundle.items.map(mapCatalogItemToProduct),
+    products: [
+      ...products,
+      ...bundles.map((catalogBundle) => mapBundleToProduct(catalogBundle, products)),
+    ],
   } satisfies OnlineMenu;
 }
 
@@ -176,6 +208,45 @@ function mapCatalogItemToProduct(item: z.infer<typeof onlineProductSchema>): Onl
     availableQuantity: stock,
     modifiers: item.modifiers ?? [],
     variants: item.variants ?? [],
+  };
+}
+
+function mapBundleToProduct(
+  bundle: z.infer<typeof publicBundleSchema>,
+  products: OnlineProduct[],
+): OnlineProduct {
+  const rawTotal = bundle.items.reduce((sum, item) => {
+    const product = products.find((candidate) => candidate.id === item.itemId);
+    return sum + (Number.parseFloat(product?.price ?? '0') * item.quantity);
+  }, 0);
+  const discount = bundle.discountAmount
+    ? Number.parseFloat(bundle.discountAmount)
+    : bundle.discountPercent
+      ? rawTotal * (Number.parseFloat(bundle.discountPercent) / 100)
+      : 0;
+  const price = bundle.priceType === 'fixed'
+    ? Number.parseFloat(bundle.fixedPrice ?? '0')
+    : Math.max(0, rawTotal - discount);
+
+  return {
+    id: bundle.id,
+    itemType: 'bundle',
+    bundleId: bundle.id,
+    name: bundle.name,
+    description: bundle.description ?? null,
+    categoryId: null,
+    price: price.toFixed(2),
+    sortOrder: 0,
+    availableQuantity: null,
+    isOutOfStock: false,
+    inventoryTrackingEnabled: false,
+    isActive: bundle.isActive,
+    bundleItems: bundle.items.map((item) => ({
+      ...item,
+      name: products.find((product) => product.id === item.itemId)?.name,
+    })),
+    variants: [],
+    modifiers: [],
   };
 }
 
@@ -283,6 +354,8 @@ export async function createOnlineOrder(body: {
   items: Array<{
     itemId: string;
     variantId?: string;
+    bundleId?: string;
+    selectedBundleItemIds?: string[];
     modifiers?: string[];
     quantity: number;
     price?: string;

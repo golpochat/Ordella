@@ -29,6 +29,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Analytics', href: '/dashboard', icon: LayoutDashboard },
   { id: 'locations', label: 'Locations', href: '/locations', icon: MapPin },
   { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },
+  { id: 'bundles', label: 'Bundles & Combos', href: '/catalog/bundles', icon: Package },
   { id: 'products', label: 'Products (legacy)', href: '/products', icon: Package },
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
   { id: 'staff', label: 'Staff', href: '/staff', icon: Users },
@@ -50,6 +51,11 @@ export const PRODUCTS_SUBNAV = [
   { label: 'All products', href: '/products' },
   { label: 'Categories', href: '/products/categories' },
   { label: 'Modifiers', href: '/products/modifiers' },
+];
+
+export const CATALOG_SUBNAV = [
+  { label: 'Catalog builder', href: '/catalog' },
+  { label: 'Bundles & Combos', href: '/catalog/bundles' },
 ];
 
 export const INVENTORY_SUBNAV = [

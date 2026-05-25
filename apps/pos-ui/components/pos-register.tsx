@@ -260,8 +260,20 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                   <Card key={item.id} className="min-h-32">
                     <CardContent className="flex h-full flex-col justify-between p-4">
                       <div>
-                        <p className="text-lg font-semibold leading-tight">{item.name}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-lg font-semibold leading-tight">{item.name}</p>
+                          {item.itemType === 'bundle' ? (
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                              Bundle
+                            </span>
+                          ) : null}
+                        </div>
                         <p className="text-sm text-muted-foreground">${item.price}</p>
+                        {item.bundleItems?.length ? (
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                            {item.bundleItems.map((bundleItem) => bundleItem.name).filter(Boolean).join(', ')}
+                          </p>
+                        ) : null}
                         {item.sku ? (
                           <p className="mt-1 text-xs text-muted-foreground">SKU {item.sku}</p>
                         ) : null}

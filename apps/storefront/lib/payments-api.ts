@@ -35,6 +35,8 @@ export async function createCheckoutSession(body: {
   items: Array<{
     itemId: string;
     variantId?: string;
+    bundleId?: string;
+    selectedBundleItemIds?: string[];
     modifiers?: string[];
     quantity: number;
   }>;

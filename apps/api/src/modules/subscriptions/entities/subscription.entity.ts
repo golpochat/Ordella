@@ -2,9 +2,23 @@ import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm
 import { CustomerEntity } from '../../loyalty/entities';
 import { OrderType } from '../../orders/enums/order-type.enum';
 import { BaseTenantScopedEntity } from '../../loyalty/entities/base-tenant-scoped.entity';
-import { SubscriptionItemEntity } from './subscription-item.entity';
-import { SubscriptionOrderEntity } from './subscription-order.entity';
 import { SubscriptionSchedule, SubscriptionStatus } from './subscription.enums';
+
+type SubscriptionItemSnapshot = {
+  id: string;
+  itemId: string;
+  variantId: string | null;
+  quantity: number;
+  modifiers: Record<string, unknown>;
+};
+
+type SubscriptionOrderSnapshot = {
+  id: string;
+  orderId: string | null;
+  runAt: Date;
+  status: string;
+  failureReason: string | null;
+};
 
 @Entity('customer_subscriptions')
 @Index(['tenantId', 'customerId'])
@@ -41,9 +55,9 @@ export class SubscriptionEntity extends BaseTenantScopedEntity {
   @Column({ name: 'delivery_details', type: 'jsonb', nullable: true })
   deliveryDetails!: Record<string, unknown> | null;
 
-  @OneToMany(() => SubscriptionItemEntity, (item) => item.subscription)
-  items!: SubscriptionItemEntity[];
+  @OneToMany('SubscriptionItemEntity', 'subscription')
+  items!: SubscriptionItemSnapshot[];
 
-  @OneToMany(() => SubscriptionOrderEntity, (order) => order.subscription)
-  orders!: SubscriptionOrderEntity[];
+  @OneToMany('SubscriptionOrderEntity', 'subscription')
+  orders!: SubscriptionOrderSnapshot[];
 }

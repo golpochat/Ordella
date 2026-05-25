@@ -39,6 +39,7 @@ import { CreateCheckoutSessionDto } from '../dto/create-checkout-session.dto';
 import { StripeCheckoutPendingStore } from './stripe-checkout-pending.store';
 import { LoyaltyService } from '../../loyalty/services';
 import { GiftCardsService } from '../../giftcards/services';
+import { BundleEntity, BundlePriceType } from '../../bundles/entities';
 
 const DEFAULT_CURRENCY = 'EUR';
 const TOTAL_TOLERANCE = 0.02;
@@ -60,6 +61,8 @@ export class OnlineStripeCheckoutService {
     private readonly giftCardsService: GiftCardsService,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
+    @InjectRepository(BundleEntity)
+    private readonly bundleRepository: Repository<BundleEntity>,
   ) {}
 
   getPublicConfig(): { publishableKey: string | null; stripeConfigured: boolean } {
@@ -81,6 +84,8 @@ export class OnlineStripeCheckoutService {
       dto.items.map((item) => ({
         productId: item.itemId,
         variantId: item.variantId,
+        bundleId: item.bundleId,
+        selectedBundleItemIds: item.selectedBundleItemIds,
         quantity: item.quantity,
         modifierOptionIds: item.modifiers,
       })),
@@ -150,6 +155,8 @@ export class OnlineStripeCheckoutService {
       items: dto.items.map((item) => ({
         productId: item.itemId,
         variantId: item.variantId,
+        bundleId: item.bundleId,
+        selectedBundleItemIds: item.selectedBundleItemIds,
         quantity: item.quantity,
         modifierOptionIds: item.modifiers,
       })),
@@ -353,6 +360,8 @@ export class OnlineStripeCheckoutService {
       items: pending.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,
+        bundleId: line.bundleId,
+        selectedBundleItemIds: line.selectedBundleItemIds,
         quantity: line.quantity,
         modifierOptionIds: line.modifierOptionIds,
       })),
@@ -440,11 +449,17 @@ export class OnlineStripeCheckoutService {
       variantId?: string;
       quantity: number;
       modifierOptionIds?: string[];
+      bundleId?: string;
+      selectedBundleItemIds?: string[];
     }>,
   ) {
     const priced = [];
 
     for (const item of items) {
+      if (item.bundleId) {
+        priced.push(...await this.validateAndPriceBundleLine(tenantId, locationId, item));
+        continue;
+      }
       const product = await this.menuRepository.findProductByIdForTenant(tenantId, item.productId);
       if (
         !product ||
@@ -497,6 +512,67 @@ export class OnlineStripeCheckoutService {
     }
 
     return priced;
+  }
+
+  private async validateAndPriceBundleLine(
+    tenantId: string,
+    locationId: string,
+    item: {
+      productId: string;
+      variantId?: string;
+      quantity: number;
+      modifierOptionIds?: string[];
+      bundleId?: string;
+      selectedBundleItemIds?: string[];
+    },
+  ) {
+    const bundle = await this.bundleRepository.findOne({
+      where: { tenantId, id: item.bundleId, isActive: true },
+      relations: { items: true },
+    });
+    if (!bundle) throwOnlineProductInactive(item.bundleId ?? item.productId);
+    const componentLines = [];
+    const selected = new Set(item.selectedBundleItemIds ?? []);
+    for (const component of bundle.items.filter((bundleItem) =>
+      !bundleItem.isOptional ||
+      !item.selectedBundleItemIds ||
+      selected.has(bundleItem.itemId),
+    )) {
+      const product = await this.menuRepository.findProductByIdForTenant(tenantId, component.itemId);
+      if (!product || product.status !== ProductStatus.ACTIVE || !isOnlineChannelVisible(product.channelVisibility)) {
+        throwOnlineProductInactive(component.itemId);
+      }
+      const quantity = component.quantity * item.quantity;
+      const available = await this.menuRepository.getAvailableQuantity(tenantId, locationId, component.itemId);
+      if (available !== null) {
+        if (available <= 0) throwOnlineProductOutOfStock(component.itemId);
+        if (quantity > available) throwOnlineInsufficientStock(component.itemId, quantity, available);
+      }
+      componentLines.push({
+        productId: component.itemId,
+        variantId: null,
+        quantity,
+        unitPrice: product.price,
+        modifierTotal: formatMoney(0),
+        lineSubtotal: formatMoney(parseMoney(product.price) * quantity),
+        categoryId: product.categoryId,
+      });
+    }
+    const rawSubtotal = componentLines.reduce((sum, line) => sum + parseMoney(line.lineSubtotal), 0);
+    if (bundle.priceType === BundlePriceType.DYNAMIC || rawSubtotal <= 0) return componentLines;
+    const target = bundle.priceType === BundlePriceType.FIXED && bundle.fixedPrice
+      ? parseMoney(bundle.fixedPrice) * item.quantity
+      : rawSubtotal - (
+          bundle.discountAmount
+            ? parseMoney(bundle.discountAmount) * item.quantity
+            : bundle.discountPercent
+              ? rawSubtotal * (parseMoney(bundle.discountPercent) / 100)
+              : 0
+        );
+    return componentLines.map((line) => ({
+      ...line,
+      lineSubtotal: formatMoney(target * (parseMoney(line.lineSubtotal) / rawSubtotal)),
+    }));
   }
 
   private resolveOrderType(orderType: OnlineOrderType): OrderType {

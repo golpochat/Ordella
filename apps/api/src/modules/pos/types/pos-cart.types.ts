@@ -1,6 +1,7 @@
 export interface PosCartLine {
   productId: string;
   variantId?: string;
+  bundleId?: string;
   quantity: number;
   modifierOptionIds?: string[];
   notes?: string;

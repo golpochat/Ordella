@@ -46,7 +46,13 @@ export class BasketService {
     sessionId: string,
     productId: string,
     quantity: number,
-    modifiers?: { variantId?: string; modifierOptionIds?: string[]; notes?: string },
+    modifiers?: {
+      variantId?: string;
+      bundleId?: string;
+      selectedBundleItemIds?: string[];
+      modifierOptionIds?: string[];
+      notes?: string;
+    },
   ): OnlineBasket {
     const basket = this.baskets.get(sessionId);
     if (!basket) {
@@ -60,6 +66,8 @@ export class BasketService {
       id: randomUUID(),
       productId,
       variantId: modifiers?.variantId,
+      bundleId: modifiers?.bundleId,
+      selectedBundleItemIds: modifiers?.selectedBundleItemIds,
       quantity,
       modifierOptionIds: modifiers?.modifierOptionIds,
       notes: modifiers?.notes,

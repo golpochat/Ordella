@@ -65,6 +65,7 @@ export class PosOrderService {
       items: cart.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,
+        bundleId: line.bundleId,
         quantity: line.quantity,
         modifierOptionIds: line.modifierOptionIds,
         notes: line.notes,

@@ -4,6 +4,8 @@ export interface OnlineBasketLine {
   id: string;
   productId: string;
   variantId?: string;
+  bundleId?: string;
+  selectedBundleItemIds?: string[];
   quantity: number;
   modifierOptionIds?: string[];
   notes?: string;

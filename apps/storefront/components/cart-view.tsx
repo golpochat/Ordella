@@ -63,6 +63,18 @@ export function CartView() {
                       Recurring order: {line.subscriptionSchedule === 'biweekly' ? 'every 2 weeks' : line.subscriptionSchedule}
                     </p>
                   ) : null}
+                  {line.bundleId && line.bundleItems?.length ? (
+                    <details className="mt-2 text-xs text-muted-foreground">
+                      <summary className="cursor-pointer font-medium text-foreground">Bundle contents</summary>
+                      <div className="mt-1 space-y-1">
+                        {line.bundleItems
+                          .filter((item) => !item.isOptional || !line.selectedBundleItemIds || line.selectedBundleItemIds.includes(item.itemId))
+                          .map((item) => (
+                          <p key={item.itemId}>{item.quantity}x {item.name ?? 'Catalog item'}</p>
+                        ))}
+                      </div>
+                    </details>
+                  ) : null}
                 </div>
                 <Button type="button" variant="ghost" onClick={() => removeLine(line.lineId)}>
                   Remove

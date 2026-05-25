@@ -17,6 +17,8 @@ export interface StripeCheckoutPendingSnapshot {
   items: Array<{
     productId: string;
     variantId?: string;
+    bundleId?: string;
+    selectedBundleItemIds?: string[];
     quantity: number;
     modifierOptionIds?: string[];
   }>;

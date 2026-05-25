@@ -62,6 +62,8 @@ export class OnlineOrderService {
       items: dto.items.map((item) => ({
         productId: item.itemId,
         variantId: item.variantId,
+        bundleId: item.bundleId,
+        selectedBundleItemIds: item.selectedBundleItemIds,
         quantity: item.quantity,
         modifierOptionIds: item.modifiers,
       })),
@@ -133,6 +135,8 @@ export class OnlineOrderService {
       items: basket.items.map((line) => ({
         productId: line.productId,
         variantId: line.variantId,
+        bundleId: line.bundleId,
+        selectedBundleItemIds: line.selectedBundleItemIds,
         quantity: line.quantity,
         modifierOptionIds: line.modifierOptionIds,
         notes: line.notes,

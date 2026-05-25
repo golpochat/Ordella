@@ -17,6 +17,8 @@ export class OnlineBasketFacade {
       if (dto.item) {
         this.basketService.addItem(dto.sessionId, this.requireProductId(dto), dto.item.quantity, {
           variantId: dto.item.variantId,
+          bundleId: dto.item.bundleId,
+          selectedBundleItemIds: dto.item.selectedBundleItemIds,
           modifierOptionIds: dto.item.modifierOptionIds,
           notes: dto.item.notes,
         });
@@ -32,6 +34,8 @@ export class OnlineBasketFacade {
     if (dto.item) {
       this.basketService.addItem(basket.sessionId, this.requireProductId(dto), dto.item.quantity, {
         variantId: dto.item.variantId,
+        bundleId: dto.item.bundleId,
+        selectedBundleItemIds: dto.item.selectedBundleItemIds,
         modifierOptionIds: dto.item.modifierOptionIds,
         notes: dto.item.notes,
       });
@@ -47,6 +51,8 @@ export class OnlineBasketFacade {
       case OnlineBasketAction.ADD:
         this.basketService.addItem(dto.sessionId, this.requireProductId(dto), dto.item.quantity, {
           variantId: dto.item.variantId,
+          bundleId: dto.item.bundleId,
+          selectedBundleItemIds: dto.item.selectedBundleItemIds,
           modifierOptionIds: dto.item.modifierOptionIds,
           notes: dto.item.notes,
         });

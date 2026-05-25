@@ -21,6 +21,15 @@ export class OnlineBasketItemDto {
   @IsUUID()
   variantId?: string;
 
+  @IsOptional()
+  @IsUUID()
+  bundleId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  selectedBundleItemIds?: string[];
+
   @IsInt()
   @Min(1)
   quantity!: number;

@@ -16,6 +16,10 @@ export class PosCartItemDto {
   @IsUUID()
   variantId?: string;
 
+  @IsOptional()
+  @IsUUID()
+  bundleId?: string;
+
   @IsInt()
   @Min(1)
   quantity!: number;

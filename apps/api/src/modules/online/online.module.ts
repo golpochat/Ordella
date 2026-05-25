@@ -10,6 +10,7 @@ import { ModifierEntity } from '../catalog/entities/modifier.entity';
 import { ModifierOptionEntity } from '../catalog/entities/modifier-option.entity';
 import { VariantEntity } from '../catalog/entities/variant.entity';
 import { ProductModifierEntity } from '../catalog/entities/product-modifier.entity';
+import { BundleEntity, BundleItemEntity } from '../bundles/entities';
 import { StockItemEntity } from '../inventory/entities/stock-item.entity';
 import { KdsModule } from '../kds/kds.module';
 import { PosModule } from '../pos/pos.module';
@@ -64,6 +65,8 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
       ModifierOptionEntity,
       VariantEntity,
       ProductModifierEntity,
+      BundleEntity,
+      BundleItemEntity,
       StockItemEntity,
     ]),
     OrdersFeatureModule,

@@ -245,6 +245,7 @@ export class OrderCreationService {
           orderId,
           productId: line.productId,
           variantId: line.variantId,
+          bundleId: line.bundleId ?? null,
           quantity: line.quantity,
           price: line.unitPriceWithModifiers,
           notes: line.notes,

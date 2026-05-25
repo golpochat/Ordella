@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductEntity } from '../../../catalog/entities/product.entity';
 import { VariantEntity } from '../../../catalog/entities/variant.entity';
 import { ModifierOptionEntity } from '../../../catalog/entities/modifier-option.entity';
+import { BundleEntity } from '../../../bundles/entities/bundle.entity';
 import { OrderEntity } from '../../entities';
 import { OrderItemEntity } from '../../entities';
 import { OrderStatusHistoryEntity } from '../../entities';
@@ -57,6 +58,7 @@ import { GiftCardsModule } from '../../../giftcards/giftcards.module';
       ProductEntity,
       VariantEntity,
       ModifierOptionEntity,
+      BundleEntity,
     ]),
   ],
   controllers: [OrdersFulfillmentController, OrdersPosController, OrdersController],

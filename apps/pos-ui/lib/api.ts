@@ -11,6 +11,7 @@ const api = createApiClient({
 const posCartLineSchema = z.object({
   productId: z.string().uuid(),
   variantId: z.string().uuid().optional(),
+  bundleId: z.string().uuid().optional(),
   quantity: z.number().int().min(1),
   modifierOptionIds: z.array(z.string().uuid()).optional(),
   notes: z.string().optional(),
@@ -133,6 +134,8 @@ const catalogModifierSchema = z.object({
 
 export const posCatalogItemSchema = z.object({
   id: z.string().uuid(),
+  itemType: z.enum(['product', 'bundle']).default('product'),
+  bundleId: z.string().uuid().optional(),
   name: z.string(),
   description: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable(),
@@ -144,6 +147,12 @@ export const posCatalogItemSchema = z.object({
   stockLevel: z.number().int().nullable().optional(),
   stockStatus: z.enum(['ok', 'low', 'out']).optional(),
   isOutOfStock: z.boolean().optional(),
+  bundleItems: z.array(z.object({
+    itemId: z.string().uuid(),
+    name: z.string().optional(),
+    quantity: z.number().int(),
+    isOptional: z.boolean().optional(),
+  })).optional(),
   variants: z.array(catalogVariantSchema).default([]),
   modifiers: z.array(catalogModifierSchema).default([]),
 });
@@ -172,6 +181,7 @@ export async function listPosCatalog(locationId?: string) {
 
 type CartLinePayload = {
   productId: string;
+  bundleId?: string;
   quantity: number;
   variantId?: string;
   modifierOptionIds?: string[];

@@ -172,6 +172,8 @@ export function CheckoutForm() {
       const items = lines.map((line) => ({
         itemId: line.productId,
         variantId: line.variantId,
+        bundleId: line.bundleId,
+        selectedBundleItemIds: line.selectedBundleItemIds,
         modifiers: line.modifierOptionIds,
         quantity: line.quantity,
         price: line.unitPrice.toFixed(2),
@@ -227,9 +229,11 @@ export function CheckoutForm() {
           orderType,
           customerId: accountCustomerId ?? undefined,
           customer,
-          items: items.map(({ itemId, variantId, modifiers, quantity }) => ({
+          items: items.map(({ itemId, variantId, bundleId, selectedBundleItemIds, modifiers, quantity }) => ({
             itemId,
             variantId,
+            bundleId,
+            selectedBundleItemIds,
             modifiers,
             quantity,
           })),

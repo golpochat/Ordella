@@ -25,6 +25,15 @@ class CreateOnlineOrderItemDto {
   variantId?: string;
 
   @IsOptional()
+  @IsUUID()
+  bundleId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  selectedBundleItemIds?: string[];
+
+  @IsOptional()
   @IsArray()
   @IsUUID('4', { each: true })
   modifiers?: string[];

@@ -6,6 +6,7 @@ import { TenantContext } from '../../../common/interfaces';
 import { ProductEntity } from '../../catalog/entities/product.entity';
 import { VariantEntity } from '../../catalog/entities/variant.entity';
 import { ModifierOptionEntity } from '../../catalog/entities/modifier-option.entity';
+import { BundleEntity, BundlePriceType } from '../../bundles/entities';
 import {
   calculateGrandTotal,
   formatMoney,
@@ -30,6 +31,7 @@ export interface CalculateLineItemInput {
   variantId?: string | null;
   modifierOptionIds?: string[];
   notes?: string | null;
+  bundleId?: string | null;
 }
 
 @Injectable()
@@ -41,6 +43,8 @@ export class OrderPricingService {
     private readonly variantRepository: Repository<VariantEntity>,
     @InjectRepository(ModifierOptionEntity)
     private readonly modifierOptionRepository: Repository<ModifierOptionEntity>,
+    @InjectRepository(BundleEntity)
+    private readonly bundleRepository: Repository<BundleEntity>,
     private readonly feeCalculator: OrderFeeCalculatorService,
     private readonly promotionsService: PromotionsService,
   ) {}
@@ -71,6 +75,7 @@ export class OrderPricingService {
     return {
       productId,
       variantId: variantId ?? null,
+      bundleId: input.bundleId ?? null,
       quantity,
       unitPrice,
       modifierTotal,
@@ -88,21 +93,89 @@ export class OrderPricingService {
     items: CreateOrderNestedItemDto[],
     pricingContext: OrderPricingContext,
   ): Promise<CalculatedLineItem[]> {
-    return Promise.all(
-      items.map((item) =>
-        this.calculateLineItem(
-          tenant,
-          {
-            productId: item.productId,
-            quantity: item.quantity,
-            variantId: item.variantId,
-            modifierOptionIds: item.modifierOptionIds,
-            notes: item.notes,
-          },
-          pricingContext,
-        ),
-      ),
+    const lines: CalculatedLineItem[] = [];
+    for (const item of items) {
+      if (item.bundleId) {
+        lines.push(...await this.calculateBundleLines(tenant, item, pricingContext));
+        continue;
+      }
+      lines.push(await this.calculateLineItem(
+        tenant,
+        {
+          productId: item.productId,
+          quantity: item.quantity,
+          variantId: item.variantId,
+          modifierOptionIds: item.modifierOptionIds,
+          notes: item.notes,
+        },
+        pricingContext,
+      ));
+    }
+    return lines;
+  }
+
+  private async calculateBundleLines(
+    tenant: TenantContext,
+    item: CreateOrderNestedItemDto,
+    pricingContext: OrderPricingContext,
+  ): Promise<CalculatedLineItem[]> {
+    const bundle = await this.bundleRepository.findOne({
+      where: { id: item.bundleId, tenantId: tenant.tenantId, isActive: true },
+      relations: { items: true },
+    });
+    if (!bundle) throw new NotFoundException(`Bundle ${item.bundleId} not found`);
+    const selected = new Set(item.selectedBundleItemIds ?? []);
+    const rows = bundle.items.filter(
+      (bundleItem) =>
+        !bundleItem.isOptional ||
+        !item.selectedBundleItemIds ||
+        selected.has(bundleItem.itemId),
     );
+    const lines = await Promise.all(rows.map((bundleItem) =>
+      this.calculateLineItem(tenant, {
+        productId: bundleItem.itemId,
+        quantity: bundleItem.quantity * item.quantity,
+        notes: item.notes ?? `Bundle: ${bundle.name}`,
+        bundleId: bundle.id,
+      }, pricingContext),
+    ));
+    return this.applyBundlePricing(bundle, lines, item.quantity);
+  }
+
+  private applyBundlePricing(
+    bundle: BundleEntity,
+    lines: CalculatedLineItem[],
+    bundleQuantity: number,
+  ): CalculatedLineItem[] {
+    const rawSubtotal = sumMoney(lines.map((line) => line.lineSubtotal));
+    if (rawSubtotal <= 0 || bundle.priceType === BundlePriceType.DYNAMIC) return lines;
+
+    if (bundle.priceType === BundlePriceType.FIXED && bundle.fixedPrice) {
+      const target = parseMoney(bundle.fixedPrice) * bundleQuantity;
+      return lines.map((line) => {
+        const share = parseMoney(line.lineSubtotal) / rawSubtotal;
+        const lineSubtotal = formatMoney(target * share);
+        const unit = formatMoney(parseMoney(lineSubtotal) / line.quantity);
+        return {
+          ...line,
+          unitPrice: unit,
+          modifierTotal: formatMoney(0),
+          unitPriceWithModifiers: unit,
+          lineSubtotal,
+          lineDiscount: formatMoney(0),
+        };
+      });
+    }
+
+    const discountAmount = bundle.discountAmount
+      ? parseMoney(bundle.discountAmount) * bundleQuantity
+      : bundle.discountPercent
+        ? rawSubtotal * (parseMoney(bundle.discountPercent) / 100)
+        : 0;
+    return lines.map((line) => ({
+      ...line,
+      lineDiscount: formatMoney(discountAmount * (parseMoney(line.lineSubtotal) / rawSubtotal)),
+    }));
   }
 
   calculateOrderTotals(

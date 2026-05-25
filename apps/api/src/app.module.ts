@@ -26,6 +26,7 @@ import { AuditModule } from './modules/audit';
 import { MarketingModule } from './modules/marketing';
 import { CrmModule } from './modules/crm';
 import { SubscriptionsModule } from './modules/subscriptions';
+import { BundlesModule } from './modules/bundles';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { SubscriptionsModule } from './modules/subscriptions';
     MarketingModule,
     CrmModule,
     SubscriptionsModule,
+    BundlesModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

@@ -16,6 +16,16 @@ export class CreateOrderNestedItemDto {
   @IsUUID()
   variantId?: string;
 
+  @IsOptional()
+  @IsUUID()
+  bundleId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  selectedBundleItemIds?: string[];
+
   @IsInt()
   @Min(1)
   quantity!: number;

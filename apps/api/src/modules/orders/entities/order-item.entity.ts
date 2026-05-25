@@ -19,6 +19,9 @@ export class OrderItemEntity extends BaseTimestampsEntity {
   @Column({ name: 'variant_id', type: 'uuid', nullable: true })
   variantId!: string | null;
 
+  @Column({ name: 'bundle_id', type: 'uuid', nullable: true })
+  bundleId!: string | null;
+
   @Column({ type: 'int' })
   quantity!: number;
 
