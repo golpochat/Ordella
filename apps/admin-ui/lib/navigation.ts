@@ -14,6 +14,7 @@ import {
   Gift,
   Settings,
   ShoppingCart,
+  Sparkles,
   Users,
   Warehouse,
 } from 'lucide-react';
@@ -40,6 +41,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'orders', label: 'Orders', href: '/orders', icon: ShoppingCart },
   { id: 'subscriptions', label: 'Subscriptions', href: '/subscriptions', icon: Repeat },
   { id: 'promotions', label: 'Promotions & Discounts', href: '/promotions', icon: Percent },
+  { id: 'recommendations', label: 'AI Recommendations', href: '/recommendations', icon: Sparkles },
   { id: 'marketing', label: 'Marketing', href: '/marketing/campaigns', icon: Megaphone },
   { id: 'audit-logs', label: 'Audit Logs', href: '/audit-logs', icon: FileClock },
   { id: 'developer', label: 'Developer', href: '/developer', icon: Code2 },

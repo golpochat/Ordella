@@ -155,6 +155,27 @@ export type CheckoutResult = z.infer<typeof checkoutResultSchema>;
 export type PaymentResult = z.infer<typeof paymentResultSchema>;
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
+const recommendationItemSchema = z.object({
+  item: onlineProductSchema,
+  score: z.number(),
+  reason: z.enum([
+    'frequently_bought_together',
+    'frequently_viewed_together',
+    'customer_preference',
+    'same_category',
+    'popular_item',
+  ]),
+});
+
+const recommendationResponseSchema = z.object({
+  recommendations: z.array(recommendationItemSchema),
+  strategy: z.array(z.string()),
+  generatedAt: z.string(),
+});
+
+export type RecommendationItem = z.infer<typeof recommendationItemSchema>;
+export type RecommendationResponse = z.infer<typeof recommendationResponseSchema>;
+
 const catalogBundleSchema = z.object({
   categories: z.array(
     z.object({
@@ -258,6 +279,55 @@ export async function fetchPublicMenu() {
     const data = await api.getData<unknown>('public/menu', { params: { locationId } });
     return onlineMenuSchema.parse(data);
   }
+}
+
+function recommendationParams(options?: { locationId?: string; customerId?: string; itemIds?: string[]; limit?: number }) {
+  return {
+    locationId: options?.locationId ?? getLocationId(),
+    customerId: options?.customerId,
+    itemIds: options?.itemIds?.join(','),
+    limit: options?.limit,
+  };
+}
+
+export async function fetchItemRecommendations(
+  itemId: string,
+  options?: { customerId?: string; limit?: number },
+) {
+  const data = await api.getData<unknown>(`recommendations/item/${itemId}`, {
+    params: recommendationParams(options),
+  });
+  return recommendationResponseSchema.parse(data);
+}
+
+export async function fetchCustomerRecommendations(
+  customerId: string,
+  options?: { itemIds?: string[]; limit?: number },
+) {
+  const data = await api.getData<unknown>(`recommendations/customer/${customerId}`, {
+    params: recommendationParams(options),
+  });
+  return recommendationResponseSchema.parse(data);
+}
+
+export async function fetchCartRecommendations(options?: {
+  itemIds?: string[];
+  customerId?: string;
+  limit?: number;
+}) {
+  const data = await api.getData<unknown>('recommendations/cart', {
+    params: recommendationParams(options),
+  });
+  return recommendationResponseSchema.parse(data);
+}
+
+export async function trackRecommendationEvent(body: {
+  itemId: string;
+  customerId?: string;
+  eventType: 'view' | 'add_to_cart' | 'purchase' | 'impression' | 'click';
+  source?: string;
+}) {
+  await api.postData('recommendations/events', body);
 }
 
 export async function fetchProductsByCategory(categoryId: string) {

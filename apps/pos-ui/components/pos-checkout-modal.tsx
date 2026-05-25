@@ -28,6 +28,7 @@ import {
 } from '@/lib/api';
 import { enqueueOfflineSale } from '@/lib/offline-queue';
 import { useCartStore } from '@/stores/cart-store';
+import { PosRecommendationsPanel } from '@/components/pos-recommendations-panel';
 
 type PosCheckoutModalProps = {
   open: boolean;
@@ -336,6 +337,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
             value={couponCode}
             onChange={(e) => setCouponCode(e.target.value)}
           />
+          <PosRecommendationsPanel customerId={selectedCustomer?.id} />
 
           {!online ? (
             <p className="text-sm text-amber-700">

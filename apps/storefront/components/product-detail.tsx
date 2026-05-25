@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
-import { isProductOrderable, type OnlineProduct } from '@/lib/api';
+import { isProductOrderable, trackRecommendationEvent, type OnlineProduct } from '@/lib/api';
+import { RecommendationSection } from '@/components/recommendation-section';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function ProductDetail({ product }: { product: OnlineProduct }) {
@@ -56,6 +57,10 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
     ) &&
     (product.variants.length === 0 || !!selectedVariantId);
 
+  useEffect(() => {
+    void trackRecommendationEvent({ itemId: product.id, eventType: 'view', source: 'product_page' }).catch(() => undefined);
+  }, [product.id]);
+
   const onAdd = () => {
     addItem(product, {
       variantId: selectedVariantId,
@@ -67,7 +72,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">{product.name}</CardTitle>
@@ -176,6 +181,18 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
           </Button>
         </CardContent>
       </Card>
+      <RecommendationSection
+        title="Frequently bought together"
+        source="product_page_frequently_bought_together"
+        itemId={product.id}
+        mode="item"
+      />
+      <RecommendationSection
+        title="You may also like"
+        source="product_page_you_may_also_like"
+        itemIds={[product.id]}
+        mode="cart"
+      />
     </div>
   );
 }

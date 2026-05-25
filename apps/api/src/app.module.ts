@@ -28,6 +28,7 @@ import { CrmModule } from './modules/crm';
 import { SubscriptionsModule } from './modules/subscriptions';
 import { BundlesModule } from './modules/bundles';
 import { ThemesModule } from './modules/themes';
+import { RecommendationsModule } from './modules/recommendations';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { ThemesModule } from './modules/themes';
     SubscriptionsModule,
     BundlesModule,
     ThemesModule,
+    RecommendationsModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

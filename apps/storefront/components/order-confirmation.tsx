@@ -5,6 +5,7 @@ import { labelOrderStatus, labelOrderType } from '@shared-utils';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { useOrderTracking } from '@/hooks/use-order-tracking';
 import { getOpeningHours } from '@/lib/config';
+import { RecommendationSection } from '@/components/recommendation-section';
 
 type OrderConfirmationProps = {
   orderId: string;
@@ -30,7 +31,7 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
         : 'Visit the business to collect your in-store order.';
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-8">
+    <div className="mx-auto max-w-xl space-y-6 px-4 py-8">
       {justPlaced ? (
         <p className="mb-4 text-center text-lg font-medium text-emerald-700">
           Thank you — your order was placed successfully.
@@ -63,6 +64,11 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
           </div>
         </CardContent>
       </Card>
+      <RecommendationSection
+        title="You might also like"
+        source="post_purchase_you_might_also_like"
+        mode="cart"
+      />
     </div>
   );
 }

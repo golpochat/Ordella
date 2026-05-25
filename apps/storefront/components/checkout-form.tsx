@@ -15,6 +15,7 @@ import {
   type StorefrontCustomerAddress,
 } from '@/lib/api';
 import { createCheckoutSession } from '@/lib/payments-api';
+import { RecommendationSection } from '@/components/recommendation-section';
 import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
 import { createSubscriptionCheckoutSession } from '@/lib/subscriptions-api';
 import { useBasketStore } from '@/stores/basket-store';
@@ -139,6 +140,7 @@ export function CheckoutForm() {
   const payableTotal = Math.max(0, totals.total - loyaltyDiscount - giftCardDiscount - storeCreditDiscount);
   const subscriptionLines = lines.filter((line) => line.purchaseType === 'subscription');
   const hasSubscriptionLines = subscriptionLines.length > 0;
+  const cartProductIds = useMemo(() => lines.map((line) => line.productId), [lines]);
 
   function selectAddress(address: StorefrontCustomerAddress) {
     setSelectedAddressId(address.id);
@@ -505,6 +507,14 @@ export function CheckoutForm() {
               <span>${formatMoney(payableTotal)}</span>
             </div>
           </div>
+          <RecommendationSection
+            title="Recommended add-ons"
+            source="checkout_recommended_addons"
+            itemIds={cartProductIds}
+            customerId={accountCustomerId ?? undefined}
+            mode="cart"
+            limit={3}
+          />
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <Button type="submit" className="h-12 w-full text-base" disabled={loading}>
             {loading

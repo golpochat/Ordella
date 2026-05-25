@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Button, Card, CardContent, Input } from '@shared-ui';
+import { RecommendationSection } from '@/components/recommendation-section';
 import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
 import { useBasketStore } from '@/stores/basket-store';
 
@@ -21,6 +22,7 @@ export function CartView() {
 
   const subtotal = basketSubtotal(lines);
   const totals = calculateStorefrontTotals(subtotal);
+  const cartProductIds = useMemo(() => lines.map((line) => line.productId), [lines]);
 
   if (lines.length === 0) {
     return (
@@ -136,6 +138,14 @@ export function CartView() {
         <Button type="button" variant="outline" className="h-12" onClick={clearBasket}>
           Clear cart
         </Button>
+      </div>
+      <div className="mt-8">
+        <RecommendationSection
+          title="Complete your order"
+          source="cart_complete_your_order"
+          itemIds={cartProductIds}
+          mode="cart"
+        />
       </div>
     </div>
   );

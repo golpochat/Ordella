@@ -178,6 +178,26 @@ export const posCatalogCategorySchema = z.object({
 export type PosCatalogItem = z.infer<typeof posCatalogItemSchema>;
 export type PosCatalogCategory = z.infer<typeof posCatalogCategorySchema>;
 
+const posRecommendationItemSchema = z.object({
+  item: posCatalogItemSchema,
+  score: z.number(),
+  reason: z.enum([
+    'frequently_bought_together',
+    'frequently_viewed_together',
+    'customer_preference',
+    'same_category',
+    'popular_item',
+  ]),
+});
+
+const posRecommendationResponseSchema = z.object({
+  recommendations: z.array(posRecommendationItemSchema),
+  strategy: z.array(z.string()),
+  generatedAt: z.string(),
+});
+
+export type PosRecommendationItem = z.infer<typeof posRecommendationItemSchema>;
+
 const posCatalogBundleSchema = z.object({
   categories: z.array(posCatalogCategorySchema),
   items: z.array(posCatalogItemSchema),
@@ -189,6 +209,32 @@ export async function listPosCatalog(locationId?: string) {
   });
   const parsed = posCatalogBundleSchema.parse(data);
   return parsed;
+}
+
+export async function fetchPosRecommendations(options: {
+  itemIds?: string[];
+  customerId?: string;
+  limit?: number;
+} = {}) {
+  const session = getSession();
+  const data = await api.getData<unknown>('recommendations/pos/cart', {
+    params: {
+      locationId: session.locationId,
+      itemIds: options.itemIds?.join(','),
+      customerId: options.customerId,
+      limit: options.limit,
+    },
+  });
+  return posRecommendationResponseSchema.parse(data);
+}
+
+export async function trackPosRecommendationEvent(body: {
+  itemId: string;
+  customerId?: string;
+  eventType: 'view' | 'add_to_cart' | 'purchase' | 'impression' | 'click';
+  source?: string;
+}) {
+  await api.postData('recommendations/events', body);
 }
 
 type CartLinePayload = {

@@ -1,7 +1,7 @@
 'use client';
 
-import type { LocationOption } from '@shared-utils';
-import { setStoredLocationId } from '@shared-utils';
+import type { LocationOption } from '@ordella/shared-utils';
+import { setStoredLocationId } from '@ordella/shared-utils';
 
 type LocationSwitcherProps = {
   locations: LocationOption[];
