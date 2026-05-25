@@ -1,4 +1,5 @@
 export enum ReportJobStatus {
+  PENDING = 'pending',
   QUEUED = 'queued',
   PROCESSING = 'processing',
   COMPLETED = 'completed',

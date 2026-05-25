@@ -5,9 +5,14 @@ export class ReportJobResponseDto {
   id!: string;
   tenantId!: string;
   reportId!: string | null;
-  definitionId!: string;
+  definitionId!: string | null;
+  reportType!: string | null;
   format!: ReportExportFormat;
   status!: ReportJobStatus;
+  fileUrl!: string | null;
+  parameters!: Record<string, unknown>;
+  locationId!: string | null;
+  requestedBy!: string | null;
   startedAt!: Date | null;
   completedAt!: Date | null;
   errorMessage!: string | null;

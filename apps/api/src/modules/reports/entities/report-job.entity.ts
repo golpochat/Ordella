@@ -17,14 +17,29 @@ export class ReportJobEntity extends BaseTenantScopedEntity {
   @JoinColumn({ name: 'report_id' })
   report!: ReportEntity | null;
 
-  @Column({ name: 'definition_id', type: 'uuid' })
-  definitionId!: string;
+  @Column({ name: 'definition_id', type: 'uuid', nullable: true })
+  definitionId!: string | null;
+
+  @Column({ name: 'report_type', type: 'varchar', length: 64, nullable: true })
+  reportType!: string | null;
 
   @Column({ type: 'varchar', length: 16 })
   format!: ReportExportFormat;
 
   @Column({ type: 'varchar', length: 32, default: ReportJobStatus.QUEUED })
   status!: ReportJobStatus;
+
+  @Column({ type: 'jsonb', default: () => "'{}'" })
+  parameters!: Record<string, unknown>;
+
+  @Column({ name: 'location_id', type: 'uuid', nullable: true })
+  locationId!: string | null;
+
+  @Column({ name: 'requested_by', type: 'uuid', nullable: true })
+  requestedBy!: string | null;
+
+  @Column({ name: 'file_url', type: 'varchar', length: 1024, nullable: true })
+  fileUrl!: string | null;
 
   @Column({ name: 'started_at', type: 'timestamptz', nullable: true })
   startedAt!: Date | null;

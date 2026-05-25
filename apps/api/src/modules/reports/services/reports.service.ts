@@ -1,5 +1,7 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
-import { TenantContext } from '../../../common/interfaces';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AuthenticatedUser, TenantContext } from '../../../common/interfaces';
 import { FilterPaginationDto } from '../../../common/dto';
 import { FilterReportDateRangeDto } from '../dto';
 import { SalesReportResponseDto } from '../dto';
@@ -10,53 +12,762 @@ import { CreateExportReportDto } from '../dto';
 import { ExportReportResponseDto } from '../dto';
 import { CreateReportDto } from '../dto';
 import { ReportResponseDto } from '../dto';
+import { ReportExportFormat } from '../enums/report-export-format.enum';
+import { ReportJobStatus } from '../enums/report-job-status.enum';
+import { ReportDefinitionSlug } from '../enums/report-definition-slug.enum';
+import {
+  ReportEntity,
+  ReportDefinitionEntity,
+  ReportJobEntity,
+  ReportResultEntity,
+  ReportEventEntity,
+  ReportSnapshotEntity,
+} from '../entities';
+import { CsvExportService } from '../integrations';
+import { OrderEntity, OrderItemEntity } from '../../orders/entities';
+import { OrderStatus } from '../../orders/enums/order-status.enum';
+import { ProductEntity, CategoryEntity } from '../../catalog/entities';
+import {
+  StockItemEntity,
+  StockMovementEntity,
+  WastageRecordEntity,
+} from '../../inventory/entities';
+import { OrderTaxLineEntity } from '../../tax/entities/order-tax-line.entity';
+import { CustomerEntity, LoyaltyTransactionEntity } from '../../loyalty/entities';
+import { DeliveryTaskEntity } from '../../deliveries/entities';
+import { DeliveryTaskStatus } from '../../deliveries/enums/delivery-task-status.enum';
+import { WarehousePickTaskEntity } from '../../warehouse/entities';
+import { PurchaseOrderEntity } from '../../procurement/entities';
+import { LocationEntity } from '../../tenants/entities';
+
+const EXCLUDED_ORDER_STATUSES = [OrderStatus.CANCELLED, OrderStatus.FAILED];
+const SNAPSHOT_TTL_MS = 5 * 60 * 1000;
+
+type ReportRange = {
+  from: Date;
+  to: Date;
+  fromIso: string;
+  toIso: string;
+  locationId?: string;
+  channel?: string;
+  categoryId?: string;
+  supplierId?: string;
+  staffId?: string;
+  refresh: boolean;
+};
 
 @Injectable()
 export class ReportsAnalyticsService {
-  getSalesReport(
-    _tenant: TenantContext,
-    _query: FilterReportDateRangeDto,
+  constructor(
+    @InjectRepository(OrderEntity)
+    private readonly orders: Repository<OrderEntity>,
+    @InjectRepository(OrderItemEntity)
+    private readonly orderItems: Repository<OrderItemEntity>,
+    @InjectRepository(StockItemEntity)
+    private readonly stockItems: Repository<StockItemEntity>,
+    @InjectRepository(StockMovementEntity)
+    private readonly stockMovements: Repository<StockMovementEntity>,
+    @InjectRepository(WastageRecordEntity)
+    private readonly wastageRecords: Repository<WastageRecordEntity>,
+    @InjectRepository(OrderTaxLineEntity)
+    private readonly taxLines: Repository<OrderTaxLineEntity>,
+    @InjectRepository(CustomerEntity)
+    private readonly customers: Repository<CustomerEntity>,
+    @InjectRepository(LoyaltyTransactionEntity)
+    private readonly loyaltyTransactions: Repository<LoyaltyTransactionEntity>,
+    @InjectRepository(DeliveryTaskEntity)
+    private readonly deliveries: Repository<DeliveryTaskEntity>,
+    @InjectRepository(WarehousePickTaskEntity)
+    private readonly pickTasks: Repository<WarehousePickTaskEntity>,
+    @InjectRepository(PurchaseOrderEntity)
+    private readonly purchaseOrders: Repository<PurchaseOrderEntity>,
+    @InjectRepository(ReportSnapshotEntity)
+    private readonly snapshots: Repository<ReportSnapshotEntity>,
+    @InjectRepository(ReportJobEntity)
+    private readonly reportJobs: Repository<ReportJobEntity>,
+    @InjectRepository(ReportResultEntity)
+    private readonly reportResults: Repository<ReportResultEntity>,
+    @InjectRepository(ReportEventEntity)
+    private readonly reportEvents: Repository<ReportEventEntity>,
+    private readonly csvExport: CsvExportService,
+  ) {}
+
+  async getSummaryReport(
+    tenant: TenantContext,
+    query: FilterReportDateRangeDto,
+  ): Promise<Record<string, unknown>> {
+    return this.withSnapshot(tenant, 'summary', query, async (range) => {
+      const [sales, inventory, customers, tax, delivery, warehouse, supplierSpend, analyticsSignals] =
+        await Promise.all([
+          this.buildSalesMetrics(tenant.tenantId, range),
+          this.buildInventoryMetrics(tenant.tenantId, range),
+          this.buildCustomerMetrics(tenant.tenantId, range),
+          this.buildTaxMetrics(tenant.tenantId, range),
+          this.buildDeliveryMetrics(tenant.tenantId, range),
+          this.buildWarehouseMetrics(tenant.tenantId, range),
+          this.buildSupplierSpend(tenant.tenantId, range),
+          this.buildAnalyticsSignals(tenant.tenantId, range),
+        ]);
+
+      return {
+        from: range.fromIso,
+        to: range.toIso,
+        locationId: range.locationId ?? null,
+        revenue: sales.totalRevenue,
+        orders: sales.orderCount,
+        averageOrderValue: sales.averageOrderValue,
+        revenueByLocation: sales.revenueByLocation,
+        salesByChannel: sales.salesByChannel,
+        topCategories: sales.revenueByCategory,
+        topItems: sales.revenueByItem,
+        taxCollected: tax.totalTax,
+        inventoryValue: inventory.inventoryValue,
+        customerMetrics: customers,
+        deliveryPerformance: delivery,
+        warehousePerformance: warehouse,
+        supplierSpend,
+        analyticsSignals,
+        generatedAt: new Date().toISOString(),
+      };
+    });
+  }
+
+  async getSalesReport(
+    tenant: TenantContext,
+    query: FilterReportDateRangeDto,
   ): Promise<SalesReportResponseDto> {
-    throw new NotImplementedException('get sales report');
+    const payload = await this.withSnapshot(tenant, ReportDefinitionSlug.SALES, query, (range) =>
+      this.buildSalesMetrics(tenant.tenantId, range),
+    );
+    return {
+      from: String(payload.from),
+      to: String(payload.to),
+      locationId: (payload.locationId as string | null) ?? null,
+      totalSales: String(payload.totalRevenue ?? '0.00'),
+      orderCount: Number(payload.orderCount ?? 0),
+      metrics: payload,
+    };
   }
 
-  getOrdersReport(
-    _tenant: TenantContext,
-    _query: FilterReportDateRangeDto,
+  async getOrdersReport(
+    tenant: TenantContext,
+    query: FilterReportDateRangeDto,
   ): Promise<OrdersReportResponseDto> {
-    throw new NotImplementedException('get orders report');
+    const payload = await this.withSnapshot(tenant, ReportDefinitionSlug.ORDERS, query, (range) =>
+      this.buildOrderMetrics(tenant.tenantId, range),
+    );
+    return {
+      from: String(payload.from),
+      to: String(payload.to),
+      locationId: (payload.locationId as string | null) ?? null,
+      metrics: payload,
+    };
   }
 
-  getCustomersReport(
-    _tenant: TenantContext,
-    _query: FilterReportDateRangeDto,
+  async getCustomersReport(
+    tenant: TenantContext,
+    query: FilterReportDateRangeDto,
   ): Promise<CustomersReportResponseDto> {
-    throw new NotImplementedException('get customers report');
+    const payload = await this.withSnapshot(tenant, ReportDefinitionSlug.CUSTOMERS, query, (range) =>
+      this.buildCustomerMetrics(tenant.tenantId, range),
+    );
+    return {
+      from: String(payload.from),
+      to: String(payload.to),
+      metrics: payload,
+    };
   }
 
-  getInventoryReport(
-    _tenant: TenantContext,
-    _query: FilterReportDateRangeDto,
+  async getInventoryReport(
+    tenant: TenantContext,
+    query: FilterReportDateRangeDto,
   ): Promise<InventoryReportResponseDto> {
-    throw new NotImplementedException('get inventory report');
+    const payload = await this.withSnapshot(tenant, ReportDefinitionSlug.INVENTORY, query, (range) =>
+      this.buildInventoryMetrics(tenant.tenantId, range),
+    );
+    return {
+      from: String(payload.from),
+      to: String(payload.to),
+      locationId: (payload.locationId as string | null) ?? null,
+      metrics: payload,
+    };
   }
 
-  exportReport(_tenant: TenantContext, _dto: CreateExportReportDto): Promise<ExportReportResponseDto> {
-    throw new NotImplementedException('export report');
+  async getTaxReport(
+    tenant: TenantContext,
+    query: FilterReportDateRangeDto,
+  ): Promise<Record<string, unknown>> {
+    return this.withSnapshot(tenant, ReportDefinitionSlug.TAX, query, (range) =>
+      this.buildTaxMetrics(tenant.tenantId, range),
+    );
+  }
+
+  async listExportJobs(tenant: TenantContext): Promise<ReportJobEntity[]> {
+    return this.reportJobs.find({
+      where: { tenantId: tenant.tenantId },
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+  }
+
+  async exportReport(
+    tenant: TenantContext,
+    dto: CreateExportReportDto,
+    user?: AuthenticatedUser,
+  ): Promise<ExportReportResponseDto> {
+    const format = dto.format ?? ReportExportFormat.CSV;
+    const query = {
+      ...(dto.parameters ?? {}),
+      locationId: dto.locationId ?? dto.parameters?.locationId,
+      refresh: 'true',
+    } as FilterReportDateRangeDto;
+    const job = await this.reportJobs.save(this.reportJobs.create({
+      tenantId: tenant.tenantId,
+      reportId: null,
+      definitionId: null,
+      reportType: dto.reportType,
+      format,
+      status: ReportJobStatus.PENDING,
+      parameters: query as Record<string, unknown>,
+      locationId: dto.locationId ?? null,
+      requestedBy: user?.id ?? null,
+      fileUrl: null,
+      startedAt: new Date(),
+      completedAt: null,
+      errorMessage: null,
+    }));
+
+    try {
+      const report = await this.getReportByType(tenant, dto.reportType, query);
+      const rows = this.flattenForExport(report);
+      const fileUrl = this.buildFileUrl(format, rows);
+      job.status = ReportJobStatus.COMPLETED;
+      job.completedAt = new Date();
+      job.fileUrl = fileUrl;
+      await this.reportJobs.save(job);
+      await this.reportResults.save(this.reportResults.create({
+        jobId: job.id,
+        format,
+        storageRef: fileUrl,
+        summary: { reportType: dto.reportType, rows: rows.length },
+        rowCount: rows.length,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      }));
+      return { jobId: job.id, status: job.status, fileUrl, reportType: dto.reportType, format, rowCount: rows.length };
+    } catch (error) {
+      job.status = ReportJobStatus.FAILED;
+      job.errorMessage = error instanceof Error ? error.message : 'Report export failed';
+      job.completedAt = new Date();
+      await this.reportJobs.save(job);
+      return { jobId: job.id, status: job.status, fileUrl: null, reportType: dto.reportType, format, rowCount: 0 };
+    }
+  }
+
+  private async getReportByType(
+    tenant: TenantContext,
+    reportType: ReportDefinitionSlug,
+    query: FilterReportDateRangeDto,
+  ) {
+    if (reportType === ReportDefinitionSlug.SUMMARY) return this.getSummaryReport(tenant, query);
+    if (reportType === ReportDefinitionSlug.SALES) return this.getSalesReport(tenant, query);
+    if (reportType === ReportDefinitionSlug.ORDERS) return this.getOrdersReport(tenant, query);
+    if (reportType === ReportDefinitionSlug.CUSTOMERS) return this.getCustomersReport(tenant, query);
+    if (reportType === ReportDefinitionSlug.INVENTORY) return this.getInventoryReport(tenant, query);
+    if (reportType === ReportDefinitionSlug.TAX) return this.getTaxReport(tenant, query);
+    return this.getSummaryReport(tenant, query);
+  }
+
+  private async withSnapshot<T extends Record<string, unknown>>(
+    tenant: TenantContext,
+    reportType: string,
+    query: FilterReportDateRangeDto,
+    build: (range: ReportRange) => Promise<T>,
+  ): Promise<T> {
+    const range = this.normalizeRange(query);
+    const cacheKey = JSON.stringify({
+      from: range.fromIso,
+      to: range.toIso,
+      locationId: range.locationId ?? null,
+      channel: range.channel ?? null,
+      categoryId: range.categoryId ?? null,
+      supplierId: range.supplierId ?? null,
+      staffId: range.staffId ?? null,
+    });
+
+    if (!range.refresh) {
+      const cached = await this.snapshots
+        .createQueryBuilder('snapshot')
+        .where('snapshot.tenant_id = :tenantId', { tenantId: tenant.tenantId })
+        .andWhere('snapshot.report_type = :reportType', { reportType })
+        .andWhere('snapshot.cache_key = :cacheKey', { cacheKey })
+        .andWhere('(snapshot.expires_at IS NULL OR snapshot.expires_at > NOW())')
+        .orderBy('snapshot.generated_at', 'DESC')
+        .getOne();
+      if (cached) return cached.payload as T;
+    }
+
+    const payload = await build(range);
+    await this.snapshots.save(this.snapshots.create({
+      tenantId: tenant.tenantId,
+      reportType,
+      cacheKey,
+      payload,
+      generatedAt: new Date(),
+      expiresAt: new Date(Date.now() + SNAPSHOT_TTL_MS),
+    }));
+    return payload;
+  }
+
+  private normalizeRange(query: FilterReportDateRangeDto): ReportRange {
+    const to = query.to ? new Date(query.to) : new Date();
+    const from = query.from ? new Date(query.from) : new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000);
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+    return {
+      from,
+      to,
+      fromIso: from.toISOString(),
+      toIso: to.toISOString(),
+      locationId: query.locationId,
+      channel: query.channel,
+      categoryId: query.categoryId,
+      supplierId: query.supplierId,
+      staffId: query.staffId,
+      refresh: query.refresh === 'true',
+    };
+  }
+
+  private async buildSalesMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const total = await this.baseOrderQuery(tenantId, range)
+      .select('COUNT(*)', 'orderCount')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'totalRevenue')
+      .addSelect('COALESCE(AVG(o.total), 0)', 'averageOrderValue')
+      .getRawOne<{ orderCount: string; totalRevenue: string; averageOrderValue: string }>();
+    const [revenueByLocation, salesByChannel, revenueByItem, revenueByCategory, dailyRevenue] =
+      await Promise.all([
+        this.revenueByLocation(tenantId, range),
+        this.salesByChannel(tenantId, range),
+        this.revenueByItem(tenantId, range),
+        this.revenueByCategory(tenantId, range),
+        this.dailyRevenue(tenantId, range),
+      ]);
+
+    return {
+      from: range.fromIso,
+      to: range.toIso,
+      locationId: range.locationId ?? null,
+      totalRevenue: this.money(total?.totalRevenue),
+      orderCount: Number(total?.orderCount ?? 0),
+      averageOrderValue: this.money(total?.averageOrderValue),
+      revenueByLocation,
+      salesByChannel,
+      revenueByItem,
+      revenueByCategory,
+      dailyRevenue,
+    };
+  }
+
+  private async buildOrderMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const rows = await this.baseOrderQuery(tenantId, range)
+      .select('o.status', 'status')
+      .addSelect('o.order_type', 'channel')
+      .addSelect('o.payment_method', 'paymentMethod')
+      .addSelect('COUNT(*)', 'orders')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .addSelect('COALESCE(SUM(o.discount_total), 0)', 'discounts')
+      .groupBy('o.status')
+      .addGroupBy('o.order_type')
+      .addGroupBy('o.payment_method')
+      .getRawMany<{ status: string; channel: string; paymentMethod: string | null; orders: string; revenue: string; discounts: string }>();
+    return {
+      from: range.fromIso,
+      to: range.toIso,
+      locationId: range.locationId ?? null,
+      byStatusChannel: rows.map((row) => ({
+        status: row.status,
+        channel: row.channel,
+        paymentMethod: row.paymentMethod,
+        orders: Number(row.orders),
+        revenue: this.money(row.revenue),
+        discounts: this.money(row.discounts),
+      })),
+    };
+  }
+
+  private async buildInventoryMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const stockQb = this.stockItems
+      .createQueryBuilder('s')
+      .leftJoin(ProductEntity, 'p', 'p.id = s.product_id')
+      .where('s.tenant_id = :tenantId', { tenantId })
+      .select('COUNT(*)', 'itemCount')
+      .addSelect('COALESCE(SUM(s.quantity_on_hand), 0)', 'quantityOnHand')
+      .addSelect('COALESCE(SUM(s.quantity_reserved), 0)', 'quantityReserved')
+      .addSelect('COALESCE(SUM(s.quantity_on_hand * COALESCE(p.price, 0)), 0)', 'inventoryValue');
+    if (range.locationId) stockQb.andWhere('s.location_id = :locationId', { locationId: range.locationId });
+    const stock = await stockQb.getRawOne<{ itemCount: string; quantityOnHand: string; quantityReserved: string; inventoryValue: string }>();
+
+    const movementQb = this.stockMovements
+      .createQueryBuilder('m')
+      .innerJoin(StockItemEntity, 's', 's.id = m.stock_item_id')
+      .where('m.tenant_id = :tenantId', { tenantId })
+      .andWhere('m.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('m.type', 'type')
+      .addSelect('COUNT(*)', 'movements')
+      .addSelect('COALESCE(SUM(ABS(m.quantity)), 0)', 'quantity')
+      .groupBy('m.type');
+    if (range.locationId) movementQb.andWhere('s.location_id = :locationId', { locationId: range.locationId });
+    const movements = await movementQb.getRawMany<{ type: string; movements: string; quantity: string }>();
+
+    const wastageQb = this.wastageRecords
+      .createQueryBuilder('w')
+      .where('w.tenant_id = :tenantId', { tenantId })
+      .andWhere('w.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('COALESCE(SUM(w.quantity), 0)', 'quantity')
+      .addSelect('COUNT(*)', 'records');
+    if (range.locationId) wastageQb.andWhere('w.location_id = :locationId', { locationId: range.locationId });
+    const waste = await wastageQb.getRawOne<{ quantity: string; records: string }>();
+
+    return {
+      from: range.fromIso,
+      to: range.toIso,
+      locationId: range.locationId ?? null,
+      itemCount: Number(stock?.itemCount ?? 0),
+      quantityOnHand: Number(stock?.quantityOnHand ?? 0),
+      quantityReserved: Number(stock?.quantityReserved ?? 0),
+      inventoryValue: this.money(stock?.inventoryValue),
+      stockMovements: movements.map((row) => ({ type: row.type, movements: Number(row.movements), quantity: Number(row.quantity) })),
+      wasteShrinkage: { quantity: Number(waste?.quantity ?? 0), records: Number(waste?.records ?? 0) },
+    };
+  }
+
+  private async buildCustomerMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const customerRows = await this.customers
+      .createQueryBuilder('c')
+      .where('c.tenant_id = :tenantId', { tenantId })
+      .select('COUNT(*)', 'customerCount')
+      .addSelect('COALESCE(SUM(c.lifetime_value), 0)', 'lifetimeValue')
+      .addSelect('COALESCE(AVG(c.avg_order_value), 0)', 'averageCustomerOrderValue')
+      .getRawOne<{ customerCount: string; lifetimeValue: string; averageCustomerOrderValue: string }>();
+    const loyaltyRows = await this.loyaltyTransactions
+      .createQueryBuilder('t')
+      .where('t.tenant_id = :tenantId', { tenantId })
+      .andWhere('t.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('t.type', 'type')
+      .addSelect('COUNT(*)', 'transactions')
+      .addSelect('COALESCE(SUM(t.points), 0)', 'points')
+      .groupBy('t.type')
+      .getRawMany<{ type: string; transactions: string; points: string }>();
+    return {
+      from: range.fromIso,
+      to: range.toIso,
+      customerCount: Number(customerRows?.customerCount ?? 0),
+      lifetimeValue: this.money(customerRows?.lifetimeValue),
+      averageCustomerOrderValue: this.money(customerRows?.averageCustomerOrderValue),
+      loyaltyUsage: loyaltyRows.map((row) => ({ type: row.type, transactions: Number(row.transactions), points: Number(row.points) })),
+    };
+  }
+
+  private async buildTaxMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const qb = this.taxLines
+      .createQueryBuilder('tax')
+      .where('tax.tenant_id = :tenantId', { tenantId })
+      .andWhere('tax.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('tax.tax_type', 'taxType')
+      .addSelect('tax.tax_name', 'taxName')
+      .addSelect('tax.jurisdiction', 'jurisdiction')
+      .addSelect('COALESCE(SUM(tax.taxable_amount), 0)', 'taxableAmount')
+      .addSelect('COALESCE(SUM(tax.tax_amount), 0)', 'taxAmount')
+      .groupBy('tax.tax_type')
+      .addGroupBy('tax.tax_name')
+      .addGroupBy('tax.jurisdiction')
+      .orderBy('taxAmount', 'DESC');
+    if (range.locationId) qb.andWhere('tax.location_id = :locationId', { locationId: range.locationId });
+    const rows = await qb.getRawMany<{ taxType: string; taxName: string; jurisdiction: string; taxableAmount: string; taxAmount: string }>();
+    const totalTax = rows.reduce((sum, row) => sum + Number(row.taxAmount), 0);
+    return {
+      from: range.fromIso,
+      to: range.toIso,
+      locationId: range.locationId ?? null,
+      totalTax: this.money(totalTax),
+      lines: rows.map((row) => ({
+        taxType: row.taxType,
+        taxName: row.taxName,
+        jurisdiction: row.jurisdiction,
+        taxableAmount: this.money(row.taxableAmount),
+        taxAmount: this.money(row.taxAmount),
+      })),
+    };
+  }
+
+  private async buildDeliveryMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const qb = this.deliveries
+      .createQueryBuilder('d')
+      .innerJoin(OrderEntity, 'o', 'o.id = d.order_id')
+      .where('d.tenant_id = :tenantId', { tenantId })
+      .andWhere('d.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('d.status', 'status')
+      .addSelect('COUNT(*)', 'deliveries')
+      .addSelect('AVG(EXTRACT(EPOCH FROM (d.completed_at - d.started_at)) / 60)', 'avgMinutes')
+      .groupBy('d.status');
+    if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
+    const rows = await qb.getRawMany<{ status: string; deliveries: string; avgMinutes: string | null }>();
+    return {
+      deliveriesByStatus: rows.map((row) => ({
+        status: row.status,
+        deliveries: Number(row.deliveries),
+        averageMinutes: row.avgMinutes ? Number(Number(row.avgMinutes).toFixed(1)) : null,
+      })),
+      completedDeliveries: rows.filter((row) => row.status === DeliveryTaskStatus.DELIVERED).reduce((sum, row) => sum + Number(row.deliveries), 0),
+    };
+  }
+
+  private async buildWarehouseMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const qb = this.pickTasks
+      .createQueryBuilder('task')
+      .where('task.tenant_id = :tenantId', { tenantId })
+      .andWhere('task.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('task.status', 'status')
+      .addSelect('COUNT(*)', 'tasks')
+      .addSelect('AVG(EXTRACT(EPOCH FROM (task.completed_at - task.started_at)) / 60)', 'avgPickMinutes')
+      .groupBy('task.status');
+    if (range.locationId) qb.andWhere('task.warehouse_id = :locationId', { locationId: range.locationId });
+    const rows = await qb.getRawMany<{ status: string; tasks: string; avgPickMinutes: string | null }>();
+    return {
+      pickTasksByStatus: rows.map((row) => ({
+        status: row.status,
+        tasks: Number(row.tasks),
+        averagePickMinutes: row.avgPickMinutes ? Number(Number(row.avgPickMinutes).toFixed(1)) : null,
+      })),
+    };
+  }
+
+  private async buildSupplierSpend(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const qb = this.purchaseOrders
+      .createQueryBuilder('po')
+      .where('po.tenant_id = :tenantId', { tenantId })
+      .andWhere('po.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('po.supplier_id', 'supplierId')
+      .addSelect('COUNT(*)', 'purchaseOrders')
+      .addSelect('COALESCE(SUM(po.total_cost), 0)', 'spend')
+      .groupBy('po.supplier_id')
+      .orderBy('spend', 'DESC')
+      .limit(20);
+    if (range.locationId) qb.andWhere('po.location_id = :locationId', { locationId: range.locationId });
+    if (range.supplierId) qb.andWhere('po.supplier_id = :supplierId', { supplierId: range.supplierId });
+    const rows = await qb.getRawMany<{ supplierId: string; purchaseOrders: string; spend: string }>();
+    return {
+      totalSpend: this.money(rows.reduce((sum, row) => sum + Number(row.spend), 0)),
+      suppliers: rows.map((row) => ({ supplierId: row.supplierId, purchaseOrders: Number(row.purchaseOrders), spend: this.money(row.spend) })),
+    };
+  }
+
+  private async buildAnalyticsSignals(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const rows = await this.reportEvents
+      .createQueryBuilder('event')
+      .where('event.tenant_id = :tenantId', { tenantId })
+      .andWhere('event.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('event.event_type', 'eventType')
+      .addSelect('COUNT(*)', 'events')
+      .groupBy('event.event_type')
+      .orderBy('events', 'DESC')
+      .getRawMany<{ eventType: string; events: string }>();
+    return {
+      storefront: rows.filter((row) => row.eventType.startsWith('STOREFRONT_')).map((row) => ({ eventType: row.eventType, events: Number(row.events) })),
+      pos: rows.filter((row) => row.eventType.startsWith('POS_')).map((row) => ({ eventType: row.eventType, events: Number(row.events) })),
+      warehouse: rows.filter((row) => row.eventType.startsWith('WAREHOUSE_')).map((row) => ({ eventType: row.eventType, events: Number(row.events) })),
+      delivery: rows.filter((row) => row.eventType.startsWith('DELIVERY_')).map((row) => ({ eventType: row.eventType, events: Number(row.events) })),
+    };
+  }
+
+  private baseOrderQuery(tenantId: string, range: ReportRange) {
+    const qb = this.orders
+      .createQueryBuilder('o')
+      .where('o.tenant_id = :tenantId', { tenantId })
+      .andWhere('o.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .andWhere('o.status NOT IN (:...excluded)', { excluded: EXCLUDED_ORDER_STATUSES });
+    if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
+    if (range.channel) qb.andWhere('o.order_type = :channel', { channel: range.channel });
+    return qb;
+  }
+
+  private async revenueByLocation(tenantId: string, range: ReportRange) {
+    const qb = this.baseOrderQuery(tenantId, range)
+      .leftJoin(LocationEntity, 'loc', 'loc.id = o.location_id')
+      .select('o.location_id', 'locationId')
+      .addSelect("COALESCE(loc.name, 'Unknown location')", 'locationName')
+      .addSelect('COUNT(*)', 'orders')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .groupBy('o.location_id')
+      .addGroupBy('loc.name')
+      .orderBy('revenue', 'DESC');
+    const rows = await qb.getRawMany<{ locationId: string; locationName: string; orders: string; revenue: string }>();
+    return rows.map((row) => ({ locationId: row.locationId, locationName: row.locationName, orders: Number(row.orders), revenue: this.money(row.revenue) }));
+  }
+
+  private async salesByChannel(tenantId: string, range: ReportRange) {
+    const rows = await this.baseOrderQuery(tenantId, range)
+      .select('o.order_type', 'channel')
+      .addSelect('COUNT(*)', 'orders')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .groupBy('o.order_type')
+      .orderBy('revenue', 'DESC')
+      .getRawMany<{ channel: string; orders: string; revenue: string }>();
+    return rows.map((row) => ({ channel: row.channel, orders: Number(row.orders), revenue: this.money(row.revenue) }));
+  }
+
+  private async revenueByItem(tenantId: string, range: ReportRange) {
+    const qb = this.orderItems
+      .createQueryBuilder('item')
+      .innerJoin('item.order', 'o')
+      .leftJoin(ProductEntity, 'p', 'p.id = item.product_id')
+      .where('o.tenant_id = :tenantId', { tenantId })
+      .andWhere('o.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .andWhere('o.status NOT IN (:...excluded)', { excluded: EXCLUDED_ORDER_STATUSES })
+      .select('item.product_id', 'productId')
+      .addSelect("COALESCE(p.name, 'Item')", 'productName')
+      .addSelect('SUM(item.quantity)', 'quantitySold')
+      .addSelect('COALESCE(SUM(item.quantity * item.price), 0)', 'revenue')
+      .groupBy('item.product_id')
+      .addGroupBy('p.name')
+      .orderBy('revenue', 'DESC')
+      .limit(20);
+    if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
+    if (range.categoryId) qb.andWhere('p.category_id = :categoryId', { categoryId: range.categoryId });
+    const rows = await qb.getRawMany<{ productId: string; productName: string; quantitySold: string; revenue: string }>();
+    return rows.map((row) => ({ productId: row.productId, productName: row.productName, quantitySold: Number(row.quantitySold), revenue: this.money(row.revenue) }));
+  }
+
+  private async revenueByCategory(tenantId: string, range: ReportRange) {
+    const qb = this.orderItems
+      .createQueryBuilder('item')
+      .innerJoin('item.order', 'o')
+      .leftJoin(ProductEntity, 'p', 'p.id = item.product_id')
+      .leftJoin(CategoryEntity, 'c', 'c.id = p.category_id')
+      .where('o.tenant_id = :tenantId', { tenantId })
+      .andWhere('o.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .andWhere('o.status NOT IN (:...excluded)', { excluded: EXCLUDED_ORDER_STATUSES })
+      .select('p.category_id', 'categoryId')
+      .addSelect("COALESCE(c.name, 'Uncategorized')", 'categoryName')
+      .addSelect('SUM(item.quantity)', 'quantitySold')
+      .addSelect('COALESCE(SUM(item.quantity * item.price), 0)', 'revenue')
+      .groupBy('p.category_id')
+      .addGroupBy('c.name')
+      .orderBy('revenue', 'DESC')
+      .limit(20);
+    if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
+    if (range.categoryId) qb.andWhere('p.category_id = :categoryId', { categoryId: range.categoryId });
+    const rows = await qb.getRawMany<{ categoryId: string | null; categoryName: string; quantitySold: string; revenue: string }>();
+    return rows.map((row) => ({ categoryId: row.categoryId, categoryName: row.categoryName, quantitySold: Number(row.quantitySold), revenue: this.money(row.revenue) }));
+  }
+
+  private async dailyRevenue(tenantId: string, range: ReportRange) {
+    const rows = await this.baseOrderQuery(tenantId, range)
+      .select("TO_CHAR(o.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')", 'date')
+      .addSelect('COUNT(*)', 'orders')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .groupBy("TO_CHAR(o.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')")
+      .orderBy('date', 'ASC')
+      .getRawMany<{ date: string; orders: string; revenue: string }>();
+    return rows.map((row) => ({ date: row.date, orders: Number(row.orders), revenue: this.money(row.revenue) }));
+  }
+
+  private flattenForExport(report: unknown): Array<Record<string, unknown>> {
+    if (!report || typeof report !== 'object') return [];
+    const rows: Array<Record<string, unknown>> = [];
+    const walk = (prefix: string, value: unknown) => {
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item && typeof item === 'object' && !Array.isArray(item)) {
+            rows.push({ section: prefix, ...(item as Record<string, unknown>) });
+          } else {
+            rows.push({ section: prefix, value: item });
+          }
+        }
+        return;
+      }
+      if (value && typeof value === 'object') {
+        for (const [key, nested] of Object.entries(value)) {
+          walk(prefix ? `${prefix}.${key}` : key, nested);
+        }
+        return;
+      }
+      rows.push({ metric: prefix, value });
+    };
+    walk('', report);
+    return rows;
+  }
+
+  private buildFileUrl(format: ReportExportFormat, rows: Array<Record<string, unknown>>) {
+    if (format === ReportExportFormat.JSON) {
+      return `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rows))}`;
+    }
+    const csv = this.csvExport.serialize(rows);
+    return `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
+  }
+
+  private money(value: string | number | null | undefined): string {
+    const amount = Number(value ?? 0);
+    return Number.isFinite(amount) ? amount.toFixed(2) : '0.00';
   }
 }
 
 @Injectable()
 export class ReportsService {
-  findAll(_tenant: TenantContext, _query: FilterPaginationDto): Promise<ReportResponseDto[]> {
-    throw new NotImplementedException('findAll reports');
+  constructor(
+    @InjectRepository(ReportEntity)
+    private readonly reports: Repository<ReportEntity>,
+    @InjectRepository(ReportDefinitionEntity)
+    private readonly definitions: Repository<ReportDefinitionEntity>,
+  ) {}
+
+  async findAll(tenant: TenantContext, query: FilterPaginationDto): Promise<ReportResponseDto[]> {
+    const rows = await this.reports.find({
+      where: { tenantId: tenant.tenantId },
+      relations: { definition: true },
+      order: { createdAt: 'DESC' },
+      skip: ((query.page ?? 1) - 1) * (query.limit ?? 20),
+      take: query.limit ?? 20,
+    });
+    return rows.map((row) => this.toResponse(row));
   }
 
-  create(_tenant: TenantContext, _dto: CreateReportDto): Promise<ReportResponseDto> {
-    throw new NotImplementedException('create report');
+  async create(tenant: TenantContext, dto: CreateReportDto): Promise<ReportResponseDto> {
+    const definition = await this.definitions.findOne({ where: { slug: dto.definitionSlug } });
+    if (!definition) throw new NotFoundException('Report definition not found');
+    const row = await this.reports.save(this.reports.create({
+      tenantId: tenant.tenantId,
+      definitionId: definition.id,
+      definition,
+      name: dto.name ?? null,
+      parameters: dto.parameters ?? {},
+      locationId: dto.locationId ?? null,
+      requestedBy: null,
+    }));
+    return this.toResponse(row);
   }
 
-  findOne(_tenant: TenantContext, _id: string): Promise<ReportResponseDto> {
-    throw new NotImplementedException('findOne report');
+  async findOne(tenant: TenantContext, id: string): Promise<ReportResponseDto> {
+    const row = await this.reports.findOne({
+      where: { id, tenantId: tenant.tenantId },
+      relations: { definition: true },
+    });
+    if (!row) throw new NotFoundException('Report not found');
+    return this.toResponse(row);
+  }
+
+  private toResponse(row: ReportEntity): ReportResponseDto {
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      definitionId: row.definitionId,
+      definitionSlug: row.definition?.slug ?? ReportDefinitionSlug.SUMMARY,
+      name: row.name,
+      parameters: row.parameters,
+      status: row.status,
+      locationId: row.locationId,
+      requestedBy: row.requestedBy,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
   }
 }

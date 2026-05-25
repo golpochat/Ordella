@@ -78,6 +78,7 @@ export const INVENTORY_SUBNAV = [
 ];
 
 export const REPORTS_SUBNAV = [
+  { label: 'Enterprise Suite', href: '/reports' },
   { label: 'Analytics home', href: '/dashboard' },
   { label: 'Daily sales', href: '/reports/sales' },
   { label: 'Inventory', href: '/reports/inventory' },
@@ -101,6 +102,7 @@ export const FRANCHISE_HQ_SUBNAV = [
   { label: 'Locations', href: '/franchise-hq/locations' },
   { label: 'Orders', href: '/franchise-hq/orders' },
   { label: 'Inventory', href: '/franchise-hq/inventory' },
+  { label: 'Reports', href: '/franchise-hq/reports' },
   { label: 'Brand Catalog', href: '/franchise-hq/catalog' },
   { label: 'Order Routing', href: '/franchise-hq/routing' },
   { label: 'Staff', href: '/franchise-hq/staff' },

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiSuccessResponse } from '../../../common/interfaces';
-import { CurrentTenant } from '../../../common/decorators';
-import { TenantContext } from '../../../common/interfaces';
+import { CurrentTenant, CurrentUser } from '../../../common/decorators';
+import { AuthenticatedUser, TenantContext } from '../../../common/interfaces';
 import { TenantGuard } from '../../../common/guards';
 import { JwtAuthGuard } from '../../auth';
 import { RbacGuard } from '../../auth';
@@ -38,6 +38,16 @@ export class ReportsController {
     return { success: true, data };
   }
 
+  @Get('summary')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
+  async getSummary(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: FilterReportDateRangeDto,
+  ): Promise<ApiSuccessResponse<Record<string, unknown>>> {
+    const data = await this.reportsAnalyticsService.getSummaryReport(tenant, query);
+    return { success: true, data };
+  }
+
   @Get('orders')
   @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
   async getOrders(
@@ -68,13 +78,44 @@ export class ReportsController {
     return { success: true, data };
   }
 
+  @Get('tax')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
+  async getTax(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: FilterReportDateRangeDto,
+  ): Promise<ApiSuccessResponse<Record<string, unknown>>> {
+    const data = await this.reportsAnalyticsService.getTaxReport(tenant, query);
+    return { success: true, data };
+  }
+
+  @Get('export')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_EXPORT)
+  async getExports(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.reportsAnalyticsService.listExportJobs(tenant);
+    return { success: true, data };
+  }
+
   @Post('export')
   @RequirePermissions(ReportsPermissionKeys.REPORTS_EXPORT)
   async export(
     @CurrentTenant() tenant: TenantContext,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateExportReportDto,
   ): Promise<ApiSuccessResponse<ExportReportResponseDto>> {
-    const data = await this.reportsAnalyticsService.exportReport(tenant, dto);
+    const data = await this.reportsAnalyticsService.exportReport(tenant, dto, user);
+    return { success: true, data };
+  }
+
+  @Post('export/create')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_EXPORT)
+  async createExport(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateExportReportDto,
+  ): Promise<ApiSuccessResponse<ExportReportResponseDto>> {
+    const data = await this.reportsAnalyticsService.exportReport(tenant, dto, user);
     return { success: true, data };
   }
 

@@ -10,4 +10,23 @@ export class CsvExportService {
       `[placeholder] CsvExportService.enqueue tenant=${tenantId} type=${reportType} from=${range.from} to=${range.to}`,
     );
   }
+
+  serialize(rows: Array<Record<string, unknown>>): string {
+    if (!rows.length) {
+      return '';
+    }
+    const headers = Object.keys(rows[0]);
+    const lines = [
+      headers.join(','),
+      ...rows.map((row) => headers.map((header) => this.escape(row[header])).join(',')),
+    ];
+    return lines.join('\n');
+  }
+
+  private escape(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    const raw = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    if (!/[",\n\r]/.test(raw)) return raw;
+    return `"${raw.replace(/"/g, '""')}"`;
+  }
 }
