@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
+import { DataSource } from 'typeorm';
+import { NotificationEntity } from '../../notifications/entities/notification.entity';
+import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
+import { NotificationStatus } from '../../notifications/enums/notification-status.enum';
+import { NotificationType } from '../../notifications/enums/notification-type.enum';
 import { SubscriptionStatus } from '../enums/subscription-status.enum';
 import { BillingRepository } from '../repositories/billing.repository';
 import { TenantBillingService } from './tenant-billing.service';
@@ -13,6 +18,7 @@ export class StripeWebhookHandler {
     private readonly stripeClient: StripeClientService,
     private readonly billingService: TenantBillingService,
     private readonly repository: BillingRepository,
+    private readonly dataSource: DataSource,
   ) {}
 
   constructEvent(payload: Buffer, signature: string): Stripe.Event {
@@ -27,8 +33,10 @@ export class StripeWebhookHandler {
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-        await this.billingService.syncStripeSubscriptionStatus(
+        await this.billingService.syncStripeSubscriptionStatus(event.data.object as Stripe.Subscription);
+        await this.recordBillingNotification(
           event.data.object as Stripe.Subscription,
+          'subscription_updated',
         );
         break;
       case 'customer.subscription.deleted': {
@@ -46,6 +54,23 @@ export class StripeWebhookHandler {
         if (invoice.subscription && typeof invoice.subscription === 'string') {
           const sub = await this.stripeClient.client().subscriptions.retrieve(invoice.subscription);
           await this.billingService.syncStripeSubscriptionStatus(sub);
+          await this.recordBillingNotification(sub, 'invoice_available');
+        }
+        break;
+      }
+      case 'invoice.created': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId =
+          typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+        if (customerId) {
+          const billing = await this.repository.findBillingByStripeCustomer(customerId);
+          if (billing) {
+            await this.recordTenantBillingNotification(billing.tenantId, 'invoice_available', {
+              templateName: 'invoice_available',
+              invoiceId: invoice.id,
+              amountDue: invoice.amount_due,
+            });
+          }
         }
         break;
       }
@@ -58,6 +83,15 @@ export class StripeWebhookHandler {
           if (billing) {
             billing.subscriptionStatus = SubscriptionStatus.PAST_DUE;
             await this.repository.saveBilling(billing);
+            await this.recordTenantBillingNotification(
+              billing.tenantId,
+              'subscription_failed',
+              {
+                templateName: 'subscription_failed',
+                invoiceId: invoice.id,
+                amountDue: invoice.amount_due,
+              },
+            );
           }
         }
         break;
@@ -99,5 +133,40 @@ export class StripeWebhookHandler {
       default:
         this.logger.debug(`Unhandled Stripe event type: ${event.type}`);
     }
+  }
+
+  private async recordBillingNotification(
+    subscription: Stripe.Subscription,
+    templateName: string,
+  ): Promise<void> {
+    const tenantId = subscription.metadata?.tenantId;
+    if (!tenantId) {
+      return;
+    }
+    await this.recordTenantBillingNotification(tenantId, templateName, {
+      templateName,
+      subscriptionId: subscription.id,
+      status: subscription.status,
+    });
+  }
+
+  private async recordTenantBillingNotification(
+    tenantId: string,
+    templateName: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    const repository = this.dataSource.getRepository(NotificationEntity);
+    await repository.save(
+      repository.create({
+        tenantId,
+        type: NotificationType.SUBSCRIPTION,
+        channel: NotificationChannelType.EMAIL,
+        userId: null,
+        recipient: null,
+        payload: { templateName, ...payload },
+        status: NotificationStatus.SENT,
+        sentAt: new Date(),
+      }),
+    );
   }
 }

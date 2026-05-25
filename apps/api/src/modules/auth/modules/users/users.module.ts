@@ -5,6 +5,7 @@ import { UsersService } from '../../services';
 import { UserRepository } from '../../repositories/user.repository';
 import { RoleEntity, UserEntity } from '../../entities';
 import { TenantMembershipEntity } from '../../../onboarding/entities/tenant-membership.entity';
+import { NotificationEntity } from '../../../notifications/entities/notification.entity';
 import { LocationEntity, UserLocationAssignmentEntity } from '../../../tenants/entities';
 import { UserLocationRepository } from '../../../tenants/repositories/user-location.repository';
 
@@ -16,6 +17,7 @@ import { UserLocationRepository } from '../../../tenants/repositories/user-locat
       LocationEntity,
       TenantMembershipEntity,
       UserLocationAssignmentEntity,
+      NotificationEntity,
     ]),
   ],
   controllers: [UsersController, StaffController],

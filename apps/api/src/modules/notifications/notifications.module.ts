@@ -23,6 +23,6 @@ import { NotificationLogsModule } from './modules/notification-logs/notification
     NotificationsFeatureModule,
     NotificationLogsModule,
   ],
-  exports: [],
+  exports: [NotificationsFeatureModule],
 })
 export class NotificationsModule {}

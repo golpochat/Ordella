@@ -2,6 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { TenantMembershipEntity } from '../../onboarding/entities/tenant-membership.entity';
+import { NotificationEntity } from '../../notifications/entities/notification.entity';
+import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
+import { NotificationStatus } from '../../notifications/enums/notification-status.enum';
+import { NotificationType } from '../../notifications/enums/notification-type.enum';
 import { LocationEntity } from '../../tenants/entities/location.entity';
 import { UserLocationAssignmentEntity } from '../../tenants/entities/user-location-assignment.entity';
 import { UserLocationRepository } from '../../tenants/repositories/user-location.repository';
@@ -27,6 +31,8 @@ export class UsersService {
     private readonly memberships: Repository<TenantMembershipEntity>,
     @InjectRepository(UserLocationAssignmentEntity)
     private readonly locationAssignments: Repository<UserLocationAssignmentEntity>,
+    @InjectRepository(NotificationEntity)
+    private readonly notifications: Repository<NotificationEntity>,
     private readonly userLocationRepository: UserLocationRepository,
   ) {}
 
@@ -78,6 +84,10 @@ export class UsersService {
       user.id,
       dto.assignedLocations ?? [],
     );
+    await this.recordStaffNotification(tenant.tenantId, user.id, 'staff_invite', {
+      staffName: user.name,
+      roleName: role.name,
+    });
 
     return this.findOne(tenant, user.id);
   }
@@ -93,6 +103,10 @@ export class UsersService {
       const role = await this.requireRole(tenant.tenantId, dto.roleId);
       user.roleId = role.id;
       await this.syncMembershipRole(tenant.tenantId, user.id, role.id);
+      await this.recordStaffNotification(tenant.tenantId, user.id, 'role_change', {
+        staffName: user.name,
+        roleName: role.name,
+      });
     }
     if (dto.name !== undefined) user.name = dto.name.trim();
     if (dto.email !== undefined) user.email = dto.email.trim().toLowerCase();
@@ -110,6 +124,10 @@ export class UsersService {
         user.id,
         dto.assignedLocations,
       );
+      await this.recordStaffNotification(tenant.tenantId, user.id, 'location_assignment', {
+        staffName: user.name,
+        locationCount: dto.assignedLocations.length,
+      });
     }
     await this.users.save(user);
     return this.findOne(tenant, id);
@@ -215,5 +233,25 @@ export class UsersService {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
+  }
+
+  private async recordStaffNotification(
+    tenantId: string,
+    userId: string,
+    templateName: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    await this.notifications.save(
+      this.notifications.create({
+        tenantId,
+        userId,
+        type: NotificationType.STAFF,
+        channel: NotificationChannelType.PUSH,
+        recipient: null,
+        payload: { templateName, ...payload },
+        status: NotificationStatus.SENT,
+        sentAt: new Date(),
+      }),
+    );
   }
 }

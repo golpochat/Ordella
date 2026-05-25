@@ -6,5 +6,8 @@ export * from './notification-logs/notification-log-response.dto';
 export * from './notification-templates/create-notification-template.dto';
 export * from './notification-templates/notification-template-response.dto';
 export * from './notification-templates/update-notification-template.dto';
+export * from './notifications/bulk-send-notification.dto';
 export * from './notifications/create-notification.dto';
+export * from './notifications/notification-preference-response.dto';
 export * from './notifications/notification-response.dto';
+export * from './notifications/update-notification-preference.dto';

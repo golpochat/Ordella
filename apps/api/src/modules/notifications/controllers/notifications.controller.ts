@@ -9,15 +9,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiSuccessResponse } from '../../../common/interfaces';
-import { CurrentTenant } from '../../../common/decorators';
-import { TenantContext } from '../../../common/interfaces';
+import { CurrentTenant, CurrentUser } from '../../../common/decorators';
+import { AuthenticatedUser, TenantContext } from '../../../common/interfaces';
 import { TenantGuard } from '../../../common/guards';
 import { JwtAuthGuard } from '../../auth';
 import { RbacGuard } from '../../auth';
 import { RequirePermissions } from '../../auth';
 import { FilterPaginationDto } from '../../../common/dto';
 import { NotificationsPermissionKeys } from '../constants/permission-keys';
-import { CreateNotificationDto } from '../dto';
+import {
+  BulkSendNotificationDto,
+  CreateNotificationDto,
+  NotificationPreferenceResponseDto,
+  UpdateNotificationPreferenceDto,
+} from '../dto';
 import { NotificationResponseDto } from '../dto';
 import { NotificationsService } from '../services';
 
@@ -37,6 +42,27 @@ export class NotificationsController {
     return { success: true, data };
   }
 
+  @Get('history')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_READ)
+  async history(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: FilterPaginationDto,
+  ): Promise<ApiSuccessResponse<NotificationResponseDto[]>> {
+    const data = await this.notificationsService.findAll(tenant, query);
+    return { success: true, data };
+  }
+
+  @Get('preferences')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_READ)
+  async preferences(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Query('userId') userId?: string,
+  ): Promise<ApiSuccessResponse<NotificationPreferenceResponseDto>> {
+    const data = await this.notificationsService.getPreferences(tenant, user, userId);
+    return { success: true, data };
+  }
+
   @Post()
   @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_CREATE)
   async create(
@@ -44,6 +70,37 @@ export class NotificationsController {
     @Body() dto: CreateNotificationDto,
   ): Promise<ApiSuccessResponse<NotificationResponseDto>> {
     const data = await this.notificationsService.create(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('send')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_CREATE)
+  async send(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: CreateNotificationDto,
+  ): Promise<ApiSuccessResponse<NotificationResponseDto>> {
+    const data = await this.notificationsService.create(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('bulk-send')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_CREATE)
+  async bulkSend(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: BulkSendNotificationDto,
+  ): Promise<ApiSuccessResponse<NotificationResponseDto[]>> {
+    const data = await this.notificationsService.bulkSend(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('preferences/update')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_CREATE)
+  async updatePreferences(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Body() dto: UpdateNotificationPreferenceDto,
+  ): Promise<ApiSuccessResponse<NotificationPreferenceResponseDto>> {
+    const data = await this.notificationsService.updatePreferences(tenant, user, dto);
     return { success: true, data };
   }
 

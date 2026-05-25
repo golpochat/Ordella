@@ -1,6 +1,7 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { NotificationStatus } from '../enums/notification-status.enum';
 import { NotificationType } from '../enums/notification-type.enum';
+import { NotificationChannelType } from '../enums/notification-channel-type.enum';
 import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 import { NotificationChannelEntity } from './notification-channel.entity';
 import { NotificationLogEntity } from './notification-log.entity';
@@ -14,6 +15,9 @@ export class NotificationEntity extends BaseTenantScopedEntity {
   @Column({ type: 'varchar', length: 64 })
   type!: NotificationType;
 
+  @Column({ type: 'varchar', length: 32, default: NotificationChannelType.EMAIL })
+  channel!: NotificationChannelType;
+
   @Column({ name: 'user_id', type: 'uuid', nullable: true })
   userId!: string | null;
 
@@ -25,7 +29,7 @@ export class NotificationEntity extends BaseTenantScopedEntity {
 
   @ManyToOne(() => NotificationChannelEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'channel_id' })
-  channel!: NotificationChannelEntity | null;
+  channelConfig!: NotificationChannelEntity | null;
 
   @Column({ name: 'template_id', type: 'uuid', nullable: true })
   templateId!: string | null;

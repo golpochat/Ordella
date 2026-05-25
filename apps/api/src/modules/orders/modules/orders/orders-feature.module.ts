@@ -38,10 +38,12 @@ import {
   ReportingService,
 } from '../../integrations';
 import { InventoryCoreModule } from '../../../inventory/modules/inventory-core/inventory-core.module';
+import { NotificationsModule } from '../../../notifications/notifications.module';
 
 @Module({
   imports: [
     InventoryCoreModule,
+    NotificationsModule,
     forwardRef(() => KdsModule),
     TypeOrmModule.forFeature([
       OrderEntity,
