@@ -388,6 +388,7 @@ function CatalogView({ catalog, onChanged }: { catalog: SupplierCatalogItem[]; o
         costPrice: Number(draft.costPrice),
         leadTimeDays: draft.leadTimeDays,
         minOrderQty: draft.minOrderQty,
+        caseSize: draft.caseSize,
         sku: draft.sku ?? undefined,
       });
       setError(null);
@@ -409,6 +410,7 @@ function CatalogView({ catalog, onChanged }: { catalog: SupplierCatalogItem[]; o
               <th className="p-3 font-medium">Cost</th>
               <th className="p-3 font-medium">Lead days</th>
               <th className="p-3 font-medium">Min order</th>
+              <th className="p-3 font-medium">Case size</th>
               <th className="p-3 font-medium">SKU</th>
               <th className="p-3 font-medium">Action</th>
             </tr>
@@ -427,6 +429,9 @@ function CatalogView({ catalog, onChanged }: { catalog: SupplierCatalogItem[]; o
                   </td>
                   <td className="p-3">
                     <Input type="number" value={draft.minOrderQty} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, minOrderQty: Number(event.target.value) } }))} />
+                  </td>
+                  <td className="p-3">
+                    <Input type="number" value={draft.caseSize} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, caseSize: Number(event.target.value) } }))} />
                   </td>
                   <td className="p-3">
                     <Input value={draft.sku ?? ''} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, sku: event.target.value } }))} />

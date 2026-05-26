@@ -4,13 +4,30 @@ import { TenantGuard } from '../../../common/guards';
 import { ApiSuccessResponse, TenantContext } from '../../../common/interfaces';
 import { AdminPermissionKeys } from '../../admin/constants/admin-permission-keys';
 import { JwtAuthGuard, RbacGuard, RequirePermissions } from '../../auth';
-import { ReplenishmentActionQueryDto, RunReplenishmentDto, UpsertReplenishmentRuleDto } from '../dto';
+import {
+  ApproveSuggestedPurchaseOrderDto,
+  GeneratePurchaseOrderSuggestionsDto,
+  ReplenishmentActionQueryDto,
+  ReplenishmentDashboardQueryDto,
+  RunReplenishmentDto,
+  UpsertReplenishmentRuleDto,
+} from '../dto';
 import { ReplenishmentService } from '../services';
 
 @Controller('replenishment')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
 export class ReplenishmentController {
   constructor(private readonly replenishment: ReplenishmentService) {}
+
+  @Get('dashboard')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.INVENTORY)
+  async dashboard(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: ReplenishmentDashboardQueryDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.replenishment.dashboard(tenant, query);
+    return { success: true, data };
+  }
 
   @Post('run')
   @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.INVENTORY)
@@ -19,6 +36,26 @@ export class ReplenishmentController {
     @Body() dto: RunReplenishmentDto,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.replenishment.run(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('purchase-order-suggestions/generate')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.INVENTORY)
+  async generatePurchaseOrderSuggestions(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: GeneratePurchaseOrderSuggestionsDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.replenishment.generatePurchaseOrderSuggestions(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('purchase-order-suggestions/approve')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.INVENTORY)
+  async approvePurchaseOrderSuggestion(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: ApproveSuggestedPurchaseOrderDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.replenishment.approveSuggestedPurchaseOrder(tenant, dto);
     return { success: true, data };
   }
 

@@ -96,6 +96,7 @@ export class SuppliersService {
       sku: item.sku ?? null,
       leadTimeDays: item.leadTimeDays ?? 0,
       minOrderQty: item.minOrderQty ?? 1,
+      caseSize: item.caseSize ?? 1,
     })));
   }
 

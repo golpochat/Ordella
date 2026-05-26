@@ -294,6 +294,7 @@ export class SupplierPortalService {
     if (dto.costPrice !== undefined) item.costPrice = dto.costPrice.toFixed(2);
     if (dto.leadTimeDays !== undefined) item.leadTimeDays = dto.leadTimeDays;
     if (dto.minOrderQty !== undefined) item.minOrderQty = dto.minOrderQty;
+    if (dto.caseSize !== undefined) item.caseSize = dto.caseSize;
     if (dto.sku !== undefined) item.sku = dto.sku.trim() || null;
     const saved = await this.supplierItems.save(item);
     if (oldCostPrice !== saved.costPrice) {

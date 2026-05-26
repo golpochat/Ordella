@@ -8,11 +8,18 @@ import { StockTransferStatus } from '../../inventory/enums/stock-transfer-status
 import { StockTransfersService } from '../../inventory/services';
 import { ProductEntity } from '../../catalog/entities';
 import { ForecastService } from '../../forecast';
-import { PurchaseOrderStatus, SupplierEntity, SupplierItemEntity } from '../../procurement/entities';
+import { PurchaseOrderEntity, PurchaseOrderStatus, SupplierEntity, SupplierItemEntity } from '../../procurement/entities';
 import { PurchaseOrdersService } from '../../procurement/services';
 import { LocationEntity, LocationType } from '../../tenants/entities';
 import { WarehouseService } from '../../warehouse/services';
-import { ReplenishmentActionQueryDto, RunReplenishmentDto, UpsertReplenishmentRuleDto } from '../dto';
+import {
+  ApproveSuggestedPurchaseOrderDto,
+  GeneratePurchaseOrderSuggestionsDto,
+  ReplenishmentActionQueryDto,
+  ReplenishmentDashboardQueryDto,
+  RunReplenishmentDto,
+  UpsertReplenishmentRuleDto,
+} from '../dto';
 import {
   ReplenishmentActionEntity,
   ReplenishmentActionType,
@@ -27,6 +34,26 @@ type Candidate = {
   projectedDemand: number;
   requiredQuantity: number;
   reason: string;
+};
+
+type ReplenishmentDashboardRow = {
+  productId: string;
+  name: string;
+  locationId: string;
+  available: number;
+  forecastedDemand: number;
+  daysUntilStockout: number | null;
+  forecastedDepletionDate: string | null;
+  recommendedReorderDate: string | null;
+  recommendedReorderQty: number;
+  riskScore: number;
+  alertType: 'stockout_risk' | 'overstocked' | 'low_stock' | 'healthy';
+  supplierId: string | null;
+  supplierName: string | null;
+  leadTimeDays: number;
+  minOrderQty: number;
+  caseSize: number;
+  estimatedCost: string;
 };
 
 @Injectable()
@@ -46,6 +73,8 @@ export class ReplenishmentService {
     private readonly suppliers: Repository<SupplierEntity>,
     @InjectRepository(SupplierItemEntity)
     private readonly supplierItems: Repository<SupplierItemEntity>,
+    @InjectRepository(PurchaseOrderEntity)
+    private readonly purchaseOrderRepository: Repository<PurchaseOrderEntity>,
     private readonly purchaseOrders: PurchaseOrdersService,
     private readonly stockTransfers: StockTransfersService,
     private readonly warehouse: WarehouseService,
@@ -93,6 +122,117 @@ export class ReplenishmentService {
       },
       order: { createdAt: 'DESC' },
       take: 100,
+    });
+  }
+
+  async dashboard(tenant: TenantContext, query: ReplenishmentDashboardQueryDto) {
+    if (query.locationId) await this.assertLocation(tenant.tenantId, query.locationId);
+    const horizonDays = query.horizonDays ?? 14;
+    const riskWindowDays = query.riskWindowDays ?? 7;
+    const rows = await this.buildDashboardRows(tenant, { ...query, horizonDays, riskWindowDays });
+    const stockoutAlerts = rows.filter((row) => row.alertType === 'stockout_risk');
+    const overstockAlerts = rows.filter((row) => row.alertType === 'overstocked');
+    const suggestedPurchaseOrders = this.groupSuggestedPurchaseOrders(rows.filter((row) => row.recommendedReorderQty > 0));
+    const draftPurchaseOrders = await this.purchaseOrderRepository.find({
+      where: {
+        tenantId: tenant.tenantId,
+        status: PurchaseOrderStatus.DRAFT,
+        ...(query.locationId ? { locationId: query.locationId } : {}),
+      },
+      relations: { supplier: true, location: true, items: { item: true } },
+      order: { createdAt: 'DESC' },
+      take: 25,
+    });
+    return {
+      horizonDays,
+      riskWindowDays,
+      lowStockItems: rows.filter((row) => ['stockout_risk', 'low_stock'].includes(row.alertType)),
+      alerts: {
+        stockoutRisk: stockoutAlerts,
+        overstocked: overstockAlerts,
+      },
+      suggestedPurchaseOrders,
+      draftPurchaseOrders,
+      metrics: {
+        lowStockItems: rows.filter((row) => ['stockout_risk', 'low_stock'].includes(row.alertType)).length,
+        stockoutRiskItems: stockoutAlerts.length,
+        overstockedItems: overstockAlerts.length,
+        suggestedPurchaseOrders: suggestedPurchaseOrders.length,
+        suggestedValue: suggestedPurchaseOrders.reduce((sum, group) => sum + Number(group.estimatedTotal), 0).toFixed(2),
+      },
+    };
+  }
+
+  async generatePurchaseOrderSuggestions(tenant: TenantContext, dto: GeneratePurchaseOrderSuggestionsDto) {
+    const dashboard = await this.dashboard(tenant, dto);
+    if (dto.dryRun) return { dryRun: true, purchaseOrders: [], suggestions: dashboard.suggestedPurchaseOrders };
+    const purchaseOrders: PurchaseOrderEntity[] = [];
+    for (const suggestion of dashboard.suggestedPurchaseOrders) {
+      if (!suggestion.supplierId || !suggestion.items.length) continue;
+      const maxLeadTime = Math.max(1, ...suggestion.items.map((item) => item.leadTimeDays || 1));
+      const expectedDeliveryDate = new Date(Date.now() + maxLeadTime * 86_400_000).toISOString().slice(0, 10);
+      const order = await this.purchaseOrders.create(tenant.tenantId, {
+        supplierId: suggestion.supplierId,
+        locationId: suggestion.locationId,
+        status: PurchaseOrderStatus.DRAFT,
+        expectedDeliveryDate,
+        items: suggestion.items.map((item) => ({
+          itemId: item.productId,
+          quantityOrdered: item.recommendedReorderQty,
+          costPrice: Number(item.costPrice),
+        })),
+      });
+      purchaseOrders.push(order as PurchaseOrderEntity);
+      await this.actions.save(this.actions.create({
+        tenantId: tenant.tenantId,
+        ruleId: null,
+        locationId: suggestion.locationId,
+        itemId: suggestion.items[0].productId,
+        stockItemId: null,
+        actionType: 'create_po',
+        quantity: formatQty(suggestion.items.reduce((sum, item) => sum + item.recommendedReorderQty, 0)),
+        sourceLocationId: null,
+        supplierId: suggestion.supplierId,
+        status: 'completed',
+        purchaseOrderId: order.id,
+        stockTransferId: null,
+        pickTaskId: null,
+        reason: 'Forecast-based purchase order suggestion generated from replenishment dashboard',
+        metadata: {
+          estimatedCost: suggestion.estimatedSubtotal,
+          estimatedTax: suggestion.estimatedTax,
+          estimatedTotal: suggestion.estimatedTotal,
+          itemCount: suggestion.items.length,
+        },
+        error: null,
+      }));
+    }
+    return { dryRun: false, purchaseOrders, suggestions: dashboard.suggestedPurchaseOrders };
+  }
+
+  async approveSuggestedPurchaseOrder(tenant: TenantContext, dto: ApproveSuggestedPurchaseOrderDto) {
+    const order = await this.purchaseOrders.get(tenant.tenantId, dto.purchaseOrderId) as PurchaseOrderEntity;
+    if (order.status !== PurchaseOrderStatus.DRAFT) {
+      throw new BadRequestException('Only draft suggested purchase orders can be approved');
+    }
+    return this.purchaseOrders.update(tenant.tenantId, {
+      id: order.id,
+      supplierId: order.supplierId,
+      locationId: order.locationId,
+      status: PurchaseOrderStatus.SENT,
+      expectedDeliveryDate: order.expectedDeliveryDate ?? undefined,
+      supplierStatus: order.supplierStatus,
+      supplierExpectedDeliveryDate: order.supplierExpectedDeliveryDate ?? undefined,
+      supplierNotes: order.supplierNotes ?? undefined,
+      items: (dto.items?.length ? dto.items : order.items.map((item) => ({
+        itemId: item.itemId,
+        quantityOrdered: item.quantityOrdered,
+        costPrice: Number(item.costPrice),
+      }))).map((item) => ({
+        itemId: item.itemId,
+        quantityOrdered: item.quantityOrdered,
+        costPrice: item.costPrice,
+      })),
     });
   }
 
@@ -152,6 +292,150 @@ export class ReplenishmentService {
         overstockReduction: actionable.filter((candidate) => candidate.rule.maxLevel !== null).length,
       },
     };
+  }
+
+  private async buildDashboardRows(
+    tenant: TenantContext,
+    query: ReplenishmentDashboardQueryDto & { horizonDays: number; riskWindowDays: number },
+  ): Promise<ReplenishmentDashboardRow[]> {
+    const [forecast, stockItems, rules, supplierItems] = await Promise.all([
+      this.forecasts.getInventory(tenant, {
+        locationId: query.locationId,
+        horizonDays: query.horizonDays,
+      }).catch(() => ({ reorderRecommendations: [], stockoutPredictions: [] })),
+      this.stockItems.find({
+        where: {
+          tenantId: tenant.tenantId,
+          isActive: true,
+          ...(query.locationId ? { locationId: query.locationId } : {}),
+        },
+        take: 300,
+      }),
+      this.rules.find({ where: { tenantId: tenant.tenantId, isActive: true } }),
+      this.supplierItems.find({
+        where: { supplier: { tenantId: tenant.tenantId, isActive: true } },
+        relations: { supplier: true, item: true },
+      }),
+    ]);
+    const forecastRows = this.forecastByProduct(forecast);
+    const ruleByLocationProduct = new Map(rules.map((rule) => [`${rule.locationId}:${rule.itemId}`, rule]));
+    const supplierByProduct = new Map<string, SupplierItemEntity>();
+    for (const item of supplierItems) {
+      const existing = supplierByProduct.get(item.itemId);
+      if (!existing || item.leadTimeDays < existing.leadTimeDays) supplierByProduct.set(item.itemId, item);
+    }
+
+    return stockItems
+      .filter((stock) => stock.productId)
+      .map((stock) => {
+        const productId = stock.productId!;
+        const forecast = forecastRows.get(productId) ?? {};
+        const rule = ruleByLocationProduct.get(`${stock.locationId}:${productId}`) ?? null;
+        const supplier = rule?.supplierId
+          ? supplierItems.find((item) => item.itemId === productId && item.supplierId === rule.supplierId) ?? supplierByProduct.get(productId)
+          : supplierByProduct.get(productId);
+        const available = availableQty(stock.quantityOnHand, stock.quantityReserved);
+        const forecastedDemand = Number(forecast.forecastedDemand ?? 0);
+        const daysUntilStockout = forecast.daysUntilStockout === null || forecast.daysUntilStockout === undefined
+          ? null
+          : Number(forecast.daysUntilStockout);
+        const safetyStock = parseQty(rule?.safetyStock ?? stock.safetyStockLevel ?? '0');
+        const reorderMultiple = Math.max(1, parseQty(rule?.reorderMultiple ?? '0'));
+        const caseSize = Math.max(1, supplier?.caseSize ?? Math.ceil(reorderMultiple));
+        const minOrderQty = Math.max(1, supplier?.minOrderQty ?? 1);
+        const leadTimeDays = Math.max(1, supplier?.leadTimeDays ?? query.riskWindowDays);
+        const baselineQty = Math.max(
+          Number(forecast.suggestedQuantity ?? forecast.recommendedReorderQty ?? 0),
+          forecastedDemand + safetyStock - available,
+          parseQty(rule?.minLevel ?? stock.reorderPoint ?? stock.reorderLevel ?? '0') - available,
+          0,
+        );
+        const roundedQty = baselineQty > 0 ? this.roundOrderQuantity(Math.max(baselineQty, minOrderQty), caseSize) : 0;
+        const depletionDate = daysUntilStockout === null
+          ? null
+          : new Date(Date.now() + Math.max(0, Math.floor(daysUntilStockout)) * 86_400_000).toISOString().slice(0, 10);
+        const reorderDate = daysUntilStockout === null
+          ? null
+          : new Date(Date.now() + Math.max(0, Math.floor(daysUntilStockout - leadTimeDays)) * 86_400_000).toISOString().slice(0, 10);
+        const riskScore = this.stockoutRiskScore(daysUntilStockout, query.riskWindowDays, available, safetyStock);
+        const overstocked = forecastedDemand > 0 && available > forecastedDemand * 3 + safetyStock;
+        const lowStock = available <= Math.max(safetyStock, parseQty(stock.reorderLevel ?? stock.reorderPoint ?? '0'));
+        const alertType: ReplenishmentDashboardRow['alertType'] = riskScore >= 70
+          ? 'stockout_risk'
+          : overstocked
+            ? 'overstocked'
+            : lowStock
+              ? 'low_stock'
+              : 'healthy';
+        return {
+          productId,
+          name: stock.name,
+          locationId: stock.locationId,
+          available,
+          forecastedDemand,
+          daysUntilStockout,
+          forecastedDepletionDate: depletionDate,
+          recommendedReorderDate: reorderDate,
+          recommendedReorderQty: roundedQty,
+          riskScore,
+          alertType,
+          supplierId: supplier?.supplierId ?? null,
+          supplierName: supplier?.supplier?.name ?? null,
+          leadTimeDays,
+          minOrderQty,
+          caseSize,
+          estimatedCost: (roundedQty * Number(supplier?.costPrice ?? 0)).toFixed(2),
+        };
+      })
+      .filter((row) => row.alertType !== 'healthy' || row.recommendedReorderQty > 0)
+      .sort((a, b) => b.riskScore - a.riskScore);
+  }
+
+  private groupSuggestedPurchaseOrders(rows: ReplenishmentDashboardRow[]) {
+    const groups = new Map<string, {
+      supplierId: string | null;
+      supplierName: string | null;
+      locationId: string;
+      estimatedSubtotal: string;
+      estimatedTax: string;
+      estimatedTotal: string;
+      items: Array<ReplenishmentDashboardRow & { costPrice: string }>;
+    }>();
+    for (const row of rows) {
+      if (!row.supplierId) continue;
+      const key = `${row.supplierId}:${row.locationId}`;
+      const group = groups.get(key) ?? {
+        supplierId: row.supplierId,
+        supplierName: row.supplierName,
+        locationId: row.locationId,
+        estimatedSubtotal: '0.00',
+        estimatedTax: '0.00',
+        estimatedTotal: '0.00',
+        items: [],
+      };
+      const costPrice = row.recommendedReorderQty > 0
+        ? (Number(row.estimatedCost) / row.recommendedReorderQty).toFixed(2)
+        : '0.00';
+      group.items.push({ ...row, costPrice });
+      const subtotal = group.items.reduce((sum, item) => sum + Number(item.estimatedCost), 0);
+      group.estimatedSubtotal = subtotal.toFixed(2);
+      group.estimatedTax = '0.00';
+      group.estimatedTotal = subtotal.toFixed(2);
+      groups.set(key, group);
+    }
+    return [...groups.values()].sort((a, b) => Number(b.estimatedTotal) - Number(a.estimatedTotal));
+  }
+
+  private roundOrderQuantity(quantity: number, caseSize: number): number {
+    return Math.ceil(quantity / Math.max(1, caseSize)) * Math.max(1, caseSize);
+  }
+
+  private stockoutRiskScore(daysUntilStockout: number | null, riskWindowDays: number, available: number, safetyStock: number) {
+    if (available <= 0) return 100;
+    if (daysUntilStockout === null) return available <= safetyStock ? 45 : 0;
+    if (daysUntilStockout <= 0) return 100;
+    if (daysUntilStockout >= riskWindowDays * 2) return 0;
+    return Math.max(0, Math.min(100, Math.round((1 - daysUntilStockout / (riskWindowDays * 2)) * 100)));
   }
 
   private async evaluateRule(

@@ -19,6 +19,7 @@ type SupplierItemForm = {
   sku: string;
   leadTimeDays: number;
   minOrderQty: number;
+  caseSize: number;
 };
 
 type SupplierForm = {
@@ -96,6 +97,7 @@ export function SuppliersPanel() {
         sku: item.sku ?? '',
         leadTimeDays: item.leadTimeDays,
         minOrderQty: item.minOrderQty,
+        caseSize: item.caseSize,
       })),
     });
   };
@@ -111,6 +113,7 @@ export function SuppliersPanel() {
         sku: firstItem.sku ?? '',
         leadTimeDays: 0,
         minOrderQty: 1,
+        caseSize: 1,
       }],
     }));
   };
@@ -134,6 +137,7 @@ export function SuppliersPanel() {
           sku: item.sku || undefined,
           leadTimeDays: Number(item.leadTimeDays || 0),
           minOrderQty: Number(item.minOrderQty || 1),
+          caseSize: Number(item.caseSize || 1),
         })),
       };
       if (form.id) {
@@ -191,7 +195,7 @@ export function SuppliersPanel() {
               </Button>
             </div>
             {form.items.map((row, index) => (
-              <div key={`${row.itemId}-${index}`} className="grid gap-2 rounded-lg border p-3 md:grid-cols-6">
+              <div key={`${row.itemId}-${index}`} className="grid gap-2 rounded-lg border p-3 md:grid-cols-8">
                 <select
                   className="h-10 rounded-md border bg-background px-3 text-sm md:col-span-2"
                   value={row.itemId}
@@ -215,6 +219,14 @@ export function SuppliersPanel() {
                 <Input placeholder="Lead days" type="number" value={row.leadTimeDays} onChange={(e) => setForm((current) => ({
                   ...current,
                   items: current.items.map((item, i) => (i === index ? { ...item, leadTimeDays: Number(e.target.value) } : item)),
+                }))} />
+                <Input placeholder="MOQ" type="number" value={row.minOrderQty} onChange={(e) => setForm((current) => ({
+                  ...current,
+                  items: current.items.map((item, i) => (i === index ? { ...item, minOrderQty: Number(e.target.value) } : item)),
+                }))} />
+                <Input placeholder="Case size" type="number" value={row.caseSize} onChange={(e) => setForm((current) => ({
+                  ...current,
+                  items: current.items.map((item, i) => (i === index ? { ...item, caseSize: Number(e.target.value) } : item)),
                 }))} />
                 <Button type="button" variant="ghost" onClick={() => setForm((current) => ({ ...current, items: current.items.filter((_, i) => i !== index) }))}>
                   Remove

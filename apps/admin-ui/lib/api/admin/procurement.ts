@@ -9,6 +9,7 @@ const supplierItemSchema = z.object({
   sku: z.string().nullable().optional(),
   leadTimeDays: z.number().int(),
   minOrderQty: z.number().int(),
+  caseSize: z.number().int().default(1),
   item: z.object({ id: z.string().uuid(), name: z.string() }).optional(),
 });
 

@@ -6,7 +6,7 @@ import { ForecastModule } from '../forecast';
 import { StockItemEntity } from '../inventory/entities';
 import { StockTransfersModule } from '../inventory/modules/stock-transfers/stock-transfers.module';
 import { ProcurementModule } from '../procurement/procurement.module';
-import { SupplierEntity, SupplierItemEntity } from '../procurement/entities';
+import { PurchaseOrderEntity, SupplierEntity, SupplierItemEntity } from '../procurement/entities';
 import { LocationEntity } from '../tenants/entities';
 import { WarehouseModule } from '../warehouse';
 import { ReplenishmentController } from './controllers';
@@ -27,6 +27,7 @@ import { ReplenishmentService } from './services';
       LocationEntity,
       SupplierEntity,
       SupplierItemEntity,
+      PurchaseOrderEntity,
     ]),
   ],
   controllers: [ReplenishmentController],

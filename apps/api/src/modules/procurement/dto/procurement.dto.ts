@@ -23,6 +23,11 @@ export class SupplierItemDto {
   @IsInt()
   @Min(1)
   minOrderQty?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  caseSize?: number;
 }
 
 export class UpsertSupplierDto {
@@ -243,6 +248,11 @@ export class SupplierCatalogUpdateDto {
   @IsInt()
   @Min(1)
   minOrderQty?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  caseSize?: number;
 
   @IsOptional()
   @IsString()

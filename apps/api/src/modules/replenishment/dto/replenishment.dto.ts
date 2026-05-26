@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsUUID, Max, Min, ValidateNested } from 'class-validator';
 import type { ReplenishmentRuleType } from '../entities';
 
 const ruleTypes = ['min_max', 'forecast_based', 'safety_stock'] as const;
@@ -16,6 +16,58 @@ export class RunReplenishmentDto {
   @IsOptional()
   @IsBoolean()
   dryRun?: boolean;
+}
+
+export class ReplenishmentDashboardQueryDto {
+  @IsOptional()
+  @IsUUID()
+  locationId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(90)
+  horizonDays?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  riskWindowDays?: number;
+}
+
+export class GeneratePurchaseOrderSuggestionsDto extends ReplenishmentDashboardQueryDto {
+  @IsOptional()
+  @IsBoolean()
+  dryRun?: boolean;
+}
+
+export class ApproveSuggestedPurchaseOrderLineDto {
+  @IsUUID()
+  itemId!: string;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantityOrdered!: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  costPrice!: number;
+}
+
+export class ApproveSuggestedPurchaseOrderDto {
+  @IsUUID()
+  purchaseOrderId!: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ApproveSuggestedPurchaseOrderLineDto)
+  items?: ApproveSuggestedPurchaseOrderLineDto[];
 }
 
 export class UpsertReplenishmentRuleDto {

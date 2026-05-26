@@ -33,4 +33,7 @@ export class SupplierItemEntity {
 
   @Column({ name: 'min_order_qty', type: 'int', default: 1 })
   minOrderQty!: number;
+
+  @Column({ name: 'case_size', type: 'int', default: 1 })
+  caseSize!: number;
 }
