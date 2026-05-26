@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RateLimitService } from '../../platform/security/rate-limit.service';
 import { AuditLogEntity } from '../audit/entities';
 import { AuthModule } from '../auth/auth.module';
+import { ApiKeyUsageLogEntity } from '../auth/entities';
 import { ProductEntity } from '../catalog/entities/product.entity';
 import { CategoryEntity } from '../catalog/entities/category.entity';
 import { VariantEntity } from '../catalog/entities/variant.entity';
@@ -33,6 +34,7 @@ import { IntegrationPublicApiService, WebhooksService } from './services';
     TypeOrmModule.forFeature([
       ...INTEGRATIONS_ENTITIES,
       AuditLogEntity,
+      ApiKeyUsageLogEntity,
       OrderEntity,
       ProductEntity,
       CategoryEntity,

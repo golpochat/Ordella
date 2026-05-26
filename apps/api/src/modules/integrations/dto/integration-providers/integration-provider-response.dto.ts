@@ -5,6 +5,9 @@ export class IntegrationProviderResponseDto {
   slug!: string;
   name!: string;
   category!: IntegrationProviderCategory;
+  authType!: string;
+  capabilities!: string[];
+  docsUrl!: string | null;
   configSchema!: Record<string, unknown>;
   isActive!: boolean;
   createdAt!: Date;

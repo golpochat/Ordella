@@ -32,7 +32,9 @@ export type NavItem = {
 
 export const DASHBOARD_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Analytics', href: '/dashboard', icon: LayoutDashboard },
+  { id: 'ai-assistant', label: 'AI Assistant', href: '/ai-assistant', icon: Sparkles },
   { id: 'analytics-insights', label: 'Analytics & Insights', href: '/analytics-insights', icon: TrendingUp },
+  { id: 'enterprise', label: 'Enterprise Admin', href: '/enterprise', icon: Building2 },
   { id: 'franchise-hq', label: 'Franchise HQ', href: '/franchise-hq/dashboard', icon: Building2 },
   { id: 'locations', label: 'Locations', href: '/locations', icon: MapPin },
   { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },
@@ -41,7 +43,9 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'inventory', label: 'Inventory', href: '/inventory', icon: Warehouse },
   { id: 'multi-store-inventory', label: 'Multi-Store Inventory', href: '/inventory/multi-store', icon: Warehouse },
   { id: 'replenishment', label: 'Replenishment', href: '/replenishment', icon: Repeat },
+  { id: 'offline-sync', label: 'Offline & Sync', href: '/offline-sync', icon: Repeat },
   { id: 'warehouse', label: 'Warehouse Management', href: '/warehouse', icon: Boxes },
+  { id: 'devices', label: 'Hardware & IoT', href: '/devices', icon: Boxes },
   { id: 'picking-mode', label: 'Picking Mode', href: '/warehouse/picking', icon: Boxes },
   { id: 'stock-transfers', label: 'Stock Transfers', href: '/warehouse/transfers', icon: Truck },
   { id: 'suppliers', label: 'Suppliers', href: '/suppliers', icon: Truck },
@@ -60,6 +64,8 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'recommendations', label: 'AI Recommendations', href: '/recommendations', icon: Sparkles },
   { id: 'marketing', label: 'Marketing', href: '/marketing/campaigns', icon: Megaphone },
   { id: 'audit-logs', label: 'Audit Logs', href: '/audit-logs', icon: FileClock },
+  { id: 'app-store', label: 'App Store', href: '/app-store', icon: Package },
+  { id: 'integrations-hub', label: 'Integrations Hub', href: '/integrations-hub', icon: Code2 },
   { id: 'developer', label: 'Developer', href: '/developer', icon: Code2 },
   { id: 'reports', label: 'Reports', href: '/reports', icon: ClipboardList },
   { id: 'forecasting', label: 'Forecasting', href: '/forecasting', icon: TrendingUp },

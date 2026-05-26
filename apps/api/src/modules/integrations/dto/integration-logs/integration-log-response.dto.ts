@@ -8,5 +8,9 @@ export class IntegrationLogResponseDto {
   action!: string;
   message!: string | null;
   metadata!: Record<string, unknown>;
+  requestPayload!: Record<string, unknown> | null;
+  responsePayload!: Record<string, unknown> | null;
+  errorCode!: string | null;
+  durationMs!: number | null;
   createdAt!: Date;
 }

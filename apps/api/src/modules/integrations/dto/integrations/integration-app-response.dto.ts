@@ -8,9 +8,15 @@ export class IntegrationAppResponseDto {
   providerSlug!: string;
   providerName!: string;
   providerCategory!: IntegrationProviderCategory;
+  integrationType!: string;
   name!: string;
   status!: IntegrationStatus;
   config!: Record<string, unknown>;
+  syncSchedule!: string | null;
+  conflictResolution!: string;
+  retryCount!: number;
+  lastSyncAt!: Date | null;
+  lastSyncStatus!: string | null;
   connectedAt!: Date | null;
   createdAt!: Date;
   updatedAt!: Date | null;

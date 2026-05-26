@@ -11,4 +11,16 @@ export class CreateIntegrationAppDto {
   @IsOptional()
   @IsObject()
   config?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  credentials?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsString()
+  syncSchedule?: string;
+
+  @IsOptional()
+  @IsString()
+  conflictResolution?: string;
 }

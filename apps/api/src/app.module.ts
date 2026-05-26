@@ -40,6 +40,11 @@ import { ReplenishmentModule } from './modules/replenishment';
 import { AnalyticsInsightsModule } from './modules/analytics-insights';
 import { StaffSchedulingModule } from './modules/staff-scheduling';
 import { SupportModule } from './modules/support';
+import { EnterpriseModule } from './modules/enterprise';
+import { AppStoreModule } from './modules/app-store';
+import { HardwareModule } from './modules/hardware';
+import { AiAssistantModule } from './modules/ai-assistant';
+import { OfflineSyncModule } from './modules/offline-sync';
 
 @Module({
   imports: [
@@ -86,6 +91,11 @@ import { SupportModule } from './modules/support';
     AnalyticsInsightsModule,
     StaffSchedulingModule,
     SupportModule,
+    EnterpriseModule,
+    AppStoreModule,
+    HardwareModule,
+    AiAssistantModule,
+    OfflineSyncModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

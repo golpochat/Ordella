@@ -71,6 +71,27 @@ export class IntegrationsAppsController {
     return { success: true, data };
   }
 
+  @Post(':id/test-connection')
+  @RequirePermissions(IntegrationsPermissionKeys.INTEGRATIONS_UPDATE)
+  async testConnection(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiSuccessResponse<{ ok: boolean; latencyMs: number; message: string }>> {
+    const data = await this.integrationsAppsService.testConnection(tenant, id);
+    return { success: true, data };
+  }
+
+  @Post(':id/sync')
+  @RequirePermissions(IntegrationsPermissionKeys.INTEGRATIONS_UPDATE)
+  async syncNow(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { mode?: string },
+  ): Promise<ApiSuccessResponse<{ queued: boolean; eventId: string; syncedObjects: string[] }>> {
+    const data = await this.integrationsAppsService.syncNow(tenant, id, body.mode ?? 'manual');
+    return { success: true, data };
+  }
+
   @Delete(':id')
   @RequirePermissions(IntegrationsPermissionKeys.INTEGRATIONS_DELETE)
   async disconnect(

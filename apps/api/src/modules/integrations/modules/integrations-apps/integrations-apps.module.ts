@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuditModule } from '../../../audit';
 import { IntegrationEntity, IntegrationEventEntity, IntegrationLogEntity, IntegrationProviderEntity } from '../../entities';
 import { IntegrationsAppsController } from '../../controllers';
 import { IntegrationsWebhooksController } from '../../controllers';
@@ -10,7 +11,7 @@ import {
 import { IntegrationRepository } from '../../repositories/integration.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([IntegrationEntity, IntegrationProviderEntity, IntegrationLogEntity, IntegrationEventEntity])],
+  imports: [AuditModule, TypeOrmModule.forFeature([IntegrationEntity, IntegrationProviderEntity, IntegrationLogEntity, IntegrationEventEntity])],
   controllers: [IntegrationsAppsController, IntegrationsWebhooksController],
   providers: [IntegrationsAppsService, IntegrationsWebhooksService, IntegrationRepository],
   exports: [],

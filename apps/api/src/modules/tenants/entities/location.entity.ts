@@ -16,6 +16,9 @@ export class LocationEntity extends BaseTenantScopedEntity {
   @Column({ name: 'store_id', type: 'uuid', nullable: true })
   storeId!: string | null;
 
+  @Column({ name: 'region_id', type: 'uuid', nullable: true })
+  regionId!: string | null;
+
   @ManyToOne(() => StoreEntity, (store) => store.locations, {
     nullable: true,
     onDelete: 'SET NULL',

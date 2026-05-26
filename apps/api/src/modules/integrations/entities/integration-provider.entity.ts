@@ -15,6 +15,15 @@ export class IntegrationProviderEntity extends BaseTimestampsEntity {
   @Column({ type: 'varchar', length: 32 })
   category!: IntegrationProviderCategory;
 
+  @Column({ name: 'auth_type', type: 'varchar', length: 32, default: 'api_key' })
+  authType!: 'api_key' | 'oauth2' | 'saml' | 'none';
+
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  capabilities!: string[];
+
+  @Column({ name: 'docs_url', type: 'varchar', length: 255, nullable: true })
+  docsUrl!: string | null;
+
   @Column({ name: 'config_schema', type: 'jsonb', default: {} })
   configSchema!: Record<string, unknown>;
 

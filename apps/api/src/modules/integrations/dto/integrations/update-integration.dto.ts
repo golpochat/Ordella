@@ -1,4 +1,4 @@
-import { IsEnum, IsObject, IsOptional } from 'class-validator';
+import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { IntegrationStatus } from '../../enums/integration-status.enum';
 
 export class UpdateIntegrationDto {
@@ -9,4 +9,16 @@ export class UpdateIntegrationDto {
   @IsOptional()
   @IsObject()
   config?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  credentials?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsString()
+  syncSchedule?: string;
+
+  @IsOptional()
+  @IsString()
+  conflictResolution?: string;
 }

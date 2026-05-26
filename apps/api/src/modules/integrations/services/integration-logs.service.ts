@@ -36,6 +36,10 @@ export class IntegrationLogsService {
       action: log.action,
       message: log.message,
       metadata: log.metadata,
+      requestPayload: log.requestPayload,
+      responsePayload: log.responsePayload,
+      errorCode: log.errorCode,
+      durationMs: log.durationMs,
       createdAt: log.createdAt,
     }));
   }

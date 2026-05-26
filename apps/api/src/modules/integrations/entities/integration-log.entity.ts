@@ -32,6 +32,18 @@ export class IntegrationLogEntity {
   @Column({ type: 'jsonb', default: {} })
   metadata!: Record<string, unknown>;
 
+  @Column({ name: 'request_payload', type: 'jsonb', nullable: true })
+  requestPayload!: Record<string, unknown> | null;
+
+  @Column({ name: 'response_payload', type: 'jsonb', nullable: true })
+  responsePayload!: Record<string, unknown> | null;
+
+  @Column({ name: 'error_code', type: 'varchar', length: 64, nullable: true })
+  errorCode!: string | null;
+
+  @Column({ name: 'duration_ms', type: 'int', nullable: true })
+  durationMs!: number | null;
+
   @Column({ name: 'created_at', type: 'timestamptz', default: () => 'NOW()' })
   createdAt!: Date;
 }
