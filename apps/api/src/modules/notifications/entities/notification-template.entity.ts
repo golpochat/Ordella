@@ -4,7 +4,7 @@ import { BaseTenantScopedEntity } from './base-tenant-scoped.entity';
 
 /** ERD §1.9 — API Spec §10.2 */
 @Entity('notification_templates')
-@Index(['tenantId', 'name'], { unique: true })
+@Index(['tenantId', 'name', 'channel'], { unique: true })
 export class NotificationTemplateEntity extends BaseTenantScopedEntity {
   @Column({ type: 'varchar', length: 128 })
   name!: string;

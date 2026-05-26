@@ -12,6 +12,9 @@ import { PurchaseOrderEntity, PurchaseOrderStatus, SupplierEntity, SupplierItemE
 import { PurchaseOrdersService } from '../../procurement/services';
 import { LocationEntity, LocationType } from '../../tenants/entities';
 import { WarehouseService } from '../../warehouse/services';
+import { NotificationsService } from '../../notifications/services';
+import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
+import { NotificationType } from '../../notifications/enums/notification-type.enum';
 import {
   ApproveSuggestedPurchaseOrderDto,
   GeneratePurchaseOrderSuggestionsDto,
@@ -79,6 +82,7 @@ export class ReplenishmentService {
     private readonly stockTransfers: StockTransfersService,
     private readonly warehouse: WarehouseService,
     private readonly forecasts: ForecastService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   listRules(tenant: TenantContext) {
@@ -207,6 +211,13 @@ export class ReplenishmentService {
         error: null,
       }));
     }
+    if (purchaseOrders.length) {
+      await this.notifications.dispatchEvent(tenant.tenantId, 'replenishment.suggestion', {
+        itemCount: dashboard.suggestedPurchaseOrders.reduce((sum, suggestion) => sum + suggestion.items.length, 0),
+        suggestedValue: dashboard.metrics.suggestedValue,
+        purchaseOrderCount: purchaseOrders.length,
+      }, { channel: NotificationChannelType.PUSH, type: NotificationType.REPLENISHMENT }).catch(() => undefined);
+    }
     return { dryRun: false, purchaseOrders, suggestions: dashboard.suggestedPurchaseOrders };
   }
 
@@ -277,6 +288,16 @@ export class ReplenishmentService {
         continue;
       }
       created.push(await this.createAction(tenant, candidate));
+    }
+
+    if (actionable.length) {
+      await this.notifications.dispatchEvent(tenant.tenantId, 'inventory.low', {
+        itemName: actionable[0].product.name,
+        stockLevel: actionable[0].available,
+        reorderPoint: actionable[0].requiredQuantity,
+        itemCount: actionable.length,
+        message: `${actionable.length} item(s) need replenishment.`,
+      }, { channel: NotificationChannelType.PUSH, type: NotificationType.LOW_STOCK }).catch(() => undefined);
     }
 
     return {

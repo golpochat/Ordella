@@ -21,6 +21,7 @@ import {
   BulkSendNotificationDto,
   CreateNotificationDto,
   NotificationPreferenceResponseDto,
+  UpdateTenantNotificationSettingsDto,
   UpdateNotificationPreferenceDto,
 } from '../dto';
 import { NotificationResponseDto } from '../dto';
@@ -60,6 +61,23 @@ export class NotificationsController {
     @Query('userId') userId?: string,
   ): Promise<ApiSuccessResponse<NotificationPreferenceResponseDto>> {
     const data = await this.notificationsService.getPreferences(tenant, user, userId);
+    return { success: true, data };
+  }
+
+  @Get('settings')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_READ)
+  async settings(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.notificationsService.getTenantNotificationSettings(tenant);
+    return { success: true, data };
+  }
+
+  @Post('settings/update')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_CREATE)
+  async updateSettings(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpdateTenantNotificationSettingsDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.notificationsService.updateTenantNotificationSettings(tenant, dto);
     return { success: true, data };
   }
 

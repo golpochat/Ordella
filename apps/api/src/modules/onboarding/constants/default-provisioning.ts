@@ -45,6 +45,11 @@ export function defaultTenantLocalizationSettings() {
     freeDeliveryThreshold: null,
     deliveryRadiusKm: DEFAULT_DELIVERY_RADIUS_KM,
     deliveryZones: [],
+    notificationEmailEnabled: true,
+    notificationSmsEnabled: false,
+    notificationPushEnabled: true,
+    notificationFromName: 'Ordella',
+    notificationFromEmail: 'noreply@ordella.app',
   };
 }
 

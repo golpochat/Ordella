@@ -12,6 +12,9 @@ import { DeliveryTaskEntity } from '../../deliveries/entities';
 import { DriverProfileEntity } from '../../deliveries/entities/driver-profile.entity';
 import { UserEntity } from '../../auth/entities';
 import { LocationEntity } from '../../tenants/entities';
+import { NotificationsService } from '../../notifications/services';
+import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
+import { NotificationType } from '../../notifications/enums/notification-type.enum';
 import { GenerateForecastDto, ForecastQueryDto, UpdateForecastModelDto } from '../dto';
 import {
   ForecastModelConfigEntity,
@@ -75,6 +78,7 @@ export class ForecastService {
     private readonly users: Repository<UserEntity>,
     @InjectRepository(LocationEntity)
     private readonly locations: Repository<LocationEntity>,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async generate(tenant: TenantContext, dto: GenerateForecastDto) {
@@ -91,6 +95,7 @@ export class ForecastService {
       generatedForDate: context.generatedForDate,
       confidence: String(payload.confidence ?? context.parameters.minConfidence),
     }));
+    await this.notifyForecastAlerts(tenant.tenantId, forecastType, payload).catch(() => undefined);
     return { ...snapshot.payload, snapshotId: snapshot.id, generatedAt: snapshot.generatedAt.toISOString() };
   }
 
@@ -123,6 +128,21 @@ export class ForecastService {
       parameters: dto.parameters,
       isActive: dto.isActive ?? true,
     }));
+  }
+
+  private async notifyForecastAlerts(tenantId: string, forecastType: ForecastType, payload: Record<string, unknown>) {
+    const summary = payload.summary && typeof payload.summary === 'object' ? payload.summary as Record<string, unknown> : {};
+    const stockoutPredictions = Number(summary.stockoutPredictions ?? 0);
+    const supplierDelayRisk = Number(summary.supplierDelayRisk ?? 0);
+    const shouldAlert = stockoutPredictions > 0 || supplierDelayRisk > 0 || payload.stockoutPrevention === 'action_required';
+    if (!shouldAlert) return;
+    await this.notifications.dispatchEvent(tenantId, 'forecast.alert', {
+      title: `${forecastType} forecast alert`,
+      message: `${stockoutPredictions} stock-out prediction(s), ${supplierDelayRisk} supplier delay risk item(s).`,
+      forecastType,
+      stockoutPredictions,
+      supplierDelayRisk,
+    }, { channel: NotificationChannelType.PUSH, type: NotificationType.FORECAST_ALERT });
   }
 
   private async getOrGenerate(tenant: TenantContext, forecastType: ForecastType, query: ForecastQueryDto) {

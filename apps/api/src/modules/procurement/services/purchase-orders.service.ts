@@ -305,19 +305,14 @@ export class PurchaseOrdersService {
     const recipient = order.supplier?.email;
     if (!recipient) return;
     try {
-      await this.notifications.sendSystemNotification(tenantId, {
-        type: NotificationType.SYSTEM,
-        channel: NotificationChannelType.EMAIL,
-        recipient,
-        payload: {
-          templateName: `purchase_order_${event}`,
-          subject: `Purchase order ${event}`,
-          body: `Purchase order ${order.id} was ${event}. Total cost: ${order.totalCost}.`,
-          purchaseOrderId: order.id,
-          supplierId: order.supplierId,
-          totalCost: order.totalCost,
-        },
-      });
+      await this.notifications.dispatchEvent(tenantId, event === 'created' ? 'po.created' : 'po.updated', {
+        purchaseOrderId: order.id,
+        supplierId: order.supplierId,
+        supplierName: order.supplier?.name ?? 'Supplier',
+        total: order.totalCost,
+        status: order.status,
+        supplierStatus: order.supplierStatus,
+      }, { recipient, channel: NotificationChannelType.EMAIL, type: NotificationType.SUPPLIER_PO });
     } catch {
       // Notification delivery must not block stock receiving or PO state changes.
     }

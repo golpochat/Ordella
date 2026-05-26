@@ -13,12 +13,11 @@ export class NotificationsService {
     context: OrderNotificationContext,
     eventType: OrderNotificationType,
   ): Promise<void> {
-    const templateName = this.templateForEvent(eventType);
-    await this.notifications.sendSystemNotification(context.tenant.tenantId, {
-      type: NotificationType.ORDER_STATUS,
-      channel: NotificationChannelType.PUSH,
-      payload: {
-        templateName: eventType === OrderNotificationType.ORDER_CREATED ? 'new_order' : templateName,
+    await this.notifications.dispatchEvent(
+      context.tenant.tenantId,
+      eventType === OrderNotificationType.ORDER_CREATED ? 'order.created' : 'order.status.updated',
+      {
+        templateName: this.templateForEvent(eventType),
         orderId: context.order.id,
         orderNumber: context.order.orderNumber ?? context.order.id.slice(0, 8),
         status: context.toStatus,
@@ -26,7 +25,8 @@ export class NotificationsService {
         total: context.order.total,
         message: `Order ${context.order.orderNumber ?? context.order.id.slice(0, 8)} changed to ${context.toStatus}`,
       },
-    });
+      { channel: NotificationChannelType.PUSH, type: NotificationType.ORDER_STATUS },
+    );
   }
 
   private templateForEvent(eventType: OrderNotificationType): string {

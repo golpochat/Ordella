@@ -55,6 +55,21 @@ export class TenantSettingsEntity {
   @Column({ name: 'delivery_zones', type: 'jsonb', default: () => "'[]'" })
   deliveryZones!: Array<Record<string, unknown>>;
 
+  @Column({ name: 'notification_email_enabled', type: 'boolean', default: true })
+  notificationEmailEnabled!: boolean;
+
+  @Column({ name: 'notification_sms_enabled', type: 'boolean', default: false })
+  notificationSmsEnabled!: boolean;
+
+  @Column({ name: 'notification_push_enabled', type: 'boolean', default: true })
+  notificationPushEnabled!: boolean;
+
+  @Column({ name: 'notification_from_name', type: 'varchar', length: 128, default: 'Ordella' })
+  notificationFromName!: string;
+
+  @Column({ name: 'notification_from_email', type: 'varchar', length: 255, default: 'noreply@ordella.app' })
+  notificationFromEmail!: string;
+
   @Column({ name: 'opening_hours', type: 'jsonb', default: {} })
   openingHours!: Record<string, unknown>;
 

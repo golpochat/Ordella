@@ -13,5 +13,10 @@ export interface TenantLocalizationSettings {
   freeDeliveryThreshold: string | null;
   deliveryRadiusKm: string;
   deliveryZones: Array<Record<string, unknown>>;
+  notificationEmailEnabled: boolean;
+  notificationSmsEnabled: boolean;
+  notificationPushEnabled: boolean;
+  notificationFromName: string;
+  notificationFromEmail: string;
 }
 

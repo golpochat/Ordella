@@ -18,7 +18,7 @@ import { RbacGuard } from '../../auth';
 import { RequirePermissions } from '../../auth';
 import { FilterPaginationDto } from '../../../common/dto';
 import { NotificationsPermissionKeys } from '../constants/permission-keys';
-import { CreateNotificationTemplateDto } from '../dto';
+import { CreateNotificationTemplateDto, PreviewNotificationTemplateDto, TestNotificationTemplateDto } from '../dto';
 import { NotificationTemplateResponseDto } from '../dto';
 import { UpdateNotificationTemplateDto } from '../dto';
 import { NotificationTemplatesService } from '../services';
@@ -46,6 +46,26 @@ export class NotificationTemplatesController {
     @Body() dto: CreateNotificationTemplateDto,
   ): Promise<ApiSuccessResponse<NotificationTemplateResponseDto>> {
     const data = await this.notificationTemplatesService.create(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('preview')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATION_TEMPLATES_READ)
+  async preview(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: PreviewNotificationTemplateDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.notificationTemplatesService.preview(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('test-send')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATION_TEMPLATES_CREATE)
+  async testSend(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: TestNotificationTemplateDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.notificationTemplatesService.testSend(tenant, dto);
     return { success: true, data };
   }
 

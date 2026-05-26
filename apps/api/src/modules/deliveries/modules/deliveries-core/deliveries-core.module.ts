@@ -18,9 +18,11 @@ import {
   ExternalDeliveryProviderService,
   RouteOptimizationService,
 } from '../../integrations';
+import { NotificationsModule } from '../../../notifications/notifications.module';
 
 @Module({
   imports: [
+    NotificationsModule,
     TypeOrmModule.forFeature([
       DeliveryTaskEntity,
       DriverProfileEntity,

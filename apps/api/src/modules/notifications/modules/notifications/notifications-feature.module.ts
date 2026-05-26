@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../../../auth/entities/user.entity';
+import { TenantSettingsEntity } from '../../../onboarding/entities/tenant-settings.entity';
 import {
   NotificationChannelEntity,
   NotificationEntity,
@@ -21,6 +22,7 @@ import { NotificationRepository } from '../../repositories/notification.reposito
       NotificationChannelEntity,
       NotificationTemplateEntity,
       UserEntity,
+      TenantSettingsEntity,
     ]),
   ],
   controllers: [NotificationsController],

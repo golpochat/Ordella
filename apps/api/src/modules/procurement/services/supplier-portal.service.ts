@@ -473,10 +473,10 @@ export class SupplierPortalService {
     if (!recipient) return;
     try {
       await this.notifications.sendSystemNotification(tenantId, {
-        type: NotificationType.SYSTEM,
+        type: NotificationType.SUPPLIER_PO,
         channel: NotificationChannelType.EMAIL,
         recipient,
-        payload: { title, body: message, supplierId: supplier.id },
+        payload: { templateName: 'supplier_po_updated', title, message, supplierId: supplier.id },
       });
     } catch {
       // Supplier notifications should not block portal workflows.
@@ -485,18 +485,17 @@ export class SupplierPortalService {
 
   private async notifyMerchant(tenantId: string, order: PurchaseOrderEntity, action: string) {
     try {
-      await this.notifications.sendSystemNotification(tenantId, {
-        type: NotificationType.SYSTEM,
-        channel: NotificationChannelType.EMAIL,
-        recipient: 'merchant',
-        payload: {
-          templateName: `purchase_order_${action.replace(/\s+/g, '_')}`,
-          title: `Supplier ${action}`,
-          body: `Supplier ${order.supplierId} ${action}${order.id ? ` purchase order ${order.id}` : ''}.`,
-          purchaseOrderId: order.id,
-          supplierId: order.supplierId,
-        },
-      });
+      const eventName = action === 'confirmed'
+        ? 'po.confirmed'
+        : action === 'rejected'
+          ? 'po.rejected'
+          : 'po.updated';
+      await this.notifications.dispatchEvent(tenantId, eventName, {
+        purchaseOrderId: order.id,
+        supplierId: order.supplierId,
+        supplierStatus: action,
+        message: `Supplier ${order.supplierId} ${action}${order.id ? ` purchase order ${order.id}` : ''}.`,
+      }, { recipient: 'merchant', channel: NotificationChannelType.EMAIL, type: NotificationType.SUPPLIER_PO });
     } catch {
       // Merchant notifications are best-effort for MVP portal actions.
     }

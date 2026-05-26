@@ -312,6 +312,11 @@ export class OnboardingProvisioningService {
       freeDeliveryThreshold: settings.freeDeliveryThreshold,
       deliveryRadiusKm: settings.deliveryRadiusKm,
       deliveryZones: settings.deliveryZones,
+      notificationEmailEnabled: settings.notificationEmailEnabled,
+      notificationSmsEnabled: settings.notificationSmsEnabled,
+      notificationPushEnabled: settings.notificationPushEnabled,
+      notificationFromName: settings.notificationFromName,
+      notificationFromEmail: settings.notificationFromEmail,
     };
   }
 

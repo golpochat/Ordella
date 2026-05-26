@@ -1,8 +1,12 @@
 export enum NotificationType {
   ORDER_STATUS = 'order_status',
   DELIVERY_UPDATE = 'delivery_update',
+  DRIVER_ASSIGNMENT = 'driver_assignment',
+  SUPPLIER_PO = 'supplier_po',
   PAYMENT_ALERT = 'payment_alert',
   LOW_STOCK = 'low_stock',
+  FORECAST_ALERT = 'forecast_alert',
+  REPLENISHMENT = 'replenishment',
   SUBSCRIPTION = 'subscription',
   STAFF = 'staff',
   CUSTOMER = 'customer',

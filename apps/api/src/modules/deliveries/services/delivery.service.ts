@@ -23,6 +23,9 @@ import {
 import { DeliveryAssignmentStatus } from '../enums/delivery-assignment-status.enum';
 import { DeliveryAssignmentType } from '../enums/delivery-assignment-type.enum';
 import { DriverProfileStatus } from '../enums/driver-profile-status.enum';
+import { NotificationsService } from '../../notifications/services';
+import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
+import { NotificationType } from '../../notifications/enums/notification-type.enum';
 
 @Injectable()
 export class DeliveryService {
@@ -36,6 +39,7 @@ export class DeliveryService {
     private readonly externalProviderService: ExternalDeliveryProviderService,
     private readonly routeOptimizationService: RouteOptimizationService,
     private readonly driverTrackingService: DriverTrackingService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createTask(context: DeliveryOrderContext): Promise<DeliveryTaskEntity> {
@@ -285,6 +289,12 @@ export class DeliveryService {
       manager,
     );
     await this.recordEvent(tenantId, task.id, 'delivery.assigned', { driverId: driver.id }, manager);
+    await this.notifications.dispatchEvent(tenantId, 'delivery.assigned', {
+      deliveryTaskId: task.id,
+      orderId: task.orderId,
+      driverId: driver.id,
+      driverName: driver.name,
+    }, { channel: NotificationChannelType.PUSH, type: NotificationType.DRIVER_ASSIGNMENT }).catch(() => undefined);
     this.routeOptimizationService.optimize(task);
     return task;
   }

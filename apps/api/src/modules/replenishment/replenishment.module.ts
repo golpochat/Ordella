@@ -6,6 +6,7 @@ import { ForecastModule } from '../forecast';
 import { StockItemEntity } from '../inventory/entities';
 import { StockTransfersModule } from '../inventory/modules/stock-transfers/stock-transfers.module';
 import { ProcurementModule } from '../procurement/procurement.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { PurchaseOrderEntity, SupplierEntity, SupplierItemEntity } from '../procurement/entities';
 import { LocationEntity } from '../tenants/entities';
 import { WarehouseModule } from '../warehouse';
@@ -18,6 +19,7 @@ import { ReplenishmentService } from './services';
     AuthModule,
     ForecastModule,
     ProcurementModule,
+    NotificationsModule,
     StockTransfersModule,
     WarehouseModule,
     TypeOrmModule.forFeature([

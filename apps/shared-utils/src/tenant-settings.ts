@@ -15,6 +15,11 @@ export const tenantSettingsSchema = z.object({
   freeDeliveryThreshold: z.string().nullable().default(null),
   deliveryRadiusKm: z.string().default('5.00'),
   deliveryZones: z.array(z.record(z.unknown())).default([]),
+  notificationEmailEnabled: z.boolean().default(true),
+  notificationSmsEnabled: z.boolean().default(false),
+  notificationPushEnabled: z.boolean().default(true),
+  notificationFromName: z.string().default('Ordella'),
+  notificationFromEmail: z.string().default('noreply@ordella.app'),
 });
 
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;
@@ -34,6 +39,11 @@ export const DEFAULT_TENANT_SETTINGS: TenantSettings = {
   freeDeliveryThreshold: null,
   deliveryRadiusKm: '5.00',
   deliveryZones: [],
+  notificationEmailEnabled: true,
+  notificationSmsEnabled: false,
+  notificationPushEnabled: true,
+  notificationFromName: 'Ordella',
+  notificationFromEmail: 'noreply@ordella.app',
 };
 
 export function normalizeTenantSettings(value: unknown): TenantSettings {

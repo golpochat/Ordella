@@ -10,4 +10,5 @@ export * from './notifications/bulk-send-notification.dto';
 export * from './notifications/create-notification.dto';
 export * from './notifications/notification-preference-response.dto';
 export * from './notifications/notification-response.dto';
+export * from './notifications/update-tenant-notification-settings.dto';
 export * from './notifications/update-notification-preference.dto';

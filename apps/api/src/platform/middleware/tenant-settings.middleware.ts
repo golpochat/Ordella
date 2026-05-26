@@ -23,6 +23,11 @@ const DEFAULT_TENANT_SETTINGS: TenantLocalizationSettings = {
   freeDeliveryThreshold: null,
   deliveryRadiusKm: '5.00',
   deliveryZones: [],
+  notificationEmailEnabled: true,
+  notificationSmsEnabled: false,
+  notificationPushEnabled: true,
+  notificationFromName: 'Ordella',
+  notificationFromEmail: 'noreply@ordella.app',
 };
 
 @Injectable()
@@ -65,6 +70,11 @@ export class TenantSettingsMiddleware implements NestMiddleware {
             freeDeliveryThreshold: row.freeDeliveryThreshold,
             deliveryRadiusKm: row.deliveryRadiusKm,
             deliveryZones: row.deliveryZones,
+            notificationEmailEnabled: row.notificationEmailEnabled,
+            notificationSmsEnabled: row.notificationSmsEnabled,
+            notificationPushEnabled: row.notificationPushEnabled,
+            notificationFromName: row.notificationFromName,
+            notificationFromEmail: row.notificationFromEmail,
           }
         : {}),
     };
