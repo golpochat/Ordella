@@ -55,6 +55,7 @@ import { AnalyticsQueryRepository } from './repositories/analytics-query.reposit
 import { AdminSettingsCoreModule } from './admin-settings-core.module';
 import { AdminNotificationsIntegration } from './integrations/admin-notifications.integration';
 import { SearchModule } from '../search';
+import { PromotionsModule } from '../promotions/promotions.module';
 
 /**
  * Admin Dashboard API — tenant-scoped management layer over core domains.
@@ -92,6 +93,7 @@ import { SearchModule } from '../search';
     InventoryModule,
     ReportsModule,
     SearchModule,
+    PromotionsModule,
   ],
   controllers: [
     AdminProductsController,

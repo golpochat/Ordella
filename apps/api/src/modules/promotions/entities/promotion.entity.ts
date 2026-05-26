@@ -66,6 +66,21 @@ export class PromotionEntity extends BaseTenantScopedEntity {
   @Column({ name: 'usage_count', type: 'int', default: 0 })
   usageCount!: number;
 
+  @Column({ type: 'int', default: 100 })
+  priority!: number;
+
+  @Column({ type: 'boolean', default: false })
+  stackable!: boolean;
+
+  @Column({ name: 'conflict_strategy', type: 'varchar', length: 32, default: 'best_price' })
+  conflictStrategy!: 'best_price' | 'priority' | 'exclusive';
+
+  @Column({ name: 'eligible_customer_segments', type: 'varchar', array: true, default: () => "'{}'" })
+  eligibleCustomerSegments!: string[];
+
+  @Column({ name: 'dynamic_pricing_rules', type: 'jsonb', default: () => "'{}'" })
+  dynamicPricingRules!: Record<string, unknown>;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 

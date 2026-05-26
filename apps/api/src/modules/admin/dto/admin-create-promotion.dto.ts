@@ -6,6 +6,7 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  IsObject,
   IsString,
   IsUUID,
   Min,
@@ -83,4 +84,30 @@ export class AdminCreatePromotionDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  priority?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  stackable?: boolean;
+
+  @IsOptional()
+  @IsIn(['best_price', 'priority', 'exclusive'])
+  conflictStrategy?: 'best_price' | 'priority' | 'exclusive';
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  eligibleCustomerSegments?: string[];
+
+  @IsOptional()
+  @IsObject()
+  dynamicPricingRules?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, unknown>;
 }

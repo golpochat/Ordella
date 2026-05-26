@@ -4,6 +4,8 @@ export interface PromotionOrderLine {
   quantity: number;
   lineSubtotal: string;
   categoryId?: string | null;
+  stockLevel?: number | null;
+  demandScore?: number | null;
 }
 
 export interface PromotionOrderDraftContext {
@@ -15,6 +17,7 @@ export interface PromotionOrderDraftContext {
   channel?: 'pos' | 'online' | 'both';
   orderType?: string | null;
   isFirstOrder?: boolean;
+  customerSegmentIds?: string[];
   subtotal: string;
   taxTotal: string;
   deliveryFee: string;

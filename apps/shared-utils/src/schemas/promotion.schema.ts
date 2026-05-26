@@ -6,9 +6,14 @@ export const promotionTypeSchema = z.enum([
   'percentage',
   'fixed',
   'bxgy',
+  'mix-and-match',
+  'combo',
   'threshold',
   'category',
   'time-based',
+  'location',
+  'customer-segment',
+  'dynamic-pricing',
 ]);
 
 export const promotionSchema = z.object({
@@ -31,6 +36,12 @@ export const promotionSchema = z.object({
   channel: z.enum(['pos', 'online', 'both']).optional(),
   usageLimit: z.number().int().nullable().optional(),
   usageCount: z.number().int().optional(),
+  priority: z.number().int().optional(),
+  stackable: z.boolean().optional(),
+  conflictStrategy: z.enum(['best_price', 'priority', 'exclusive']).optional(),
+  eligibleCustomerSegments: z.array(z.string()).optional(),
+  dynamicPricingRules: z.record(z.unknown()).optional(),
+  metadata: z.record(z.unknown()).optional(),
   isActive: z.boolean(),
   status: z.string().optional(),
 });

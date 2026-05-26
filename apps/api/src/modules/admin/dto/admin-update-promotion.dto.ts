@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsEnum, IsIn, IsInt, IsObject, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { PromotionType } from '../../promotions/enums/promotion-type.enum';
 
 export class AdminUpdatePromotionDto {
@@ -75,4 +75,30 @@ export class AdminUpdatePromotionDto {
   @IsInt()
   @Min(1)
   usageLimit?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  priority?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  stackable?: boolean;
+
+  @IsOptional()
+  @IsIn(['best_price', 'priority', 'exclusive'])
+  conflictStrategy?: 'best_price' | 'priority' | 'exclusive';
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  eligibleCustomerSegments?: string[];
+
+  @IsOptional()
+  @IsObject()
+  dynamicPricingRules?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, unknown>;
 }

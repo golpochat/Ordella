@@ -15,6 +15,7 @@ export interface OnlineLinePricing {
   lineSubtotal: string;
   categoryId: string | null;
   taxCategoryId?: string | null;
+  stockLevel?: number | null;
 }
 
 export interface OnlineTotalsInput {

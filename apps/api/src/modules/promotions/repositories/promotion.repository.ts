@@ -38,7 +38,7 @@ export class PromotionRepository {
   ): Promise<PromotionEntity[]> {
     return this.repo(manager).find({
       where: { tenantId, isActive: true },
-      order: { createdAt: 'DESC' },
+      order: { priority: 'ASC', createdAt: 'DESC' },
     });
   }
 

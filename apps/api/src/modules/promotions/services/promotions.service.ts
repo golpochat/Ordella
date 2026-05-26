@@ -49,9 +49,9 @@ export class PromotionsService {
     }
 
     const candidates = await this.resolveCandidates(context);
-    const applied: AppliedPromotionResult[] = [];
-    let discountTotal = 0;
-    let bestNonStackable: AppliedPromotionResult | null = null;
+    const stackableResults: AppliedPromotionResult[] = [];
+    const exclusiveResults: AppliedPromotionResult[] = [];
+    const nonStackableResults: AppliedPromotionResult[] = [];
 
     for (const promotion of candidates) {
       this.assertPromotionSchedulable(promotion);
@@ -79,8 +79,11 @@ export class PromotionsService {
       }
 
       const stackable = this.isStackable(promotion);
-
-      const discount = await this.applyActions(promotion, context);
+      const discount = this.applyDynamicPricingRules(
+        promotion,
+        await this.applyActions(promotion, context),
+        context,
+      );
       if (discount <= 0) {
         continue;
       }
@@ -91,18 +94,22 @@ export class PromotionsService {
         discountAmount: formatAmount(discount),
       };
 
-      if (stackable) {
-        discountTotal += discount;
-        applied.push(result);
-      } else if (!bestNonStackable || discount > parseAmount(bestNonStackable.discountAmount)) {
-        bestNonStackable = result;
+      if (promotion.conflictStrategy === 'exclusive') {
+        exclusiveResults.push(result);
+      } else if (stackable) {
+        stackableResults.push(result);
+      } else {
+        nonStackableResults.push(result);
       }
     }
 
-    if (bestNonStackable) {
-      discountTotal += parseAmount(bestNonStackable.discountAmount);
-      applied.push(bestNonStackable);
-    }
+    const applied = this.resolvePromotionConflicts(
+      candidates,
+      stackableResults,
+      nonStackableResults,
+      exclusiveResults,
+    );
+    const discountTotal = applied.reduce((sum, item) => sum + parseAmount(item.discountAmount), 0);
 
     const cappedDiscount = Math.min(discountTotal, parseAmount(context.subtotal));
     const grandTotal = calculateGrandTotal({
@@ -122,7 +129,14 @@ export class PromotionsService {
             context.orderId ?? null,
             context.customerId ?? null,
             item.discountAmount,
-            { couponCode: item.code ?? null, channel: context.channel ?? 'both' },
+            {
+              couponCode: item.code ?? null,
+              channel: context.channel ?? 'both',
+              subtotal: context.subtotal,
+              grandTotal,
+              orderType: context.orderType ?? null,
+              locationId: context.locationId ?? null,
+            },
             manager,
           );
 
@@ -154,6 +168,37 @@ export class PromotionsService {
       promotionIds: applied.map((a) => a.promotionId),
       appliedPromotions: applied,
       grandTotal,
+    };
+  }
+
+  previewPromotion(
+    promotion: PromotionEntity,
+    context: PromotionOrderDraftContext,
+  ): ApplyPromotionsResult {
+    if (!this.matchesPromotionScope(promotion, context)) {
+      return this.emptyResult(context);
+    }
+
+    const discount = this.applyDynamicPricingRules(
+      promotion,
+      this.applyPromotionType(promotion, context),
+      context,
+    );
+    const cappedDiscount = Math.min(discount, parseAmount(context.subtotal));
+    return {
+      discountTotal: formatAmount(cappedDiscount),
+      promotionIds: cappedDiscount > 0 ? [promotion.id] : [],
+      appliedPromotions:
+        cappedDiscount > 0
+          ? [{ promotionId: promotion.id, code: promotion.code, discountAmount: formatAmount(cappedDiscount) }]
+          : [],
+      grandTotal: calculateGrandTotal({
+        subtotal: parseAmount(context.subtotal),
+        discountTotal: cappedDiscount,
+        taxTotal: parseAmount(context.taxTotal),
+        serviceChargeTotal: parseAmount(context.serviceChargeTotal),
+        deliveryFee: parseAmount(context.deliveryFee),
+      }),
     };
   }
 
@@ -302,6 +347,14 @@ export class PromotionsService {
     if (promotion.applicableCategories?.length) {
       if (!context.lines.some((line) => line.categoryId && promotion.applicableCategories.includes(line.categoryId))) return false;
     }
+    if (promotion.eligibleCustomerSegments?.length) {
+      const explicitSegments = context.customerSegmentIds ?? [];
+      const matchesExplicit = explicitSegments.some((segment) => promotion.eligibleCustomerSegments.includes(segment));
+      const matchesProfile = promotion.eligibleCustomerSegments.some((segment) =>
+        this.customerSegmentationService.matchesContext(context, segment),
+      );
+      if (!matchesExplicit && !matchesProfile) return false;
+    }
     if (promotion.minSpend && parseAmount(context.subtotal) < parseAmount(promotion.minSpend)) {
       return false;
     }
@@ -435,7 +488,14 @@ export class PromotionsService {
       case PromotionType.PERCENTAGE:
       case PromotionType.CATEGORY:
       case PromotionType.TIME_BASED:
+      case PromotionType.LOCATION:
+      case PromotionType.CUSTOMER_SEGMENT:
+      case PromotionType.DYNAMIC_PRICING:
         return (this.scopedSubtotal(promotion, context) * value) / 100;
+      case PromotionType.MIX_AND_MATCH:
+        return this.calculateMixAndMatchDiscount(promotion, context, value);
+      case PromotionType.COMBO:
+        return this.calculateComboDiscount(promotion, context, value);
       case PromotionType.BXGY:
         return this.calculateBxgyDiscount(
           context,
@@ -453,6 +513,9 @@ export class PromotionsService {
   }
 
   private scopedSubtotal(promotion: PromotionEntity, context: PromotionOrderDraftContext): number {
+    if (context.lines.length === 0) {
+      return parseAmount(context.subtotal);
+    }
     const scoped = context.lines.filter((line) => {
       const itemMatch = !promotion.applicableItems?.length || promotion.applicableItems.includes(line.productId);
       const categoryMatch =
@@ -489,11 +552,171 @@ export class PromotionsService {
   }
 
   private isStackable(promotion: PromotionEntity): boolean {
+    if (promotion.stackable) {
+      return true;
+    }
     const metaRules = promotion.rules ?? [];
     if (metaRules.length === 0) {
       return Boolean((promotion.metadata as { stackable?: boolean })?.stackable);
     }
     return metaRules.some((rule) => rule.isStackable);
+  }
+
+  private resolvePromotionConflicts(
+    promotions: PromotionEntity[],
+    stackableResults: AppliedPromotionResult[],
+    nonStackableResults: AppliedPromotionResult[],
+    exclusiveResults: AppliedPromotionResult[],
+  ): AppliedPromotionResult[] {
+    const byId = new Map(promotions.map((promotion) => [promotion.id, promotion]));
+    const ordered = (items: AppliedPromotionResult[]) =>
+      [...items].sort((a, b) => (byId.get(a.promotionId)?.priority ?? 100) - (byId.get(b.promotionId)?.priority ?? 100));
+    const stackableTotal = stackableResults.reduce((sum, item) => sum + parseAmount(item.discountAmount), 0);
+    const bestExclusive = this.pickBestResult(ordered(exclusiveResults), byId);
+    if (bestExclusive) {
+      return [bestExclusive];
+    }
+
+    const bestNonStackable = this.pickBestResult(ordered(nonStackableResults), byId);
+    if (!bestNonStackable) {
+      return ordered(stackableResults);
+    }
+
+    if (parseAmount(bestNonStackable.discountAmount) >= stackableTotal) {
+      return [bestNonStackable];
+    }
+    return ordered(stackableResults);
+  }
+
+  private pickBestResult(
+    results: AppliedPromotionResult[],
+    byId: Map<string, PromotionEntity>,
+  ): AppliedPromotionResult | null {
+    let winner: AppliedPromotionResult | null = null;
+    for (const result of results) {
+      const promotion = byId.get(result.promotionId);
+      if (!winner) {
+        winner = result;
+        continue;
+      }
+      const currentPromotion = byId.get(winner.promotionId);
+      if (promotion?.conflictStrategy === 'priority') {
+        const currentPriority = currentPromotion?.priority ?? 100;
+        const nextPriority = promotion.priority ?? 100;
+        if (nextPriority < currentPriority) winner = result;
+        continue;
+      }
+      if (parseAmount(result.discountAmount) > parseAmount(winner.discountAmount)) {
+        winner = result;
+      }
+    }
+    return winner;
+  }
+
+  private calculateMixAndMatchDiscount(
+    promotion: PromotionEntity,
+    context: PromotionOrderDraftContext,
+    value: number,
+  ): number {
+    const meta = promotion.metadata as { requiredQuantity?: number; maxDiscountAmount?: string | number };
+    const eligible = this.eligibleLines(promotion, context);
+    const totalQuantity = eligible.reduce((sum, line) => sum + line.quantity, 0);
+    const distinctProducts = new Set(eligible.map((line) => line.productId)).size;
+    const requiredQuantity = Number(meta.requiredQuantity ?? promotion.buyQuantity ?? 2);
+    if (totalQuantity < requiredQuantity || distinctProducts < 2) {
+      return 0;
+    }
+    const discount = (eligible.reduce((sum, line) => sum + parseAmount(line.lineSubtotal), 0) * value) / 100;
+    const cap = meta.maxDiscountAmount != null ? parseAmount(String(meta.maxDiscountAmount)) : discount;
+    return Math.min(discount, cap);
+  }
+
+  private calculateComboDiscount(
+    promotion: PromotionEntity,
+    context: PromotionOrderDraftContext,
+    value: number,
+  ): number {
+    const requiredItems = promotion.applicableItems ?? [];
+    if (requiredItems.length && !requiredItems.every((itemId) => context.lines.some((line) => line.productId === itemId))) {
+      return 0;
+    }
+    const scopedSubtotal = this.scopedSubtotal(promotion, context);
+    const meta = promotion.metadata as { discountMode?: 'percentage' | 'fixed' };
+    return meta.discountMode === 'percentage' ? (scopedSubtotal * value) / 100 : Math.min(value, scopedSubtotal);
+  }
+
+  private eligibleLines(promotion: PromotionEntity, context: PromotionOrderDraftContext): PromotionOrderDraftContext['lines'] {
+    return context.lines.filter((line) => {
+      if (promotion.applicableItems?.length && !promotion.applicableItems.includes(line.productId)) return false;
+      if (
+        promotion.applicableCategories?.length &&
+        (!line.categoryId || !promotion.applicableCategories.includes(line.categoryId))
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  private applyDynamicPricingRules(
+    promotion: PromotionEntity,
+    discount: number,
+    context: PromotionOrderDraftContext,
+  ): number {
+    if (discount <= 0) return 0;
+    const rules = (promotion.dynamicPricingRules ?? {}) as {
+      demandBased?: { enabled?: boolean; demandScore?: number; multiplier?: number };
+      inventoryBased?: { enabled?: boolean; lowStockThreshold?: number; reductionPercent?: number };
+      timeOfDay?: { enabled?: boolean; windows?: Array<{ start?: string; end?: string; multiplier?: number }> };
+    };
+    let multiplier = 1;
+
+    if (rules.demandBased?.enabled) {
+      const demandScore = Number(rules.demandBased.demandScore ?? this.averageLineMetric(context, 'demandScore') ?? 0);
+      if (demandScore > 0) {
+        multiplier *= Number(rules.demandBased.multiplier ?? Math.max(0.2, 1 - Math.min(demandScore, 100) / 200));
+      }
+    }
+
+    if (rules.inventoryBased?.enabled) {
+      const threshold = Number(rules.inventoryBased.lowStockThreshold ?? 5);
+      const lowStockLine = context.lines.some((line) => line.stockLevel != null && Number(line.stockLevel) <= threshold);
+      if (lowStockLine) {
+        multiplier *= Math.max(0, 1 - Number(rules.inventoryBased.reductionPercent ?? 50) / 100);
+      }
+    }
+
+    if (rules.timeOfDay?.enabled && Array.isArray(rules.timeOfDay.windows)) {
+      const activeWindow = rules.timeOfDay.windows.find((window) =>
+        this.isCurrentTimeInWindow(String(window.start ?? ''), String(window.end ?? '')),
+      );
+      if (activeWindow) {
+        multiplier *= Number(activeWindow.multiplier ?? 1);
+      }
+    }
+
+    return Math.max(0, discount * multiplier);
+  }
+
+  private averageLineMetric(
+    context: PromotionOrderDraftContext,
+    key: 'demandScore',
+  ): number | null {
+    const values = context.lines.map((line) => line[key]).filter((value): value is number => typeof value === 'number');
+    if (!values.length) return null;
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  }
+
+  private isCurrentTimeInWindow(start: string, end: string): boolean {
+    const startMin = this.parseTimeToMinutes(start);
+    const endMin = this.parseTimeToMinutes(end);
+    if (startMin === null || endMin === null) return true;
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    if (startMin <= endMin) {
+      return minutes >= startMin && minutes <= endMin;
+    }
+    return minutes >= startMin || minutes <= endMin;
   }
 
   private parseTimeToMinutes(value: string): number | null {

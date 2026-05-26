@@ -69,6 +69,9 @@ export class CheckoutService {
       basket.couponCode,
       baseTotals,
       lines,
+      basket.locationId,
+      dto.customerId,
+      orderType,
     );
 
     if (basket.couponCode) {
@@ -184,6 +187,7 @@ export class CheckoutService {
         lineSubtotal,
         categoryId: product.categoryId,
         taxCategoryId: product.taxCategoryId,
+        stockLevel: available,
       });
     }
 
@@ -195,6 +199,9 @@ export class CheckoutService {
     couponCode: string | undefined,
     totals: ReturnType<typeof calculateOnlineTotals>,
     lines: OnlineLinePricing[],
+    locationId: string,
+    customerId: string | undefined,
+    orderType: OrderType,
   ): PromotionOrderDraftContext {
     return {
       tenantId,
@@ -203,11 +210,16 @@ export class CheckoutService {
       taxTotal: totals.taxTotal,
       deliveryFee: totals.deliveryFee,
       serviceChargeTotal: totals.serviceChargeTotal,
+      locationId,
+      customerId: customerId ?? null,
+      channel: 'online',
+      orderType,
       lines: lines.map((line) => ({
         productId: line.productId,
         quantity: line.quantity,
         lineSubtotal: line.lineSubtotal,
         categoryId: line.categoryId,
+        stockLevel: line.stockLevel ?? null,
       })),
     };
   }

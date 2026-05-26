@@ -21,6 +21,7 @@ export function PromotionsTable({ promotions }: { promotions: Promotion[] }) {
           <TableHead>Type</TableHead>
           <TableHead>Value</TableHead>
           <TableHead>Channel</TableHead>
+          <TableHead>Rules</TableHead>
           <TableHead>Validity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -33,6 +34,10 @@ export function PromotionsTable({ promotions }: { promotions: Promotion[] }) {
             <TableCell>{promo.type}</TableCell>
             <TableCell>{promo.value}</TableCell>
             <TableCell>{promo.channel ?? 'both'}</TableCell>
+            <TableCell>
+              P{promo.priority ?? 100}
+              {promo.stackable ? ' · stackable' : ' · best price'}
+            </TableCell>
             <TableCell>
               {promo.startDate ? new Date(promo.startDate).toLocaleDateString() : 'Now'}
               {' - '}

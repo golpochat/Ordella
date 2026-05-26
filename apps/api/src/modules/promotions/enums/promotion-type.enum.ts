@@ -4,7 +4,12 @@ export enum PromotionType {
   PERCENTAGE = 'percentage',
   FIXED = 'fixed',
   BXGY = 'bxgy',
+  MIX_AND_MATCH = 'mix-and-match',
+  COMBO = 'combo',
   THRESHOLD = 'threshold',
   CATEGORY = 'category',
   TIME_BASED = 'time-based',
+  LOCATION = 'location',
+  CUSTOMER_SEGMENT = 'customer-segment',
+  DYNAMIC_PRICING = 'dynamic-pricing',
 }

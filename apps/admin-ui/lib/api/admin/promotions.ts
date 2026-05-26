@@ -12,6 +12,26 @@ export async function createPromotion(api: ApiClient, body: Record<string, unkno
   return promotionSchema.parse(data);
 }
 
+const promotionPreviewSchema = z.object({
+  discountTotal: z.string(),
+  grandTotal: z.string(),
+  projectedSubtotal: z.string(),
+  projectedDiscountRate: z.number(),
+  estimatedMarginImpact: z.string(),
+  appliedPromotions: z.array(z.object({
+    promotionId: z.string(),
+    code: z.string().nullable().optional(),
+    discountAmount: z.string(),
+  })),
+});
+
+export type PromotionPreview = z.infer<typeof promotionPreviewSchema>;
+
+export async function previewPromotion(api: ApiClient, body: Record<string, unknown>) {
+  const data = await api.postData<unknown>('admin/promotions/preview', body);
+  return promotionPreviewSchema.parse(data);
+}
+
 export async function updatePromotion(
   api: ApiClient,
   promotionId: string,

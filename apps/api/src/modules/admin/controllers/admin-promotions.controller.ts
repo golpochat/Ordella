@@ -36,6 +36,18 @@ export class AdminPromotionsController {
     return { success: true, data };
   }
 
+  @Post('preview')
+  async preview(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: Record<string, unknown>,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = this.promotionsAdminService.previewPromotionImpact(
+      tenant.tenantId,
+      dto as Parameters<PromotionsAdminService['previewPromotionImpact']>[1],
+    );
+    return { success: true, data };
+  }
+
   @Post()
   async create(
     @CurrentTenant() tenant: TenantContext,
