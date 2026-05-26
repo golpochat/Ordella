@@ -1,0 +1,2 @@
+export const TENANT_SETTINGS_KEY = Symbol('TENANT_SETTINGS_KEY');
+

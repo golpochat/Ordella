@@ -7,6 +7,7 @@ import {
   trackPosRecommendationEvent,
   type PosRecommendationItem,
 } from '@/lib/api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useCartStore } from '@/stores/cart-store';
 
 type PosRecommendationsPanelProps = {
@@ -22,6 +23,7 @@ function reasonLabel(reason: PosRecommendationItem['reason']) {
 }
 
 export function PosRecommendationsPanel({ customerId }: PosRecommendationsPanelProps) {
+  const { formatCurrency } = useTenantSettings();
   const lines = useCartStore((state) => state.lines);
   const addCatalogItem = useCartStore((state) => state.addCatalogItem);
   const [items, setItems] = useState<PosRecommendationItem[]>([]);
@@ -72,7 +74,7 @@ export function PosRecommendationsPanel({ customerId }: PosRecommendationsPanelP
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{item.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {reasonLabel(recommendation.reason)} · ${item.price}
+                    {reasonLabel(recommendation.reason)} · {formatCurrency(item.price)}
                   </p>
                 </div>
                 <Button

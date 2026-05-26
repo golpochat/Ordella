@@ -15,6 +15,7 @@ import {
   type TaxRulePayload,
 } from '@/lib/api/admin/tax';
 import { getErrorMessage } from '@/lib/utils';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 const DEFAULT_RULE: TaxRulePayload = {
   country: 'GB',
@@ -34,6 +35,7 @@ function taxTypeLabel(type: TaxRule['taxType']) {
 
 export function TaxCompliancePanel() {
   const api = useMemo(() => createBrowserApiClient(), []);
+  const { settings, formatCurrency } = useTenantSettings();
   const [locations, setLocations] = useState<LocationListItem[]>([]);
   const [rules, setRules] = useState<TaxRule[]>([]);
   const [categories, setCategories] = useState<TaxCategory[]>([]);
@@ -47,6 +49,14 @@ export function TaxCompliancePanel() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    setRuleDraft((current) => ({
+      ...current,
+      country: settings.country,
+      taxRate: Number(settings.defaultTaxRate) || current.taxRate,
+    }));
+  }, [settings.country, settings.defaultTaxRate]);
 
   async function refresh() {
     setError(null);
@@ -128,7 +138,7 @@ export function TaxCompliancePanel() {
           </div>
           <div className="rounded-lg border p-3">
             <p className="text-sm text-muted-foreground">Tax collected</p>
-            <p className="text-lg font-semibold">${summary?.taxCollected ?? '0.00'}</p>
+            <p className="text-lg font-semibold">{formatCurrency(summary?.taxCollected ?? '0.00')}</p>
           </div>
         </CardContent>
       </Card>
@@ -221,8 +231,8 @@ export function TaxCompliancePanel() {
           <CardTitle>Tax report</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p>Taxable amount: ${summary?.taxableAmount ?? '0.00'}</p>
-          <p>Tax collected: ${summary?.taxCollected ?? '0.00'}</p>
+          <p>Taxable amount: {formatCurrency(summary?.taxableAmount ?? '0.00')}</p>
+          <p>Tax collected: {formatCurrency(summary?.taxCollected ?? '0.00')}</p>
           <p>Tax lines: {summary?.lineCount ?? 0}</p>
           <div className="grid gap-2 md:grid-cols-3">
             {rules.map((rule) => (

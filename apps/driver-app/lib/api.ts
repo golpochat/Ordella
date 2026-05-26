@@ -13,6 +13,11 @@ function createDriverApiClient() {
   });
 }
 
+export function fetchTenantSettings() {
+  const api = createDriverApiClient();
+  return withDriverSession(api.getData<unknown>('tenant/settings'));
+}
+
 async function withDriverSession<T>(request: Promise<T>): Promise<T> {
   try {
     return await request;

@@ -25,6 +25,7 @@ import {
   type SupplierPurchaseOrder,
 } from '@/lib/api/supplier-portal';
 import { formatDate, formatMoney, getErrorMessage } from '@/lib/utils';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { SupplierPortalShell } from '../layout/supplier-portal-shell';
 
 type Section = 'dashboard' | 'purchase-orders' | 'catalog' | 'messages' | 'profile';
@@ -173,6 +174,7 @@ function DashboardView({ dashboard }: { dashboard: SupplierDashboard | null }) {
 }
 
 function PurchaseOrdersView({ orders, onChanged }: { orders: SupplierPurchaseOrder[]; onChanged: () => Promise<void> }) {
+  const { settings } = useTenantSettings();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [dates, setDates] = useState<Record<string, string>>({});
@@ -208,7 +210,7 @@ function PurchaseOrdersView({ orders, onChanged }: { orders: SupplierPurchaseOrd
                 <div>
                   <h2 className="font-semibold">PO {order.id.slice(0, 8)}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {order.location?.name ?? 'Location'} · {formatMoney(order.totalCost)} · Due {formatDate(order.expectedDeliveryDate)}
+                    {order.location?.name ?? 'Location'} · {formatMoney(order.totalCost, settings)} · Due {formatDate(order.expectedDeliveryDate, settings)}
                   </p>
                 </div>
                 <Badge>{order.supplierStatus}</Badge>
@@ -318,6 +320,7 @@ function MessagesView({
   orders: SupplierPurchaseOrder[];
   onChanged: () => Promise<void>;
 }) {
+  const { settings } = useTenantSettings();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [message, setMessage] = useState('');
   const [purchaseOrderId, setPurchaseOrderId] = useState('');
@@ -355,7 +358,7 @@ function MessagesView({
           <div key={row.id} className={`rounded-lg border p-3 ${row.senderType === 'supplier' ? 'bg-muted/30' : 'bg-card'}`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Badge variant={row.senderType === 'supplier' ? 'secondary' : 'default'}>{row.senderType}</Badge>
-              <span className="text-xs text-muted-foreground">{formatDate(row.createdAt)}</span>
+              <span className="text-xs text-muted-foreground">{formatDate(row.createdAt, settings)}</span>
             </div>
             <p className="mt-2 text-sm">{row.message}</p>
             {row.purchaseOrderId ? <p className="mt-1 text-xs text-muted-foreground">PO {row.purchaseOrderId.slice(0, 8)}</p> : null}
@@ -429,6 +432,7 @@ function ProfileView({ profile, onChanged }: { profile: SupplierProfile | null; 
 }
 
 function PurchaseOrderTable({ orders, compact = false }: { orders: SupplierPurchaseOrder[]; compact?: boolean }) {
+  const { settings } = useTenantSettings();
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-sm">
@@ -447,8 +451,8 @@ function PurchaseOrderTable({ orders, compact = false }: { orders: SupplierPurch
               <td className="p-3 font-medium">{order.id.slice(0, 8)}</td>
               <td className="p-3">{order.location?.name ?? 'Location'}</td>
               <td className="p-3"><Badge>{order.supplierStatus}</Badge></td>
-              <td className="p-3">{formatDate(order.expectedDeliveryDate)}</td>
-              <td className="p-3">{formatMoney(order.totalCost)}</td>
+              <td className="p-3">{formatDate(order.expectedDeliveryDate, settings)}</td>
+              <td className="p-3">{formatMoney(order.totalCost, settings)}</td>
             </tr>
           ))}
           {!orders.length ? (
@@ -465,6 +469,7 @@ function PurchaseOrderTable({ orders, compact = false }: { orders: SupplierPurch
 }
 
 function PurchaseOrderLines({ order }: { order: SupplierPurchaseOrder }) {
+  const { settings } = useTenantSettings();
   return (
     <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-xs">
@@ -482,7 +487,7 @@ function PurchaseOrderLines({ order }: { order: SupplierPurchaseOrder }) {
               <td className="p-2">{item.item?.name ?? item.itemId}</td>
               <td className="p-2">{item.quantityOrdered}</td>
               <td className="p-2">{item.quantityReceived}</td>
-              <td className="p-2">{formatMoney(item.costPrice)}</td>
+              <td className="p-2">{formatMoney(item.costPrice, settings)}</td>
             </tr>
           ))}
         </tbody>

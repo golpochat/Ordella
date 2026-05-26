@@ -5,6 +5,7 @@ import { TenantEntity } from '../../tenants/entities/tenant.entity';
 import { LocationEntity } from '../../tenants/entities/location.entity';
 import { LocationSettingsEntity } from '../../tenants/entities/location-settings.entity';
 import { LocationOpeningHoursEntity } from '../../tenants/entities/location-opening-hours.entity';
+import { TenantSettingsEntity } from '../../onboarding/entities/tenant-settings.entity';
 import { throwAdminResourceNotFound } from '../domain/admin-domain.errors';
 
 @Injectable()
@@ -12,6 +13,8 @@ export class AdminSettingsRepository {
   constructor(
     @InjectRepository(TenantEntity)
     private readonly tenantRepository: Repository<TenantEntity>,
+    @InjectRepository(TenantSettingsEntity)
+    private readonly tenantSettingsRepository: Repository<TenantSettingsEntity>,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
     @InjectRepository(LocationSettingsEntity)
@@ -26,6 +29,28 @@ export class AdminSettingsRepository {
 
   saveTenant(tenant: TenantEntity): Promise<TenantEntity> {
     return this.tenantRepository.save(tenant);
+  }
+
+  async getOrCreateTenantSettings(tenantId: string): Promise<TenantSettingsEntity> {
+    let settings = await this.tenantSettingsRepository.findOne({ where: { tenantId } });
+    if (!settings) {
+      await this.requireTenant(tenantId);
+      settings = this.tenantSettingsRepository.create({ tenantId });
+      settings = await this.tenantSettingsRepository.save(settings);
+    }
+    return settings;
+  }
+
+  saveTenantSettings(settings: TenantSettingsEntity): Promise<TenantSettingsEntity> {
+    return this.tenantSettingsRepository.save(settings);
+  }
+
+  private async requireTenant(tenantId: string): Promise<TenantEntity> {
+    const tenant = await this.findTenant(tenantId);
+    if (!tenant) {
+      throwAdminResourceNotFound('tenant', tenantId);
+    }
+    return tenant;
   }
 
   async requireLocationForTenant(tenantId: string, locationId: string): Promise<LocationEntity> {

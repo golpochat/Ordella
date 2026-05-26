@@ -8,6 +8,18 @@ import { AdminUpdatePaymentSettingsDto } from '../dto/admin-update-payment-setti
 import { AdminUpdatePosSettingsDto } from '../dto/admin-update-pos-settings.dto';
 import { AdminUpdateFulfillmentSettingsDto } from '../dto/admin-update-fulfillment-settings.dto';
 import { AdminUpdateDeliverySettingsDto } from '../dto/admin-update-delivery-settings.dto';
+import { AdminUpdateTenantLocalizationDto } from '../dto/admin-update-tenant-localization.dto';
+
+const DEFAULT_TENANT_LOCALIZATION = {
+  currency: 'EUR',
+  currencySymbol: '€',
+  locale: 'en-IE',
+  timezone: 'Europe/Dublin',
+  dateFormat: 'DD/MM/YYYY',
+  numberFormat: '1,234.56',
+  country: 'IE',
+  defaultTaxRate: '0.0000',
+};
 
 @Injectable()
 export class TenantSettingsService {
@@ -22,6 +34,25 @@ export class TenantSettingsService {
     if (dto.slug !== undefined) tenant.slug = dto.slug;
     if (dto.subdomain !== undefined) tenant.subdomain = dto.subdomain;
     return this.settingsRepository.saveTenant(tenant);
+  }
+
+  async getTenantLocalization(tenantId: string) {
+    const settings = await this.settingsRepository.getOrCreateTenantSettings(tenantId);
+    return this.toTenantLocalization(settings);
+  }
+
+  async updateTenantLocalization(tenantId: string, dto: AdminUpdateTenantLocalizationDto) {
+    const settings = await this.settingsRepository.getOrCreateTenantSettings(tenantId);
+    if (dto.currency !== undefined) settings.currency = dto.currency.toUpperCase();
+    if (dto.currencySymbol !== undefined) settings.currencySymbol = dto.currencySymbol;
+    if (dto.locale !== undefined) settings.locale = dto.locale;
+    if (dto.timezone !== undefined) settings.timezone = dto.timezone;
+    if (dto.dateFormat !== undefined) settings.dateFormat = dto.dateFormat;
+    if (dto.numberFormat !== undefined) settings.numberFormat = dto.numberFormat;
+    if (dto.country !== undefined) settings.country = dto.country.toUpperCase();
+    if (dto.defaultTaxRate !== undefined) settings.defaultTaxRate = dto.defaultTaxRate.toFixed(4);
+    const saved = await this.settingsRepository.saveTenantSettings(settings);
+    return this.toTenantLocalization(saved);
   }
 
   async updateOpeningHours(tenantId: string, dto: AdminUpdateOpeningHoursDto) {
@@ -111,5 +142,18 @@ export class TenantSettingsService {
     const settings = await this.settingsRepository.getOrCreateSettings(locationId);
     const hours = await this.settingsRepository.listOpeningHours(locationId);
     return { settings: settings.settings, openingHours: hours };
+  }
+
+  private toTenantLocalization(settings: typeof DEFAULT_TENANT_LOCALIZATION) {
+    return {
+      currency: settings.currency ?? DEFAULT_TENANT_LOCALIZATION.currency,
+      currencySymbol: settings.currencySymbol ?? DEFAULT_TENANT_LOCALIZATION.currencySymbol,
+      locale: settings.locale ?? DEFAULT_TENANT_LOCALIZATION.locale,
+      timezone: settings.timezone ?? DEFAULT_TENANT_LOCALIZATION.timezone,
+      dateFormat: settings.dateFormat ?? DEFAULT_TENANT_LOCALIZATION.dateFormat,
+      numberFormat: settings.numberFormat ?? DEFAULT_TENANT_LOCALIZATION.numberFormat,
+      country: settings.country ?? DEFAULT_TENANT_LOCALIZATION.country,
+      defaultTaxRate: settings.defaultTaxRate ?? DEFAULT_TENANT_LOCALIZATION.defaultTaxRate,
+    };
   }
 }

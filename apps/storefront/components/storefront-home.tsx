@@ -6,6 +6,7 @@ import { Button, Card, CardContent, useTheme } from '@shared-ui';
 import type { HomepageSection } from '@shared-utils';
 import type { OnlineMenu, OnlineProduct } from '@/lib/api';
 import { isProductOrderable } from '@/lib/api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
 
 type StorefrontHomeProps = {
@@ -144,6 +145,7 @@ function FeaturedItemCard({
   product: OnlineProduct;
   onAdd: () => void;
 }) {
+  const { formatCurrency } = useTenantSettings();
   const hasOptions = product.variants.length > 0 || product.modifiers.length > 0;
 
   return (
@@ -151,7 +153,7 @@ function FeaturedItemCard({
       <CardContent className="space-y-3 p-4">
         <div>
           <p className="font-semibold">{product.name}</p>
-          <p className="text-sm text-muted-foreground">${product.price}</p>
+          <p className="text-sm text-muted-foreground">{formatCurrency(product.price)}</p>
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline" className="h-11 flex-1">

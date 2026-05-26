@@ -4,9 +4,11 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Badge, Button, Card, CardContent } from '@shared-ui';
 import type { OnlineProduct } from '@/lib/api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function BundleDetail({ bundle }: { bundle: OnlineProduct }) {
+  const { formatCurrency } = useTenantSettings();
   const addItem = useBasketStore((state) => state.addItem);
   const error = useBasketStore((state) => state.error);
   const optionalItems = bundle.bundleItems?.filter((item) => item.isOptional) ?? [];
@@ -27,7 +29,7 @@ export function BundleDetail({ bundle }: { bundle: OnlineProduct }) {
             <Badge>Bundle & Save</Badge>
             <h1 className="text-3xl font-bold">{bundle.name}</h1>
             {bundle.description ? <p className="text-muted-foreground">{bundle.description}</p> : null}
-            <p className="text-xl font-semibold">${bundle.price}</p>
+            <p className="text-xl font-semibold">{formatCurrency(bundle.price)}</p>
             <p className="text-xs text-muted-foreground">Tax is calculated at checkout based on fulfillment location.</p>
           </div>
 

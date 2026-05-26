@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { Badge, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
 import { useDeliverySocket } from '@/hooks/use-delivery-socket';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { formatAddress } from '@/lib/api';
 import { statusLabel, TASK_FILTER_TABS, type TaskFilterTab } from '@/lib/delivery-status';
 import { useTasksStore } from '@/stores/tasks-store';
@@ -18,6 +19,7 @@ function statusVariant(
 }
 
 export function TasksList() {
+  const { formatDateTime } = useTenantSettings();
   const filter = useTasksStore((s) => s.filter);
   const setFilter = useTasksStore((s) => s.setFilter);
   const loading = useTasksStore((s) => s.loading);
@@ -71,7 +73,7 @@ export function TasksList() {
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm text-muted-foreground">
                     <p>{address}</p>
-                    {task.eta ? <p>ETA: {new Date(task.eta).toLocaleString()}</p> : null}
+                    {task.eta ? <p>ETA: {formatDateTime(task.eta)}</p> : null}
                   </CardContent>
                 </Card>
               </Link>

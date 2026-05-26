@@ -38,6 +38,7 @@ import { calculatePosTotals } from '@/lib/pos-pricing';
 import { getSession } from '@/lib/session';
 import { useCartStore } from '@/stores/cart-store';
 import { PosRecommendationsPanel } from '@/components/pos-recommendations-panel';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 type PosCheckoutModalProps = {
   open: boolean;
@@ -58,6 +59,7 @@ const PAYMENT_METHOD_OPTIONS = [
 ] as const;
 
 export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModalProps) {
+  const { formatCurrency, formatDate } = useTenantSettings();
   const router = useRouter();
   const cartId = useCartStore((s) => s.cartId);
   const lines = useCartStore((s) => s.lines);
@@ -474,7 +476,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
               <p className="text-muted-foreground">Store credit: {selectedCustomer.storeCreditBalance}</p>
               <p className="text-muted-foreground">Lifetime value: {selectedCustomer.lifetimeValue}</p>
               <p className="text-muted-foreground">
-                Last order: {selectedCustomer.lastOrderAt ? new Date(selectedCustomer.lastOrderAt).toLocaleDateString() : 'No orders'}
+                Last order: {selectedCustomer.lastOrderAt ? formatDate(selectedCustomer.lastOrderAt) : 'No orders'}
               </p>
               {selectedCustomer.tags?.length ? (
                 <p className="text-muted-foreground">Tags: {selectedCustomer.tags.join(', ')}</p>
@@ -502,7 +504,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
                   <p className="font-medium">Recent orders</p>
                   {customerOrders.map((order) => (
                     <p key={order.id} className="text-muted-foreground">
-                      {order.orderNumber ?? order.id.slice(0, 8)} · {order.status} · {order.total}
+                      {order.orderNumber ?? order.id.slice(0, 8)} · {order.status} · {formatCurrency(order.total)}
                     </p>
                   ))}
                 </div>
@@ -534,7 +536,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
             {giftCard ? (
               <>
                 <p className="mt-2 text-muted-foreground">
-                  Balance: {giftCard.balance} {giftCard.currency}
+                  Balance: {formatCurrency(giftCard.balance)} {giftCard.currency}
                 </p>
                 <Input
                   className="mt-2"

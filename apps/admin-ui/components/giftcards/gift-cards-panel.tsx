@@ -32,12 +32,10 @@ import {
 } from '@/lib/api/giftcards';
 import { searchLoyaltyCustomers, type LoyaltyCustomer } from '@/lib/api/loyalty';
 import { getErrorMessage } from '@/lib/utils';
-
-function money(value: string | number | null | undefined) {
-  return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(Number(value ?? 0));
-}
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 export function GiftCardsPanel() {
+  const { formatCurrency, formatDate } = useTenantSettings();
   const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
   const [customers, setCustomers] = useState<LoyaltyCustomer[]>([]);
   const [selectedCard, setSelectedCard] = useState<GiftCard | null>(null);
@@ -170,11 +168,11 @@ export function GiftCardsPanel() {
       {error ? <p className="rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p> : null}
 
       <div className="grid gap-4 md:grid-cols-5">
-        <Metric title="Gift card sales" value={money(analytics?.giftCardSales)} />
-        <Metric title="Gift card redemptions" value={money(analytics?.giftCardRedemptions)} />
-        <Metric title="Outstanding liability" value={money(analytics?.outstandingLiability)} />
-        <Metric title="Store credit issued" value={money(analytics?.storeCreditIssued)} />
-        <Metric title="Store credit used" value={money(analytics?.storeCreditRedeemed)} />
+        <Metric title="Gift card sales" value={formatCurrency(analytics?.giftCardSales)} />
+        <Metric title="Gift card redemptions" value={formatCurrency(analytics?.giftCardRedemptions)} />
+        <Metric title="Outstanding liability" value={formatCurrency(analytics?.outstandingLiability)} />
+        <Metric title="Store credit issued" value={formatCurrency(analytics?.storeCreditIssued)} />
+        <Metric title="Store credit used" value={formatCurrency(analytics?.storeCreditRedeemed)} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -220,10 +218,10 @@ export function GiftCardsPanel() {
                 {giftCards.map((card) => (
                   <TableRow key={card.id} className="cursor-pointer" onClick={() => setSelectedCard(card)}>
                     <TableCell>{card.code}</TableCell>
-                    <TableCell>{money(card.balance)}</TableCell>
+                    <TableCell>{formatCurrency(card.balance)}</TableCell>
                     <TableCell><Badge variant={card.isActive ? 'default' : 'secondary'}>{card.isActive ? 'Active' : 'Disabled'}</Badge></TableCell>
                     <TableCell>{card.customer?.name ?? 'Unassigned'}</TableCell>
-                    <TableCell>{new Date(card.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{formatDate(card.createdAt)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -240,8 +238,8 @@ export function GiftCardsPanel() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 md:grid-cols-3">
-              <Metric title="Balance" value={money(selectedCard.balance)} />
-              <Metric title="Initial value" value={money(selectedCard.initialValue)} />
+              <Metric title="Balance" value={formatCurrency(selectedCard.balance)} />
+              <Metric title="Initial value" value={formatCurrency(selectedCard.initialValue)} />
               <Metric title="Status" value={selectedCard.isActive ? 'Active' : 'Disabled'} />
             </div>
             <div className="flex flex-col gap-2 md:flex-row">
@@ -264,7 +262,7 @@ export function GiftCardsPanel() {
             <>
               <div className="grid gap-3 md:grid-cols-3">
                 <Metric title="Customer" value={selectedCustomer.name} />
-                <Metric title="Store credit balance" value={money(selectedCustomer.storeCreditBalance)} />
+                <Metric title="Store credit balance" value={formatCurrency(selectedCustomer.storeCreditBalance)} />
                 <Metric title="Contact" value={selectedCustomer.email ?? selectedCustomer.phone ?? 'No contact'} />
               </div>
               <div className="flex flex-col gap-2 md:flex-row">
@@ -293,12 +291,13 @@ function Metric({ title, value }: { title: string; value: string | number }) {
 }
 
 function TransactionList({ transactions }: { transactions: Array<{ id: string; amount: string; type: string; createdAt: string }> }) {
+  const { formatCurrency, formatDateTime } = useTenantSettings();
   return (
     <div className="space-y-2">
       {transactions.length ? transactions.map((transaction) => (
         <div key={transaction.id} className="flex justify-between rounded-md border p-3 text-sm">
           <span>{transaction.type}</span>
-          <span>{money(transaction.amount)} - {new Date(transaction.createdAt).toLocaleString()}</span>
+          <span>{formatCurrency(transaction.amount)} - {formatDateTime(transaction.createdAt)}</span>
         </div>
       )) : <p className="text-sm text-muted-foreground">No transactions yet.</p>}
     </div>

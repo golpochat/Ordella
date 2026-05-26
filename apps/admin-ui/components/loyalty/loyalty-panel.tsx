@@ -31,13 +31,10 @@ import {
   type LoyaltyTransaction,
 } from '@/lib/api/loyalty';
 import { getErrorMessage } from '@/lib/utils';
-
-function money(value: string | number | null | undefined) {
-  const amount = Number(value ?? 0);
-  return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(amount);
-}
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 export function LoyaltyPanel() {
+  const { formatCurrency, formatDate } = useTenantSettings();
   const [settings, setSettings] = useState<LoyaltySettings | null>(null);
   const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([]);
   const [customers, setCustomers] = useState<LoyaltyCustomer[]>([]);
@@ -148,7 +145,7 @@ export function LoyaltyPanel() {
         <Metric title="Points issued" value={analytics?.totalPointsIssued ?? 0} />
         <Metric title="Points redeemed" value={analytics?.totalPointsRedeemed ?? 0} />
         <Metric title="Unused points" value={analytics?.breakage ?? 0} />
-        <Metric title="Customer lifetime value" value={money(analytics?.customerLifetimeValue)} />
+        <Metric title="Customer lifetime value" value={formatCurrency(analytics?.customerLifetimeValue)} />
       </div>
 
       {settings ? (
@@ -204,8 +201,8 @@ export function LoyaltyPanel() {
               <>
                 <div className="grid gap-3 md:grid-cols-3">
                   <Metric title="Points balance" value={selectedCustomer.pointsBalance} />
-                  <Metric title="Lifetime value" value={money(selectedCustomer.lifetimeValue)} />
-                  <Metric title="Last order" value={selectedCustomer.lastOrderAt ? new Date(selectedCustomer.lastOrderAt).toLocaleDateString() : 'No orders'} />
+                  <Metric title="Lifetime value" value={formatCurrency(selectedCustomer.lifetimeValue)} />
+                  <Metric title="Last order" value={selectedCustomer.lastOrderAt ? formatDate(selectedCustomer.lastOrderAt) : 'No orders'} />
                 </div>
                 <div className="flex gap-2">
                   <Input placeholder="Add or remove points, e.g. 50 or -20" value={adjustment} onChange={(event) => setAdjustment(event.target.value)} />
@@ -270,6 +267,7 @@ function SettingInput({ label, value, onChange, onBlur }: { label: string; value
 }
 
 function TransactionTable({ transactions }: { transactions: LoyaltyTransaction[] }) {
+  const { formatDateTime } = useTenantSettings();
   return (
     <Table>
       <TableHeader>
@@ -286,7 +284,7 @@ function TransactionTable({ transactions }: { transactions: LoyaltyTransaction[]
             <TableCell>{transaction.customer?.name ?? transaction.customerId}</TableCell>
             <TableCell><Badge variant="outline">{transaction.type}</Badge></TableCell>
             <TableCell>{transaction.points}</TableCell>
-            <TableCell>{new Date(transaction.createdAt).toLocaleString()}</TableCell>
+            <TableCell>{formatDateTime(transaction.createdAt)}</TableCell>
           </TableRow>
         )) : (
           <TableRow>

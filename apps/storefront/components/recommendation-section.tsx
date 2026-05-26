@@ -11,6 +11,7 @@ import {
   trackRecommendationEvent,
   type RecommendationItem,
 } from '@/lib/api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
 
 type RecommendationSectionProps = {
@@ -47,6 +48,7 @@ export function RecommendationSection({
   mode = itemId ? 'item' : 'cart',
   limit = 4,
 }: RecommendationSectionProps) {
+  const { formatCurrency } = useTenantSettings();
   const [items, setItems] = useState<RecommendationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const addItem = useBasketStore((state) => state.addItem);
@@ -105,7 +107,7 @@ export function RecommendationSection({
                 <div>
                   <p className="font-medium">{product.name}</p>
                   <p className="text-xs text-muted-foreground">{reasonLabel(recommendation.reason)}</p>
-                  <p className="text-sm">${product.price}</p>
+                  <p className="text-sm">{formatCurrency(product.price)}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button asChild variant="outline" className="h-10 flex-1">

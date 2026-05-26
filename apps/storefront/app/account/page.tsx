@@ -10,8 +10,10 @@ import {
   type PublicGiftCard,
   type PublicLoyaltyCustomer,
 } from '@/lib/api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 export default function AccountPage() {
+  const { formatCurrency, formatDate } = useTenantSettings();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [customer, setCustomer] = useState<PublicLoyaltyCustomer | null>(null);
@@ -50,11 +52,11 @@ export default function AccountPage() {
           {customer ? (
             <div className="grid gap-3 md:grid-cols-3">
               <Metric title="Points balance" value={customer.pointsBalance} />
-              <Metric title="Store credit" value={customer.storeCreditBalance} />
-              <Metric title="Lifetime value" value={customer.lifetimeValue} />
+              <Metric title="Store credit" value={formatCurrency(customer.storeCreditBalance)} />
+              <Metric title="Lifetime value" value={formatCurrency(customer.lifetimeValue)} />
               <Metric title="Total orders" value={customer.totalOrders ?? 0} />
-              <Metric title="Average order" value={customer.avgOrderValue ?? '0.00'} />
-              <Metric title="Last order" value={customer.lastOrderAt ? new Date(customer.lastOrderAt).toLocaleDateString() : 'No orders'} />
+              <Metric title="Average order" value={formatCurrency(customer.avgOrderValue ?? '0.00')} />
+              <Metric title="Last order" value={customer.lastOrderAt ? formatDate(customer.lastOrderAt) : 'No orders'} />
             </div>
           ) : null}
           {customer?.segments?.length ? (
@@ -69,7 +71,7 @@ export default function AccountPage() {
               {giftCards.map((card) => (
                 <div key={card.id} className="rounded-md border p-3 text-sm">
                   <p className="font-medium">{card.code}</p>
-                  <p className="text-muted-foreground">Balance: {card.balance} {card.currency}</p>
+                  <p className="text-muted-foreground">Balance: {formatCurrency(card.balance)} {card.currency}</p>
                 </div>
               ))}
             </div>
@@ -80,7 +82,7 @@ export default function AccountPage() {
               {storeCreditHistory.map((transaction) => (
                 <div key={transaction.id} className="flex justify-between rounded-md border p-3 text-sm">
                   <span>{transaction.type}</span>
-                  <span>{transaction.amount}</span>
+                  <span>{formatCurrency(transaction.amount)}</span>
                 </div>
               ))}
             </div>

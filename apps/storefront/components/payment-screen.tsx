@@ -6,9 +6,11 @@ import { useState } from 'react';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { submitPayment } from '@/lib/api';
 import { clearCheckoutPreview, loadCheckoutPreview } from '@/lib/checkout-storage';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function PaymentScreen({ sessionId }: { sessionId: string }) {
+  const { formatCurrency } = useTenantSettings();
   const router = useRouter();
   const clearBasket = useBasketStore((s) => s.clearBasket);
   const preview = loadCheckoutPreview();
@@ -40,11 +42,11 @@ export function PaymentScreen({ sessionId }: { sessionId: string }) {
         <CardContent className="space-y-4">
           {preview ? (
             <div className="space-y-1 text-sm">
-              <p>Subtotal: ${preview.totals.subtotal}</p>
-              <p>Discount: -${preview.totals.discountTotal}</p>
-              <p>Tax: ${preview.totals.taxTotal}</p>
-              <p>Delivery: ${preview.totals.deliveryFee}</p>
-              <p className="text-lg font-semibold">Total: ${preview.totals.grandTotal}</p>
+              <p>Subtotal: {formatCurrency(preview.totals.subtotal)}</p>
+              <p>Discount: -{formatCurrency(preview.totals.discountTotal)}</p>
+              <p>Tax: {formatCurrency(preview.totals.taxTotal)}</p>
+              <p>Delivery: {formatCurrency(preview.totals.deliveryFee)}</p>
+              <p className="text-lg font-semibold">Total: {formatCurrency(preview.totals.grandTotal)}</p>
             </div>
           ) : null}
           <Button className="h-12 w-full text-base" disabled={state === 'processing'} onClick={pay}>

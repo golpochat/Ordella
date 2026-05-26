@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -36,6 +37,16 @@ export class TenantProvisioningController {
   @Post('create')
   async create(@Body() dto: TenantSignupDto): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.signupService.createTenant(dto.name, dto.email, dto.password);
+    return { success: true, data };
+  }
+
+  @Public()
+  @Get('settings')
+  @UseGuards(TenantGuard)
+  async getSettings(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.provisioning.getTenantSettings(tenant);
     return { success: true, data };
   }
 

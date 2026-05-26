@@ -16,9 +16,11 @@ import {
 } from '@shared-ui';
 import { getReceipt, type PosReceipt } from '@/lib/api';
 import { LiveOrderStatus } from '@/components/live-order-status';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { getOfflineOrder, type OfflinePendingOrder } from '@/lib/offline-db';
 
 export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; offline?: boolean }) {
+  const { formatCurrency } = useTenantSettings();
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
   const [offlineOrder, setOfflineOrder] = useState<OfflinePendingOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,27 +91,27 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
                     <TableRow key={`${item.productId}-${idx}`}>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.unitPrice.toFixed(2)}</TableCell>
+                      <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
               <div className="space-y-1 text-sm">
                 <p>Total qty: {totalQty}</p>
-                <p>Subtotal: {offlineOrder.payload.totals.subtotal}</p>
+                <p>Subtotal: {formatCurrency(offlineOrder.payload.totals.subtotal)}</p>
                 {Number(offlineOrder.payload.totals.discountTotal) > 0 ? (
-                  <p>Discount: -{offlineOrder.payload.totals.discountTotal}</p>
+                  <p>Discount: -{formatCurrency(offlineOrder.payload.totals.discountTotal)}</p>
                 ) : null}
                 {(offlineOrder.payload.totals.taxLines ?? []).length ? (
                   offlineOrder.payload.totals.taxLines?.map((line) => (
                     <p key={`${line.taxName}-${line.taxAmount}`}>
-                      {line.taxName} ({line.taxRate}%): {line.taxAmount}
+                      {line.taxName} ({line.taxRate}%): {formatCurrency(line.taxAmount)}
                     </p>
                   ))
                 ) : (
-                  <p>Tax: {offlineOrder.payload.totals.tax}</p>
+                  <p>Tax: {formatCurrency(offlineOrder.payload.totals.tax)}</p>
                 )}
-                <p className="text-lg font-semibold">Total: {offlineOrder.payload.totals.total}</p>
+                <p className="text-lg font-semibold">Total: {formatCurrency(offlineOrder.payload.totals.total)}</p>
               </div>
             </div>
           ) : null}
@@ -136,20 +138,20 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
                     <TableRow key={`${item.productId}-${idx}`}>
                       <TableCell>{item.productId}</TableCell>
                       <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.price}</TableCell>
+                      <TableCell>{formatCurrency(item.price)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
               <div className="space-y-1 text-sm">
                 <p>Total qty: {totalQty}</p>
-                <p>Subtotal: {receipt.subtotal}</p>
+                <p>Subtotal: {formatCurrency(receipt.subtotal)}</p>
                 {Number(receipt.discountTotal ?? 0) > 0 ? (
                   <>
-                    <p>Discount: -{receipt.discountTotal}</p>
+                    <p>Discount: -{formatCurrency(receipt.discountTotal)}</p>
                     {receipt.appliedPromotions?.map((promotion) => (
                       <p key={promotion.promotionId} className="text-muted-foreground">
-                        Promotion {promotion.code ?? promotion.promotionId.slice(0, 8)}: -{promotion.discountAmount}
+                        Promotion {promotion.code ?? promotion.promotionId.slice(0, 8)}: -{formatCurrency(promotion.discountAmount)}
                       </p>
                     ))}
                   </>
@@ -157,13 +159,13 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
                 {receipt.taxLines.length ? (
                   receipt.taxLines.map((line) => (
                     <p key={`${line.taxName}-${line.taxAmount}`}>
-                      {line.taxName} ({Number(line.taxRate).toFixed(2)}%, {line.priceMode}): {line.taxAmount}
+                      {line.taxName} ({Number(line.taxRate).toFixed(2)}%, {line.priceMode}): {formatCurrency(line.taxAmount)}
                     </p>
                   ))
                 ) : (
-                  <p>Tax: {receipt.tax}</p>
+                  <p>Tax: {formatCurrency(receipt.tax)}</p>
                 )}
-                <p className="text-lg font-semibold">Total: {receipt.total}</p>
+                <p className="text-lg font-semibold">Total: {formatCurrency(receipt.total)}</p>
               </div>
             </div>
           ) : null}

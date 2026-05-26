@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { isProductOrderable, trackRecommendationEvent, type OnlineProduct } from '@/lib/api';
 import { RecommendationSection } from '@/components/recommendation-section';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function ProductDetail({ product }: { product: OnlineProduct }) {
+  const { formatCurrency } = useTenantSettings();
   const router = useRouter();
   const addItem = useBasketStore((s) => s.addItem);
   const error = useBasketStore((s) => s.error);
@@ -83,7 +85,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
           ) : null}
           {product.description ? <p className="text-muted-foreground">{product.description}</p> : null}
           {product.sku ? <p className="text-sm text-muted-foreground">SKU {product.sku}</p> : null}
-          <p className="text-xl font-semibold">${displayPrice}</p>
+          <p className="text-xl font-semibold">{formatCurrency(displayPrice)}</p>
           <p className="text-xs text-muted-foreground">Tax is calculated at checkout based on fulfillment location.</p>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
           {product.inventoryTrackingEnabled &&
@@ -109,7 +111,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
                   >
                     {variant.name}
                     {variant.priceDelta !== '0' && variant.priceDelta !== '0.00'
-                      ? ` (+$${variant.priceDelta})`
+                      ? ` (+${formatCurrency(variant.priceDelta)})`
                       : ''}
                   </Button>
                 ))}
@@ -135,7 +137,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
                       onClick={() => toggleOption(option.id, modifier.id, modifier.type !== 'single')}
                     >
                       {option.name}
-                      {option.priceDelta !== '0' ? ` (+$${option.priceDelta})` : ''}
+                      {option.priceDelta !== '0' ? ` (+${formatCurrency(option.priceDelta)})` : ''}
                     </Button>
                   );
                 })}

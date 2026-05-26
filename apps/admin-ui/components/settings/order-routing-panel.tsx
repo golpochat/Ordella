@@ -11,10 +11,12 @@ import {
   type RoutingRule,
 } from '@/lib/api/admin/routing';
 import { getErrorMessage } from '@/lib/utils';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 const ruleTypes: RoutingRule['ruleType'][] = ['distance', 'stock', 'capacity', 'priority', 'delivery_zone'];
 
 export function OrderRoutingPanel() {
+  const { formatDateTime, formatNumber } = useTenantSettings();
   const [rules, setRules] = useState<RoutingRule[]>([]);
   const [decisions, setDecisions] = useState<RoutingDecision[]>([]);
   const [locations, setLocations] = useState<LocationListItem[]>([]);
@@ -100,10 +102,10 @@ export function OrderRoutingPanel() {
           <CardTitle className="text-lg">Order routing dashboard</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-4">
-          <Metric label="Active rules" value={activeRules.length.toString()} />
-          <Metric label="Decisions logged" value={decisions.length.toString()} />
-          <Metric label="Delivery locations" value={locations.filter((location) => location.supportsDelivery).length.toString()} />
-          <Metric label="Zone-enabled locations" value={locations.filter((location) => (location.deliveryZones?.length ?? 0) > 0).length.toString()} />
+          <Metric label="Active rules" value={formatNumber(activeRules.length)} />
+          <Metric label="Decisions logged" value={formatNumber(decisions.length)} />
+          <Metric label="Delivery locations" value={formatNumber(locations.filter((location) => location.supportsDelivery).length)} />
+          <Metric label="Zone-enabled locations" value={formatNumber(locations.filter((location) => (location.deliveryZones?.length ?? 0) > 0).length)} />
         </CardContent>
       </Card>
 
@@ -176,7 +178,7 @@ export function OrderRoutingPanel() {
               <div className="font-medium">{decision.toLocation?.name ?? decision.toLocationId ?? 'No eligible location'}</div>
               <div className="text-muted-foreground">{decision.reason}</div>
               <div className="text-xs text-muted-foreground">
-                ETA {decision.estimatedDeliveryMinutes ?? 'n/a'} min · {new Date(decision.createdAt).toLocaleString()}
+                ETA {decision.estimatedDeliveryMinutes ?? 'n/a'} min · {formatDateTime(decision.createdAt)}
               </div>
             </div>
           ))}

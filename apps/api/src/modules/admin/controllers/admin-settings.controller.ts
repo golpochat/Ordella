@@ -11,6 +11,7 @@ import { AdminUpdateDeliverySettingsDto } from '../dto/admin-update-delivery-set
 import {
   AdminUpdateBusinessInfoDto,
   AdminUpdateDeliveryZonesDto,
+  AdminUpdateTenantLocalizationDto,
   AdminUpdateOpeningHoursDto,
   AdminUpdatePaymentSettingsDto,
   AdminUpdatePosSettingsDto,
@@ -21,6 +22,23 @@ import {
 @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.SETTINGS)
 export class AdminSettingsController {
   constructor(private readonly tenantSettingsService: TenantSettingsService) {}
+
+  @Get('tenant')
+  async getTenantSettings(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.tenantSettingsService.getTenantLocalization(tenant.tenantId);
+    return { success: true, data };
+  }
+
+  @Patch('tenant')
+  async updateTenantSettings(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: AdminUpdateTenantLocalizationDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.tenantSettingsService.updateTenantLocalization(tenant.tenantId, dto);
+    return { success: true, data };
+  }
 
   @Patch('business')
   async updateBusiness(

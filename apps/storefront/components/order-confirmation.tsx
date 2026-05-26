@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { labelOrderStatus, labelOrderType } from '@shared-utils';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { useOrderTracking } from '@/hooks/use-order-tracking';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { getOpeningHours } from '@/lib/config';
 import { RecommendationSection } from '@/components/recommendation-section';
 
@@ -13,6 +14,7 @@ type OrderConfirmationProps = {
 };
 
 export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProps) {
+  const { formatCurrency, formatDateTime } = useTenantSettings();
   const { status, error } = useOrderTracking(orderId);
 
   if (error) {
@@ -48,7 +50,7 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
           </div>
           <p>Payment: {status.paymentStatus}</p>
           <p>Order type: {labelOrderType(status.orderType)}</p>
-          <p className="text-lg font-semibold">Total: ${status.total}</p>
+          <p className="text-lg font-semibold">Total: {formatCurrency(status.total)}</p>
           <p className="text-muted-foreground">
             Fulfilled by: {status.fulfilledByLocationName ?? 'assigned location'}
             {status.estimatedDeliveryMinutes ? ` · ETA ${status.estimatedDeliveryMinutes} min` : ''}
@@ -57,7 +59,7 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
           <p className="text-muted-foreground">{pickupOrDelivery}</p>
           <p className="text-muted-foreground">Hours: {getOpeningHours()}</p>
           <p className="text-muted-foreground">
-            Placed: {new Date(status.createdAt).toLocaleString()}
+            Placed: {formatDateTime(status.createdAt)}
           </p>
           <div className="flex flex-col gap-2 pt-2 sm:flex-row">
             <Button asChild variant="outline" className="h-11 flex-1">

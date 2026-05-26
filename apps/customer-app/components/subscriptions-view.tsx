@@ -9,8 +9,10 @@ import {
   updateCustomerSubscription,
   type CustomerSubscription,
 } from '@/lib/api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 export function SubscriptionsView() {
+  const { formatCurrency, formatDate } = useTenantSettings();
   const [subscriptions, setSubscriptions] = useState<CustomerSubscription[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -52,9 +54,9 @@ export function SubscriptionsView() {
           <CardContent className="space-y-3 text-sm">
             <div className="grid gap-2">
               <p>Schedule: {subscription.schedule}</p>
-              <p>Next delivery date: {new Date(subscription.nextRunAt).toLocaleDateString()}</p>
+              <p>Next delivery date: {formatDate(subscription.nextRunAt)}</p>
               <p>Status: {subscription.status}</p>
-              <p>Total: {subscription.totalPrice}</p>
+              <p>Total: {formatCurrency(subscription.totalPrice)}</p>
               <p>Items: {subscription.items.map((item) => `${item.quantity}x ${item.itemId.slice(0, 8)}`).join(', ')}</p>
             </div>
             <select
@@ -79,7 +81,7 @@ export function SubscriptionsView() {
                 <p className="font-medium">Past subscription orders</p>
                 {subscription.orders.map((order) => (
                   <p key={order.id} className="text-muted-foreground">
-                    {new Date(order.runAt).toLocaleDateString()} · {order.status}
+                    {formatDate(order.runAt)} · {order.status}
                   </p>
                 ))}
               </div>

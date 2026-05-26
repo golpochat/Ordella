@@ -24,6 +24,7 @@ import {
   type NotificationPreference,
 } from '@/lib/api/notifications';
 import { getErrorMessage } from '@/lib/utils';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 const CATEGORIES = [
   { key: 'orders', label: 'Orders' },
@@ -34,6 +35,7 @@ const CATEGORIES = [
 ];
 
 export function NotificationsPanel() {
+  const { formatDateTime } = useTenantSettings();
   const [history, setHistory] = useState<NotificationHistoryItem[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreference | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -163,7 +165,7 @@ export function NotificationsPanel() {
                     </Badge>
                   </TableCell>
                   <TableCell>{item.recipient ?? 'Dashboard'}</TableCell>
-                  <TableCell>{new Date(item.sentAt ?? item.createdAt).toLocaleString()}</TableCell>
+                  <TableCell>{formatDateTime(item.sentAt ?? item.createdAt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

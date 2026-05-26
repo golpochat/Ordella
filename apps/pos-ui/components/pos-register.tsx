@@ -31,6 +31,7 @@ import {
 import { PosCartSidebar } from '@/components/pos-cart-sidebar';
 import { PosCheckoutModal } from '@/components/pos-checkout-modal';
 import { PosTopBar } from '@/components/pos-top-bar';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useCartStore } from '@/stores/cart-store';
 
 type PosRegisterProps = {
@@ -49,6 +50,7 @@ function isLowStock(item: PosCatalogItem): boolean {
 }
 
 export function PosRegister({ initialCategories, initialItems }: PosRegisterProps) {
+  const { formatCurrency } = useTenantSettings();
   const setCatalog = useCartStore((s) => s.setCatalog);
   const addCatalogItem = useCartStore((s) => s.addCatalogItem);
   const cartSyncing = useCartStore((s) => s.syncing);
@@ -408,7 +410,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                             </span>
                           ) : null}
                         </div>
-                        <p className="text-sm text-muted-foreground">${item.price}</p>
+                        <p className="text-sm text-muted-foreground">{formatCurrency(item.price)}</p>
                         {item.bundleItems?.length ? (
                           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                             {item.bundleItems.map((bundleItem) => bundleItem.name).filter(Boolean).join(', ')}
@@ -463,7 +465,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                     variant={selectedVariantId === variant.id ? 'default' : 'outline'}
                     onClick={() => setSelectedVariantId(variant.id)}
                   >
-                    {variant.name} (+{variant.priceDelta})
+                    {variant.name} (+{formatCurrency(variant.priceDelta)})
                   </Button>
                 ))}
               </div>
@@ -486,7 +488,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                     }
                   >
                     {option.name}
-                    {option.priceDelta !== '0' ? ` (+${option.priceDelta})` : ''}
+                    {option.priceDelta !== '0' ? ` (+${formatCurrency(option.priceDelta)})` : ''}
                   </Button>
                 ))}
               </div>

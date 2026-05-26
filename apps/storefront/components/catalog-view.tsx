@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
 import type { OnlineMenu, OnlineProduct } from '@/lib/api';
 import { isProductOrderable, searchStorefrontItems } from '@/lib/api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
 
 type SortKey = 'name' | 'price-asc' | 'price-desc';
@@ -243,6 +244,7 @@ function CatalogItemCard({
   product: OnlineProduct;
   onAdd: (p: OnlineProduct) => void;
 }) {
+  const { formatCurrency } = useTenantSettings();
   const orderable = isProductOrderable(product);
   const hasOptions = product.variants.length > 0 || product.modifiers.length > 0;
   const isBundle = product.itemType === 'bundle';
@@ -274,7 +276,7 @@ function CatalogItemCard({
           ) : null}
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-semibold">${product.price} <span className="text-xs font-normal text-muted-foreground">tax calculated at checkout</span></span>
+          <span className="font-semibold">{formatCurrency(product.price)} <span className="text-xs font-normal text-muted-foreground">tax calculated at checkout</span></span>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
         </div>
         <p className="text-xs text-muted-foreground">Eligible delivery orders may be fulfilled by a dark store.</p>

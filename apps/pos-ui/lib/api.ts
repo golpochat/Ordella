@@ -83,6 +83,10 @@ const api = new Proxy(rawApi, {
   },
 }) as typeof rawApi;
 
+export function fetchTenantSettings() {
+  return api.getData<unknown>('tenant/settings');
+}
+
 const posCartLineSchema = z.object({
   productId: z.string().uuid(),
   variantId: z.string().uuid().optional(),

@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import {
-  formatOrderTimestamp,
   orderTypeLabel,
   type DriverOrder,
 } from '@/lib/driver-orders-api';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { statusLabel, type DeliveryTaskStatus } from '@/lib/delivery-status';
 import { maskPhone } from '@/lib/mask-phone';
 
@@ -34,6 +34,7 @@ export function OrderCard({
   actionBusy,
   showNavigate = true,
 }: OrderCardProps) {
+  const { formatDateTime } = useTenantSettings();
   const itemsText =
     order.itemsSummary.length > 0
       ? order.itemsSummary.map((l) => `${l.quantity}× ${l.name}`).join(', ')
@@ -46,7 +47,7 @@ export function OrderCard({
           <CardTitle className="text-base">
             {order.orderNumber ? `#${order.orderNumber}` : `Order ${order.orderId.slice(0, 8)}`}
           </CardTitle>
-          <p className="text-xs text-muted-foreground">{formatOrderTimestamp(order.createdAt)}</p>
+          <p className="text-xs text-muted-foreground">{formatDateTime(order.createdAt)}</p>
         </div>
         <div className="flex flex-col items-end gap-1">
           <Badge variant="outline">{orderTypeLabel(order.orderType, order.isPickup)}</Badge>

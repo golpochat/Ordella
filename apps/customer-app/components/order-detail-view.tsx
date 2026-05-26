@@ -8,8 +8,10 @@ import { fetchCustomerOrder, type CustomerOrderDetail } from '@/lib/api';
 import { labelOrderStatus } from '@shared-utils';
 import { ORDER_TIMELINE, timelineIndexForStatus } from '@/lib/order-timeline';
 import { setLastOrderId } from '@/lib/session';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 export function OrderDetailView({ orderId }: { orderId: string }) {
+  const { formatCurrency, formatDateTime } = useTenantSettings();
   const [order, setOrder] = useState<CustomerOrderDetail | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { status: liveStatus, error: trackError } = useOrderTracking(orderId);
@@ -119,7 +121,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                     <span>
                       {line.name} x{line.quantity}
                     </span>
-                    <span>${line.price}</span>
+                    <span>{formatCurrency(line.price)}</span>
                   </div>
                   {line.variantName ? (
                     <p className="text-xs text-muted-foreground">Variant: {line.variantName}</p>
@@ -130,9 +132,9 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             ) : (
               <p className="text-muted-foreground">Line items will appear when synced.</p>
             )}
-            {order.subtotal ? <p className="border-t pt-2">Subtotal: ${order.subtotal}</p> : null}
-            {order.tax ? <p>Tax: ${order.tax}</p> : null}
-            <p className="border-t pt-2 font-medium">Total: ${order.total}</p>
+            {order.subtotal ? <p className="border-t pt-2">Subtotal: {formatCurrency(order.subtotal)}</p> : null}
+            {order.tax ? <p>Tax: {formatCurrency(order.tax)}</p> : null}
+            <p className="border-t pt-2 font-medium">Total: {formatCurrency(order.total)}</p>
             {order.delivery ? (
               <p className="text-muted-foreground">
                 Deliver to: {order.delivery.addressLine1}, {order.delivery.city}
@@ -150,7 +152,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             {order.statusTimeline.map((step, index) => (
               <p key={`${step.status}-${step.changedAt}-${index}`}>
-                {labelOrderStatus(step.status)} · {new Date(step.changedAt).toLocaleString()}
+                {labelOrderStatus(step.status)} · {formatDateTime(step.changedAt)}
               </p>
             ))}
           </CardContent>

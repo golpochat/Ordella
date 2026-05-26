@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
 import { fetchCustomerProfile, updateCustomerProfile, type CustomerProfile } from '@/lib/api';
 import { clearCustomerSession, setCustomerName } from '@/lib/session';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 function getField(row: unknown, field: string): string | number | null {
   if (!row || typeof row !== 'object') return null;
@@ -14,6 +15,7 @@ function getField(row: unknown, field: string): string | number | null {
 }
 
 export function ProfileView() {
+  const { formatCurrency } = useTenantSettings();
   const router = useRouter();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [name, setName] = useState('');
@@ -179,7 +181,7 @@ export function ProfileView() {
           <p className="font-medium">{profile?.loyaltyPoints ?? profile?.pointsBalance ?? 0} points</p>
           <div className="grid gap-2 text-muted-foreground">
             <p>Total orders: {profile?.totalOrders ?? 0}</p>
-            <p>Average order: ${profile?.avgOrderValue ?? '0.00'}</p>
+            <p>Average order: {formatCurrency(profile?.avgOrderValue ?? '0.00')}</p>
             <p>Order frequency: {profile?.orderFrequency ?? 'No orders yet'}</p>
           </div>
           {profile?.loyaltyHistory?.length ? (
@@ -201,12 +203,12 @@ export function ProfileView() {
           <CardTitle className="text-base">Store credit</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <p className="font-medium">${profile?.storeCreditBalance ?? '0.00'} available</p>
+          <p className="font-medium">{formatCurrency(profile?.storeCreditBalance ?? '0.00')} available</p>
           {profile?.storeCreditHistory?.length ? (
             <div className="space-y-1 text-muted-foreground">
               {profile.storeCreditHistory.slice(0, 5).map((row, index) => (
                 <p key={String(getField(row, 'id') ?? index)}>
-                  {getField(row, 'type') ?? 'Activity'} · ${getField(row, 'amount') ?? '0.00'}
+                  {getField(row, 'type') ?? 'Activity'} · {formatCurrency(getField(row, 'amount') ?? '0.00')}
                 </p>
               ))}
             </div>
@@ -225,7 +227,7 @@ export function ProfileView() {
             <div className="space-y-1 text-muted-foreground">
               {profile.giftCards.map((row, index) => (
                 <p key={String(getField(row, 'id') ?? index)}>
-                  {getField(row, 'code') ?? 'Gift card'} · ${getField(row, 'balance') ?? '0.00'}
+                  {getField(row, 'code') ?? 'Gift card'} · {formatCurrency(getField(row, 'balance') ?? '0.00')}
                 </p>
               ))}
             </div>

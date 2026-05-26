@@ -3,8 +3,10 @@
 import { labelOrderStatus, labelOrderType } from '@shared-utils';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
 import { useOrderTracking } from '@/hooks/use-order-tracking';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 export function OrderTracking({ orderId }: { orderId: string }) {
+  const { formatCurrency, formatDateTime } = useTenantSettings();
   const { status, error } = useOrderTracking(orderId);
 
   if (error) {
@@ -30,13 +32,13 @@ export function OrderTracking({ orderId }: { orderId: string }) {
           </div>
           <p>Payment: {status.paymentStatus}</p>
           <p>Type: {labelOrderType(status.orderType)}</p>
-          <p>Total: ${status.total}</p>
+          <p>Total: {formatCurrency(status.total)}</p>
           <p className="text-muted-foreground">
             Fulfilled by: {status.fulfilledByLocationName ?? 'assigned location'}
             {status.estimatedDeliveryMinutes ? ` · ETA ${status.estimatedDeliveryMinutes} min` : ''}
           </p>
           {status.routingReason ? <p className="text-muted-foreground">{status.routingReason}</p> : null}
-          <p className="text-muted-foreground">Placed: {new Date(status.createdAt).toLocaleString()}</p>
+          <p className="text-muted-foreground">Placed: {formatDateTime(status.createdAt)}</p>
           <Button asChild variant="outline" className="mt-2 h-11 w-full">
             <a href={`/order/${orderId}`}>Refresh status</a>
           </Button>

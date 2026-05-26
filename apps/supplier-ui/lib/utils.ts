@@ -1,16 +1,26 @@
+import {
+  DEFAULT_TENANT_SETTINGS,
+  formatTenantCurrency,
+  formatTenantDate,
+  type TenantSettings,
+} from '@shared-utils';
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return 'Something went wrong';
 }
 
-export function formatMoney(value: string | number): string {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-  }).format(Number(value || 0));
+export function formatMoney(
+  value: string | number,
+  settings: TenantSettings = DEFAULT_TENANT_SETTINGS,
+): string {
+  return formatTenantCurrency(value, settings);
 }
 
-export function formatDate(value?: string | null): string {
+export function formatDate(
+  value?: string | null,
+  settings: TenantSettings = DEFAULT_TENANT_SETTINGS,
+): string {
   if (!value) return 'Not set';
-  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(value));
+  return formatTenantDate(value, settings);
 }

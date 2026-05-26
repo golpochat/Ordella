@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 import { Button, Card, CardContent, Input } from '@shared-ui';
 import { RecommendationSection } from '@/components/recommendation-section';
-import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { basketSubtotal, calculateStorefrontTotals } from '@/lib/storefront-pricing';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function CartView() {
+  const { formatCurrency } = useTenantSettings();
   const lines = useBasketStore((s) => s.lines);
   const hydrate = useBasketStore((s) => s.hydrate);
   const updateQuantity = useBasketStore((s) => s.updateQuantity);
@@ -64,7 +66,7 @@ export function CartView() {
                       Available at this location: {line.availableQuantity}
                     </p>
                   ) : null}
-                  <p className="text-sm">${formatMoney(line.unitPrice)} each</p>
+                  <p className="text-sm">{formatCurrency(line.unitPrice)} each</p>
                   {line.purchaseType === 'subscription' ? (
                     <p className="text-xs font-medium text-primary">
                       Recurring order: {line.subscriptionSchedule === 'biweekly' ? 'every 2 weeks' : line.subscriptionSchedule}
@@ -125,17 +127,17 @@ export function CartView() {
       <div className="mt-6 space-y-1 border-t pt-4 text-sm">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>${formatMoney(totals.subtotal)}</span>
+          <span>{formatCurrency(totals.subtotal)}</span>
         </div>
         {totals.taxBreakdown.map((line) => (
           <div key={line.taxName} className="flex justify-between">
             <span>{line.taxName} ({line.taxRate.toFixed(2)}%, {line.priceMode} est.)</span>
-            <span>${formatMoney(line.taxAmount)}</span>
+            <span>{formatCurrency(line.taxAmount)}</span>
           </div>
         ))}
         <div className="flex justify-between text-lg font-bold">
           <span>Total (est.)</span>
-          <span>${formatMoney(totals.total)}</span>
+          <span>{formatCurrency(totals.total)}</span>
         </div>
       </div>
 

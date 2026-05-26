@@ -18,11 +18,13 @@ import {
 } from '@/lib/api';
 import { createCheckoutSession } from '@/lib/payments-api';
 import { RecommendationSection } from '@/components/recommendation-section';
-import { basketSubtotal, calculateStorefrontTotals, formatMoney } from '@/lib/storefront-pricing';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { basketSubtotal, calculateStorefrontTotals } from '@/lib/storefront-pricing';
 import { createSubscriptionCheckoutSession } from '@/lib/subscriptions-api';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function CheckoutForm() {
+  const { formatCurrency } = useTenantSettings();
   const router = useRouter();
   const lines = useBasketStore((s) => s.lines);
   const hydrate = useBasketStore((s) => s.hydrate);
@@ -374,7 +376,7 @@ export function CheckoutForm() {
               <div className="rounded-md border p-3 text-sm">
                 <p className="font-medium">Rewards available</p>
                 <p className="text-muted-foreground">{loyaltyCustomer.pointsBalance} points available</p>
-                <p className="text-muted-foreground">Store credit: {formatMoney(Number(loyaltyCustomer.storeCreditBalance))}</p>
+                <p className="text-muted-foreground">Store credit: {formatCurrency(loyaltyCustomer.storeCreditBalance)}</p>
                 <Input
                   className="mt-2"
                   placeholder={`Redeem points (minimum ${loyaltySettings.minRedeemPoints})`}
@@ -389,7 +391,7 @@ export function CheckoutForm() {
                 />
                 {loyaltyDiscount > 0 ? (
                   <p className="mt-2 text-muted-foreground">
-                    Discount applied: {formatMoney(loyaltyDiscount)}
+                    Discount applied: {formatCurrency(loyaltyDiscount)}
                   </p>
                 ) : null}
               </div>
@@ -405,7 +407,7 @@ export function CheckoutForm() {
               {giftCard ? (
                 <>
                   <p className="mt-2 text-muted-foreground">
-                    Balance: {formatMoney(Number(giftCard.balance))}
+                    Balance: {formatCurrency(giftCard.balance)}
                   </p>
                   <Input
                     className="mt-2"
@@ -415,7 +417,7 @@ export function CheckoutForm() {
                   />
                   {giftCardDiscount > 0 ? (
                     <p className="mt-2 text-muted-foreground">
-                      Gift card applied: {formatMoney(giftCardDiscount)}
+                      Gift card applied: {formatCurrency(giftCardDiscount)}
                     </p>
                   ) : null}
                 </>
@@ -539,36 +541,36 @@ export function CheckoutForm() {
                   {line.variantName ? ` (${line.variantName})` : ''}
                   {line.purchaseType === 'subscription' ? ` · ${line.subscriptionSchedule}` : ''}
                 </span>
-                <span>${formatMoney(line.unitPrice * line.quantity)}</span>
+                <span>{formatCurrency(line.unitPrice * line.quantity)}</span>
               </li>
             ))}
           </ul>
           <div className="space-y-1 border-t pt-3 text-sm">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span>${formatMoney(totals.subtotal)}</span>
+              <span>{formatCurrency(totals.subtotal)}</span>
             </div>
             {totals.taxBreakdown.map((line) => (
               <div key={line.taxName} className="flex justify-between">
                 <span>{line.taxName} ({line.taxRate.toFixed(2)}%, {line.priceMode} est.)</span>
-                <span>${formatMoney(line.taxAmount)}</span>
+                <span>{formatCurrency(line.taxAmount)}</span>
               </div>
             ))}
             {giftCardDiscount > 0 ? (
               <div className="flex justify-between text-muted-foreground">
                 <span>Gift card</span>
-                <span>-${formatMoney(giftCardDiscount)}</span>
+                <span>-{formatCurrency(giftCardDiscount)}</span>
               </div>
             ) : null}
             {storeCreditDiscount > 0 ? (
               <div className="flex justify-between text-muted-foreground">
                 <span>Store credit</span>
-                <span>-${formatMoney(storeCreditDiscount)}</span>
+                <span>-{formatCurrency(storeCreditDiscount)}</span>
               </div>
             ) : null}
             <div className="flex justify-between font-semibold">
               <span>Total (est.)</span>
-              <span>${formatMoney(payableTotal)}</span>
+              <span>{formatCurrency(payableTotal)}</span>
             </div>
           </div>
           <RecommendationSection

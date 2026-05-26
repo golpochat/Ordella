@@ -19,6 +19,11 @@ function createCustomerApiClient() {
   });
 }
 
+export function fetchTenantSettings() {
+  const api = createCustomerApiClient();
+  return api.getData<unknown>('tenant/settings');
+}
+
 async function withCustomerSession<T>(request: Promise<T>): Promise<T> {
   try {
     return await request;

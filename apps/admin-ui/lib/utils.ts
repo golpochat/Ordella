@@ -1,14 +1,11 @@
-export function formatMoney(value: string, currency = 'USD'): string {
-  const amount = Number.parseFloat(value);
-  if (Number.isNaN(amount)) return value;
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
+import { DEFAULT_TENANT_SETTINGS, formatTenantCurrency, formatTenantDateTime, type TenantSettings } from '@shared-utils';
+
+export function formatMoney(value: string, settings: TenantSettings = DEFAULT_TENANT_SETTINGS): string {
+  return formatTenantCurrency(value, settings);
 }
 
-export function formatDate(value: Date | string | undefined): string {
-  if (!value) return '—';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleString();
+export function formatDate(value: Date | string | undefined, settings: TenantSettings = DEFAULT_TENANT_SETTINGS): string {
+  return formatTenantDateTime(value, settings);
 }
 
 export function getErrorMessage(error: unknown): string {

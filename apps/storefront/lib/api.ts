@@ -10,6 +10,10 @@ const api = createApiClient({
   getTenantId: () => getConfiguredValue(tokenStorage.getTenantId(), getTenantId()),
 });
 
+export function fetchTenantSettings() {
+  return api.getData<unknown>('tenant/settings');
+}
+
 const modifierOptionSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),

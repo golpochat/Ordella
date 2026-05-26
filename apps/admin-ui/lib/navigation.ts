@@ -117,6 +117,7 @@ export const FRANCHISE_HQ_SUBNAV = [
 ];
 
 export const SETTINGS_TABS = [
+  { id: 'localization', label: 'Localization' },
   { id: 'billing', label: 'Billing' },
   { id: 'branding', label: 'Branding' },
   { id: 'storefront-theme', label: 'Storefront Theme' },

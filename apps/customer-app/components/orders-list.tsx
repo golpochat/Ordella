@@ -6,6 +6,7 @@ import { Badge, Card, CardContent, CardHeader, CardTitle, Tabs, TabsContent, Tab
 import { labelOrderStatus, labelOrderType } from '@shared-utils';
 import { fetchCustomerOrders, type CustomerOrder } from '@/lib/api';
 import { isActiveOrderStatus } from '@/lib/order-timeline';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 type OrdersFilter = 'active' | 'past';
 
@@ -19,6 +20,7 @@ function statusVariant(status: string): 'default' | 'secondary' | 'destructive' 
 }
 
 export function OrdersList() {
+  const { formatCurrency, formatDateTime } = useTenantSettings();
   const [filter, setFilter] = useState<OrdersFilter>('active');
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,9 +74,9 @@ export function OrdersList() {
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
                   <p>
-                    ${order.total} · {labelOrderType(order.orderType)}
+                    {formatCurrency(order.total)} · {labelOrderType(order.orderType)}
                   </p>
-                  <p>{new Date(order.createdAt).toLocaleString()}</p>
+                  <p>{formatDateTime(order.createdAt)}</p>
                 </CardContent>
               </Card>
             </Link>

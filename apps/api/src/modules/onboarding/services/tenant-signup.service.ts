@@ -19,9 +19,14 @@ import { hashPassword } from '../utils/password.util';
 import { slugifyTenantName } from '../utils/slug.util';
 import {
   DEFAULT_CURRENCY,
+  DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_LOCALE,
   DEFAULT_LOCATION_NAME,
   DEFAULT_TIMEZONE,
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_NUMBER_FORMAT,
+  DEFAULT_COUNTRY,
+  DEFAULT_TAX_RATE,
   defaultLocationSettings,
   defaultOpeningHoursRows,
   defaultOpeningHoursTemplate,
@@ -73,7 +78,13 @@ export class TenantSignupService {
         {
           tenantId: tenant.id,
           currency: DEFAULT_CURRENCY,
+          currencySymbol: DEFAULT_CURRENCY_SYMBOL,
           locale: DEFAULT_LOCALE,
+          timezone: DEFAULT_TIMEZONE,
+          dateFormat: DEFAULT_DATE_FORMAT,
+          numberFormat: DEFAULT_NUMBER_FORMAT,
+          country: DEFAULT_COUNTRY,
+          defaultTaxRate: DEFAULT_TAX_RATE,
           openingHours: defaultOpeningHoursTemplate(),
           metadata: defaultTenantMetadata(),
         },

@@ -9,6 +9,7 @@ import {
   type RecommendationSettings,
 } from '@/lib/api/admin/recommendations';
 import { getErrorMessage } from '@/lib/utils';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 type AiRecommendationsPanelProps = {
   analytics: RecommendationAnalytics | null;
@@ -16,6 +17,7 @@ type AiRecommendationsPanelProps = {
 };
 
 export function AiRecommendationsPanel({ analytics, settings: initialSettings }: AiRecommendationsPanelProps) {
+  const { formatCurrency } = useTenantSettings();
   const [settings, setSettings] = useState<RecommendationSettings | null>(
     initialSettings ?? analytics?.settings ?? null,
   );
@@ -63,7 +65,7 @@ export function AiRecommendationsPanel({ analytics, settings: initialSettings }:
           <CardContent className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span>Revenue influenced</span>
-              <span>${analytics?.revenueInfluenced ?? '0.00'}</span>
+              <span>{formatCurrency(analytics?.revenueInfluenced ?? '0.00')}</span>
             </div>
             <div className="flex justify-between">
               <span>AOV uplift</span>

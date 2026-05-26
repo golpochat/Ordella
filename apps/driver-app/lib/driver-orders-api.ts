@@ -150,15 +150,6 @@ export function orderTypeLabel(orderType: string, isPickup: boolean): string {
   return 'Order';
 }
 
-export function formatOrderTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString([], {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function nextActionForOrder(order: DriverOrder): {
   label: string;
   action: 'accept' | 'start' | 'complete' | 'pickup-complete' | null;

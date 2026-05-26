@@ -17,3 +17,4 @@ export * from './admin-update-opening-hours.dto';
 export * from './admin-update-delivery-zones.dto';
 export * from './admin-update-payment-settings.dto';
 export * from './admin-update-pos-settings.dto';
+export * from './admin-update-tenant-localization.dto';

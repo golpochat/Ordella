@@ -23,10 +23,11 @@ import {
   type BillingSummary,
 } from '@/lib/api/billing';
 import { getErrorMessage } from '@/lib/utils';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
-function formatLimit(value: number | null): string {
+function formatLimit(value: number | null, formatNumber: (value: number) => string): string {
   if (value === null) return 'Unlimited';
-  return value.toLocaleString();
+  return formatNumber(value);
 }
 
 function usagePercent(used: number, limit: number | null): number | null {
@@ -35,6 +36,7 @@ function usagePercent(used: number, limit: number | null): number | null {
 }
 
 export function BillingPanel() {
+  const { formatCurrency, formatDate, formatNumber } = useTenantSettings();
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
   const [paymentMethodId, setPaymentMethodId] = useState('');
@@ -106,7 +108,7 @@ export function BillingPanel() {
           <div className="flex flex-wrap gap-2">
             {onTrial ? (
               <Badge variant="secondary">
-                Trial ends {new Date(summary.trialEndsAt!).toLocaleDateString()}
+                Trial ends {formatDate(summary.trialEndsAt!)}
               </Badge>
             ) : null}
             {usage.softLimitWarned ? <Badge variant="secondary">Approaching limits</Badge> : null}
@@ -149,21 +151,21 @@ export function BillingPanel() {
           </div>
           {summary.currentPeriodEnd ? (
             <p className="text-muted-foreground">
-              Billing period ends {new Date(summary.currentPeriodEnd).toLocaleDateString()}
+              Billing period ends {formatDate(summary.currentPeriodEnd)}
             </p>
           ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="font-medium">Orders this month</p>
               <p>
-                {usage.ordersUsed.toLocaleString()} / {formatLimit(usage.orderLimit)}
+                {formatNumber(usage.ordersUsed)} / {formatLimit(usage.orderLimit, formatNumber)}
                 {orderPct !== null ? ` (${orderPct}%)` : ''}
               </p>
             </div>
             <div>
               <p className="font-medium">Locations</p>
               <p>
-                {usage.locationsUsed.toLocaleString()} / {formatLimit(usage.locationLimit)}
+                {formatNumber(usage.locationsUsed)} / {formatLimit(usage.locationLimit, formatNumber)}
                 {locationPct !== null ? ` (${locationPct}%)` : ''}
               </p>
             </div>
@@ -252,7 +254,7 @@ export function BillingPanel() {
               {invoices.map((inv) => (
                 <li key={inv.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                   <span>
-                    {new Date(inv.created).toLocaleDateString()} · {(inv.amountDue / 100).toFixed(2)}{' '}
+                    {formatDate(inv.created)} · {formatCurrency(inv.amountDue / 100)}{' '}
                     {inv.currency?.toUpperCase()} · {inv.status}
                   </span>
                   {inv.hostedInvoiceUrl ? (

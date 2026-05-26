@@ -12,6 +12,14 @@ export async function updateBusinessInfo(api: ApiClient, body: Record<string, un
   return api.patch<{ success: boolean; data: unknown }>('admin/settings/business', body);
 }
 
+export async function getTenantLocalizationSettings(api: ApiClient) {
+  return api.getData<unknown>('admin/settings/tenant');
+}
+
+export async function updateTenantLocalizationSettings(api: ApiClient, body: Record<string, unknown>) {
+  return api.patch<{ success: boolean; data: unknown }>('admin/settings/tenant', body);
+}
+
 export async function updateOpeningHours(api: ApiClient, body: Record<string, unknown>) {
   return api.post<{ success: boolean; data: unknown }>('admin/settings/opening-hours', body);
 }

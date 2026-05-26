@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { Button, Input } from '@shared-ui';
-import { calculatePosTotals, formatMoney } from '@/lib/pos-pricing';
+import { calculatePosTotals } from '@/lib/pos-pricing';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { cartLineKey, useCartStore } from '@/stores/cart-store';
 
 type PosCartSidebarProps = {
@@ -10,6 +11,7 @@ type PosCartSidebarProps = {
 };
 
 export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
+  const { settings, formatCurrency } = useTenantSettings();
   const lines = useCartStore((s) => s.lines);
   const syncing = useCartStore((s) => s.syncing);
   const error = useCartStore((s) => s.error);
@@ -78,7 +80,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
                   {line.sku ? (
                     <p className="text-xs text-muted-foreground">SKU {line.sku}</p>
                   ) : null}
-                  <p className="text-sm">${formatMoney(line.unitPrice)} each</p>
+                  <p className="text-sm">{formatCurrency(line.unitPrice)} each</p>
                   {line.bundleId && line.bundleItems?.length ? (
                     <details className="mt-2 text-xs text-muted-foreground">
                       <summary className="cursor-pointer font-medium text-foreground">Bundle breakdown</summary>
@@ -177,7 +179,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
             type="number"
             min={0}
             step="0.01"
-            placeholder="Discount $"
+            placeholder={`Discount ${settings.currencySymbol}`}
             value={discountFixed || ''}
             onChange={(e) => setDiscountFixed(Number(e.target.value) || 0)}
           />
@@ -185,23 +187,23 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
         <div className="space-y-1 text-sm">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span>${formatMoney(totals.subtotal)}</span>
+            <span>{formatCurrency(totals.subtotal)}</span>
           </div>
           {totals.discount > 0 ? (
             <div className="flex justify-between text-emerald-700">
               <span>Discount</span>
-              <span>−${formatMoney(totals.discount)}</span>
+              <span>−{formatCurrency(totals.discount)}</span>
             </div>
           ) : null}
           {totals.taxBreakdown.map((line) => (
             <div key={line.taxName} className="flex justify-between">
               <span>{line.taxName} ({line.taxRate.toFixed(2)}%, {line.priceMode})</span>
-              <span>${formatMoney(line.taxAmount)}</span>
+              <span>{formatCurrency(line.taxAmount)}</span>
             </div>
           ))}
           <div className="flex justify-between text-lg font-bold">
             <span>Total</span>
-            <span>${formatMoney(totals.total)}</span>
+            <span>{formatCurrency(totals.total)}</span>
           </div>
         </div>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}

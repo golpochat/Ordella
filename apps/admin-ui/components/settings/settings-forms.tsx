@@ -20,6 +20,7 @@ import { OfflineModePanel } from './offline-mode-panel';
 import { TaxCompliancePanel } from './tax-compliance-panel';
 import { OrderRoutingPanel } from './order-routing-panel';
 import { EnterpriseSsoPanel } from './enterprise-sso-panel';
+import { TenantLocalizationPanel } from './tenant-localization-panel';
 
 function SettingsSection({
   title,
@@ -82,6 +83,9 @@ export function SettingsForms() {
           </TabsTrigger>
         ))}
       </TabsList>
+      <TabsContent value="localization" className="mt-4">
+        <TenantLocalizationPanel />
+      </TabsContent>
       <TabsContent value="billing" className="mt-4">
         <BillingPanel />
       </TabsContent>

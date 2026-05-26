@@ -6,6 +6,7 @@ export * from './auth/tenant-switcher';
 export * from './location';
 export * from './theme';
 export * from './routing';
+export * from './tenant-settings';
 export * from './schemas';
 export * from './labels';
 export * from './websocket/types';

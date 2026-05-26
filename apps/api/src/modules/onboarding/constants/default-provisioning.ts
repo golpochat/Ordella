@@ -1,6 +1,11 @@
 export const DEFAULT_CURRENCY = 'EUR';
+export const DEFAULT_CURRENCY_SYMBOL = '€';
 export const DEFAULT_LOCALE = 'en-IE';
 export const DEFAULT_TIMEZONE = 'Europe/Dublin';
+export const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
+export const DEFAULT_NUMBER_FORMAT = '1,234.56';
+export const DEFAULT_COUNTRY = 'IE';
+export const DEFAULT_TAX_RATE = '0.0000';
 export const DEFAULT_LOCATION_NAME = 'Main Location';
 
 export function defaultTenantMetadata(): Record<string, unknown> {
@@ -18,6 +23,19 @@ export function defaultTenantMetadata(): Record<string, unknown> {
       modifiers: [],
       inventory: [],
     },
+  };
+}
+
+export function defaultTenantLocalizationSettings() {
+  return {
+    currency: DEFAULT_CURRENCY,
+    currencySymbol: DEFAULT_CURRENCY_SYMBOL,
+    locale: DEFAULT_LOCALE,
+    timezone: DEFAULT_TIMEZONE,
+    dateFormat: DEFAULT_DATE_FORMAT,
+    numberFormat: DEFAULT_NUMBER_FORMAT,
+    country: DEFAULT_COUNTRY,
+    defaultTaxRate: DEFAULT_TAX_RATE,
   };
 }
 

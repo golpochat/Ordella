@@ -25,10 +25,16 @@ import {
 } from '../dto/onboarding-provisioning.dto';
 import {
   DEFAULT_CURRENCY,
+  DEFAULT_CURRENCY_SYMBOL,
   DEFAULT_LOCALE,
   DEFAULT_TIMEZONE,
+  DEFAULT_DATE_FORMAT,
+  DEFAULT_NUMBER_FORMAT,
+  DEFAULT_COUNTRY,
+  DEFAULT_TAX_RATE,
   defaultLocationSettings,
   defaultOpeningHoursRows,
+  defaultTenantLocalizationSettings,
   defaultTenantMetadata,
 } from '../constants/default-provisioning';
 
@@ -71,7 +77,13 @@ export class OnboardingProvisioningService {
     };
 
     settings.currency = dto.currency;
+    settings.currencySymbol = DEFAULT_CURRENCY_SYMBOL;
     settings.locale = DEFAULT_LOCALE;
+    settings.timezone = dto.timezone;
+    settings.dateFormat = DEFAULT_DATE_FORMAT;
+    settings.numberFormat = DEFAULT_NUMBER_FORMAT;
+    settings.country = DEFAULT_COUNTRY;
+    settings.defaultTaxRate = DEFAULT_TAX_RATE;
     settings.metadata = metadata;
     await this.repository.saveSettings(settings);
 
@@ -259,7 +271,7 @@ export class OnboardingProvisioningService {
       throw new BadRequestException('Tenant settings not found');
     }
 
-    const metadata = { ...(settings.metadata ?? {}), ...defaultTenantMetadata() };
+    const metadata = { ...defaultTenantMetadata(), ...(settings.metadata ?? {}) };
     if (dto.businessName !== undefined) metadata.businessName = dto.businessName;
     if (dto.businessType !== undefined) metadata.businessType = dto.businessType;
     if (dto.timezone !== undefined) metadata.timezone = dto.timezone;
@@ -267,9 +279,34 @@ export class OnboardingProvisioningService {
     if (dto.deliveryEnabled !== undefined) metadata.deliveryEnabled = dto.deliveryEnabled;
     if (dto.pickupEnabled !== undefined) metadata.pickupEnabled = dto.pickupEnabled;
     if (dto.currency !== undefined) settings.currency = dto.currency;
+    if (dto.currencySymbol !== undefined) settings.currencySymbol = dto.currencySymbol;
+    if (dto.locale !== undefined) settings.locale = dto.locale;
+    if (dto.timezone !== undefined) settings.timezone = dto.timezone;
+    if (dto.dateFormat !== undefined) settings.dateFormat = dto.dateFormat;
+    if (dto.numberFormat !== undefined) settings.numberFormat = dto.numberFormat;
+    if (dto.country !== undefined) settings.country = dto.country;
+    if (dto.defaultTaxRate !== undefined) settings.defaultTaxRate = dto.defaultTaxRate.toFixed(4);
     settings.metadata = metadata;
     await this.repository.saveSettings(settings);
-    return settings;
+    return { ...defaultTenantLocalizationSettings(), ...settings };
+  }
+
+  async getTenantSettings(tenant: TenantContext) {
+    const settings = await this.repository.findSettings(tenant.tenantId);
+    if (!settings) {
+      return defaultTenantLocalizationSettings();
+    }
+    return {
+      ...defaultTenantLocalizationSettings(),
+      currency: settings.currency,
+      currencySymbol: settings.currencySymbol,
+      locale: settings.locale,
+      timezone: settings.timezone,
+      dateFormat: settings.dateFormat,
+      numberFormat: settings.numberFormat,
+      country: settings.country,
+      defaultTaxRate: settings.defaultTaxRate,
+    };
   }
 
   async updateBranding(
