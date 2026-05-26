@@ -27,7 +27,7 @@ import { parseMoney, formatMoney, sumMoney } from '../../orders/domain/order-tot
 import { TaxCalculationService } from '../../tax';
 import { TenantSettingsEntity } from '../../onboarding/entities/tenant-settings.entity';
 
-const DEFAULT_CURRENCY = 'USD';
+const DEFAULT_CURRENCY = 'EUR';
 
 @Injectable()
 export class CheckoutService {
@@ -103,7 +103,7 @@ export class CheckoutService {
       tenantId: tenant.tenantId,
       orderId: '',
       amount: totals.grandTotal,
-      currency: dto.currency ?? DEFAULT_CURRENCY,
+      currency: this.resolveCurrency(tenant, dto.currency),
       method: dto.paymentMethod ?? 'card',
       customerId: dto.customerId ?? null,
       reason: 'online_checkout',
@@ -288,5 +288,9 @@ export class CheckoutService {
     if (!delivery?.addressLine1?.trim() || !delivery.city?.trim()) {
       throwOnlineDeliveryAddressRequired();
     }
+  }
+
+  private resolveCurrency(tenant: TenantContext, currency?: string): string {
+    return (currency ?? tenant.settings?.currency ?? DEFAULT_CURRENCY).trim().toUpperCase();
   }
 }

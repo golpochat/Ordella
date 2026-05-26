@@ -9,6 +9,7 @@ import { labelOrderStatus } from '@shared-utils';
 import { ORDER_TIMELINE, timelineIndexForStatus } from '@/lib/order-timeline';
 import { setLastOrderId } from '@/lib/session';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { getStorefrontUrl } from '@/lib/config';
 
 export function OrderDetailView({ orderId }: { orderId: string }) {
   const { formatCurrency, formatDateTime } = useTenantSettings();
@@ -161,6 +162,9 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
 
       <Button asChild variant="outline">
         <Link href="/orders">Back to orders</Link>
+      </Button>
+      <Button asChild>
+        <a href={`${getStorefrontUrl()}/catalog`}>Reorder from catalog</a>
       </Button>
     </div>
   );

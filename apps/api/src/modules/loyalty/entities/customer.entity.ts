@@ -57,11 +57,38 @@ export class CustomerEntity extends BaseTenantScopedEntity {
   @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
   lastLoginAt!: Date | null;
 
+  @Column({ name: 'email_verified_at', type: 'timestamptz', nullable: true })
+  emailVerifiedAt!: Date | null;
+
+  @Column({ name: 'date_of_birth', type: 'date', nullable: true })
+  dateOfBirth!: string | null;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  gender!: string | null;
+
+  @Column({ type: 'jsonb', default: () => "'{}'" })
+  preferences!: Record<string, unknown>;
+
+  @Column({ name: 'notification_email_opt_in', type: 'boolean', default: true })
+  notificationEmailOptIn!: boolean;
+
+  @Column({ name: 'notification_sms_opt_in', type: 'boolean', default: false })
+  notificationSmsOptIn!: boolean;
+
+  @Column({ name: 'notification_push_opt_in', type: 'boolean', default: true })
+  notificationPushOptIn!: boolean;
+
   @Column({ name: 'marketing_email_opt_in', type: 'boolean', default: true })
   marketingEmailOptIn!: boolean;
 
   @Column({ name: 'marketing_sms_opt_in', type: 'boolean', default: false })
   marketingSmsOptIn!: boolean;
+
+  @Column({ name: 'marketing_push_opt_in', type: 'boolean', default: false })
+  marketingPushOptIn!: boolean;
+
+  @Column({ name: 'gdpr_erased_at', type: 'timestamptz', nullable: true })
+  gdprErasedAt!: Date | null;
 
   @OneToMany(() => LoyaltyTransactionEntity, (transaction) => transaction.customer)
   loyaltyTransactions!: LoyaltyTransactionEntity[];

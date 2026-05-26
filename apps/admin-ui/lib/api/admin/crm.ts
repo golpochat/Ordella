@@ -18,6 +18,19 @@ export const crmCustomerSchema = z.object({
   tags: z.array(z.string()).default([]),
   segments: z.array(z.string()).default([]),
   staffNotes: z.string().nullable(),
+  defaultAddressId: z.string().uuid().nullable().optional(),
+  lastLoginAt: z.string().nullable().optional(),
+  emailVerifiedAt: z.string().nullable().optional(),
+  dateOfBirth: z.string().nullable().optional(),
+  gender: z.string().nullable().optional(),
+  preferences: z.record(z.unknown()).optional(),
+  notificationEmailOptIn: z.boolean().optional(),
+  notificationSmsOptIn: z.boolean().optional(),
+  notificationPushOptIn: z.boolean().optional(),
+  marketingEmailOptIn: z.boolean().optional(),
+  marketingSmsOptIn: z.boolean().optional(),
+  marketingPushOptIn: z.boolean().optional(),
+  gdprErasedAt: z.string().nullable().optional(),
   createdAt: z.string(),
 });
 
@@ -47,6 +60,10 @@ export const crmCustomerDetailSchema = crmCustomerSchema.extend({
   loyaltyTransactions: z.array(z.unknown()).default([]),
   giftCards: z.array(z.unknown()).default([]),
   storeCreditTransactions: z.array(z.unknown()).default([]),
+  addresses: z.array(z.unknown()).default([]),
+  savedBaskets: z.array(z.unknown()).default([]),
+  savedItems: z.array(z.unknown()).default([]),
+  accountStatus: z.string().optional(),
 });
 
 const segmentSummarySchema = z.object({

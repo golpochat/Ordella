@@ -44,6 +44,7 @@ const loginResponseSchema = z.object({
   refreshToken: z.string().optional(),
   customerId: z.string().uuid(),
   name: z.string().optional(),
+  sessionId: z.string().uuid().optional(),
 });
 
 export const customerOrderSchema = z.object({
@@ -96,8 +97,13 @@ export const customerProfileSchema = z.object({
   name: z.string(),
   email: z.string().email(),
   phone: z.string(),
+  dateOfBirth: z.string().nullable().optional(),
+  gender: z.string().nullable().optional(),
+  preferences: z.record(z.unknown()).optional(),
+  emailVerifiedAt: z.string().nullable().optional(),
   loyaltyPoints: z.number().optional(),
   pointsBalance: z.number().optional(),
+  loyaltyTier: z.string().optional(),
   storeCreditBalance: z.string().optional(),
   lifetimeValue: z.string().optional(),
   totalOrders: z.number().optional(),
@@ -116,9 +122,47 @@ export const customerProfileSchema = z.object({
     push: z.boolean(),
     marketingEmail: z.boolean().optional(),
     marketingSms: z.boolean().optional(),
+    marketingPush: z.boolean().optional(),
   }),
   marketingEmailOptIn: z.boolean().optional(),
   marketingSmsOptIn: z.boolean().optional(),
+  marketingPushOptIn: z.boolean().optional(),
+  savedBaskets: z.array(z.unknown()).optional(),
+  savedItems: z.array(z.unknown()).optional(),
+  sessions: z.array(z.unknown()).optional(),
+  locale: z.string().optional(),
+  currency: z.string().optional(),
+  timezone: z.string().optional(),
+});
+
+export const savedBasketSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  items: z.array(z.record(z.unknown())),
+  itemCount: z.number(),
+  subtotal: z.string(),
+  currency: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable().optional(),
+});
+
+export const savedItemSchema = z.object({
+  id: z.string().uuid(),
+  productId: z.string().uuid(),
+  variantId: z.string().uuid().nullable().optional(),
+  quantity: z.number(),
+  label: z.string().nullable().optional(),
+  metadata: z.record(z.unknown()).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable().optional(),
+});
+
+export const customerSessionSchema = z.object({
+  id: z.string().uuid(),
+  deviceLabel: z.string(),
+  lastSeenAt: z.string(),
+  revokedAt: z.string().nullable().optional(),
+  isActive: z.boolean(),
 });
 
 export const orderStatusSchema = z.object({
@@ -139,6 +183,9 @@ export const orderStatusSchema = z.object({
 export type CustomerOrder = z.infer<typeof customerOrderSchema>;
 export type CustomerOrderDetail = z.infer<typeof customerOrderDetailSchema>;
 export type CustomerProfile = z.infer<typeof customerProfileSchema>;
+export type CustomerSavedBasket = z.infer<typeof savedBasketSchema>;
+export type CustomerSavedItem = z.infer<typeof savedItemSchema>;
+export type CustomerSession = z.infer<typeof customerSessionSchema>;
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
 export const customerSubscriptionSchema = z.object({
@@ -200,6 +247,11 @@ export async function loginWithOtp(email: string, otp: string) {
 export async function requestPasswordReset(email: string) {
   const api = createCustomerApiClient();
   await api.post('public/customer/reset-password', { email });
+}
+
+export async function completePasswordReset(token: string, password: string) {
+  const api = createCustomerApiClient();
+  return api.postData<unknown>('public/customer/reset-password/complete', { token, password });
 }
 
 export async function fetchCustomerOrders(filter?: 'active' | 'past') {
@@ -278,15 +330,96 @@ export async function updateCustomerProfile(body: {
   name?: string;
   email?: string;
   phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  preferences?: Record<string, unknown>;
   notificationPreferences?: Partial<CustomerProfile['notificationPreferences']>;
   marketingEmailOptIn?: boolean;
   marketingSmsOptIn?: boolean;
+  marketingPushOptIn?: boolean;
 }) {
   const api = createCustomerApiClient();
   const data = await withCustomerSession(
     api.patch<{ success: boolean; data: unknown }>('public/customer/profile', body),
   );
   return customerProfileSchema.parse((data as { data: unknown }).data);
+}
+
+export async function requestEmailVerification() {
+  const api = createCustomerApiClient();
+  return withCustomerSession(api.postData<unknown>('public/customer/email-verification/request'));
+}
+
+export async function verifyEmail(token: string) {
+  const api = createCustomerApiClient();
+  const data = await api.postData<unknown>('public/customer/email-verification/verify', { token });
+  return customerProfileSchema.parse(data);
+}
+
+export async function fetchSavedBaskets() {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.getData<unknown[]>('public/customer/saved-baskets'));
+  return z.array(savedBasketSchema).parse(data);
+}
+
+export async function saveCustomerBasket(body: {
+  name: string;
+  items: Array<Record<string, unknown>>;
+  subtotal?: number;
+  currency?: string;
+}) {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.postData<unknown>('public/customer/saved-baskets', body));
+  return savedBasketSchema.parse(data);
+}
+
+export async function deleteSavedBasket(basketId: string) {
+  const api = createCustomerApiClient();
+  await withCustomerSession(api.delete(`public/customer/saved-baskets/${basketId}`));
+}
+
+export async function fetchSavedItems() {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.getData<unknown[]>('public/customer/saved-items'));
+  return z.array(savedItemSchema).parse(data);
+}
+
+export async function saveCustomerItem(body: {
+  productId: string;
+  variantId?: string;
+  quantity?: number;
+  label?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.postData<unknown>('public/customer/saved-items', body));
+  return savedItemSchema.parse(data);
+}
+
+export async function deleteSavedItem(itemId: string) {
+  const api = createCustomerApiClient();
+  await withCustomerSession(api.delete(`public/customer/saved-items/${itemId}`));
+}
+
+export async function fetchCustomerSessions() {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.getData<unknown[]>('public/customer/sessions'));
+  return z.array(customerSessionSchema).parse(data);
+}
+
+export async function revokeCustomerSession(sessionId: string) {
+  const api = createCustomerApiClient();
+  await withCustomerSession(api.delete(`public/customer/sessions/${sessionId}`));
+}
+
+export async function exportCustomerData() {
+  const api = createCustomerApiClient();
+  return withCustomerSession(api.getData<unknown>('public/customer/gdpr/export'));
+}
+
+export async function deleteCustomerData() {
+  const api = createCustomerApiClient();
+  return withCustomerSession(api.delete('public/customer/gdpr/delete'));
 }
 
 export async function fetchAddresses(): Promise<CustomerAddress[]> {

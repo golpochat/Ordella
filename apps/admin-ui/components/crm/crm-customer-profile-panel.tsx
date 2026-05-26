@@ -20,6 +20,12 @@ import { createBrowserApiClient } from '@/lib/api/browser';
 import { refreshCrmInsights, updateCrmCustomerTags, type CrmCustomerDetail } from '@/lib/api/admin/crm';
 import { formatDate, formatMoney, getErrorMessage } from '@/lib/utils';
 
+function field(row: unknown, key: string): string | number | boolean | null {
+  if (!row || typeof row !== 'object') return null;
+  const value = (row as Record<string, unknown>)[key];
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? value : null;
+}
+
 export function CrmCustomerProfilePanel({ initialCustomer }: { initialCustomer: CrmCustomerDetail }) {
   const [customer, setCustomer] = useState(initialCustomer);
   const [tagInput, setTagInput] = useState(customer.tags.join(', '));
@@ -70,11 +76,18 @@ export function CrmCustomerProfilePanel({ initialCustomer }: { initialCustomer: 
             <Metric title="Frequency" value={customer.insight?.orderFrequency ?? 'Unknown'} />
             <Metric title="Churn risk" value={customer.insight?.churnRiskScore ?? 'N/A'} />
           </div>
+          <div className="grid gap-3 md:grid-cols-4">
+            <Metric title="Account status" value={customer.accountStatus ?? (customer.lastLoginAt ? 'registered' : 'guest')} />
+            <Metric title="Last login" value={formatDate(customer.lastLoginAt ?? undefined)} />
+            <Metric title="Email verified" value={customer.emailVerifiedAt ? 'Yes' : 'No'} />
+            <Metric title="DOB" value={customer.dateOfBirth ?? 'Not set'} />
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-md border p-3 text-sm">
               <p className="font-medium">Contact</p>
               <p className="text-muted-foreground">{customer.email ?? 'No email'}</p>
               <p className="text-muted-foreground">{customer.phone ?? 'No phone'}</p>
+              <p className="text-muted-foreground">Gender: {customer.gender ?? 'Not set'}</p>
               <p className="text-muted-foreground">Preferred location: {customer.preferredLocationId ?? 'Unknown'}</p>
             </div>
             <div className="rounded-md border p-3 text-sm">
@@ -83,6 +96,20 @@ export function CrmCustomerProfilePanel({ initialCustomer }: { initialCustomer: 
                 {customer.segments.map((segment) => <Badge key={segment} variant="secondary">{segment}</Badge>)}
                 {!customer.segments.length ? <span className="text-muted-foreground">No generated segments yet.</span> : null}
               </div>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Communication preferences</p>
+              <p className="text-muted-foreground">Email: {customer.notificationEmailOptIn ? 'enabled' : 'disabled'}</p>
+              <p className="text-muted-foreground">SMS: {customer.notificationSmsOptIn ? 'enabled' : 'disabled'}</p>
+              <p className="text-muted-foreground">Push: {customer.notificationPushOptIn ? 'enabled' : 'disabled'}</p>
+            </div>
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Marketing preferences</p>
+              <p className="text-muted-foreground">Email: {customer.marketingEmailOptIn ? 'opted in' : 'opted out'}</p>
+              <p className="text-muted-foreground">SMS: {customer.marketingSmsOptIn ? 'opted in' : 'opted out'}</p>
+              <p className="text-muted-foreground">Push: {customer.marketingPushOptIn ? 'opted in' : 'opted out'}</p>
             </div>
           </div>
           <div className="space-y-2">
@@ -117,6 +144,47 @@ export function CrmCustomerProfilePanel({ initialCustomer }: { initialCustomer: 
               return <p key={row.id ?? row.code}>{row.code ?? 'Gift card'} · {formatMoney(row.balance ?? '0')}</p>;
             })}
             {!customer.giftCards.length ? <p className="text-muted-foreground">No linked gift cards.</p> : null}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader><CardTitle>Address book</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {customer.addresses.map((address, index) => (
+              <div key={String(field(address, 'id') ?? index)} className="rounded-md border p-2">
+                <p className="font-medium">
+                  {String(field(address, 'label') ?? 'Address')} {field(address, 'isDefault') ? '· Default' : ''}
+                </p>
+                <p className="text-muted-foreground">
+                  {String(field(address, 'line1') ?? field(address, 'addressLine1') ?? '')}, {String(field(address, 'city') ?? '')}
+                </p>
+              </div>
+            ))}
+            {!customer.addresses.length ? <p className="text-muted-foreground">No saved addresses.</p> : null}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Saved baskets</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {customer.savedBaskets.map((basket, index) => (
+              <p key={String(field(basket, 'id') ?? index)}>
+                {String(field(basket, 'name') ?? 'Saved basket')} · {String(field(basket, 'itemCount') ?? 0)} items
+              </p>
+            ))}
+            {!customer.savedBaskets.length ? <p className="text-muted-foreground">No saved baskets.</p> : null}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Saved items</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {customer.savedItems.map((item, index) => (
+              <p key={String(field(item, 'id') ?? index)}>
+                {String(field(item, 'label') ?? field(item, 'productId') ?? 'Saved item')}
+              </p>
+            ))}
+            {!customer.savedItems.length ? <p className="text-muted-foreground">No saved items.</p> : null}
           </CardContent>
         </Card>
       </div>

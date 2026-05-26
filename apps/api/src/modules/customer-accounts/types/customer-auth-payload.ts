@@ -3,4 +3,5 @@ export type CustomerAuthPayload = {
   tenantId: string;
   email: string;
   type: 'customer';
+  sessionId?: string;
 };

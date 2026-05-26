@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
 import { CategoryEntity, ProductEntity } from '../../catalog/entities';
+import { CustomerAddressEntity, CustomerSavedBasketEntity, CustomerSavedItemEntity } from '../../customer-accounts/entities';
 import { GiftCardEntity, StoreCreditTransactionEntity } from '../../giftcards/entities';
 import { CustomerEntity, LoyaltyTransactionEntity } from '../../loyalty/entities';
 import { OrderEntity, OrderItemEntity } from '../../orders/entities';
@@ -20,6 +21,12 @@ export class CrmCustomersService {
   constructor(
     @InjectRepository(CustomerEntity)
     private readonly customers: Repository<CustomerEntity>,
+    @InjectRepository(CustomerAddressEntity)
+    private readonly addresses: Repository<CustomerAddressEntity>,
+    @InjectRepository(CustomerSavedBasketEntity)
+    private readonly savedBaskets: Repository<CustomerSavedBasketEntity>,
+    @InjectRepository(CustomerSavedItemEntity)
+    private readonly savedItems: Repository<CustomerSavedItemEntity>,
     @InjectRepository(CustomerInsightEntity)
     private readonly insights: Repository<CustomerInsightEntity>,
     @InjectRepository(OrderEntity)
@@ -57,14 +64,28 @@ export class CrmCustomersService {
 
   async getCustomer(tenant: TenantContext, customerId: string) {
     const customer = await this.requireCustomer(tenant.tenantId, customerId);
-    const [orders, insight, loyalty, giftCards, storeCredit] = await Promise.all([
+    const [orders, insight, loyalty, giftCards, storeCredit, addresses, savedBaskets, savedItems] = await Promise.all([
       this.orders.find({ where: { tenantId: tenant.tenantId, customerId }, order: { createdAt: 'DESC' }, take: 50 }),
       this.insights.findOne({ where: { tenantId: tenant.tenantId, customerId } }),
       this.loyaltyTransactions.find({ where: { tenantId: tenant.tenantId, customerId }, order: { createdAt: 'DESC' }, take: 50 }),
       this.giftCards.find({ where: { tenantId: tenant.tenantId, customerId }, order: { createdAt: 'DESC' }, take: 25 }),
       this.storeCreditTransactions.find({ where: { tenantId: tenant.tenantId, customerId }, order: { createdAt: 'DESC' }, take: 50 }),
+      this.addresses.find({ where: { customerId }, order: { isDefault: 'DESC', createdAt: 'ASC' }, take: 25 }),
+      this.savedBaskets.find({ where: { tenantId: tenant.tenantId, customerId }, order: { updatedAt: 'DESC' }, take: 25 }),
+      this.savedItems.find({ where: { tenantId: tenant.tenantId, customerId }, order: { updatedAt: 'DESC' }, take: 50 }),
     ]);
-    return { ...customer, orders, insight, loyaltyTransactions: loyalty, giftCards, storeCreditTransactions: storeCredit };
+    return {
+      ...customer,
+      orders,
+      insight,
+      loyaltyTransactions: loyalty,
+      giftCards,
+      storeCreditTransactions: storeCredit,
+      addresses,
+      savedBaskets,
+      savedItems,
+      accountStatus: customer.gdprErasedAt ? 'erased' : customer.passwordHash ? 'registered' : 'guest',
+    };
   }
 
   async tagCustomer(tenant: TenantContext, dto: TagCustomerDto): Promise<CustomerEntity> {

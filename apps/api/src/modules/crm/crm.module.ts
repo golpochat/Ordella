@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { CategoryEntity, ProductEntity } from '../catalog/entities';
+import { CustomerAddressEntity, CustomerSavedBasketEntity, CustomerSavedItemEntity } from '../customer-accounts/entities';
 import { GiftCardEntity, StoreCreditTransactionEntity } from '../giftcards/entities';
 import { CustomerEntity, LoyaltyTransactionEntity } from '../loyalty/entities';
 import { OrderEntity, OrderItemEntity } from '../orders/entities';
@@ -15,6 +16,9 @@ import { CrmCustomersService } from './services';
     TypeOrmModule.forFeature([
       ...CRM_ENTITIES,
       CustomerEntity,
+      CustomerAddressEntity,
+      CustomerSavedBasketEntity,
+      CustomerSavedItemEntity,
       LoyaltyTransactionEntity,
       GiftCardEntity,
       StoreCreditTransactionEntity,

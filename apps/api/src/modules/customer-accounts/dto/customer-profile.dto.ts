@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsISO8601, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateCustomerProfileDto {
   @IsOptional()
@@ -17,6 +17,19 @@ export class UpdateCustomerProfileDto {
   phone?: string;
 
   @IsOptional()
+  @IsISO8601({ strict: true })
+  dateOfBirth?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  gender?: string;
+
+  @IsOptional()
+  @IsObject()
+  preferences?: Record<string, unknown>;
+
+  @IsOptional()
   @IsObject()
   notificationPreferences?: {
     email?: boolean;
@@ -24,6 +37,7 @@ export class UpdateCustomerProfileDto {
     push?: boolean;
     marketingEmail?: boolean;
     marketingSms?: boolean;
+    marketingPush?: boolean;
   };
 
   @IsOptional()
@@ -33,4 +47,8 @@ export class UpdateCustomerProfileDto {
   @IsOptional()
   @IsBoolean()
   marketingSmsOptIn?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  marketingPushOptIn?: boolean;
 }
