@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
 import type { OnlineMenu, OnlineProduct } from '@/lib/api';
-import { isProductOrderable, searchStorefrontItems } from '@/lib/api';
+import { autocompleteStorefrontItems, isProductOrderable, searchStorefrontItems, trackSearchEvent, type StorefrontAutocompleteSuggestion } from '@/lib/api';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
 
@@ -24,6 +24,7 @@ export function CatalogView({ menu, initialCategoryId }: { menu: OnlineMenu; ini
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sort, setSort] = useState<SortKey>('name');
   const [semanticProductIds, setSemanticProductIds] = useState<string[] | null>(null);
+  const [remotePredictions, setRemotePredictions] = useState<StorefrontAutocompleteSuggestion[]>([]);
   const [searchMessage, setSearchMessage] = useState<string | null>(null);
 
   const products = useMemo(() => {
@@ -101,13 +102,34 @@ export function CatalogView({ menu, initialCategoryId }: { menu: OnlineMenu; ini
     }
   };
 
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) {
+      setRemotePredictions([]);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      void autocompleteStorefrontItems(q, {
+        categoryId: categoryId === 'all' ? undefined : categoryId,
+      })
+        .then((response) => setRemotePredictions(response.suggestions))
+        .catch(() => setRemotePredictions([]));
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [categoryId, search]);
+
   const predictions = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (q.length < 2) return [];
+    if (remotePredictions.length) {
+      return remotePredictions
+        .map((suggestion) => menu.products.find((item) => item.id === suggestion.entityId))
+        .filter((item): item is OnlineProduct => Boolean(item));
+    }
     return menu.products
       .filter((item) => item.name.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q))
       .slice(0, 5);
-  }, [menu.products, search]);
+  }, [menu.products, remotePredictions, search]);
 
   return (
     <div className="mx-auto max-w-[var(--storefront-container)] px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
@@ -175,7 +197,17 @@ export function CatalogView({ menu, initialCategoryId }: { menu: OnlineMenu; ini
           </Button>
         ))}
         {predictions.map((product) => (
-          <Button key={product.id} type="button" size="sm" variant="ghost" className="rounded-[var(--storefront-radius)]" onClick={() => setSearch(product.name)}>
+          <Button
+            key={product.id}
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="rounded-[var(--storefront-radius)]"
+            onClick={() => {
+              setSearch(product.name);
+              void trackSearchEvent({ eventType: 'click', query: search, entityType: 'item', entityId: product.id }).catch(() => undefined);
+            }}
+          >
             {product.name}
           </Button>
         ))}

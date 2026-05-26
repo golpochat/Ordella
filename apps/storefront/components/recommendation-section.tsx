@@ -36,6 +36,10 @@ function reasonLabel(reason: RecommendationItem['reason']) {
       return 'Similar item';
     case 'popular_item':
       return 'Popular choice';
+    case 'recently_viewed':
+      return 'Recently viewed';
+    case 'trending':
+      return 'Trending now';
   }
 }
 

@@ -8,6 +8,7 @@ import type { OnlineMenu, OnlineProduct } from '@/lib/api';
 import { isProductOrderable } from '@/lib/api';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { useBasketStore } from '@/stores/basket-store';
+import { RecommendationSection } from '@/components/recommendation-section';
 
 type StorefrontHomeProps = {
   menu: OnlineMenu;
@@ -57,7 +58,7 @@ export function StorefrontHome({ menu }: StorefrontHomeProps) {
         }
         if (section.type === 'featuredItems' && featuredItems.length > 0) {
           return (
-            <section key={`${section.type}-${index}`} className="mx-auto max-w-[var(--storefront-container)] px-[var(--theme-spacing)] pb-[var(--storefront-section-padding)]">
+            <section key={`${section.type}-${index}`} className="mx-auto max-w-[var(--storefront-container)] space-y-[var(--theme-spacing)] px-[var(--theme-spacing)] pb-[var(--storefront-section-padding)]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-2xl font-semibold">{section.title ?? 'Featured items'}</h2>
                 <Link href="/catalog" className="text-sm font-medium text-primary hover:underline">
@@ -73,6 +74,7 @@ export function StorefrontHome({ menu }: StorefrontHomeProps) {
                   />
                 ))}
               </div>
+              <RecommendationSection title="Trending now" source="storefront_home_trending" mode="cart" limit={section.limit ?? 6} />
             </section>
           );
         }

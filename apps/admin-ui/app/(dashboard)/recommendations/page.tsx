@@ -2,8 +2,10 @@ import { createServerApiClient } from '@/lib/api/server';
 import {
   getRecommendationAnalytics,
   getRecommendationSettings,
+  getSearchAnalytics,
   type RecommendationAnalytics,
   type RecommendationSettings,
+  type SearchAnalytics,
 } from '@/lib/api/admin/recommendations';
 import { PageHeader } from '@/components/ui/page-header';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
@@ -14,12 +16,14 @@ export default async function RecommendationsPage() {
   const api = createServerApiClient();
   let analytics: RecommendationAnalytics | null = null;
   let settings: RecommendationSettings | null = null;
+  let searchAnalytics: SearchAnalytics | null = null;
   let error: string | null = null;
 
   try {
-    [analytics, settings] = await Promise.all([
+    [analytics, settings, searchAnalytics] = await Promise.all([
       getRecommendationAnalytics(api),
       getRecommendationSettings(api),
+      getSearchAnalytics(api),
     ]);
   } catch (err) {
     error = getErrorMessage(err);
@@ -32,7 +36,7 @@ export default async function RecommendationsPage() {
         description="Measure recommendation performance, tune personalization, and manage subtle upsells across storefront and POS."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
-      <AiRecommendationsPanel analytics={analytics} settings={settings} />
+      <AiRecommendationsPanel analytics={analytics} settings={settings} searchAnalytics={searchAnalytics} />
     </>
   );
 }

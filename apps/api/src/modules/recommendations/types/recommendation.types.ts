@@ -5,7 +5,9 @@ export type RecommendationReason =
   | 'frequently_viewed_together'
   | 'customer_preference'
   | 'same_category'
-  | 'popular_item';
+  | 'popular_item'
+  | 'recently_viewed'
+  | 'trending';
 
 export type RecommendationProduct = {
   id: string;

@@ -89,6 +89,9 @@ export class RecommendationsService {
       personalizationEnabled: dto.personalizationEnabled ?? current.personalizationEnabled,
       cartUpsellsEnabled: dto.cartUpsellsEnabled ?? current.cartUpsellsEnabled,
       maxRecommendations: dto.maxRecommendations ?? current.maxRecommendations,
+      enabledTypes: dto.enabledTypes ?? current.enabledTypes,
+      rankingWeights: dto.rankingWeights ?? current.rankingWeights,
+      personalizationRules: dto.personalizationRules ?? current.personalizationRules,
     });
   }
 
@@ -150,21 +153,37 @@ export class RecommendationsService {
     const seedIds = [...new Set((input.itemIds ?? []).filter(Boolean))];
     const scores = new Map<string, ScoreEntry>();
     const strategy: string[] = [];
+    const enabled = new Set(settings.enabledTypes ?? []);
+    const weights = settings.rankingWeights ?? {};
 
     if (seedIds.length) {
-      await this.addCoPurchaseScores(input.tenantId, seedIds, scores);
-      await this.addCoViewScores(input.tenantId, seedIds, scores);
-      await this.addCategoryScores(input.tenantId, seedIds, scores);
-      strategy.push('co_purchase', 'co_view', 'category_similarity');
+      if (enabled.has('frequently_bought_together')) {
+        await this.addCoPurchaseScores(input.tenantId, seedIds, scores, weights.frequentlyBoughtTogether ?? 1);
+        strategy.push('co_purchase');
+      }
+      if (enabled.has('similar_products')) {
+        await this.addCoViewScores(input.tenantId, seedIds, scores, weights.similarProducts ?? 1);
+        strategy.push('co_view');
+      }
+      if (enabled.has('category_based')) {
+        await this.addCategoryScores(input.tenantId, seedIds, scores, weights.categoryBased ?? 1);
+        strategy.push('category_similarity');
+      }
     }
 
     if (input.customerId && settings.personalizationEnabled) {
-      await this.addCustomerScores(input.tenantId, input.customerId, scores, seedIds);
+      if (enabled.has('recently_viewed')) {
+        await this.addRecentlyViewedScores(input.tenantId, input.customerId, scores, seedIds, weights.recentlyViewed ?? 1);
+        strategy.push('recently_viewed');
+      }
+      await this.addCustomerScores(input.tenantId, input.customerId, scores, seedIds, weights.categoryBased ?? 1);
       strategy.push('crm_personalization');
     }
 
-    await this.addPopularScores(input.tenantId, input.locationId, scores);
-    strategy.push('popular_fallback');
+    if (enabled.has('trending')) {
+      await this.addPopularScores(input.tenantId, input.locationId, scores, weights.trending ?? 1);
+      strategy.push('popular_fallback');
+    }
 
     const ranked = [...scores.entries()]
       .filter(([id]) => !seedIds.includes(id))
@@ -197,7 +216,7 @@ export class RecommendationsService {
     return { recommendations, strategy, generatedAt: new Date().toISOString() };
   }
 
-  private async addCoPurchaseScores(tenantId: string, seedIds: string[], scores: Map<string, ScoreEntry>) {
+  private async addCoPurchaseScores(tenantId: string, seedIds: string[], scores: Map<string, ScoreEntry>, weightMultiplier: number) {
     const rows = await this.orderItems
       .createQueryBuilder('item')
       .innerJoin(OrderEntity, 'order', 'order.id = item.order_id')
@@ -212,10 +231,10 @@ export class RecommendationsService {
       .limit(40)
       .getRawMany<{ productId: string; weight: string }>();
 
-    for (const row of rows) this.bump(scores, row.productId, Number(row.weight) * 5, 'frequently_bought_together');
+    for (const row of rows) this.bump(scores, row.productId, Number(row.weight) * 5 * weightMultiplier, 'frequently_bought_together');
   }
 
-  private async addCoViewScores(tenantId: string, seedIds: string[], scores: Map<string, ScoreEntry>) {
+  private async addCoViewScores(tenantId: string, seedIds: string[], scores: Map<string, ScoreEntry>, weightMultiplier: number) {
     const rows = await this.events
       .createQueryBuilder('event')
       .innerJoin(
@@ -235,10 +254,10 @@ export class RecommendationsService {
       .limit(40)
       .getRawMany<{ itemId: string; weight: string }>();
 
-    for (const row of rows) this.bump(scores, row.itemId, Number(row.weight) * 3, 'frequently_viewed_together');
+    for (const row of rows) this.bump(scores, row.itemId, Number(row.weight) * 3 * weightMultiplier, 'frequently_viewed_together');
   }
 
-  private async addCategoryScores(tenantId: string, seedIds: string[], scores: Map<string, ScoreEntry>) {
+  private async addCategoryScores(tenantId: string, seedIds: string[], scores: Map<string, ScoreEntry>, weightMultiplier: number) {
     const seeds = await this.products.find({ where: { tenantId, id: In(seedIds) } });
     const categoryIds = [...new Set(seeds.map((product) => product.categoryId).filter(Boolean) as string[])];
     if (!categoryIds.length) return;
@@ -247,10 +266,10 @@ export class RecommendationsService {
       take: 50,
       order: { sortOrder: 'ASC', name: 'ASC' },
     });
-    for (const product of products) this.bump(scores, product.id, 2, 'same_category');
+    for (const product of products) this.bump(scores, product.id, 2 * weightMultiplier, 'same_category');
   }
 
-  private async addCustomerScores(tenantId: string, customerId: string, scores: Map<string, ScoreEntry>, seedIds: string[]) {
+  private async addCustomerScores(tenantId: string, customerId: string, scores: Map<string, ScoreEntry>, seedIds: string[], weightMultiplier: number) {
     const [customer, insight, previousProducts] = await Promise.all([
       this.customers.findOne({ where: { tenantId, id: customerId } }),
       this.insights.findOne({ where: { tenantId, customerId } }),
@@ -269,7 +288,7 @@ export class RecommendationsService {
     if (!customer && !insight && !previousProducts.length) return;
 
     for (const row of previousProducts) {
-      if (!seedIds.includes(row.productId)) this.bump(scores, row.productId, Number(row.quantity) * 2, 'customer_preference');
+      if (!seedIds.includes(row.productId)) this.bump(scores, row.productId, Number(row.quantity) * 2 * weightMultiplier, 'customer_preference');
     }
 
     const categoryIds = insight?.categoriesPurchased ?? [];
@@ -279,10 +298,27 @@ export class RecommendationsService {
       take: 60,
       order: { sortOrder: 'ASC', name: 'ASC' },
     });
-    for (const product of products) this.bump(scores, product.id, 4, 'customer_preference');
+    for (const product of products) this.bump(scores, product.id, 4 * weightMultiplier, 'customer_preference');
   }
 
-  private async addPopularScores(tenantId: string, locationId: string | undefined, scores: Map<string, ScoreEntry>) {
+  private async addRecentlyViewedScores(
+    tenantId: string,
+    customerId: string,
+    scores: Map<string, ScoreEntry>,
+    seedIds: string[],
+    weightMultiplier: number,
+  ) {
+    const rows = await this.events.find({
+      where: { tenantId, customerId, eventType: In(['view', 'click']) },
+      order: { createdAt: 'DESC' },
+      take: 20,
+    });
+    for (const row of rows) {
+      if (!seedIds.includes(row.itemId)) this.bump(scores, row.itemId, 4 * weightMultiplier, 'recently_viewed');
+    }
+  }
+
+  private async addPopularScores(tenantId: string, locationId: string | undefined, scores: Map<string, ScoreEntry>, weightMultiplier: number) {
     const rows = await this.orderItems
       .createQueryBuilder('item')
       .innerJoin(OrderEntity, 'order', 'order.id = item.order_id')
@@ -295,7 +331,7 @@ export class RecommendationsService {
       .limit(50);
     if (locationId) rows.andWhere('order.location_id = :locationId', { locationId });
     const popular = await rows.getRawMany<{ productId: string; weight: string }>();
-    for (const row of popular) this.bump(scores, row.productId, Number(row.weight), 'popular_item');
+    for (const row of popular) this.bump(scores, row.productId, Number(row.weight) * weightMultiplier, 'trending');
   }
 
   private async resolveAvailableProducts(

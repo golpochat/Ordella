@@ -69,6 +69,28 @@ export class SearchQueryDto extends FilterPaginationDto {
   @IsOptional()
   @IsIn(SORT_VALUES)
   sort?: 'relevance' | 'price' | 'name' | 'popularity';
+
+  @IsOptional()
+  @IsUUID()
+  boostCategoryId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  popularityWeight?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  availabilityWeight?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  categoryWeight?: number;
 }
 
 export class SemanticSearchQueryDto extends SearchQueryDto {}
@@ -77,4 +99,27 @@ export class ReindexSearchDto {
   @IsOptional()
   @IsIn(ENTITY_TYPES)
   entityType?: SearchEntityType;
+}
+
+export class SearchAnalyticsEventDto {
+  @IsIn(['query', 'click', 'conversion'])
+  eventType!: 'query' | 'click' | 'conversion';
+
+  @IsOptional()
+  @IsString()
+  query?: string;
+
+  @IsOptional()
+  @IsIn(ENTITY_TYPES)
+  entityType?: SearchEntityType;
+
+  @IsOptional()
+  @IsUUID()
+  entityId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  resultCount?: number;
 }

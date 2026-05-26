@@ -10,6 +10,7 @@ import {
   fetchCustomerAccount,
   fetchLoyaltyCustomer,
   fetchLoyaltySettings,
+  trackRecommendationEvent,
   quoteRouting,
   type RoutingQuote,
   type PublicGiftCard,
@@ -332,6 +333,14 @@ export function CheckoutForm() {
         giftCardAmount: giftCardAmount ? Number(giftCardAmount) : undefined,
         storeCreditAmount: storeCreditAmount ? Number(storeCreditAmount) : undefined,
       });
+      for (const line of lines) {
+        void trackRecommendationEvent({
+          itemId: line.productId,
+          customerId: accountCustomerId ?? undefined,
+          eventType: 'purchase',
+          source: 'checkout_conversion',
+        }).catch(() => undefined);
+      }
       clearBasket();
       router.push(`/order/${order.id}?confirmed=1`);
     } catch (err) {

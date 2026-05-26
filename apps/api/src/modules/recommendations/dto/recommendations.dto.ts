@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsObject, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import type { RecommendationEventType } from '../entities';
 
 export class RecommendationQueryDto {
@@ -58,4 +58,17 @@ export class RecommendationSettingsDto {
   @Min(1)
   @Max(12)
   maxRecommendations?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  enabledTypes?: string[];
+
+  @IsOptional()
+  @IsObject()
+  rankingWeights?: Record<string, number>;
+
+  @IsOptional()
+  @IsObject()
+  personalizationRules?: Record<string, unknown>;
 }

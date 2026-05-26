@@ -17,6 +17,23 @@ export class RecommendationSettingsEntity {
   @Column({ name: 'max_recommendations', type: 'int', default: 4 })
   maxRecommendations!: number;
 
+  @Column({
+    name: 'enabled_types',
+    type: 'jsonb',
+    default: () => `'["trending","frequently_bought_together","recently_viewed","similar_products","category_based"]'`,
+  })
+  enabledTypes!: string[];
+
+  @Column({
+    name: 'ranking_weights',
+    type: 'jsonb',
+    default: () => `'{"trending":1,"frequentlyBoughtTogether":1,"recentlyViewed":1,"similarProducts":1,"categoryBased":1,"availability":1}'`,
+  })
+  rankingWeights!: Record<string, number>;
+
+  @Column({ name: 'personalization_rules', type: 'jsonb', default: () => "'{}'" })
+  personalizationRules!: Record<string, unknown>;
+
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt!: Date;
 }

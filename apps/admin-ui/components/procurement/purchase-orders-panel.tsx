@@ -53,6 +53,7 @@ export function PurchaseOrdersPanel() {
   const [form, setForm] = useState<PoForm>(emptyForm);
   const [receiveOrder, setReceiveOrder] = useState<PurchaseOrder | null>(null);
   const [received, setReceived] = useState<Record<string, number>>({});
+  const [productSearch, setProductSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -91,6 +92,17 @@ export function PurchaseOrdersPanel() {
   const purchasableItems = selectedSupplier?.items.length
     ? selectedSupplier.items.map((item) => itemById[item.itemId]).filter((item): item is CatalogItem => Boolean(item))
     : catalogItems;
+  const productSuggestions = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    if (!q) return purchasableItems.slice(0, 8);
+    return purchasableItems
+      .filter((item) =>
+        item.name.toLowerCase().includes(q) ||
+        item.sku?.toLowerCase().includes(q) ||
+        item.barcode?.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [productSearch, purchasableItems]);
   const total = form.items.reduce((sum, item) => sum + item.quantityOrdered * Number(item.costPrice || 0), 0);
 
   const supplierCost = (itemId: string) => {
@@ -224,6 +236,38 @@ export function PurchaseOrdersPanel() {
               <Button type="button" variant="outline" onClick={addLine} disabled={!form.supplierId}>
                 Add item
               </Button>
+            </div>
+            <div className="space-y-2">
+              <Input
+                placeholder="Autocomplete products by name, SKU, or barcode"
+                value={productSearch}
+                onChange={(event) => setProductSearch(event.target.value)}
+              />
+              {productSearch.trim() && productSuggestions.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {productSuggestions.map((item) => (
+                    <Button
+                      key={item.id}
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setForm((current) => ({
+                          ...current,
+                          items: [...current.items, {
+                            itemId: item.id,
+                            quantityOrdered: selectedSupplier?.items.find((supplierItem) => supplierItem.itemId === item.id)?.minOrderQty ?? 1,
+                            costPrice: supplierCost(item.id),
+                          }],
+                        }));
+                        setProductSearch('');
+                      }}
+                    >
+                      {item.name}
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
             </div>
             {form.items.map((line, index) => (
               <div key={`${line.itemId}-${index}`} className="grid gap-2 rounded-lg border p-3 md:grid-cols-5">

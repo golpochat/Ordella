@@ -3,13 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { ProductEntity, CategoryEntity } from '../catalog/entities';
 import { CustomerEntity } from '../loyalty/entities';
-import { OrderEntity } from '../orders/entities';
+import { OrderEntity, OrderItemEntity } from '../orders/entities';
 import { SupplierEntity } from '../procurement/entities';
 import { StockItemEntity } from '../inventory/entities';
 import { LocationEntity } from '../tenants/entities';
 import { WarehouseBinEntity } from '../warehouse/entities';
 import { SearchController } from './controllers';
-import { SearchIndexEntity } from './entities';
+import { SearchAnalyticsEntity, SearchIndexEntity } from './entities';
 import { SearchIndexService } from './services';
 
 @Module({
@@ -17,10 +17,12 @@ import { SearchIndexService } from './services';
     AuthModule,
     TypeOrmModule.forFeature([
       SearchIndexEntity,
+      SearchAnalyticsEntity,
       ProductEntity,
       CategoryEntity,
       CustomerEntity,
       OrderEntity,
+      OrderItemEntity,
       SupplierEntity,
       StockItemEntity,
       LocationEntity,

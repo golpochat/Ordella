@@ -7,6 +7,7 @@ import {
   updateRecommendationSettings,
   type RecommendationAnalytics,
   type RecommendationSettings,
+  type SearchAnalytics,
 } from '@/lib/api/admin/recommendations';
 import { getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
@@ -14,9 +15,27 @@ import { useTenantSettings } from '@/hooks/use-tenant-settings';
 type AiRecommendationsPanelProps = {
   analytics: RecommendationAnalytics | null;
   settings: RecommendationSettings | null;
+  searchAnalytics: SearchAnalytics | null;
 };
 
-export function AiRecommendationsPanel({ analytics, settings: initialSettings }: AiRecommendationsPanelProps) {
+const recommendationTypes = [
+  ['trending', 'Trending products'],
+  ['frequently_bought_together', 'Frequently bought together'],
+  ['recently_viewed', 'Recently viewed'],
+  ['similar_products', 'Similar products'],
+  ['category_based', 'Category based'],
+] as const;
+
+const weightFields = [
+  ['trending', 'Trending weight'],
+  ['frequentlyBoughtTogether', 'Frequently bought together weight'],
+  ['recentlyViewed', 'Recently viewed weight'],
+  ['similarProducts', 'Similar product weight'],
+  ['categoryBased', 'Category relevance weight'],
+  ['availability', 'Availability weight'],
+] as const;
+
+export function AiRecommendationsPanel({ analytics, settings: initialSettings, searchAnalytics }: AiRecommendationsPanelProps) {
   const { formatCurrency } = useTenantSettings();
   const [settings, setSettings] = useState<RecommendationSettings | null>(
     initialSettings ?? analytics?.settings ?? null,
@@ -95,6 +114,41 @@ export function AiRecommendationsPanel({ analytics, settings: initialSettings }:
 
         <Card>
           <CardHeader>
+            <CardTitle>Search analytics</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ['Queries', searchAnalytics?.queries ?? 0],
+                ['CTR', `${searchAnalytics?.clickThroughRate ?? 0}%`],
+                ['Conversion', `${searchAnalytics?.conversionRate ?? 0}%`],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-md border p-3">
+                  <p className="text-muted-foreground">{label}</p>
+                  <p className="text-lg font-semibold">{value}</p>
+                </div>
+              ))}
+            </div>
+            <div>
+              <p className="font-medium">Top searches</p>
+              {searchAnalytics?.topQueries.length ? (
+                <div className="mt-2 space-y-2">
+                  {searchAnalytics.topQueries.map((item) => (
+                    <div key={item.query} className="flex justify-between text-muted-foreground">
+                      <span>{item.query}</span>
+                      <span>{item.count} searches · {item.avgResults} avg results</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-muted-foreground">No search queries recorded yet.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -123,6 +177,54 @@ export function AiRecommendationsPanel({ analytics, settings: initialSettings }:
                     value={settings.maxRecommendations}
                     onChange={(e) => setSettings({ ...settings, maxRecommendations: Number(e.target.value) })}
                     onBlur={() => void save({ maxRecommendations: settings.maxRecommendations })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Recommendation types</p>
+                  {recommendationTypes.map(([type, label]) => (
+                    <label key={type} className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm">
+                      <span>{label}</span>
+                      <input
+                        type="checkbox"
+                        checked={settings.enabledTypes.includes(type)}
+                        onChange={(e) => {
+                          const enabledTypes = e.target.checked
+                            ? [...new Set([...settings.enabledTypes, type])]
+                            : settings.enabledTypes.filter((item) => item !== type);
+                          setSettings({ ...settings, enabledTypes });
+                          void save({ enabledTypes });
+                        }}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {weightFields.map(([key, label]) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-sm font-medium">{label}</label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.1"
+                        value={settings.rankingWeights[key] ?? 1}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          rankingWeights: { ...settings.rankingWeights, [key]: Number(e.target.value) },
+                        })}
+                        onBlur={() => void save({ rankingWeights: settings.rankingWeights })}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Personalization rules</label>
+                  <Input
+                    value={String(settings.personalizationRules.strategy ?? 'recent + purchase history + CRM categories')}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      personalizationRules: { ...settings.personalizationRules, strategy: e.target.value },
+                    })}
+                    onBlur={() => void save({ personalizationRules: settings.personalizationRules })}
                   />
                 </div>
               </>

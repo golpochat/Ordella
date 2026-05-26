@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, In, Repository } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
 import { ProductEntity, CategoryEntity } from '../../catalog/entities';
 import { CustomerEntity } from '../../loyalty/entities';
-import { OrderEntity } from '../../orders/entities';
+import { OrderEntity, OrderItemEntity } from '../../orders/entities';
 import { SupplierEntity } from '../../procurement/entities';
 import { StockItemEntity } from '../../inventory/entities';
 import { LocationEntity } from '../../tenants/entities';
 import { WarehouseBinEntity } from '../../warehouse/entities';
-import { ReindexSearchDto, SearchQueryDto, SemanticSearchQueryDto } from '../dto';
-import { SearchEntityType, SearchIndexEntity } from '../entities';
+import { ReindexSearchDto, SearchAnalyticsEventDto, SearchQueryDto, SemanticSearchQueryDto } from '../dto';
+import { SearchAnalyticsEntity, SearchEntityType, SearchIndexEntity } from '../entities';
 
 type UpsertSearchDocument = {
   tenantId: string;
@@ -30,6 +30,8 @@ export class SearchIndexService {
   constructor(
     @InjectRepository(SearchIndexEntity)
     private readonly index: Repository<SearchIndexEntity>,
+    @InjectRepository(SearchAnalyticsEntity)
+    private readonly analyticsEvents: Repository<SearchAnalyticsEntity>,
     @InjectRepository(ProductEntity)
     private readonly products: Repository<ProductEntity>,
     @InjectRepository(CategoryEntity)
@@ -38,6 +40,8 @@ export class SearchIndexService {
     private readonly customers: Repository<CustomerEntity>,
     @InjectRepository(OrderEntity)
     private readonly orders: Repository<OrderEntity>,
+    @InjectRepository(OrderItemEntity)
+    private readonly orderItems: Repository<OrderItemEntity>,
     @InjectRepository(SupplierEntity)
     private readonly suppliers: Repository<SupplierEntity>,
     @InjectRepository(StockItemEntity)
@@ -49,14 +53,81 @@ export class SearchIndexService {
   ) {}
 
   async search(tenant: TenantContext, query: SearchQueryDto) {
-    const rows = await this.queryIndex(tenant.tenantId, query);
+    const rows = await this.enrichLocationAvailability(tenant.tenantId, await this.queryIndex(tenant.tenantId, query), query);
+    const popularity = await this.productPopularity(tenant.tenantId, rows);
     const q = query.q?.trim().toLowerCase() ?? '';
-    const results = rows.map((row) => this.toResult(row, q));
+    const results = rows.map((row) => this.toResult(row, q, query, popularity.get(row.entityId) ?? 0));
+    const sorted = this.sortResults(results, query.sort ?? 'relevance').slice(0, query.limit ?? 20);
+    if (q) await this.recordAnalyticsEvent(tenant.tenantId, { eventType: 'query', query: q, resultCount: sorted.length });
     return {
-      results: this.sortResults(results, query.sort ?? 'relevance').slice(0, query.limit ?? 20),
+      results: sorted,
       total: results.length,
       query: q,
       generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async autocomplete(tenant: TenantContext, query: SearchQueryDto) {
+    const response = await this.search(tenant, { ...query, entityType: query.entityType ?? 'item', limit: query.limit ?? 8 });
+    return {
+      suggestions: response.results.map((result) => {
+        const metadata = result.metadata as Record<string, unknown>;
+        return {
+          entityType: result.entityType,
+          entityId: result.entityId,
+          label: result.title,
+          subtitle: [metadata.category, metadata.sku].filter(Boolean).join(' - '),
+          metadata,
+          score: result.relevance,
+        };
+      }),
+      query: response.query,
+      generatedAt: response.generatedAt,
+    };
+  }
+
+  async recordAnalytics(tenant: TenantContext, dto: SearchAnalyticsEventDto) {
+    await this.recordAnalyticsEvent(tenant.tenantId, dto);
+    return { recorded: true };
+  }
+
+  async analytics(tenant: TenantContext) {
+    const [events, topQueries] = await Promise.all([
+      this.analyticsEvents
+        .createQueryBuilder('event')
+        .select('event.event_type', 'eventType')
+        .addSelect('COUNT(*)', 'count')
+        .where('event.tenant_id = :tenantId', { tenantId: tenant.tenantId })
+        .groupBy('event.event_type')
+        .getRawMany<{ eventType: string; count: string }>(),
+      this.analyticsEvents
+        .createQueryBuilder('event')
+        .select('event.query', 'query')
+        .addSelect('COUNT(*)', 'count')
+        .addSelect('AVG(event.result_count)', 'avgResults')
+        .where('event.tenant_id = :tenantId', { tenantId: tenant.tenantId })
+        .andWhere('event.event_type = :eventType', { eventType: 'query' })
+        .andWhere('event.query IS NOT NULL')
+        .groupBy('event.query')
+        .orderBy('count', 'DESC')
+        .limit(10)
+        .getRawMany<{ query: string; count: string; avgResults: string }>(),
+    ]);
+    const counts = Object.fromEntries(events.map((row) => [row.eventType, Number(row.count)]));
+    const queries = counts.query ?? 0;
+    const clicks = counts.click ?? 0;
+    const conversions = counts.conversion ?? 0;
+    return {
+      queries,
+      clicks,
+      conversions,
+      clickThroughRate: queries > 0 ? Number(((clicks / queries) * 100).toFixed(2)) : 0,
+      conversionRate: queries > 0 ? Number(((conversions / queries) * 100).toFixed(2)) : 0,
+      topQueries: topQueries.map((row) => ({
+        query: row.query,
+        count: Number(row.count),
+        avgResults: Number(Number(row.avgResults ?? 0).toFixed(1)),
+      })),
     };
   }
 
@@ -140,11 +211,17 @@ export class SearchIndexService {
       qb.andWhere('search.entityType = :entityType', { entityType: query.entityType });
     }
     if (query.q?.trim()) {
-      const q = `%${query.q.trim().toLowerCase()}%`;
+      const rawQuery = query.q.trim();
+      const q = `%${rawQuery.toLowerCase()}%`;
       qb.andWhere(
         new Brackets((where) => {
           where
-            .where('LOWER(search.title) LIKE :q', { q })
+            .where(
+              `to_tsvector('simple', CONCAT_WS(' ', search.title, COALESCE(search.body, ''), array_to_string(search.keywords, ' ')))
+                @@ plainto_tsquery('simple', :fullTextQuery)`,
+              { fullTextQuery: rawQuery },
+            )
+            .orWhere('LOWER(search.title) LIKE :q', { q })
             .orWhere('LOWER(COALESCE(search.body, \'\')) LIKE :q', { q })
             .orWhere(
               `EXISTS (
@@ -157,7 +234,7 @@ export class SearchIndexService {
       );
     }
     this.applyMetadataFilters(qb, query);
-    qb.take(Math.min(query.limit ?? 20, 100));
+    qb.take(Math.min(Math.max(query.limit ?? 20, 50), 100));
     return qb.getMany();
   }
 
@@ -165,7 +242,7 @@ export class SearchIndexService {
     qb: ReturnType<Repository<SearchIndexEntity>['createQueryBuilder']>,
     query: SearchQueryDto,
   ) {
-    if (query.locationId) {
+    if (query.locationId && query.entityType !== 'item') {
       qb.andWhere("search.metadata->>'locationId' = :locationId", { locationId: query.locationId });
     }
     if (query.categoryId) {
@@ -272,16 +349,28 @@ export class SearchIndexService {
     const effectiveName = item.overrideName ?? item.globalItem?.name ?? item.name;
     const effectiveDescription = item.overrideDescription ?? item.globalItem?.description ?? item.description;
     const effectivePrice = item.overridePrice ?? item.globalItem?.basePrice ?? item.price;
+    const tags = this.productTags(item);
     await this.upsertDocument({
       tenantId: item.tenantId,
       entityType: 'item',
       entityId: item.id,
       title: effectiveName,
       body: effectiveDescription,
-      keywords: [effectiveName, item.sku, item.barcode, item.category?.name, item.status, String(effectivePrice)],
+      keywords: [
+        effectiveName,
+        effectiveDescription,
+        item.sku,
+        item.barcode,
+        item.category?.name,
+        item.status,
+        ...tags,
+        String(effectivePrice),
+      ],
       metadata: {
         categoryId: item.categoryId,
         category: item.category?.name,
+        tags,
+        tenantBoost: Number(item.overrideAttributes?.searchBoost ?? 0),
         globalItemId: item.globalItemId,
         catalogSource: item.globalItemId
           ? item.overrideName || item.overrideDescription || item.overridePrice
@@ -450,9 +539,18 @@ export class SearchIndexService {
     });
   }
 
-  private toResult(row: SearchIndexEntity, q: string) {
+  private toResult(row: SearchIndexEntity, q: string, query?: SearchQueryDto, popularity = 0) {
     const haystack = [row.title, row.body, row.keywords.join(' ')].join(' ').toLowerCase();
-    const relevance = q ? (haystack.includes(q) ? 1 : 0) + this.keywordScore(row.keywords, q) : 0.5;
+    const exactTitle = q && row.title.toLowerCase() === q ? 5 : 0;
+    const titlePrefix = q && row.title.toLowerCase().startsWith(q) ? 3 : 0;
+    const textRelevance = q ? exactTitle + titlePrefix + (haystack.includes(q) ? 1 : 0) + this.keywordScore(row.keywords, q) : 0.5;
+    const categoryBoost = query?.boostCategoryId && row.metadata.categoryId === query.boostCategoryId ? query.categoryWeight ?? 2 : 0;
+    const availabilityBoost = Number(row.metadata.availableQuantity ?? row.metadata.stockLevel ?? 0) > 0
+      ? query?.availabilityWeight ?? 1
+      : 0;
+    const tenantBoost = Number(row.metadata.tenantBoost ?? 0);
+    const popularityBoost = Math.log10(popularity + 1) * (query?.popularityWeight ?? 1);
+    const relevance = Number((textRelevance + categoryBoost + availabilityBoost + popularityBoost + tenantBoost).toFixed(3));
     return {
       id: row.id,
       entityType: row.entityType,
@@ -460,7 +558,7 @@ export class SearchIndexService {
       title: row.title,
       body: row.body,
       keywords: row.keywords,
-      metadata: row.metadata,
+      metadata: { ...row.metadata, popularity },
       relevance,
       updatedAt: row.updatedAt?.toISOString() ?? null,
     };
@@ -474,10 +572,66 @@ export class SearchIndexService {
       if (sort === 'name') return a.title.localeCompare(b.title);
       if (sort === 'price') return Number(a.metadata.price ?? 0) - Number(b.metadata.price ?? 0);
       if (sort === 'popularity') {
-        return Number(b.metadata.totalOrders ?? b.metadata.itemCount ?? 0) - Number(a.metadata.totalOrders ?? a.metadata.itemCount ?? 0);
+        return Number(b.metadata.popularity ?? b.metadata.totalOrders ?? b.metadata.itemCount ?? 0) - Number(a.metadata.popularity ?? a.metadata.totalOrders ?? a.metadata.itemCount ?? 0);
       }
       return b.relevance - a.relevance;
     });
+  }
+
+  private async enrichLocationAvailability(tenantId: string, rows: SearchIndexEntity[], query: SearchQueryDto) {
+    const itemRows = rows.filter((row) => row.entityType === 'item');
+    if (!query.locationId || !itemRows.length) return rows;
+    const stock = await this.stockItems.find({
+      where: {
+        tenantId,
+        locationId: query.locationId,
+        productId: In(itemRows.map((row) => row.entityId)),
+      },
+    });
+    const stockByProduct = new Map(stock.map((item) => [item.productId, Number(item.quantityOnHand)]));
+    const enriched = rows.map((row) => {
+      if (row.entityType !== 'item') return row;
+      const availableQuantity = stockByProduct.get(row.entityId) ?? Number(row.metadata.stockLevel ?? 0);
+      row.metadata = { ...row.metadata, locationId: query.locationId, availableQuantity };
+      return row;
+    });
+    return query.inStockOnly
+      ? enriched.filter((row) => row.entityType !== 'item' || Number(row.metadata.availableQuantity ?? row.metadata.stockLevel ?? 0) > 0)
+      : enriched;
+  }
+
+  private async productPopularity(tenantId: string, rows: SearchIndexEntity[]) {
+    const productIds = rows.filter((row) => row.entityType === 'item').map((row) => row.entityId);
+    if (!productIds.length) return new Map<string, number>();
+    const raw = await this.orderItems
+      .createQueryBuilder('item')
+      .innerJoin(OrderEntity, 'order', 'order.id = item.order_id')
+      .select('item.product_id', 'productId')
+      .addSelect('SUM(item.quantity)', 'quantity')
+      .where('order.tenant_id = :tenantId', { tenantId })
+      .andWhere('item.product_id IN (:...productIds)', { productIds })
+      .groupBy('item.product_id')
+      .getRawMany<{ productId: string; quantity: string }>();
+    return new Map(raw.map((row) => [row.productId, Number(row.quantity)]));
+  }
+
+  private async recordAnalyticsEvent(tenantId: string, dto: SearchAnalyticsEventDto) {
+    await this.analyticsEvents.save(this.analyticsEvents.create({
+      tenantId,
+      eventType: dto.eventType,
+      query: dto.query?.trim().slice(0, 255) || null,
+      entityType: dto.entityType ?? null,
+      entityId: dto.entityId ?? null,
+      resultCount: dto.resultCount ?? 0,
+      metadata: {},
+    }));
+  }
+
+  private productTags(item: ProductEntity) {
+    const raw = item.overrideAttributes?.tags ?? item.overrideAttributes?.keywords;
+    if (Array.isArray(raw)) return raw.map((tag) => String(tag)).filter(Boolean);
+    if (typeof raw === 'string') return raw.split(',').map((tag) => tag.trim()).filter(Boolean);
+    return [];
   }
 
   private normalizeKeywords(values: Array<string | null | undefined>): string[] {

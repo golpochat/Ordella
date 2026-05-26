@@ -204,6 +204,8 @@ const recommendationItemSchema = z.object({
     'customer_preference',
     'same_category',
     'popular_item',
+    'recently_viewed',
+    'trending',
   ]),
 });
 
@@ -234,6 +236,21 @@ const searchResponseSchema = z.object({
 });
 
 export type StorefrontSearchResult = z.infer<typeof searchResultSchema>;
+
+const autocompleteResponseSchema = z.object({
+  suggestions: z.array(z.object({
+    entityType: z.string(),
+    entityId: z.string().uuid(),
+    label: z.string(),
+    subtitle: z.string().optional(),
+    metadata: z.record(z.unknown()).default({}),
+    score: z.number(),
+  })),
+  query: z.string(),
+  generatedAt: z.string(),
+});
+
+export type StorefrontAutocompleteSuggestion = z.infer<typeof autocompleteResponseSchema>['suggestions'][number];
 
 const publicBundleSchema = z.object({
   id: z.string().uuid(),
@@ -278,8 +295,7 @@ export async function searchStorefrontItems(options: {
   semantic?: boolean;
   limit?: number;
 }) {
-  const path = options.semantic ? 'search/semantic' : 'search';
-  const data = await api.getData<unknown>(path, {
+  const data = await api.getData<unknown>('search/products', {
     params: {
       q: options.q,
       entityType: 'item',
@@ -288,10 +304,25 @@ export async function searchStorefrontItems(options: {
       priceMin: options.priceMin,
       priceMax: options.priceMax,
       inStockOnly: options.inStockOnly,
+      sort: 'relevance',
       limit: options.limit ?? 50,
     },
   });
   return searchResponseSchema.parse(data);
+}
+
+export async function autocompleteStorefrontItems(q: string, options?: { categoryId?: string; limit?: number }) {
+  const data = await api.getData<unknown>('search/autocomplete', {
+    params: {
+      q,
+      entityType: 'item',
+      locationId: getLocationId(),
+      categoryId: options?.categoryId,
+      inStockOnly: true,
+      limit: options?.limit ?? 6,
+    },
+  });
+  return autocompleteResponseSchema.parse(data);
 }
 
 function mapCatalogItemToProduct(item: z.infer<typeof onlineProductSchema>): OnlineProduct {
@@ -396,6 +427,16 @@ export async function trackRecommendationEvent(body: {
   source?: string;
 }) {
   await api.postData('recommendations/events', body);
+}
+
+export async function trackSearchEvent(body: {
+  query?: string;
+  entityType?: 'item' | 'category';
+  entityId?: string;
+  eventType: 'query' | 'click' | 'conversion';
+  resultCount?: number;
+}) {
+  await api.postData('search/analytics/events', body);
 }
 
 export async function fetchProductsByCategory(categoryId: string) {

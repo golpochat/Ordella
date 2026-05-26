@@ -281,6 +281,8 @@ const posRecommendationItemSchema = z.object({
     'customer_preference',
     'same_category',
     'popular_item',
+    'recently_viewed',
+    'trending',
   ]),
 });
 

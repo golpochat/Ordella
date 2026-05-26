@@ -64,6 +64,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
   const [priceMax, setPriceMax] = useState('');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [semanticItemIds, setSemanticItemIds] = useState<string[] | null>(null);
+  const [suggestionIds, setSuggestionIds] = useState<string[]>([]);
   const [pickerItem, setPickerItem] = useState<PosCatalogItem | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>();
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
@@ -270,6 +271,32 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
     }
   };
 
+  useEffect(() => {
+    const q = search.trim();
+    if (!online || q.length < 2) {
+      setSuggestionIds([]);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      void searchPosItems({
+        q,
+        categoryId: selectedCategory === 'all' ? undefined : selectedCategory,
+        inStockOnly: true,
+        limit: 6,
+      })
+        .then((result) => setSuggestionIds(result.results.map((entry) => entry.entityId)))
+        .catch(() => setSuggestionIds([]));
+    }, 200);
+    return () => window.clearTimeout(timeout);
+  }, [online, search, selectedCategory]);
+
+  const suggestions = useMemo(
+    () => suggestionIds
+      .map((id) => items.find((item) => item.id === id))
+      .filter((item): item is PosCatalogItem => Boolean(item)),
+    [items, suggestionIds],
+  );
+
   const openPicker = (item: PosCatalogItem) => {
     setPickerItem(item);
     setSelectedVariantId(item.variants[0]?.id);
@@ -371,6 +398,25 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               Refresh catalog
             </Button>
           </div>
+          {suggestions.length ? (
+            <div className="flex flex-wrap gap-2 border-b bg-muted/40 px-[var(--pos-panel-padding)] py-2">
+              {suggestions.map((item) => (
+                <Button
+                  key={item.id}
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-[var(--pos-radius)]"
+                  onClick={() => {
+                    setSearch(item.name);
+                    setSemanticItemIds([item.id]);
+                  }}
+                >
+                  {item.name}
+                </Button>
+              ))}
+            </div>
+          ) : null}
 
           <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
             <nav className="flex shrink-0 gap-2 overflow-x-auto border-b p-2 lg:w-44 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r">
