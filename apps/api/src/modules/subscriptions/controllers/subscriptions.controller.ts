@@ -6,7 +6,13 @@ import { JwtAuthGuard, RbacGuard, RequirePermissions } from '../../auth';
 import { CurrentCustomer } from '../../customer-accounts/decorators/current-customer.decorator';
 import { CustomerAuthGuard } from '../../customer-accounts/guards/customer-auth.guard';
 import { CustomerAuthPayload } from '../../customer-accounts/types/customer-auth-payload';
-import { CreateSubscriptionDto, StorefrontCreateSubscriptionDto, UpdateSubscriptionDto } from '../dto';
+import {
+  CreateSubscriptionDto,
+  StorefrontCreateSubscriptionDto,
+  SubscribeToPlanDto,
+  UpdateSubscriptionDto,
+  UpsertSubscriptionPlanDto,
+} from '../dto';
 import { SubscriptionStatus } from '../entities';
 import { SubscriptionsService } from '../services';
 
@@ -26,6 +32,23 @@ export class AdminSubscriptionsController {
   @RequirePermissions('subscriptions.read')
   async analytics(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.subscriptions.analytics(tenant);
+    return { success: true, data };
+  }
+
+  @Get('plans')
+  @RequirePermissions('subscriptions.read')
+  async listPlans(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.subscriptions.listPlans(tenant, true);
+    return { success: true, data };
+  }
+
+  @Post('plans')
+  @RequirePermissions('subscriptions.write')
+  async upsertPlan(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpsertSubscriptionPlanDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.subscriptions.upsertPlan(tenant, dto);
     return { success: true, data };
   }
 
@@ -90,6 +113,23 @@ export class CustomerSubscriptionsController {
     @CurrentCustomer() customer: CustomerAuthPayload,
   ): Promise<ApiSuccessResponse<unknown[]>> {
     const data = await this.subscriptions.list(tenant, customer.sub);
+    return { success: true, data };
+  }
+
+  @Get('plans')
+  async listPlans(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.subscriptions.listPlans(tenant);
+    return { success: true, data };
+  }
+
+  @Post('plans/:planId/subscribe')
+  async subscribe(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentCustomer() customer: CustomerAuthPayload,
+    @Param('planId') planId: string,
+    @Body() dto: Omit<SubscribeToPlanDto, 'planId'>,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.subscriptions.subscribeToPlan(tenant, customer.sub, { ...dto, planId });
     return { success: true, data };
   }
 

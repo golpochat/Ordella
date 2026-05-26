@@ -8,6 +8,7 @@ import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { CustomerEntity, LoyaltyTransactionEntity } from '../loyalty/entities';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { OrderEntity } from '../orders/entities/order.entity';
+import { SubscriptionEntity } from '../subscriptions/entities';
 import { CustomerAccountsController } from './customer-accounts.controller';
 import { CustomerAccountsService } from './customer-accounts.service';
 import { CUSTOMER_ACCOUNT_ENTITIES } from './entities';
@@ -27,6 +28,7 @@ import { CustomerAuthGuard } from './guards/customer-auth.guard';
       OrderEntity,
       ProductEntity,
       VariantEntity,
+      SubscriptionEntity,
     ]),
   ],
   controllers: [CustomerAccountsController],

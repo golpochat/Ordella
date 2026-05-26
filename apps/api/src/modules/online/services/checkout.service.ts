@@ -57,7 +57,7 @@ export class CheckoutService {
     if (orderType === OrderType.DELIVERY) {
       this.assertDeliveryDetails(dto.delivery);
     }
-    const deliveryFee = await this.resolveDeliveryFee(tenant.tenantId, orderType, lines);
+    const deliveryFee = await this.resolveDeliveryFee(tenant.tenantId, orderType, lines, dto.customerId);
 
     const baseTax = await this.calculateTax(tenant, basket.locationId, lines, '0.00', orderType, deliveryFee);
     const baseTotals = calculateOnlineTotals({
@@ -269,9 +269,11 @@ export class CheckoutService {
     tenantId: string,
     orderType: OrderType,
     lines: OnlineLinePricing[],
+    customerId?: string,
   ): Promise<string> {
     if (orderType !== OrderType.DELIVERY) return '0.00';
     const settings = await this.tenantSettingsRepository.findOne({ where: { tenantId } });
+    if (customerId && await this.hasFreeDeliveryMembership(tenantId, customerId)) return '0.00';
     const subtotal = sumMoney(lines.map((line) => line.lineSubtotal));
     if (settings && !settings.deliveryEnabled) throw new BadRequestException('Delivery is disabled for this tenant');
     const minimum = parseMoney(settings?.minimumOrderAmount ?? '0.00');
@@ -306,5 +308,10 @@ export class CheckoutService {
   private async customerSegments(tenantId: string, customerId: string): Promise<string[]> {
     const customer = await this.customersRepository.findOne({ where: { tenantId, id: customerId } });
     return customer?.segments ?? [];
+  }
+
+  private async hasFreeDeliveryMembership(tenantId: string, customerId: string): Promise<boolean> {
+    const customer = await this.customersRepository.findOne({ where: { tenantId, id: customerId } });
+    return Boolean(customer?.preferences?.subscriptionFreeDelivery);
   }
 }

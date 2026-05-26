@@ -29,11 +29,18 @@ export function SubscriptionDetailPanel({ initialSubscription }: { initialSubscr
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
-            <Metric title="Schedule" value={subscription.schedule} />
-            <Metric title="Next run" value={formatDate(subscription.nextRunAt)} />
+            <Metric title={subscription.plan ? 'Billing cycle' : 'Schedule'} value={subscription.billingCycle ?? subscription.schedule ?? 'Membership'} />
+            <Metric title={subscription.plan ? 'Renewal date' : 'Next run'} value={formatDate(subscription.renewalDate ?? subscription.nextRunAt)} />
             <Metric title="Status" value={subscription.status} />
             <Metric title="Total" value={formatMoney(subscription.totalPrice)} />
           </div>
+          {subscription.plan ? (
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">{subscription.plan.name}</p>
+              <p className="text-muted-foreground">{formatMoney(subscription.plan.price)} / {subscription.plan.billingCycle}</p>
+              <p className="text-muted-foreground">Perks: {JSON.stringify(subscription.plan.perks)}</p>
+            </div>
+          ) : null}
           <div className="rounded-md border p-3 text-sm">
             <p className="font-medium">Payment method</p>
             <p className="text-muted-foreground">{subscription.paymentMethodId ?? 'Placeholder or not saved yet'}</p>
@@ -43,12 +50,16 @@ export function SubscriptionDetailPanel({ initialSubscription }: { initialSubscr
             <p className="text-muted-foreground">{subscription.deliveryDetails ? JSON.stringify(subscription.deliveryDetails) : 'Pickup or no delivery address'}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={subscription.schedule} onChange={(event) => void setSchedule(event.target.value)}>
-              <option value="weekly">Weekly</option>
-              <option value="biweekly">Every 2 weeks</option>
-              <option value="monthly">Monthly</option>
-            </select>
-            <Button type="button" variant="outline" onClick={() => void pause()}>Pause</Button>
+            {!subscription.plan ? (
+              <>
+                <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={subscription.schedule ?? 'monthly'} onChange={(event) => void setSchedule(event.target.value)}>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Every 2 weeks</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                <Button type="button" variant="outline" onClick={() => void pause()}>Pause</Button>
+              </>
+            ) : null}
             <Button type="button" variant="destructive" onClick={() => void cancel()}>Cancel</Button>
           </div>
         </CardContent>

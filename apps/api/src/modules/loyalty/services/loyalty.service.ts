@@ -249,7 +249,8 @@ export class LoyaltyService {
     if (!customer) return;
     const tierBefore = await this.resolveTier(customer);
     const total = parseMoney(order.total);
-    const points = Math.floor(total * parseMoney(settings.earnRate) * parseMoney(tierBefore?.pointsMultiplier ?? '1'));
+    const membershipMultiplier = Number(customer.preferences?.subscriptionPointsMultiplier ?? 1);
+    const points = Math.floor(total * parseMoney(settings.earnRate) * parseMoney(tierBefore?.pointsMultiplier ?? '1') * membershipMultiplier);
 
     const previousBalance = customer.pointsBalance;
     customer.lifetimeValue = (parseMoney(customer.lifetimeValue) + total).toFixed(2);

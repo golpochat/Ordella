@@ -10,11 +10,53 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { OrderType } from '../../orders/enums/order-type.enum';
-import { SubscriptionSchedule, SubscriptionStatus } from '../entities';
+import {
+  SubscriptionBillingCycle,
+  SubscriptionPlanStatus,
+  SubscriptionSchedule,
+  SubscriptionStatus,
+} from '../entities';
+
+export class UpsertSubscriptionPlanDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @IsString()
+  @MaxLength(120)
+  name!: string;
+
+  @IsNumber()
+  @Min(0)
+  price!: number;
+
+  @IsEnum(SubscriptionBillingCycle)
+  billingCycle!: SubscriptionBillingCycle;
+
+  @IsObject()
+  perks!: {
+    freeDelivery?: boolean;
+    discounts?: number;
+    discountPercent?: number;
+    pointsMultiplier?: number;
+    exclusiveItems?: string[];
+    description?: string[];
+  };
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  trialPeriod?: number;
+
+  @IsOptional()
+  @IsEnum(SubscriptionPlanStatus)
+  status?: SubscriptionPlanStatus;
+}
 
 export class SubscriptionItemDto {
   @IsUUID()
@@ -39,6 +81,10 @@ export class CreateSubscriptionDto {
 
   @IsUUID()
   locationId!: string;
+
+  @IsOptional()
+  @IsUUID()
+  planId?: string;
 
   @IsOptional()
   @IsEnum(OrderType)
@@ -104,6 +150,19 @@ export class StorefrontCreateSubscriptionDto {
   items!: SubscriptionItemDto[];
 }
 
+export class SubscribeToPlanDto {
+  @IsUUID()
+  planId!: string;
+
+  @IsOptional()
+  @IsString()
+  paymentMethodId?: string;
+
+  @IsOptional()
+  @IsObject()
+  refundPolicy?: Record<string, unknown>;
+}
+
 export class UpdateSubscriptionDto {
   @IsOptional()
   @IsEnum(SubscriptionSchedule)
@@ -120,6 +179,10 @@ export class UpdateSubscriptionDto {
   @IsOptional()
   @IsString()
   paymentMethodId?: string;
+
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
 
   @IsOptional()
   @IsObject()

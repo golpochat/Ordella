@@ -194,10 +194,25 @@ export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
 export const customerSubscriptionSchema = z.object({
   id: z.string().uuid(),
-  schedule: z.string(),
+  schedule: z.string().nullable().optional(),
+  billingCycle: z.string().nullable().optional(),
+  startDate: z.string().nullable().optional(),
+  renewalDate: z.string().nullable().optional(),
   nextRunAt: z.string(),
   status: z.string(),
   totalPrice: z.string(),
+  paymentMethodId: z.string().nullable().optional(),
+  cancelAtPeriodEnd: z.boolean().optional(),
+  refundPolicy: z.record(z.unknown()).optional(),
+  plan: z.object({
+    id: z.string().uuid(),
+    name: z.string(),
+    price: z.string(),
+    billingCycle: z.string(),
+    perks: z.record(z.unknown()),
+    trialPeriod: z.number(),
+    status: z.string(),
+  }).nullable().optional(),
   items: z.array(
     z.object({
       id: z.string().uuid(),
@@ -219,6 +234,18 @@ export const customerSubscriptionSchema = z.object({
 });
 
 export type CustomerSubscription = z.infer<typeof customerSubscriptionSchema>;
+
+export const subscriptionPlanSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  price: z.string(),
+  billingCycle: z.string(),
+  perks: z.record(z.unknown()),
+  trialPeriod: z.number(),
+  status: z.string(),
+});
+
+export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
 
 export async function registerCustomer(body: {
   name: string;
@@ -300,9 +327,23 @@ export async function fetchCustomerSubscriptions() {
   return z.array(customerSubscriptionSchema).parse(data);
 }
 
+export async function fetchSubscriptionPlans() {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.getData<unknown[]>('public/customer/subscriptions/plans'));
+  return z.array(subscriptionPlanSchema).parse(data);
+}
+
+export async function subscribeToPlan(planId: string, body: { paymentMethodId?: string }) {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(
+    api.postData<unknown>(`public/customer/subscriptions/plans/${planId}/subscribe`, body),
+  );
+  return customerSubscriptionSchema.parse(data);
+}
+
 export async function updateCustomerSubscription(
   subscriptionId: string,
-  body: { schedule?: string; nextRunAt?: string; status?: string; items?: unknown[] },
+  body: { schedule?: string; nextRunAt?: string; status?: string; items?: unknown[]; paymentMethod?: string; paymentMethodId?: string },
 ) {
   const api = createCustomerApiClient();
   const data = await withCustomerSession(

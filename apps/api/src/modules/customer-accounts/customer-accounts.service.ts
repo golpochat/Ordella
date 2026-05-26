@@ -21,6 +21,7 @@ import { NotificationType } from '../notifications/enums/notification-type.enum'
 import { NotificationsService } from '../notifications/services/notifications.service';
 import { OrderEntity } from '../orders/entities/order.entity';
 import { OrderStatus } from '../orders/enums/order-status.enum';
+import { SubscriptionEntity, SubscriptionStatus } from '../subscriptions/entities';
 import {
   CreateCustomerAddressDto,
   CompleteCustomerPasswordResetDto,
@@ -80,6 +81,8 @@ export class CustomerAccountsService {
     private readonly products: Repository<ProductEntity>,
     @InjectRepository(VariantEntity)
     private readonly variants: Repository<VariantEntity>,
+    @InjectRepository(SubscriptionEntity)
+    private readonly subscriptions: Repository<SubscriptionEntity>,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly notifications: NotificationsService,
@@ -512,7 +515,7 @@ export class CustomerAccountsService {
 
   async exportMyData(tenant: TenantContext, customerId: string) {
     const customer = await this.requireCustomer(tenant.tenantId, customerId);
-    const [addresses, orders, loyaltyHistory, storeCreditHistory, giftCards, savedBaskets, savedItems, sessions] =
+    const [addresses, orders, loyaltyHistory, storeCreditHistory, giftCards, savedBaskets, savedItems, sessions, subscriptions] =
       await Promise.all([
         this.listAddresses(tenant, customerId),
         this.listOrders(tenant, customerId),
@@ -522,6 +525,11 @@ export class CustomerAccountsService {
         this.listSavedBaskets(tenant, customerId),
         this.listSavedItems(tenant, customerId),
         this.listSessions(tenant, customerId),
+        this.subscriptions.find({
+          where: { tenantId: tenant.tenantId, customerId },
+          relations: { plan: true, items: true, orders: true },
+          order: { createdAt: 'DESC' },
+        }),
       ]);
 
     return {
@@ -541,6 +549,7 @@ export class CustomerAccountsService {
       savedBaskets,
       savedItems,
       sessions,
+      subscriptions,
     };
   }
 
@@ -571,6 +580,10 @@ export class CustomerAccountsService {
       this.savedItems.delete({ tenantId: tenant.tenantId, customerId }),
       this.sessions.update({ tenantId: tenant.tenantId, customerId }, { revokedAt: erasedAt }),
       this.securityTokens.update({ tenantId: tenant.tenantId, customerId }, { consumedAt: erasedAt }),
+      this.subscriptions.update(
+        { tenantId: tenant.tenantId, customerId },
+        { status: SubscriptionStatus.CANCELLED, canceledAt: erasedAt, cancelAtPeriodEnd: true },
+      ),
       this.customers.save(customer),
     ]);
     return { deleted: true, erasedAt };
