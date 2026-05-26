@@ -247,6 +247,40 @@ export const subscriptionPlanSchema = z.object({
 
 export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
 
+export const supportMessageSchema = z.object({
+  id: z.string().uuid(),
+  authorType: z.string(),
+  body: z.string(),
+  internalOnly: z.boolean(),
+  attachments: z.array(z.record(z.unknown())).default([]),
+  createdAt: z.string(),
+});
+
+export const supportTicketSchema = z.object({
+  id: z.string().uuid(),
+  orderId: z.string().uuid().nullable(),
+  subscriptionId: z.string().uuid().nullable(),
+  subject: z.string(),
+  description: z.string().nullable(),
+  category: z.string(),
+  priority: z.string(),
+  status: z.string(),
+  slaDueAt: z.string().nullable(),
+  resolvedAt: z.string().nullable(),
+  csatRating: z.number().nullable(),
+  attachments: z.array(z.record(z.unknown())).default([]),
+  messages: z.array(supportMessageSchema).default([]),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable().optional(),
+  sla: z.object({
+    breached: z.boolean(),
+    firstResponseBreached: z.boolean(),
+    escalated: z.boolean(),
+  }).optional(),
+});
+
+export type SupportTicket = z.infer<typeof supportTicketSchema>;
+
 export async function registerCustomer(body: {
   name: string;
   email: string;
@@ -325,6 +359,42 @@ export async function fetchCustomerSubscriptions() {
   const api = createCustomerApiClient();
   const data = await withCustomerSession(api.getData<unknown[]>('public/customer/subscriptions'));
   return z.array(customerSubscriptionSchema).parse(data);
+}
+
+export async function fetchSupportTickets() {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.getData<unknown[]>('public/customer/support/tickets'));
+  return z.array(supportTicketSchema).parse(data);
+}
+
+export async function createSupportTicket(body: {
+  orderId?: string;
+  subscriptionId?: string;
+  subject: string;
+  category: string;
+  priority?: string;
+  message: string;
+  attachments?: Array<Record<string, unknown>>;
+}) {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(api.postData<unknown>('public/customer/support/tickets', body));
+  return supportTicketSchema.parse(data);
+}
+
+export async function replyToSupportTicket(ticketId: string, body: string, attachments?: Array<Record<string, unknown>>) {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(
+    api.postData<unknown>(`public/customer/support/tickets/${ticketId}/messages`, { body, attachments }),
+  );
+  return supportTicketSchema.parse(data);
+}
+
+export async function rateSupportTicket(ticketId: string, rating: number, comment?: string) {
+  const api = createCustomerApiClient();
+  const data = await withCustomerSession(
+    api.postData<unknown>(`public/customer/support/tickets/${ticketId}/rating`, { rating, comment }),
+  );
+  return supportTicketSchema.parse(data);
 }
 
 export async function fetchSubscriptionPlans() {

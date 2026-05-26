@@ -14,6 +14,25 @@ export function fetchTenantSettings() {
   return api.getData<unknown>('tenant/settings');
 }
 
+const supportTicketSchema = z.object({
+  id: z.string().uuid(),
+  status: z.string(),
+  subject: z.string(),
+});
+
+export async function createSupportChatTicket(body: {
+  name: string;
+  email?: string;
+  phone?: string;
+  subject: string;
+  category: string;
+  priority?: string;
+  message: string;
+}) {
+  const data = await api.postData<unknown>('public/support/tickets', body);
+  return supportTicketSchema.parse(data);
+}
+
 const modifierOptionSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),

@@ -8,6 +8,7 @@ export enum NotificationType {
   FORECAST_ALERT = 'forecast_alert',
   REPLENISHMENT = 'replenishment',
   SUBSCRIPTION = 'subscription',
+  SUPPORT = 'support',
   STAFF = 'staff',
   CUSTOMER = 'customer',
   SYSTEM = 'system',

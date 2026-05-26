@@ -3,6 +3,7 @@ import '@ordella/shared-ui/styles.css';
 import { ThemeRoot } from '@/components/theme-root';
 import { StorefrontFooter } from '@/components/storefront-footer';
 import { StorefrontHeader } from '@/components/storefront-header';
+import { SupportWidget } from '@/components/support-widget';
 import { buildStorefrontMetadata } from '@/lib/metadata';
 import './globals.css';
 
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="flex min-h-dvh flex-col bg-background text-foreground">
             <StorefrontHeader />
             <main className="flex-1">{children}</main>
+            <SupportWidget />
             <StorefrontFooter />
           </div>
         </ThemeRoot>

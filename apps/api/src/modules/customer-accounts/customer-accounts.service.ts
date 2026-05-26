@@ -22,6 +22,7 @@ import { NotificationsService } from '../notifications/services/notifications.se
 import { OrderEntity } from '../orders/entities/order.entity';
 import { OrderStatus } from '../orders/enums/order-status.enum';
 import { SubscriptionEntity, SubscriptionStatus } from '../subscriptions/entities';
+import { SupportTicketEntity, SupportTicketMessageEntity } from '../support/entities';
 import {
   CreateCustomerAddressDto,
   CompleteCustomerPasswordResetDto,
@@ -83,6 +84,10 @@ export class CustomerAccountsService {
     private readonly variants: Repository<VariantEntity>,
     @InjectRepository(SubscriptionEntity)
     private readonly subscriptions: Repository<SubscriptionEntity>,
+    @InjectRepository(SupportTicketEntity)
+    private readonly supportTickets: Repository<SupportTicketEntity>,
+    @InjectRepository(SupportTicketMessageEntity)
+    private readonly supportMessages: Repository<SupportTicketMessageEntity>,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly notifications: NotificationsService,
@@ -515,7 +520,7 @@ export class CustomerAccountsService {
 
   async exportMyData(tenant: TenantContext, customerId: string) {
     const customer = await this.requireCustomer(tenant.tenantId, customerId);
-    const [addresses, orders, loyaltyHistory, storeCreditHistory, giftCards, savedBaskets, savedItems, sessions, subscriptions] =
+    const [addresses, orders, loyaltyHistory, storeCreditHistory, giftCards, savedBaskets, savedItems, sessions, subscriptions, supportTickets] =
       await Promise.all([
         this.listAddresses(tenant, customerId),
         this.listOrders(tenant, customerId),
@@ -528,6 +533,11 @@ export class CustomerAccountsService {
         this.subscriptions.find({
           where: { tenantId: tenant.tenantId, customerId },
           relations: { plan: true, items: true, orders: true },
+          order: { createdAt: 'DESC' },
+        }),
+        this.supportTickets.find({
+          where: { tenantId: tenant.tenantId, customerId },
+          relations: { messages: true },
           order: { createdAt: 'DESC' },
         }),
       ]);
@@ -550,6 +560,7 @@ export class CustomerAccountsService {
       savedItems,
       sessions,
       subscriptions,
+      supportTickets,
     };
   }
 
@@ -583,6 +594,14 @@ export class CustomerAccountsService {
       this.subscriptions.update(
         { tenantId: tenant.tenantId, customerId },
         { status: SubscriptionStatus.CANCELLED, canceledAt: erasedAt, cancelAtPeriodEnd: true },
+      ),
+      this.supportMessages.update(
+        { tenantId: tenant.tenantId, authorCustomerId: customerId },
+        { body: '[deleted customer message]', attachments: [] },
+      ),
+      this.supportTickets.update(
+        { tenantId: tenant.tenantId, customerId },
+        { subject: 'Deleted customer support ticket', description: null, attachments: [], metadata: {} },
       ),
       this.customers.save(customer),
     ]);

@@ -433,6 +433,10 @@ export function ProfileView() {
         <Link href="/subscriptions">Manage subscriptions</Link>
       </Button>
 
+      <Button asChild variant="outline">
+        <Link href="/support">Contact support</Link>
+      </Button>
+
       <Button variant="destructive" onClick={signOut}>
         Sign out
       </Button>
