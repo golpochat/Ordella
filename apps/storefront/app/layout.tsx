@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <ThemeRoot>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-dvh flex-col bg-background text-foreground">
             <StorefrontHeader />
             <main className="flex-1">{children}</main>
             <StorefrontFooter />

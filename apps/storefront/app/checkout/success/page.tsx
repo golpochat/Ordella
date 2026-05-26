@@ -44,12 +44,12 @@ function CheckoutSuccessContent() {
   }, [sessionId, clearBasket, router]);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-12">
-      <Card>
+    <div className="mx-auto max-w-lg px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
+      <Card className="rounded-[var(--storefront-radius)]">
         <CardHeader>
           <CardTitle>Order payment</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm">
+        <CardContent className="space-y-4 p-[var(--storefront-card-padding)] text-sm">
           {!error && !orderId ? (
             <p className="text-muted-foreground">Confirming your payment…</p>
           ) : null}
@@ -57,7 +57,7 @@ function CheckoutSuccessContent() {
           {orderId ? (
             <p className="text-muted-foreground">Redirecting to your order…</p>
           ) : null}
-          <Button asChild variant="outline" className="h-11">
+          <Button asChild variant="outline" className="h-11 rounded-[var(--storefront-radius)]">
             <Link href="/catalog">Continue shopping</Link>
           </Button>
         </CardContent>
@@ -68,7 +68,7 @@ function CheckoutSuccessContent() {
 
 export default function CheckoutSuccessPage() {
   return (
-    <Suspense fallback={<p className="px-4 py-12 text-center text-sm text-muted-foreground">Confirming your payment...</p>}>
+    <Suspense fallback={<p className="px-[var(--theme-spacing)] py-[var(--storefront-section-padding)] text-center text-sm text-muted-foreground">Confirming your payment...</p>}>
       <CheckoutSuccessContent />
     </Suspense>
   );

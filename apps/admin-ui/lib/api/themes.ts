@@ -10,7 +10,7 @@ export type BaseThemeOption = {
 };
 
 export type ThemeUpdatePayload = Partial<
-  Pick<TenantTheme, 'name' | 'baseTheme' | 'colors' | 'typography' | 'layout' | 'assets' | 'seo'>
+  Pick<TenantTheme, 'name' | 'baseTheme' | 'preset' | 'colors' | 'typography' | 'layout' | 'posTheme' | 'assets' | 'seo'>
 > & {
   homepageSections?: HomepageSection[];
 };

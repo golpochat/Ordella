@@ -11,6 +11,21 @@ const BASE_THEMES: Array<{ id: BaseTheme; name: string; description: string }> =
   { id: 'bold', name: 'Bold', description: 'High contrast colors and punchier presentation.' },
 ];
 
+const DEFAULT_POS_THEME = {
+  mode: 'light',
+  primaryColor: '#0f172a',
+  accentColor: '#0ea5e9',
+  backgroundColor: '#ffffff',
+  surfaceColor: '#f8fafc',
+  textColor: '#0f172a',
+  headingFont: 'Inter, system-ui, sans-serif',
+  bodyFont: 'Inter, system-ui, sans-serif',
+  density: 'comfortable',
+  buttonSize: 'lg',
+  cornerRadius: 'lg',
+  logoUrl: null,
+};
+
 @Injectable()
 export class ThemesService {
   private readonly cache = new Map<string, unknown>();
@@ -52,6 +67,17 @@ export class ThemesService {
     theme.colors = { ...this.defaultColors(theme.baseTheme), ...(theme.colors ?? {}), ...(dto.colors ?? {}) };
     theme.typography = { ...this.defaultTypography(), ...(theme.typography ?? {}), ...(dto.typography ?? {}) };
     theme.layout = { ...this.defaultLayout(theme.baseTheme), ...(theme.layout ?? {}), ...(dto.layout ?? {}) };
+    if (dto.preset) {
+      theme.layout = { ...theme.layout, themeMode: dto.preset };
+    }
+    theme.layout = {
+      ...theme.layout,
+      posTheme: {
+        ...DEFAULT_POS_THEME,
+        ...((theme.layout?.posTheme as Record<string, unknown> | undefined) ?? {}),
+        ...(dto.posTheme ?? {}),
+      },
+    };
     theme.homepageSections = dto.homepageSections ?? theme.homepageSections ?? this.defaultHomepageSections();
     theme.assets = { ...(theme.assets ?? {}), ...(dto.assets ?? {}) };
     theme.seo = { ...(theme.seo ?? {}), ...(dto.seo ?? {}) };
@@ -101,10 +127,20 @@ export class ThemesService {
       tenantId: theme.tenantId,
       name: theme.name,
       baseTheme: theme.baseTheme,
-      preset: 'custom',
+      preset: String((theme.layout?.themeMode as string | undefined) ?? 'light'),
       colors: { ...this.defaultColors(theme.baseTheme), ...(theme.colors ?? {}) },
       typography: { ...this.defaultTypography(), ...(theme.typography ?? {}) },
       layout: { ...this.defaultLayout(theme.baseTheme), ...(theme.layout ?? {}) },
+      posTheme: {
+        ...DEFAULT_POS_THEME,
+        ...((theme.layout?.posTheme as Record<string, unknown> | undefined) ?? {}),
+        logoUrl: String(
+          ((theme.layout?.posTheme as Record<string, unknown> | undefined)?.logoUrl as string | null | undefined) ??
+            (theme.assets ?? {}).logo ??
+            assetMap.logo ??
+            '',
+        ) || null,
+      },
       homepageSections: theme.homepageSections?.length ? theme.homepageSections : this.defaultHomepageSections(),
       assets: { ...(theme.assets ?? {}), ...assetMap },
       seo: theme.seo ?? {},
@@ -121,10 +157,11 @@ export class ThemesService {
       tenantId,
       name: 'Default Storefront Theme',
       baseTheme: 'default',
-      preset: 'custom',
+      preset: 'light',
       colors: this.defaultColors('default'),
       typography: this.defaultTypography(),
       layout: this.defaultLayout('default'),
+      posTheme: DEFAULT_POS_THEME,
       homepageSections: this.defaultHomepageSections(),
       assets: { logo: null, banner: null, background: null, favicon: null },
       seo: {},
@@ -162,6 +199,8 @@ export class ThemesService {
       spacingScale: baseTheme === 'bold' ? 'spacious' : 'comfortable',
       buttonStyle: baseTheme === 'minimal' ? 'square' : 'rounded',
       headerLayout: 'left-aligned',
+      cornerRadius: baseTheme === 'minimal' ? 'sm' : 'lg',
+      layoutStyle: baseTheme === 'bold' ? 'editorial' : 'modern',
     };
   }
 

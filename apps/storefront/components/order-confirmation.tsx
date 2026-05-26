@@ -18,11 +18,11 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
   const { status, error } = useOrderTracking(orderId);
 
   if (error) {
-    return <p className="px-4 text-sm text-destructive">{error}</p>;
+    return <p className="px-[var(--theme-spacing)] text-sm text-destructive">{error}</p>;
   }
 
   if (!status) {
-    return <p className="px-4 text-muted-foreground">Loading order…</p>;
+    return <p className="px-[var(--theme-spacing)] text-muted-foreground">Loading order…</p>;
   }
 
   const pickupOrDelivery =
@@ -33,13 +33,13 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
         : 'Visit the business to collect your in-store order.';
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 px-4 py-8">
+    <div className="mx-auto max-w-xl space-y-6 px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
       {justPlaced ? (
-        <p className="mb-4 text-center text-lg font-medium text-emerald-700">
+        <p className="mb-4 rounded-[var(--storefront-radius)] bg-muted p-4 text-center text-lg font-medium text-primary">
           Thank you — your order was placed successfully.
         </p>
       ) : null}
-      <Card>
+      <Card className="rounded-[var(--storefront-radius)]">
         <CardHeader>
           <CardTitle>Order {status.orderNumber ?? status.orderId.slice(0, 8)}</CardTitle>
         </CardHeader>
@@ -62,10 +62,10 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
             Placed: {formatDateTime(status.createdAt)}
           </p>
           <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-            <Button asChild variant="outline" className="h-11 flex-1">
+            <Button asChild variant="outline" className="h-11 flex-1 rounded-[var(--storefront-radius)]">
               <Link href={`/order/${orderId}`}>Track order</Link>
             </Button>
-            <Button asChild className="h-11 flex-1">
+            <Button asChild className="h-11 flex-1 rounded-[var(--storefront-radius)]">
               <Link href="/catalog">Continue shopping</Link>
             </Button>
           </div>

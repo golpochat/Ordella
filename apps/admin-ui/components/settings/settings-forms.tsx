@@ -17,6 +17,7 @@ import { FulfillmentDisplayPanel } from './fulfillment-display-panel';
 import { DeliverySettingsPanel } from './delivery-settings-panel';
 import { StorefrontThemePanel } from './storefront-theme-panel';
 import { OfflineModePanel } from './offline-mode-panel';
+import { PosThemePanel } from './pos-theme-panel';
 import { TaxCompliancePanel } from './tax-compliance-panel';
 import { OrderRoutingPanel } from './order-routing-panel';
 import { EnterpriseSsoPanel } from './enterprise-sso-panel';
@@ -157,6 +158,9 @@ export function SettingsForms() {
       </TabsContent>
       <TabsContent value="pos" className="mt-4">
         <OfflineModePanel />
+      </TabsContent>
+      <TabsContent value="pos-theme" className="mt-4">
+        <PosThemePanel />
       </TabsContent>
       <TabsContent value="tax-compliance" className="mt-4">
         <TaxCompliancePanel />

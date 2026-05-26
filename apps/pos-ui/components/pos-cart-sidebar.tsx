@@ -49,22 +49,22 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
   };
 
   return (
-    <aside className="flex h-full flex-col border-l bg-card">
-      <div className="border-b px-4 py-3">
+    <aside className="flex h-full max-h-[45dvh] flex-col bg-card lg:max-h-none">
+      <div className="border-b px-[var(--pos-panel-padding)] py-3">
         <h2 className="text-xl font-semibold">Cart</h2>
         <p className="text-sm text-muted-foreground">
           {lines.reduce((n, l) => n + l.quantity, 0)} items
         </p>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex-1 space-y-[var(--pos-density-gap)] overflow-y-auto p-[var(--pos-panel-padding)]">
         {lines.length === 0 ? (
           <p className="text-sm text-muted-foreground">Cart is empty. Add items from the catalog.</p>
         ) : null}
         {lines.map((line) => {
           const key = cartLineKey(line);
           return (
-            <div key={key} className="rounded-lg border p-3">
+            <div key={key} className="rounded-[var(--pos-radius)] border bg-background/60 p-[var(--pos-panel-padding)]">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">{line.name}</p>
@@ -97,7 +97,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-10 shrink-0"
+                  className="h-10 shrink-0 rounded-[var(--pos-radius)]"
                   disabled={syncing || (line.stockLevel !== null && line.stockLevel !== undefined && line.quantity >= line.stockLevel)}
                   onClick={() => removeLine(key)}
                 >
@@ -108,7 +108,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 w-11 text-lg"
+                  className="h-[var(--pos-button-height)] w-[var(--pos-button-height)] rounded-[var(--pos-radius)] text-lg"
                   disabled={syncing}
                   onClick={() => updateQuantity(key, line.quantity - 1)}
                 >
@@ -118,7 +118,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 w-11 text-lg"
+                  className="h-[var(--pos-button-height)] w-[var(--pos-button-height)] rounded-[var(--pos-radius)] text-lg"
                   disabled={syncing}
                   onClick={() => updateQuantity(key, line.quantity + 1)}
                 >
@@ -145,20 +145,20 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
       </div>
 
       {noteLineKey ? (
-        <div className="space-y-2 border-t p-4">
+        <div className="space-y-2 border-t p-[var(--pos-panel-padding)]">
           <Input
             placeholder="Line note"
             value={noteDraft}
             onChange={(e) => setNoteDraft(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button type="button" className="h-11 flex-1" onClick={saveNotes} disabled={syncing}>
+            <Button type="button" className="h-[var(--pos-button-height)] flex-1 rounded-[var(--pos-radius)]" onClick={saveNotes} disabled={syncing}>
               Save note
             </Button>
             <Button
               type="button"
               variant="outline"
-              className="h-11"
+              className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]"
               onClick={() => setNoteLineKey(null)}
             >
               Cancel
@@ -167,9 +167,10 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
         </div>
       ) : null}
 
-      <div className="space-y-3 border-t p-4">
+      <div className="space-y-3 border-t p-[var(--pos-panel-padding)]">
         <div className="grid grid-cols-2 gap-2">
           <Input
+            className="rounded-[var(--pos-radius)]"
             type="number"
             min={0}
             max={100}
@@ -178,6 +179,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
             onChange={(e) => setDiscountPercent(Number(e.target.value) || 0)}
           />
           <Input
+            className="rounded-[var(--pos-radius)]"
             type="number"
             min={0}
             step="0.01"
@@ -192,7 +194,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
             <span>{formatCurrency(totals.subtotal)}</span>
           </div>
           {totals.discount > 0 ? (
-            <div className="flex justify-between text-emerald-700">
+            <div className="flex justify-between text-primary">
               <span>Discount</span>
               <span>−{formatCurrency(totals.discount)}</span>
             </div>
@@ -211,7 +213,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <Button
           type="button"
-          className="h-12 w-full text-base"
+          className="h-[var(--pos-button-height)] w-full rounded-[var(--pos-radius)] text-base"
           disabled={syncing || lines.length === 0}
           onClick={onCheckout}
         >
@@ -220,7 +222,7 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
         <Button
           type="button"
           variant="outline"
-          className="h-11 w-full"
+          className="h-[var(--pos-button-height)] w-full rounded-[var(--pos-radius)]"
           disabled={syncing || lines.length === 0}
           onClick={clearCart}
         >

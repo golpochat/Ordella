@@ -74,18 +74,26 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
-      <Card>
+    <div className="mx-auto max-w-[var(--storefront-container)] space-y-6 px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
+      <Card className="overflow-hidden rounded-[var(--storefront-radius)]">
+        <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="bg-muted/40 p-[var(--storefront-card-padding)]">
+            {product.imageUrl ? (
+              <img src={product.imageUrl} alt="" className="aspect-square w-full rounded-[var(--storefront-radius)] object-cover" />
+            ) : (
+              <div className="flex aspect-square w-full items-center justify-center rounded-[var(--storefront-radius)] bg-muted text-muted-foreground">
+                Product image
+              </div>
+            )}
+          </div>
+          <div>
         <CardHeader>
-          <CardTitle className="text-2xl">{product.name}</CardTitle>
+          <CardTitle className="text-3xl">{product.name}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {product.imageUrl ? (
-            <p className="text-sm text-muted-foreground">Image: {product.imageUrl}</p>
-          ) : null}
           {product.description ? <p className="text-muted-foreground">{product.description}</p> : null}
           {product.sku ? <p className="text-sm text-muted-foreground">SKU {product.sku}</p> : null}
-          <p className="text-xl font-semibold">{formatCurrency(displayPrice)}</p>
+          <p className="text-2xl font-semibold text-primary">{formatCurrency(displayPrice)}</p>
           <p className="text-xs text-muted-foreground">Tax is calculated at checkout based on fulfillment location.</p>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
           {product.inventoryTrackingEnabled &&
@@ -107,6 +115,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
                     key={variant.id}
                     type="button"
                     variant={selectedVariantId === variant.id ? 'default' : 'outline'}
+                    className="rounded-[var(--storefront-radius)]"
                     onClick={() => setSelectedVariantId(variant.id)}
                   >
                     {variant.name}
@@ -120,7 +129,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
           ) : null}
 
           {product.modifiers.map((modifier) => (
-            <div key={modifier.id} className="space-y-2 rounded-md border p-3">
+            <div key={modifier.id} className="space-y-2 rounded-[var(--storefront-radius)] border p-[var(--storefront-card-padding)]">
               <p className="font-medium">
                 {modifier.name}
                 {modifier.required ? <span className="text-destructive"> *</span> : null}
@@ -133,7 +142,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
                       key={option.id}
                       type="button"
                       variant={active ? 'default' : 'outline'}
-                      className="h-11"
+                      className="h-11 rounded-[var(--storefront-radius)]"
                       onClick={() => toggleOption(option.id, modifier.id, modifier.type !== 'single')}
                     >
                       {option.name}
@@ -145,12 +154,13 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
             </div>
           ))}
 
-          <div className="space-y-2 rounded-md border p-3">
+          <div className="space-y-2 rounded-[var(--storefront-radius)] border p-[var(--storefront-card-padding)]">
             <p className="font-medium">Subscribe & Save</p>
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant={purchaseType === 'one_time' ? 'default' : 'outline'}
+                className="rounded-[var(--storefront-radius)]"
                 onClick={() => setPurchaseType('one_time')}
               >
                 One-time purchase
@@ -158,6 +168,7 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
               <Button
                 type="button"
                 variant={purchaseType === 'subscription' ? 'default' : 'outline'}
+                className="rounded-[var(--storefront-radius)]"
                 onClick={() => setPurchaseType('subscription')}
               >
                 Subscribe
@@ -165,13 +176,13 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
             </div>
             {purchaseType === 'subscription' ? (
               <div className="grid gap-2 sm:grid-cols-3">
-                <Button type="button" variant={subscriptionSchedule === 'weekly' ? 'default' : 'outline'} onClick={() => setSubscriptionSchedule('weekly')}>
+                <Button type="button" variant={subscriptionSchedule === 'weekly' ? 'default' : 'outline'} className="rounded-[var(--storefront-radius)]" onClick={() => setSubscriptionSchedule('weekly')}>
                   Weekly
                 </Button>
-                <Button type="button" variant={subscriptionSchedule === 'biweekly' ? 'default' : 'outline'} onClick={() => setSubscriptionSchedule('biweekly')}>
+                <Button type="button" variant={subscriptionSchedule === 'biweekly' ? 'default' : 'outline'} className="rounded-[var(--storefront-radius)]" onClick={() => setSubscriptionSchedule('biweekly')}>
                   Every 2 weeks
                 </Button>
-                <Button type="button" variant={subscriptionSchedule === 'monthly' ? 'default' : 'outline'} onClick={() => setSubscriptionSchedule('monthly')}>
+                <Button type="button" variant={subscriptionSchedule === 'monthly' ? 'default' : 'outline'} className="rounded-[var(--storefront-radius)]" onClick={() => setSubscriptionSchedule('monthly')}>
                   Monthly
                 </Button>
               </div>
@@ -179,10 +190,12 @@ export function ProductDetail({ product }: { product: OnlineProduct }) {
           </div>
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="button" className="h-12 w-full text-base" disabled={!canAdd} onClick={onAdd}>
+          <Button type="button" className="h-12 w-full rounded-[var(--storefront-radius)] text-base" disabled={!canAdd} onClick={onAdd}>
             {purchaseType === 'subscription' ? 'Add subscription to cart' : 'Add to cart'}
           </Button>
         </CardContent>
+          </div>
+        </div>
       </Card>
       <RecommendationSection
         title="Frequently bought together"

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@shared-ui';
-import { createApiClient, DEFAULT_THEME, type TenantTheme } from '@shared-utils';
+import { createApiClient, DEFAULT_THEME, type PosTheme, type TenantTheme } from '@shared-utils';
 import { cacheTheme, fetchThemeByTenantId, getThemeFromCache } from '@shared-utils';
 function getApiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
@@ -20,6 +20,30 @@ function getTenantId(): string {
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   return window.localStorage.getItem('ordella.accessToken');
+}
+
+function toPosTheme(theme: TenantTheme): TenantTheme {
+  const posTheme = (theme.posTheme ?? DEFAULT_THEME.posTheme) as PosTheme | undefined;
+  if (!posTheme) return theme;
+
+  return {
+    ...theme,
+    preset: posTheme.mode,
+    colors: {
+      ...theme.colors,
+      primary: posTheme.primaryColor,
+      accent: posTheme.accentColor,
+      background: posTheme.backgroundColor,
+      surface: posTheme.surfaceColor,
+      text: posTheme.textColor,
+    },
+    typography: {
+      ...theme.typography,
+      headingFont: posTheme.headingFont,
+      bodyFont: posTheme.bodyFont,
+    },
+    logoUrl: posTheme.logoUrl ?? theme.logoUrl,
+  };
 }
 
 export function ThemeRoot({ children }: ThemeRootProps) {
@@ -46,5 +70,5 @@ export function ThemeRoot({ children }: ThemeRootProps) {
       .catch(() => undefined);
   }, []);
 
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+  return <ThemeProvider theme={toPosTheme(theme)}>{children}</ThemeProvider>;
 }

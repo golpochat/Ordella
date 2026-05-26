@@ -128,6 +128,7 @@ export const SETTINGS_TABS = [
   { id: 'enterprise-sso', label: 'Enterprise SSO' },
   { id: 'payment', label: 'Payment' },
   { id: 'pos', label: 'POS' },
+  { id: 'pos-theme', label: 'POS Theme' },
   { id: 'tax-compliance', label: 'Tax & Compliance' },
   { id: 'fulfillment', label: 'Fulfillment display' },
 ] as const;

@@ -96,21 +96,21 @@ export function RecommendationSection({
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="text-sm text-muted-foreground">Helpful add-ons selected from similar baskets and catalog trends.</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-[var(--theme-spacing)] sm:grid-cols-2">
         {items.map((recommendation) => {
           const product = recommendation.item;
           const hasOptions = product.variants.length > 0 || product.modifiers.length > 0;
           const orderable = isProductOrderable(product);
           return (
-            <Card key={product.id}>
-              <CardContent className="space-y-3 p-4">
+            <Card key={product.id} className="rounded-[var(--storefront-radius)]">
+              <CardContent className="space-y-3 p-[var(--storefront-card-padding)]">
                 <div>
                   <p className="font-medium">{product.name}</p>
                   <p className="text-xs text-muted-foreground">{reasonLabel(recommendation.reason)}</p>
-                  <p className="text-sm">{formatCurrency(product.price)}</p>
+                  <p className="text-sm font-semibold text-primary">{formatCurrency(product.price)}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button asChild variant="outline" className="h-10 flex-1">
+                  <Button asChild variant="outline" className="h-10 flex-1 rounded-[var(--storefront-radius)]">
                     <Link
                       href={`/product/${product.id}`}
                       onClick={() =>
@@ -126,13 +126,13 @@ export function RecommendationSection({
                     </Link>
                   </Button>
                   {hasOptions ? (
-                    <Button asChild className="h-10 flex-1">
+                    <Button asChild className="h-10 flex-1 rounded-[var(--storefront-radius)]">
                       <Link href={`/product/${product.id}`}>Customize</Link>
                     </Button>
                   ) : (
                     <Button
                       type="button"
-                      className="h-10 flex-1"
+                      className="h-10 flex-1 rounded-[var(--storefront-radius)]"
                       disabled={!orderable}
                       onClick={() => {
                         addItem(product);

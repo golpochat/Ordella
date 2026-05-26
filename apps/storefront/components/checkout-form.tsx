@@ -343,9 +343,9 @@ export function CheckoutForm() {
 
   if (lines.length === 0) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-12 text-center">
+      <div className="mx-auto max-w-xl px-[var(--theme-spacing)] py-[var(--storefront-section-padding)] text-center">
         <p className="text-muted-foreground">Your cart is empty.</p>
-        <Button asChild className="mt-4 h-12">
+        <Button asChild className="mt-4 h-12 rounded-[var(--storefront-radius)]">
           <Link href="/catalog">Browse catalog</Link>
         </Button>
       </div>
@@ -353,13 +353,13 @@ export function CheckoutForm() {
   }
 
   return (
-    <form className="mx-auto grid max-w-5xl gap-6 px-4 py-6 lg:grid-cols-5" onSubmit={onSubmit}>
+    <form className="mx-auto grid max-w-[var(--storefront-container)] gap-[var(--theme-spacing)] px-[var(--theme-spacing)] py-[var(--storefront-section-padding)] lg:grid-cols-5" onSubmit={onSubmit}>
       <div className="space-y-4 lg:col-span-3">
-        <Card>
+        <Card className="rounded-[var(--storefront-radius)]">
           <CardHeader>
             <CardTitle>Customer details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 p-[var(--storefront-card-padding)]">
             <Input placeholder="Name *" required value={name} onChange={(e) => setName(e.target.value)} />
             <Input placeholder="Phone *" required value={phone} onChange={(e) => setPhone(e.target.value)} />
             <Input
@@ -379,7 +379,7 @@ export function CheckoutForm() {
               onChange={(e) => setCouponCode(e.target.value)}
             />
             {loyaltyCustomer && loyaltySettings?.isEnabled ? (
-              <div className="rounded-md border p-3 text-sm">
+              <div className="rounded-[var(--storefront-radius)] border p-[var(--storefront-card-padding)] text-sm">
                 <p className="font-medium">Rewards available</p>
                 <p className="text-muted-foreground">{loyaltyCustomer.pointsBalance} points available</p>
                 <p className="text-muted-foreground">Store credit: {formatCurrency(loyaltyCustomer.storeCreditBalance)}</p>
@@ -402,7 +402,7 @@ export function CheckoutForm() {
                 ) : null}
               </div>
             ) : null}
-            <div className="rounded-md border p-3 text-sm">
+            <div className="rounded-[var(--storefront-radius)] border p-[var(--storefront-card-padding)] text-sm">
               <p className="font-medium">Gift card</p>
               <Input
                 className="mt-2"
@@ -432,16 +432,16 @@ export function CheckoutForm() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-[var(--storefront-radius)]">
           <CardHeader>
             <CardTitle>Order type</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 p-[var(--storefront-card-padding)]">
             <Tabs
               value={orderType}
               onValueChange={(v) => setOrderType(v as typeof orderType)}
             >
-              <TabsList className="grid h-12 grid-cols-3">
+              <TabsList className="grid h-12 grid-cols-3 rounded-[var(--storefront-radius)]">
                 <TabsTrigger value="pickup">Pickup</TabsTrigger>
                 <TabsTrigger value="delivery">Delivery</TabsTrigger>
                 <TabsTrigger value="in_store">In-store</TabsTrigger>
@@ -454,7 +454,7 @@ export function CheckoutForm() {
                     </label>
                     <select
                       id="saved-address"
-                      className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      className="h-11 w-full rounded-[var(--storefront-radius)] border border-input bg-background px-3 text-sm"
                       value={selectedAddressId}
                       onChange={(event) => {
                         const address = savedAddresses.find((item) => item.id === event.target.value);
@@ -496,13 +496,13 @@ export function CheckoutForm() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-[var(--storefront-radius)]">
           <CardHeader>
             <CardTitle>Payment</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-[var(--storefront-card-padding)]">
             {hasSubscriptionLines ? (
-              <p className="mb-3 rounded-md border p-3 text-sm text-muted-foreground">
+              <p className="mb-3 rounded-[var(--storefront-radius)] border p-3 text-sm text-muted-foreground">
                 Subscription checkout saves a card for future recurring orders.
               </p>
             ) : null}
@@ -510,7 +510,7 @@ export function CheckoutForm() {
               value={paymentMethod}
               onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)}
             >
-              <TabsList className="grid h-12 grid-cols-2">
+              <TabsList className="grid h-12 grid-cols-2 rounded-[var(--storefront-radius)]">
                 <TabsTrigger value="cash">Cash</TabsTrigger>
                 <TabsTrigger value="card">Card</TabsTrigger>
               </TabsList>
@@ -525,12 +525,12 @@ export function CheckoutForm() {
         </Card>
       </div>
 
-      <Card className="h-fit lg:col-span-2">
+      <Card className="h-fit rounded-[var(--storefront-radius)] lg:sticky lg:top-24 lg:col-span-2">
         <CardHeader>
           <CardTitle>Order summary</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+        <CardContent className="space-y-4 p-[var(--storefront-card-padding)]">
+          <p className="rounded-[var(--storefront-radius)] bg-muted p-3 text-sm text-muted-foreground">
             {routingLoading
               ? 'Checking delivery availability…'
               : routingQuote?.canFulfill
@@ -588,7 +588,7 @@ export function CheckoutForm() {
             limit={3}
           />
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="submit" className="h-12 w-full text-base" disabled={loading}>
+          <Button type="submit" className="h-12 w-full rounded-[var(--storefront-radius)] text-base" disabled={loading}>
             {loading
               ? paymentMethod === 'card'
                 ? 'Redirecting to payment…'
@@ -599,7 +599,7 @@ export function CheckoutForm() {
                 ? 'Pay with card'
                 : 'Place order'}
           </Button>
-          <Button asChild type="button" variant="outline" className="h-11 w-full">
+          <Button asChild type="button" variant="outline" className="h-11 w-full rounded-[var(--storefront-radius)]">
             <Link href="/cart">Back to cart</Link>
           </Button>
         </CardContent>

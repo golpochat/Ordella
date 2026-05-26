@@ -99,6 +99,7 @@ export function StorefrontThemePanel() {
       const updated = await updateStorefrontTheme({
         name: patch.name ?? theme.name,
         baseTheme: patch.baseTheme ?? theme.baseTheme,
+        preset: patch.preset ?? theme.preset,
         colors: { ...theme.colors, ...(patch.colors ?? {}) },
         typography: { ...theme.typography, ...(patch.typography ?? {}) },
         layout: { ...(theme.layout ?? {}), ...(patch.layout ?? {}) },
@@ -202,6 +203,18 @@ export function StorefrontThemePanel() {
                     ))}
                   </select>
                 </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Mode</label>
+                  <select
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    value={theme.preset}
+                    onChange={(e) => void save({ preset: e.target.value as TenantTheme['preset'] })}
+                  >
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {COLOR_KEYS.map((key) => (
@@ -256,6 +269,8 @@ export function StorefrontThemePanel() {
                 ['spacingScale', 'Spacing scale', ['compact', 'comfortable', 'spacious']],
                 ['buttonStyle', 'Button style', ['rounded', 'square', 'pill']],
                 ['headerLayout', 'Header layout', ['left-aligned', 'centered']],
+                ['cornerRadius', 'Corner radius', ['none', 'sm', 'md', 'lg', 'xl']],
+                ['layoutStyle', 'Layout style', ['classic', 'modern', 'editorial']],
               ].map(([key, label, options]) => (
                 <div key={key as string} className="space-y-1">
                   <label className="text-sm font-medium">{label as string}</label>

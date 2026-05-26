@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { DARK_THEME_OVERRIDES, DEFAULT_THEME } from './default-theme';
-import type { BaseTheme, HomepageSection, TenantTheme, ThemePreset } from './types';
+import type { BaseTheme, HomepageSection, PosTheme, TenantTheme, ThemePreset } from './types';
 
 const themePresetSchema = z.enum(['light', 'dark', 'custom']);
 const baseThemeSchema = z.enum(['default', 'modern', 'minimal', 'bold']);
@@ -48,6 +48,24 @@ const tenantThemeSchema = z.object({
       spacingScale: z.enum(['compact', 'comfortable', 'spacious']).optional(),
       buttonStyle: z.enum(['rounded', 'square', 'pill']).optional(),
       headerLayout: z.enum(['centered', 'left-aligned']).optional(),
+      cornerRadius: z.enum(['none', 'sm', 'md', 'lg', 'xl']).optional(),
+      layoutStyle: z.enum(['classic', 'modern', 'editorial']).optional(),
+    })
+    .optional(),
+  posTheme: z
+    .object({
+      mode: z.enum(['light', 'dark']).optional(),
+      primaryColor: z.string().optional(),
+      accentColor: z.string().optional(),
+      backgroundColor: z.string().optional(),
+      surfaceColor: z.string().optional(),
+      textColor: z.string().optional(),
+      headingFont: z.string().optional(),
+      bodyFont: z.string().optional(),
+      density: z.enum(['compact', 'comfortable', 'spacious']).optional(),
+      buttonSize: z.enum(['sm', 'md', 'lg']).optional(),
+      cornerRadius: z.enum(['none', 'sm', 'md', 'lg', 'xl']).optional(),
+      logoUrl: z.string().nullable().optional(),
     })
     .optional(),
   homepageSections: z.array(homepageSectionSchema).optional(),
@@ -83,6 +101,7 @@ export function mergeTheme(base: TenantTheme, override?: Partial<TenantTheme> | 
     colors: { ...base.colors, ...(override.colors ?? {}) },
     typography: { ...base.typography, ...(override.typography ?? {}) },
     layout: { ...(base.layout ?? {}), ...(override.layout ?? {}) },
+    posTheme: { ...(base.posTheme ?? DEFAULT_THEME.posTheme), ...(override.posTheme ?? {}) } as PosTheme,
     homepageSections: override.homepageSections ?? base.homepageSections,
     assets: { ...(base.assets ?? {}), ...(override.assets ?? {}) },
     seo: { ...(base.seo ?? {}), ...(override.seo ?? {}) },
@@ -133,6 +152,22 @@ export function getTheme(tenantId: string, raw?: unknown): TenantTheme {
           }
         : undefined,
       layout: override.layout,
+      posTheme: override.posTheme
+        ? {
+            mode: override.posTheme.mode ?? DEFAULT_THEME.posTheme!.mode,
+            primaryColor: override.posTheme.primaryColor ?? override.colors?.primary ?? DEFAULT_THEME.posTheme!.primaryColor,
+            accentColor: override.posTheme.accentColor ?? override.colors?.accent ?? DEFAULT_THEME.posTheme!.accentColor,
+            backgroundColor: override.posTheme.backgroundColor ?? DEFAULT_THEME.posTheme!.backgroundColor,
+            surfaceColor: override.posTheme.surfaceColor ?? DEFAULT_THEME.posTheme!.surfaceColor,
+            textColor: override.posTheme.textColor ?? DEFAULT_THEME.posTheme!.textColor,
+            headingFont: override.posTheme.headingFont ?? DEFAULT_THEME.posTheme!.headingFont,
+            bodyFont: override.posTheme.bodyFont ?? DEFAULT_THEME.posTheme!.bodyFont,
+            density: override.posTheme.density ?? DEFAULT_THEME.posTheme!.density,
+            buttonSize: override.posTheme.buttonSize ?? DEFAULT_THEME.posTheme!.buttonSize,
+            cornerRadius: override.posTheme.cornerRadius ?? DEFAULT_THEME.posTheme!.cornerRadius,
+            logoUrl: override.posTheme.logoUrl ?? override.logoUrl ?? override.assets?.logo ?? null,
+          }
+        : undefined,
       homepageSections: override.homepageSections as HomepageSection[] | undefined,
       assets: override.assets,
       seo: override.seo,

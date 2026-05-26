@@ -418,20 +418,20 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent className="max-w-lg">
+      <ModalContent className="max-h-[90dvh] max-w-2xl overflow-y-auto rounded-[var(--pos-radius)]">
         <ModalHeader>
           <ModalTitle>Checkout</ModalTitle>
         </ModalHeader>
-        <div className="space-y-4 py-2">
+        <div className="space-y-[var(--pos-density-gap)] py-2">
           <div>
             <p className="mb-2 text-sm font-medium">Order type</p>
-            <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-1">
+            <div className="grid grid-cols-3 gap-2 rounded-[var(--pos-radius)] bg-muted p-1">
               {ORDER_TYPE_OPTIONS.map((option) => (
                 <Button
                   key={option.value}
                   type="button"
                   variant={orderType === option.value ? 'default' : 'ghost'}
-                  className="h-10"
+                  className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]"
                   aria-pressed={orderType === option.value}
                   onClick={() => setOrderType(option.value)}
                 >
@@ -443,13 +443,13 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
 
           <div>
             <p className="mb-2 text-sm font-medium">Payment</p>
-            <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-1">
+            <div className="grid grid-cols-3 gap-2 rounded-[var(--pos-radius)] bg-muted p-1">
               {PAYMENT_METHOD_OPTIONS.map((option) => (
                 <Button
                   key={option.value}
                   type="button"
                   variant={paymentMethod === option.value ? 'default' : 'ghost'}
-                  className="h-10"
+                  className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]"
                   aria-pressed={paymentMethod === option.value}
                   onClick={() => setPaymentMethod(option.value)}
                 >
@@ -476,7 +476,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
             onChange={(e) => setCustomerEmail(e.target.value)}
           />
           {selectedCustomer ? (
-            <div className="rounded-md border p-3 text-sm">
+            <div className="rounded-[var(--pos-radius)] border p-[var(--pos-panel-padding)] text-sm">
               <p className="font-medium">{selectedCustomer.name}</p>
               <p className="text-muted-foreground">{selectedCustomer.pointsBalance} points available</p>
               <p className="text-muted-foreground">Store credit: {selectedCustomer.storeCreditBalance}</p>
@@ -502,7 +502,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
                 value={customerNotes}
                 onChange={(e) => setCustomerNotes(e.target.value)}
               />
-              <Button type="button" variant="outline" className="mt-2" onClick={() => void saveCustomerCrm()}>
+              <Button type="button" variant="outline" className="mt-2 h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" onClick={() => void saveCustomerCrm()}>
                 Save customer CRM
               </Button>
               {customerOrders.length ? (
@@ -531,7 +531,7 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
               />
             </div>
           ) : null}
-          <div className="rounded-md border p-3 text-sm">
+          <div className="rounded-[var(--pos-radius)] border p-[var(--pos-panel-padding)] text-sm">
             <p className="font-medium">Gift card</p>
             <Input
               className="mt-2"
@@ -566,17 +566,17 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
           <PosRecommendationsPanel customerId={selectedCustomer?.id} />
 
           {!online ? (
-            <p className="text-sm text-amber-700">
+            <p className="rounded-[var(--pos-radius)] bg-muted p-3 text-sm text-muted-foreground">
               You are offline. This sale will be queued until connectivity returns.
             </p>
           ) : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
         <ModalFooter>
-          <Button type="button" variant="outline" className="h-11" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" className="h-11" disabled={loading} onClick={confirm}>
+          <Button type="button" className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" disabled={loading} onClick={confirm}>
             {loading ? 'Processing…' : 'Confirm order'}
           </Button>
         </ModalFooter>

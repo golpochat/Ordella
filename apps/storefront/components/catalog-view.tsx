@@ -11,9 +11,9 @@ import { useBasketStore } from '@/stores/basket-store';
 
 type SortKey = 'name' | 'price-asc' | 'price-desc';
 
-export function CatalogView({ menu }: { menu: OnlineMenu }) {
+export function CatalogView({ menu, initialCategoryId }: { menu: OnlineMenu; initialCategoryId?: string }) {
   const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('category') ?? 'all';
+  const initialCategory = initialCategoryId ?? searchParams.get('category') ?? 'all';
   const addItem = useBasketStore((s) => s.addItem);
   const error = useBasketStore((s) => s.error);
 
@@ -110,14 +110,18 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
   }, [menu.products, search]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <h1 className="mb-4 text-3xl font-bold">Catalog</h1>
+    <div className="mx-auto max-w-[var(--storefront-container)] px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
+      <div className="mb-6 rounded-[var(--storefront-radius)] bg-muted/50 p-[var(--storefront-card-padding)]">
+        <p className="text-sm font-medium uppercase tracking-wide text-primary">Shop the catalog</p>
+        <h1 className="mt-1 text-3xl font-bold sm:text-4xl">Find your next order</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Search products, scan a SKU, or browse by category.</p>
+      </div>
       {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
       {searchMessage ? <p className="mb-4 text-sm text-muted-foreground">{searchMessage}</p> : null}
 
-      <div className="mb-6 flex flex-col gap-3 lg:flex-row">
+      <div className="mb-6 grid gap-[var(--theme-spacing)] rounded-[var(--storefront-radius)] border bg-card p-[var(--storefront-card-padding)] lg:grid-cols-[1fr_auto_auto_auto_auto_auto]">
         <Input
-          className="h-12 flex-1 text-base"
+          className="h-12 rounded-[var(--storefront-radius)] text-base"
           placeholder="Search name, SKU, or scan barcode…"
           value={search}
           onChange={(e) => {
@@ -127,7 +131,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
           onKeyDown={onSearchKeyDown}
         />
         <Input
-          className="h-12 lg:w-28"
+          className="h-12 rounded-[var(--storefront-radius)] lg:w-28"
           type="number"
           min={0}
           placeholder="Min price"
@@ -135,7 +139,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
           onChange={(e) => setPriceMin(e.target.value)}
         />
         <Input
-          className="h-12 lg:w-28"
+          className="h-12 rounded-[var(--storefront-radius)] lg:w-28"
           type="number"
           min={0}
           placeholder="Max price"
@@ -143,7 +147,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
           onChange={(e) => setPriceMax(e.target.value)}
         />
         <select
-          className="h-12 rounded-md border bg-background px-3 text-sm"
+          className="h-12 rounded-[var(--storefront-radius)] border bg-background px-3 text-sm"
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
           aria-label="Sort items"
@@ -152,7 +156,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
           <option value="price-asc">Price: Low to high</option>
           <option value="price-desc">Price: High to low</option>
         </select>
-        <label className="flex h-12 items-center gap-2 rounded-md border px-3 text-sm">
+        <label className="flex h-12 items-center gap-2 rounded-[var(--storefront-radius)] border px-3 text-sm">
           <input
             type="checkbox"
             checked={inStockOnly}
@@ -160,29 +164,29 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
           />
           In stock only
         </label>
-        <Button type="button" variant="outline" className="h-12" disabled={!search.trim()} onClick={() => void runSemanticSearch()}>
+        <Button type="button" variant="outline" className="h-12 rounded-[var(--storefront-radius)]" disabled={!search.trim()} onClick={() => void runSemanticSearch()}>
           AI search
         </Button>
       </div>
       <div className="mb-4 flex flex-wrap gap-2">
         {['vegan options', 'breakfast products', 'cheap items under 10', 'best sellers'].map((term) => (
-          <Button key={term} type="button" size="sm" variant="outline" onClick={() => setSearch(term)}>
+          <Button key={term} type="button" size="sm" variant="outline" className="rounded-[var(--storefront-radius)]" onClick={() => setSearch(term)}>
             {term}
           </Button>
         ))}
         {predictions.map((product) => (
-          <Button key={product.id} type="button" size="sm" variant="ghost" onClick={() => setSearch(product.name)}>
+          <Button key={product.id} type="button" size="sm" variant="ghost" className="rounded-[var(--storefront-radius)]" onClick={() => setSearch(product.name)}>
             {product.name}
           </Button>
         ))}
       </div>
 
-      <div className="flex min-h-[50vh] gap-4">
-        <aside className="hidden w-44 shrink-0 space-y-1 md:block">
+      <div className="flex min-h-[50vh] gap-[var(--theme-spacing)]">
+        <aside className="hidden w-52 shrink-0 space-y-1 md:block">
           <Button
             type="button"
             variant={categoryId === 'all' ? 'default' : 'ghost'}
-            className="h-11 w-full justify-start"
+            className="h-11 w-full justify-start rounded-[var(--storefront-radius)]"
             onClick={() => setCategoryId('all')}
           >
             All
@@ -192,7 +196,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
               key={category.id}
               type="button"
               variant={categoryId === category.id ? 'default' : 'ghost'}
-              className="h-11 w-full justify-start text-left"
+              className="h-11 w-full justify-start rounded-[var(--storefront-radius)] text-left"
               onClick={() => setCategoryId(category.id)}
             >
               {category.name}
@@ -206,6 +210,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
               type="button"
               size="sm"
               variant={categoryId === 'all' ? 'default' : 'outline'}
+              className="rounded-[var(--storefront-radius)]"
               onClick={() => setCategoryId('all')}
             >
               All
@@ -216,6 +221,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
                 type="button"
                 size="sm"
                 variant={categoryId === category.id ? 'default' : 'outline'}
+                className="rounded-[var(--storefront-radius)]"
                 onClick={() => setCategoryId(category.id)}
               >
                 {category.name}
@@ -223,7 +229,7 @@ export function CatalogView({ menu }: { menu: OnlineMenu }) {
             ))}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-[var(--theme-spacing)] sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product) => (
               <CatalogItemCard key={product.id} product={product} onAdd={addItem} />
             ))}
@@ -250,10 +256,10 @@ function CatalogItemCard({
   const isBundle = product.itemType === 'bundle';
 
   return (
-    <Card className={!orderable ? 'opacity-80' : undefined}>
-      <CardContent className="space-y-3 p-4">
+    <Card className={`overflow-hidden rounded-[var(--storefront-radius)] transition-shadow hover:shadow-md ${!orderable ? 'opacity-80' : ''}`}>
+      <CardContent className="space-y-3 p-[var(--storefront-card-padding)]">
         {product.imageUrl ? (
-          <div className="aspect-video w-full overflow-hidden rounded-md bg-muted">
+          <div className="aspect-video w-full overflow-hidden rounded-[var(--storefront-radius)] bg-muted">
             <img
               src={product.imageUrl}
               alt=""
@@ -276,17 +282,17 @@ function CatalogItemCard({
           ) : null}
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-semibold">{formatCurrency(product.price)} <span className="text-xs font-normal text-muted-foreground">tax calculated at checkout</span></span>
+          <span className="font-semibold text-primary">{formatCurrency(product.price)} <span className="text-xs font-normal text-muted-foreground">tax calculated at checkout</span></span>
           {!orderable ? <Badge variant="secondary">Out of stock</Badge> : null}
         </div>
         <p className="text-xs text-muted-foreground">Eligible delivery orders may be fulfilled by a dark store.</p>
         <div className="flex gap-2">
-          <Button asChild variant="outline" className="h-11 flex-1">
+          <Button asChild variant="outline" className="h-11 flex-1 rounded-[var(--storefront-radius)]">
             <Link href={isBundle ? `/bundle/${product.id}` : `/product/${product.id}`}>Details</Link>
           </Button>
           <Button
             type="button"
-            className="h-11 flex-1"
+            className="h-11 flex-1 rounded-[var(--storefront-radius)]"
             disabled={!orderable}
             onClick={() =>
               hasOptions

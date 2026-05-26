@@ -24,6 +24,23 @@ export type ThemeLayout = {
   spacingScale?: 'compact' | 'comfortable' | 'spacious';
   buttonStyle?: 'rounded' | 'square' | 'pill';
   headerLayout?: 'centered' | 'left-aligned';
+  cornerRadius?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  layoutStyle?: 'classic' | 'modern' | 'editorial';
+};
+
+export type PosTheme = {
+  mode: 'light' | 'dark';
+  primaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  surfaceColor: string;
+  textColor: string;
+  headingFont: string;
+  bodyFont: string;
+  density: 'compact' | 'comfortable' | 'spacious';
+  buttonSize: 'sm' | 'md' | 'lg';
+  cornerRadius: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  logoUrl?: string | null;
 };
 
 export type HomepageSection = {
@@ -54,6 +71,7 @@ export type TenantTheme = {
   colors: ThemeColors;
   typography: ThemeTypography;
   layout?: ThemeLayout;
+  posTheme?: PosTheme;
   homepageSections?: HomepageSection[];
   assets?: ThemeAssets;
   seo?: {

@@ -317,21 +317,21 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
   };
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-dvh flex-col bg-background text-foreground">
       <PosTopBar online={online} syncing={syncingOffline} pendingOrders={pendingOrders} />
       {!online ? (
-        <p className="bg-red-50 px-4 py-2 text-center text-sm font-medium text-red-800">
+        <p className="bg-destructive px-4 py-2 text-center text-sm font-medium text-destructive-foreground">
           You are offline — orders will sync automatically when connection returns.
         </p>
       ) : null}
       {syncMessage ? (
         <p className="bg-muted px-4 py-1 text-center text-sm text-muted-foreground">{syncMessage}</p>
       ) : null}
-      <div className="flex min-h-0 flex-1">
-        <section className="flex min-w-0 flex-1 flex-col">
-          <div className="flex flex-wrap items-center gap-2 border-b p-3">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <div className="flex flex-wrap items-center gap-[var(--pos-density-gap)] border-b bg-card p-[var(--pos-panel-padding)]">
             <Input
-              className="h-12 max-w-md flex-1 text-base"
+              className="h-[var(--pos-button-height)] min-w-64 max-w-md flex-1 rounded-[var(--pos-radius)] text-base"
               placeholder="Search name, SKU, or scan barcode…"
               value={search}
               onChange={(e) => {
@@ -341,7 +341,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               onKeyDown={onSearchKeyDown}
             />
             <Input
-              className="h-12 w-28"
+              className="h-[var(--pos-button-height)] w-28 rounded-[var(--pos-radius)]"
               type="number"
               min={0}
               placeholder="Min price"
@@ -349,14 +349,14 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               onChange={(e) => setPriceMin(e.target.value)}
             />
             <Input
-              className="h-12 w-28"
+              className="h-[var(--pos-button-height)] w-28 rounded-[var(--pos-radius)]"
               type="number"
               min={0}
               placeholder="Max price"
               value={priceMax}
               onChange={(e) => setPriceMax(e.target.value)}
             />
-            <label className="flex h-12 items-center gap-2 rounded-md border px-3 text-sm">
+            <label className="flex h-[var(--pos-button-height)] items-center gap-2 rounded-[var(--pos-radius)] border px-3 text-sm">
               <input
                 type="checkbox"
                 checked={inStockOnly}
@@ -364,19 +364,19 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               />
               In stock
             </label>
-            <Button type="button" variant="outline" className="h-12" disabled={!online || !search.trim()} onClick={() => void runSemanticSearch()}>
+            <Button type="button" variant="outline" className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" disabled={!online || !search.trim()} onClick={() => void runSemanticSearch()}>
               AI search
             </Button>
-            <Button type="button" variant="outline" className="h-12" onClick={() => void refreshCatalog()}>
+            <Button type="button" variant="outline" className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" onClick={() => void refreshCatalog()}>
               Refresh catalog
             </Button>
           </div>
 
-          <div className="flex min-h-0 flex-1">
-            <nav className="w-36 shrink-0 overflow-y-auto border-r p-2 md:w-44">
+          <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+            <nav className="flex shrink-0 gap-2 overflow-x-auto border-b p-2 lg:w-44 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r">
               <Button
                 type="button"
-                className="mb-2 h-12 w-full justify-start text-base"
+                className="h-[var(--pos-button-height)] shrink-0 justify-start rounded-[var(--pos-radius)] text-base lg:w-full"
                 variant={selectedCategory === 'all' ? 'default' : 'ghost'}
                 onClick={() => setSelectedCategory('all')}
               >
@@ -386,7 +386,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                 <Button
                   key={category.id}
                   type="button"
-                  className="mb-2 h-12 w-full justify-start text-base"
+                  className="h-[var(--pos-button-height)] shrink-0 justify-start rounded-[var(--pos-radius)] text-base lg:w-full"
                   variant={selectedCategory === category.id ? 'default' : 'ghost'}
                   onClick={() => setSelectedCategory(category.id)}
                 >
@@ -395,12 +395,12 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               ))}
             </nav>
 
-            <div className="min-w-0 flex-1 overflow-y-auto p-4">
+            <div className="min-w-0 flex-1 overflow-y-auto p-[var(--pos-panel-padding)]">
               <h2 className="mb-3 text-lg font-semibold">Catalog</h2>
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(var(--pos-grid-min),1fr))] gap-[var(--pos-density-gap)]">
                 {visibleItems.map((item) => (
-                  <Card key={item.id} className="min-h-32">
-                    <CardContent className="flex h-full flex-col justify-between p-4">
+                  <Card key={item.id} className="min-h-36 rounded-[var(--pos-radius)] transition-shadow hover:shadow-md">
+                    <CardContent className="flex h-full flex-col justify-between p-[var(--pos-panel-padding)]">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-lg font-semibold leading-tight">{item.name}</p>
@@ -410,7 +410,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                             </span>
                           ) : null}
                         </div>
-                        <p className="text-sm text-muted-foreground">{formatCurrency(item.price)}</p>
+                        <p className="mt-1 text-lg font-semibold text-primary">{formatCurrency(item.price)}</p>
                         {item.bundleItems?.length ? (
                           <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                             {item.bundleItems.map((bundleItem) => bundleItem.name).filter(Boolean).join(', ')}
@@ -420,12 +420,12 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                           <p className="mt-1 text-xs text-muted-foreground">SKU {item.sku}</p>
                         ) : null}
                         {isLowStock(item) ? (
-                          <p className="mt-1 text-xs font-medium text-amber-600">Low stock</p>
+                          <p className="mt-1 text-xs font-medium text-destructive">Low stock</p>
                         ) : null}
                       </div>
                       <Button
                         type="button"
-                        className="mt-3 h-12 text-base"
+                        className="mt-3 h-[var(--pos-button-height)] rounded-[var(--pos-radius)] text-base"
                         disabled={cartSyncing}
                         onClick={() => tapItem(item)}
                       >
@@ -442,7 +442,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
           </div>
         </section>
 
-        <div className="w-full max-w-md shrink-0">
+        <div className="min-h-0 w-full shrink-0 border-t lg:max-w-md lg:border-l lg:border-t-0 xl:max-w-lg">
           <PosCartSidebar onCheckout={() => setCheckoutOpen(true)} />
         </div>
       </div>
@@ -472,7 +472,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
             </div>
           ) : null}
           {pickerItem?.modifiers.map((modifier) => (
-            <div key={modifier.id} className="space-y-2 rounded-md border p-3">
+            <div key={modifier.id} className="space-y-2 rounded-[var(--pos-radius)] border p-[var(--pos-panel-padding)]">
               <p className="font-medium">
                 {modifier.name}
                 {modifier.required ? <span className="text-destructive"> *</span> : null}
@@ -494,7 +494,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               </div>
             </div>
           ))}
-          <Button type="button" className="h-12 w-full" disabled={!canAdd || cartSyncing} onClick={confirmAdd}>
+          <Button type="button" className="h-[var(--pos-button-height)] w-full rounded-[var(--pos-radius)]" disabled={!canAdd || cartSyncing} onClick={confirmAdd}>
             Add to cart
           </Button>
         </ModalContent>

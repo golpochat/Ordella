@@ -10,18 +10,22 @@ export function OrderTracking({ orderId }: { orderId: string }) {
   const { status, error } = useOrderTracking(orderId);
 
   if (error) {
-    return <p className="px-4 text-sm text-destructive">{error}</p>;
+    return <p className="px-[var(--theme-spacing)] text-sm text-destructive">{error}</p>;
   }
 
   if (!status) {
-    return <p className="px-4 text-muted-foreground">Loading order status…</p>;
+    return <p className="px-[var(--theme-spacing)] text-muted-foreground">Loading order status…</p>;
   }
 
   const label = labelOrderStatus(status.status);
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6">
-      <Card>
+    <div className="mx-auto max-w-xl px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
+      <Card className="overflow-hidden rounded-[var(--storefront-radius)]">
+        <div className="bg-primary px-[var(--storefront-card-padding)] py-4 text-primary-foreground">
+          <p className="text-sm opacity-80">Order tracking</p>
+          <h1 className="text-2xl font-bold">{status.orderNumber ?? status.orderId.slice(0, 8)}</h1>
+        </div>
         <CardHeader>
           <CardTitle>Order {status.orderNumber ?? status.orderId.slice(0, 8)}</CardTitle>
         </CardHeader>
@@ -39,7 +43,7 @@ export function OrderTracking({ orderId }: { orderId: string }) {
           </p>
           {status.routingReason ? <p className="text-muted-foreground">{status.routingReason}</p> : null}
           <p className="text-muted-foreground">Placed: {formatDateTime(status.createdAt)}</p>
-          <Button asChild variant="outline" className="mt-2 h-11 w-full">
+          <Button asChild variant="outline" className="mt-2 h-11 w-full rounded-[var(--storefront-radius)]">
             <a href={`/order/${orderId}`}>Refresh status</a>
           </Button>
         </CardContent>

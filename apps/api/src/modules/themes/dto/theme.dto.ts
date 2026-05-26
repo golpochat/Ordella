@@ -12,6 +12,10 @@ export class UpdateThemeDto {
   baseTheme?: BaseTheme;
 
   @IsOptional()
+  @IsIn(['light', 'dark', 'custom'])
+  preset?: 'light' | 'dark' | 'custom';
+
+  @IsOptional()
   @IsObject()
   colors?: Record<string, unknown>;
 
@@ -22,6 +26,10 @@ export class UpdateThemeDto {
   @IsOptional()
   @IsObject()
   layout?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  posTheme?: Record<string, unknown>;
 
   @IsOptional()
   homepageSections?: Array<Record<string, unknown>>;

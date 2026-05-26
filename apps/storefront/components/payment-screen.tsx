@@ -34,12 +34,12 @@ export function PaymentScreen({ sessionId }: { sessionId: string }) {
   };
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6">
-      <Card>
+    <div className="mx-auto max-w-xl px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
+      <Card className="rounded-[var(--storefront-radius)]">
         <CardHeader>
           <CardTitle>Payment</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 p-[var(--storefront-card-padding)]">
           {preview ? (
             <div className="space-y-1 text-sm">
               <p>Subtotal: {formatCurrency(preview.totals.subtotal)}</p>
@@ -49,11 +49,11 @@ export function PaymentScreen({ sessionId }: { sessionId: string }) {
               <p className="text-lg font-semibold">Total: {formatCurrency(preview.totals.grandTotal)}</p>
             </div>
           ) : null}
-          <Button className="h-12 w-full text-base" disabled={state === 'processing'} onClick={pay}>
+          <Button className="h-12 w-full rounded-[var(--storefront-radius)] text-base" disabled={state === 'processing'} onClick={pay}>
             {state === 'processing' ? 'Processing…' : 'Pay now'}
           </Button>
           {state === 'failed' ? <p className="text-sm text-destructive">{message}</p> : null}
-          <Button asChild variant="outline" className="h-12 w-full">
+          <Button asChild variant="outline" className="h-12 w-full rounded-[var(--storefront-radius)]">
             <Link href="/checkout">Back to checkout</Link>
           </Button>
         </CardContent>

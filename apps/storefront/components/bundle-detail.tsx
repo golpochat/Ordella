@@ -21,19 +21,19 @@ export function BundleDetail({ bundle }: { bundle: OnlineProduct }) {
   );
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <div className="mx-auto max-w-3xl px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
       {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
-      <Card>
-        <CardContent className="space-y-5 p-5">
+      <Card className="rounded-[var(--storefront-radius)]">
+        <CardContent className="space-y-5 p-[var(--storefront-card-padding)]">
           <div className="space-y-2">
             <Badge>Bundle & Save</Badge>
             <h1 className="text-3xl font-bold">{bundle.name}</h1>
             {bundle.description ? <p className="text-muted-foreground">{bundle.description}</p> : null}
-            <p className="text-xl font-semibold">{formatCurrency(bundle.price)}</p>
+            <p className="text-2xl font-semibold text-primary">{formatCurrency(bundle.price)}</p>
             <p className="text-xs text-muted-foreground">Tax is calculated at checkout based on fulfillment location.</p>
           </div>
 
-          <div className="rounded-lg border p-4">
+          <div className="rounded-[var(--storefront-radius)] border p-[var(--storefront-card-padding)]">
             <h2 className="font-semibold">Included items</h2>
             <div className="mt-3 space-y-2">
               {bundle.bundleItems?.map((item) => (
@@ -65,12 +65,12 @@ export function BundleDetail({ bundle }: { bundle: OnlineProduct }) {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
-              className="h-12 flex-1"
+              className="h-12 flex-1 rounded-[var(--storefront-radius)]"
               onClick={() => addItem(bundle, { selectedBundleItemIds })}
             >
               Add bundle to cart
             </Button>
-            <Button asChild type="button" variant="outline" className="h-12">
+            <Button asChild type="button" variant="outline" className="h-12 rounded-[var(--storefront-radius)]">
               <Link href="/catalog">Back to catalog</Link>
             </Button>
           </div>

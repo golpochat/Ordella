@@ -20,7 +20,7 @@ import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { getOfflineOrder, type OfflinePendingOrder } from '@/lib/offline-db';
 
 export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; offline?: boolean }) {
-  const { formatCurrency } = useTenantSettings();
+  const { settings, formatCurrency, formatDateTime } = useTenantSettings();
   const [receipt, setReceipt] = useState<PosReceipt | null>(null);
   const [offlineOrder, setOfflineOrder] = useState<OfflinePendingOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,20 +57,21 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
   );
 
   return (
-    <div className="mx-auto max-w-3xl p-4 print:max-w-full">
-      <Card className="print:shadow-none">
-        <CardHeader>
-          <CardTitle>Receipt</CardTitle>
+    <div className="mx-auto max-w-3xl p-[var(--pos-panel-padding)] print:max-w-full">
+      <Card className="overflow-hidden rounded-[var(--pos-radius)] print:shadow-none">
+        <CardHeader className="bg-primary text-primary-foreground">
+          <CardTitle>{settings.currencySymbol ? 'Receipt Preview' : 'Receipt'}</CardTitle>
+          <p className="text-sm opacity-80">{formatDateTime(new Date())}</p>
         </CardHeader>
         <CardContent>
           {error ? <p className="text-destructive">{error}</p> : null}
           {!receipt && !offlineOrder ? <p>Loading…</p> : null}
           {offlineOrder ? (
             <div className="space-y-4">
-              <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              <div className="rounded-[var(--pos-radius)] border bg-muted p-3 text-sm text-muted-foreground">
                 This receipt is pending sync. It will be finalized automatically when the connection returns.
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid gap-2 rounded-[var(--pos-radius)] border bg-muted/40 p-[var(--pos-panel-padding)] text-sm sm:grid-cols-2">
                 <p>Order: {offlineOrder.payload.clientOrderId.slice(0, 8)}</p>
                 <p>Status: Pending Sync</p>
                 <p>Cashier: {offlineOrder.payload.session.cashierId}</p>
@@ -96,7 +97,7 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
                   ))}
                 </TableBody>
               </Table>
-              <div className="space-y-1 text-sm">
+              <div className="space-y-1 rounded-[var(--pos-radius)] border bg-muted/30 p-[var(--pos-panel-padding)] text-sm">
                 <p>Total qty: {totalQty}</p>
                 <p>Subtotal: {formatCurrency(offlineOrder.payload.totals.subtotal)}</p>
                 {Number(offlineOrder.payload.totals.discountTotal) > 0 ? (
@@ -117,7 +118,7 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
           ) : null}
           {receipt ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid gap-2 rounded-[var(--pos-radius)] border bg-muted/40 p-[var(--pos-panel-padding)] text-sm sm:grid-cols-2">
                 <p>Order: {receipt.orderNumber ?? receipt.orderId.slice(0, 8)}</p>
                 <p>Status: <LiveOrderStatus orderId={receipt.orderId} fallback={receipt.status} /></p>
                 <p>Cashier: {receipt.cashierId}</p>
@@ -143,7 +144,7 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
                   ))}
                 </TableBody>
               </Table>
-              <div className="space-y-1 text-sm">
+              <div className="space-y-1 rounded-[var(--pos-radius)] border bg-muted/30 p-[var(--pos-panel-padding)] text-sm">
                 <p>Total qty: {totalQty}</p>
                 <p>Subtotal: {formatCurrency(receipt.subtotal)}</p>
                 {Number(receipt.discountTotal ?? 0) > 0 ? (
@@ -172,7 +173,7 @@ export function ReceiptScreen({ orderId, offline = false }: { orderId?: string; 
         </CardContent>
       </Card>
       <div className="mt-4 flex gap-2 print:hidden">
-        <Button className="h-12" onClick={() => window.print()}>
+        <Button className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" onClick={() => window.print()}>
           Print
         </Button>
       </div>
