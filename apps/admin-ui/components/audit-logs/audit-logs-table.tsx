@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { formatDate } from '@/lib/utils';
 import type { AuditLog } from '@/lib/api/admin/audit-logs';
@@ -18,10 +19,13 @@ export function AuditLogsTable({ logs }: { logs: AuditLog[] }) {
         <TableRow>
           <TableHead>Timestamp</TableHead>
           <TableHead>User</TableHead>
+          <TableHead>Actor</TableHead>
           <TableHead>Action</TableHead>
+          <TableHead>Risk</TableHead>
           <TableHead>Entity</TableHead>
           <TableHead>Location</TableHead>
           <TableHead>Details</TableHead>
+          <TableHead>Drilldown</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -29,9 +33,15 @@ export function AuditLogsTable({ logs }: { logs: AuditLog[] }) {
           <TableRow key={log.id}>
             <TableCell className="whitespace-nowrap">{formatDate(log.createdAt)}</TableCell>
             <TableCell className="font-mono text-xs">{log.userId?.slice(0, 8) ?? 'System'}</TableCell>
+            <TableCell>{log.actorType}</TableCell>
             <TableCell>
-              <Badge variant={log.action.endsWith('.failed') ? 'destructive' : 'outline'}>
+              <Badge variant={log.status === 'failed' || log.action.endsWith('.failed') ? 'destructive' : 'outline'}>
                 {log.action}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <Badge variant={log.riskLevel === 'high' || log.riskLevel === 'critical' ? 'destructive' : 'secondary'}>
+                {log.riskLevel}
               </Badge>
             </TableCell>
             <TableCell className="capitalize">{formatEntity(log)}</TableCell>
@@ -43,10 +53,19 @@ export function AuditLogsTable({ logs }: { logs: AuditLog[] }) {
                   <div className="grid gap-1 text-xs text-muted-foreground">
                     <span>IP: {log.ipAddress ?? 'Unknown'}</span>
                     <span>User agent: {log.userAgent ?? 'Unknown'}</span>
+                    <span>Source: {log.source}</span>
+                    <span>Status: {log.status}</span>
+                    <span>Hash: {log.hash ?? 'Pending'}</span>
+                    <span>Retention until: {log.retentionUntil ? formatDate(log.retentionUntil) : 'Default policy'}</span>
                   </div>
                   <pre className="max-h-72 overflow-auto text-xs">{prettyJson(log.metadata)}</pre>
                 </div>
               </details>
+            </TableCell>
+            <TableCell>
+              <Link className="text-sm text-primary underline-offset-4 hover:underline" href={`/audit-logs/${log.id}`}>
+                Open
+              </Link>
             </TableCell>
           </TableRow>
         ))}

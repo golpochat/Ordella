@@ -17,6 +17,21 @@ export class AuditLogEntity {
   @Column({ name: 'location_id', type: 'uuid', nullable: true })
   locationId!: string | null;
 
+  @Column({ name: 'actor_type', type: 'varchar', length: 24, default: 'system' })
+  actorType!: string;
+
+  @Column({ type: 'varchar', length: 48, default: 'api' })
+  source!: string;
+
+  @Column({ type: 'varchar', length: 24, default: 'success' })
+  status!: string;
+
+  @Column({ name: 'risk_level', type: 'varchar', length: 16, default: 'low' })
+  riskLevel!: string;
+
+  @Column({ name: 'request_id', type: 'varchar', length: 128, nullable: true })
+  requestId!: string | null;
+
   @Column({ type: 'varchar', length: 128 })
   action!: string;
 
@@ -34,6 +49,18 @@ export class AuditLogEntity {
 
   @Column({ name: 'user_agent', type: 'text', nullable: true })
   userAgent!: string | null;
+
+  @Column({ name: 'previous_hash', type: 'varchar', length: 128, nullable: true })
+  previousHash!: string | null;
+
+  @Column({ name: 'hash', type: 'varchar', length: 128, nullable: true })
+  hash!: string | null;
+
+  @Column({ name: 'retention_until', type: 'timestamptz', nullable: true })
+  retentionUntil!: Date | null;
+
+  @Column({ name: 'legal_hold', type: 'boolean', default: false })
+  legalHold!: boolean;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

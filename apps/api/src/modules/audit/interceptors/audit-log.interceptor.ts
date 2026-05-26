@@ -48,6 +48,8 @@ export class AuditLogInterceptor implements NestInterceptor {
           void this.recordSafe({
             ...base,
             action: this.inferAction(request, false),
+            status: 'success',
+            riskLevel: this.inferRisk(request),
             entityId: this.inferEntityId(request, response),
             metadata: {
               ...base.metadata,
@@ -59,6 +61,8 @@ export class AuditLogInterceptor implements NestInterceptor {
           void this.recordSafe({
             ...base,
             action: this.inferAction(request, true),
+            status: 'failed',
+            riskLevel: 'high',
             metadata: {
               ...base.metadata,
               error: {
@@ -90,6 +94,9 @@ export class AuditLogInterceptor implements NestInterceptor {
       tenantId: tenant.tenantId,
       userId: user?.id ?? customer?.sub ?? null,
       locationId: this.findLocationId(request),
+      actorType: user ? 'staff' : customer ? 'customer' : 'system',
+      source: this.inferSource(request),
+      requestId: this.extractRequestId(request),
       entityType: this.inferEntityType(request),
       entityId: this.inferEntityId(request, undefined),
       ipAddress: this.extractIpAddress(request),
@@ -121,6 +128,11 @@ export class AuditLogInterceptor implements NestInterceptor {
 
     const path = request.path.toLowerCase();
     if (path.includes('/status')) return `${entityType}.status_changed`;
+    if (path.includes('/login')) return failed ? 'login.failed' : 'login.succeeded';
+    if (path.includes('/logout')) return 'logout.succeeded';
+    if (path.includes('/reset-password')) return `${entityType}.password_reset`;
+    if (path.includes('/permissions') || path.includes('/roles')) return `${entityType}.permission_changed`;
+    if (path.includes('/webhook')) return `${entityType}.webhook`;
     if (path.includes('/refund')) return `${entityType}.refunded`;
     if (path.includes('/redeem')) return `${entityType}.redeemed`;
     if (path.includes('/adjust')) return `${entityType}.adjusted`;
@@ -186,6 +198,29 @@ export class AuditLogInterceptor implements NestInterceptor {
     if (typeof forwardedFor === 'string') return forwardedFor.split(',')[0]?.trim() || null;
     if (Array.isArray(forwardedFor)) return forwardedFor[0]?.split(',')[0]?.trim() || null;
     return request.ip ?? null;
+  }
+
+  private extractRequestId(request: RequestWithAuditContext): string | null {
+    const requestId = request.headers['x-request-id'] ?? request.headers['x-correlation-id'];
+    if (typeof requestId === 'string') return requestId;
+    if (Array.isArray(requestId)) return requestId[0] ?? null;
+    return null;
+  }
+
+  private inferSource(request: RequestWithAuditContext): string {
+    const path = request.path.toLowerCase();
+    if (path.includes('/webhook')) return 'webhook';
+    if (path.includes('/public/customer')) return 'customer_portal';
+    if (path.includes('/public')) return 'storefront';
+    return 'admin_api';
+  }
+
+  private inferRisk(request: RequestWithAuditContext): string {
+    const path = request.path.toLowerCase();
+    if (request.method === 'DELETE') return 'high';
+    if (path.includes('/permissions') || path.includes('/roles') || path.includes('/api-keys')) return 'high';
+    if (path.includes('/refund') || path.includes('/billing') || path.includes('/webhook') || path.includes('/gdpr')) return 'medium';
+    return 'low';
   }
 
   private extractUserAgent(request: RequestWithAuditContext): string | null {

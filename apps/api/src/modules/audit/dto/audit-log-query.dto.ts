@@ -27,6 +27,22 @@ export class AuditLogQueryDto {
   action?: string;
 
   @IsOptional()
+  @IsString()
+  actorType?: string;
+
+  @IsOptional()
+  @IsString()
+  source?: string;
+
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsString()
+  riskLevel?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

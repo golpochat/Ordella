@@ -16,6 +16,13 @@ const ENTITY_TYPES = [
   'gift_card',
   'store_credit',
   'billing',
+  'support',
+  'subscription',
+  'promotion',
+  'delivery',
+  'marketing',
+  'auth',
+  'webhook',
 ];
 
 export function AuditLogsFilters() {
@@ -26,7 +33,7 @@ export function AuditLogsFilters() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const params = new URLSearchParams();
-    for (const key of ['from', 'to', 'userId', 'locationId', 'entityType', 'action']) {
+    for (const key of ['from', 'to', 'userId', 'locationId', 'entityType', 'action', 'actorType', 'source', 'status', 'riskLevel']) {
       const value = String(formData.get(key) ?? '').trim();
       if (value) params.set(key, value);
     }
@@ -57,6 +64,25 @@ export function AuditLogsFilters() {
           Filter
         </Button>
       </div>
+      <select name="actorType" className="h-10 rounded-md border border-input bg-background px-3 text-sm" defaultValue={searchParams.get('actorType') ?? ''}>
+        <option value="">All actors</option>
+        <option value="staff">Staff</option>
+        <option value="customer">Customer</option>
+        <option value="system">System</option>
+      </select>
+      <select name="status" className="h-10 rounded-md border border-input bg-background px-3 text-sm" defaultValue={searchParams.get('status') ?? ''}>
+        <option value="">All outcomes</option>
+        <option value="success">Success</option>
+        <option value="failed">Failed</option>
+      </select>
+      <select name="riskLevel" className="h-10 rounded-md border border-input bg-background px-3 text-sm" defaultValue={searchParams.get('riskLevel') ?? ''}>
+        <option value="">All risk levels</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="critical">Critical</option>
+      </select>
+      <Input name="source" placeholder="Source" defaultValue={searchParams.get('source') ?? ''} />
     </form>
   );
 }

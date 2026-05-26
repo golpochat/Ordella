@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThanOrEqual, Repository } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
+import { AuditLogService } from '../../audit';
 import { StripeClientService } from '../../billing/services/stripe-client.service';
 import { CustomerEntity } from '../../loyalty/entities';
 import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
@@ -41,6 +42,7 @@ export class SubscriptionsService {
     private readonly orders: OrdersService,
     private readonly stripeClient: StripeClientService,
     private readonly notifications: NotificationsService,
+    private readonly auditLogs: AuditLogService,
   ) {}
 
   async list(tenant: TenantContext, customerId?: string): Promise<SubscriptionEntity[]> {
@@ -227,6 +229,18 @@ export class SubscriptionsService {
       take: 50,
     });
     for (const subscription of due) await this.processRun(subscription);
+    if (due.length) {
+      await this.auditLogs.record({
+        tenantId: due[0].tenantId,
+        actorType: 'system',
+        source: 'scheduled_job',
+        action: 'subscription.process_due',
+        entityType: 'subscription',
+        status: 'success',
+        riskLevel: 'medium',
+        metadata: { processed: due.length, job: 'subscription_scheduler', runAt: now },
+      });
+    }
     return due.length;
   }
 
@@ -366,6 +380,17 @@ export class SubscriptionsService {
       subscription.canceledAt = subscription.canceledAt ?? new Date();
     }
     await this.subscriptions.save(subscription);
+    await this.auditLogs.record({
+      tenantId: subscription.tenantId,
+      actorType: 'system',
+      source: 'scheduled_job',
+      action: 'subscription.billing_renewed',
+      entityType: 'subscription',
+      entityId: subscription.id,
+      status: 'success',
+      riskLevel: 'medium',
+      metadata: { planId: plan.id, renewalDate: subscription.renewalDate, amount: plan.price },
+    });
     if (subscription.customer) {
       await this.notify(subscription.customer, 'Membership renewed', `Your ${plan.name} membership has renewed.`);
     }

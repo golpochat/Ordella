@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { AuditModule } from '../audit';
 import { BillingModule } from '../billing/billing.module';
 import { CustomerSessionEntity } from '../customer-accounts/entities';
 import { CustomerAuthGuard } from '../customer-accounts/guards/customer-auth.guard';
@@ -18,6 +19,7 @@ import { SubscriptionSchedulerService, SubscriptionsService } from './services';
 @Module({
   imports: [
     AuthModule,
+    AuditModule,
     BillingModule,
     NotificationsModule,
     OrdersFeatureModule,
