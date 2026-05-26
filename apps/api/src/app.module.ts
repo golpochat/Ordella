@@ -38,6 +38,7 @@ import { RoutingModule } from './modules/routing';
 import { ForecastModule } from './modules/forecast';
 import { ReplenishmentModule } from './modules/replenishment';
 import { AnalyticsInsightsModule } from './modules/analytics-insights';
+import { StaffSchedulingModule } from './modules/staff-scheduling';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { AnalyticsInsightsModule } from './modules/analytics-insights';
     ForecastModule,
     ReplenishmentModule,
     AnalyticsInsightsModule,
+    StaffSchedulingModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

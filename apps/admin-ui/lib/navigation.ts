@@ -48,6 +48,7 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'supplier-portal', label: 'Supplier Portal', href: '/supplier-portal', icon: MessageSquare },
   { id: 'purchase-orders', label: 'Purchase Orders', href: '/purchase-orders', icon: ClipboardList },
   { id: 'staff', label: 'Staff', href: '/staff', icon: Users },
+  { id: 'staff-scheduling', label: 'Staff Scheduling', href: '/staff/scheduling', icon: FileClock },
   { id: 'crm', label: 'CRM', href: '/crm', icon: Users },
   { id: 'notifications', label: 'Notifications', href: '/notifications', icon: MessageSquare },
   { id: 'loyalty', label: 'Loyalty & Rewards', href: '/loyalty', icon: Gift },
