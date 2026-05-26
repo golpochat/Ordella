@@ -32,6 +32,7 @@ export type NavItem = {
 
 export const DASHBOARD_NAV: NavItem[] = [
   { id: 'dashboard', label: 'Analytics', href: '/dashboard', icon: LayoutDashboard },
+  { id: 'analytics-insights', label: 'Analytics & Insights', href: '/analytics-insights', icon: TrendingUp },
   { id: 'franchise-hq', label: 'Franchise HQ', href: '/franchise-hq/dashboard', icon: Building2 },
   { id: 'locations', label: 'Locations', href: '/locations', icon: MapPin },
   { id: 'catalog', label: 'Catalog', href: '/catalog', icon: Package },

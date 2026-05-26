@@ -37,6 +37,7 @@ import { TaxModule } from './modules/tax';
 import { RoutingModule } from './modules/routing';
 import { ForecastModule } from './modules/forecast';
 import { ReplenishmentModule } from './modules/replenishment';
+import { AnalyticsInsightsModule } from './modules/analytics-insights';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { ReplenishmentModule } from './modules/replenishment';
     RoutingModule,
     ForecastModule,
     ReplenishmentModule,
+    AnalyticsInsightsModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,
