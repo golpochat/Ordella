@@ -83,11 +83,12 @@ export const INVENTORY_SUBNAV = [
 ];
 
 export const REPORTS_SUBNAV = [
-  { label: 'Enterprise Suite', href: '/reports' },
+  { label: 'Dashboards', href: '/reports' },
   { label: 'Analytics home', href: '/dashboard' },
   { label: 'Daily sales', href: '/reports/sales' },
   { label: 'Inventory', href: '/reports/inventory' },
   { label: 'Delivery', href: '/reports/delivery' },
+  { label: 'Suppliers', href: '/reports?reportType=supplier' },
   { label: 'Promotions', href: '/reports/promotions' },
 ];
 

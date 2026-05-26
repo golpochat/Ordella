@@ -15,6 +15,7 @@ export type EnterpriseReportParams = {
   locationId?: string;
   channel?: string;
   categoryId?: string;
+  productId?: string;
   supplierId?: string;
   refresh?: string;
 };
@@ -49,6 +50,11 @@ export async function getEnterpriseSummary(api: ApiClient, params?: EnterpriseRe
   return reportingMetricSchema.parse(data);
 }
 
+export async function getReportingDashboard(api: ApiClient, params?: EnterpriseReportParams) {
+  const data = await api.getData<unknown>('reports/dashboard', { params });
+  return reportingMetricSchema.parse(data);
+}
+
 export async function getEnterpriseSales(api: ApiClient, params?: EnterpriseReportParams) {
   const data = await api.getData<unknown>('reports/sales', { params });
   return reportingMetricSchema.parse(data);
@@ -69,11 +75,21 @@ export async function getEnterpriseTax(api: ApiClient, params?: EnterpriseReport
   return reportingMetricSchema.parse(data);
 }
 
+export async function getReportDrilldown(
+  api: ApiClient,
+  type: 'product' | 'location' | 'supplier',
+  id: string,
+  params?: EnterpriseReportParams,
+) {
+  const data = await api.getData<unknown>(`reports/drilldowns/${type}/${id}`, { params });
+  return reportingMetricSchema.parse(data);
+}
+
 export async function createEnterpriseExport(
   api: ApiClient,
   body: {
-    reportType: 'summary' | 'sales' | 'orders' | 'customers' | 'inventory' | 'tax';
-    format: 'csv' | 'json';
+    reportType: 'dashboard' | 'summary' | 'sales' | 'orders' | 'customers' | 'inventory' | 'delivery' | 'supplier' | 'promotions' | 'tax';
+    format: 'csv' | 'pdf' | 'json';
     parameters?: EnterpriseReportParams;
     locationId?: string;
   },

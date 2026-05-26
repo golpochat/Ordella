@@ -6,6 +6,7 @@ import {
   getEnterpriseSales,
   getEnterpriseSummary,
   getEnterpriseTax,
+  getReportingDashboard,
   type EnterpriseReportParams,
 } from '@/lib/api/admin/reports';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
@@ -22,12 +23,13 @@ type ReportsIndexPageProps = {
 
 export default async function ReportsIndexPage({ searchParams }: ReportsIndexPageProps) {
   const api = createServerApiClient();
-  const reportType = searchParams.reportType ?? 'summary';
+  const reportType = searchParams.reportType ?? 'dashboard';
   let report: Record<string, unknown> = {};
   let error: string | null = null;
 
   try {
-    if (reportType === 'sales') report = await getEnterpriseSales(api, searchParams);
+    if (reportType === 'dashboard') report = await getReportingDashboard(api, searchParams);
+    else if (reportType === 'sales') report = await getEnterpriseSales(api, searchParams);
     else if (reportType === 'inventory') report = await getEnterpriseInventory(api, searchParams);
     else if (reportType === 'customers') report = await getEnterpriseCustomers(api, searchParams);
     else if (reportType === 'tax') report = await getEnterpriseTax(api, searchParams);
@@ -39,8 +41,8 @@ export default async function ReportsIndexPage({ searchParams }: ReportsIndexPag
   return (
     <>
       <PageHeader
-        title="Enterprise Reports"
-        description="Executive reporting across sales, inventory, tax, customers, delivery, and warehouse operations."
+        title="Reporting Dashboards"
+        description="Unified sales, inventory, delivery, supplier, and promotion reporting with drill-downs and exports."
       />
       <SubNav items={REPORTS_SUBNAV} />
       <Suspense fallback={null}>

@@ -18,8 +18,11 @@ import { StockItemEntity, StockMovementEntity, WastageRecordEntity } from '../..
 import { OrderTaxLineEntity } from '../../../tax/entities/order-tax-line.entity';
 import { CustomerEntity, LoyaltyTransactionEntity } from '../../../loyalty/entities';
 import { DeliveryTaskEntity } from '../../../deliveries/entities';
+import { DriverProfileEntity } from '../../../deliveries/entities';
 import { WarehousePickTaskEntity } from '../../../warehouse/entities';
-import { PurchaseOrderEntity } from '../../../procurement/entities';
+import { PurchaseOrderEntity, SupplierEntity } from '../../../procurement/entities';
+import { ForecastSnapshotEntity } from '../../../forecast/entities';
+import { PromotionApplicationEntity, PromotionEntity } from '../../../promotions/entities';
 import { LocationEntity } from '../../../tenants/entities';
 
 @Module({
@@ -42,8 +45,13 @@ import { LocationEntity } from '../../../tenants/entities';
       CustomerEntity,
       LoyaltyTransactionEntity,
       DeliveryTaskEntity,
+      DriverProfileEntity,
       WarehousePickTaskEntity,
       PurchaseOrderEntity,
+      SupplierEntity,
+      ForecastSnapshotEntity,
+      PromotionEntity,
+      PromotionApplicationEntity,
       LocationEntity,
     ]),
   ],

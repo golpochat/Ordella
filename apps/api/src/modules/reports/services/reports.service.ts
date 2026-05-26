@@ -34,10 +34,12 @@ import {
 } from '../../inventory/entities';
 import { OrderTaxLineEntity } from '../../tax/entities/order-tax-line.entity';
 import { CustomerEntity, LoyaltyTransactionEntity } from '../../loyalty/entities';
-import { DeliveryTaskEntity } from '../../deliveries/entities';
+import { DeliveryTaskEntity, DriverProfileEntity } from '../../deliveries/entities';
 import { DeliveryTaskStatus } from '../../deliveries/enums/delivery-task-status.enum';
 import { WarehousePickTaskEntity } from '../../warehouse/entities';
-import { PurchaseOrderEntity } from '../../procurement/entities';
+import { PurchaseOrderEntity, SupplierEntity } from '../../procurement/entities';
+import { ForecastSnapshotEntity } from '../../forecast/entities';
+import { PromotionApplicationEntity, PromotionEntity } from '../../promotions/entities';
 import { LocationEntity } from '../../tenants/entities';
 
 const EXCLUDED_ORDER_STATUSES = [OrderStatus.CANCELLED, OrderStatus.FAILED];
@@ -51,6 +53,7 @@ type ReportRange = {
   locationId?: string;
   channel?: string;
   categoryId?: string;
+  productId?: string;
   supplierId?: string;
   staffId?: string;
   refresh: boolean;
@@ -77,10 +80,20 @@ export class ReportsAnalyticsService {
     private readonly loyaltyTransactions: Repository<LoyaltyTransactionEntity>,
     @InjectRepository(DeliveryTaskEntity)
     private readonly deliveries: Repository<DeliveryTaskEntity>,
+    @InjectRepository(DriverProfileEntity)
+    private readonly drivers: Repository<DriverProfileEntity>,
     @InjectRepository(WarehousePickTaskEntity)
     private readonly pickTasks: Repository<WarehousePickTaskEntity>,
     @InjectRepository(PurchaseOrderEntity)
     private readonly purchaseOrders: Repository<PurchaseOrderEntity>,
+    @InjectRepository(SupplierEntity)
+    private readonly suppliers: Repository<SupplierEntity>,
+    @InjectRepository(ForecastSnapshotEntity)
+    private readonly forecastSnapshots: Repository<ForecastSnapshotEntity>,
+    @InjectRepository(PromotionEntity)
+    private readonly promotions: Repository<PromotionEntity>,
+    @InjectRepository(PromotionApplicationEntity)
+    private readonly promotionApplications: Repository<PromotionApplicationEntity>,
     @InjectRepository(ReportSnapshotEntity)
     private readonly snapshots: Repository<ReportSnapshotEntity>,
     @InjectRepository(ReportJobEntity)
@@ -130,6 +143,78 @@ export class ReportsAnalyticsService {
         generatedAt: new Date().toISOString(),
       };
     });
+  }
+
+  async getDashboardReport(
+    tenant: TenantContext,
+    query: FilterReportDateRangeDto,
+  ): Promise<Record<string, unknown>> {
+    return this.withSnapshot(tenant, ReportDefinitionSlug.DASHBOARD, query, async (range) => {
+      const [sales, inventory, delivery, supplier, promotions, forecastSignals] = await Promise.all([
+        this.buildSalesMetrics(tenant.tenantId, range),
+        this.buildInventoryMetrics(tenant.tenantId, range),
+        this.buildDeliveryMetrics(tenant.tenantId, range),
+        this.buildSupplierPerformanceMetrics(tenant.tenantId, range),
+        this.buildPromotionPerformanceMetrics(tenant.tenantId, range),
+        this.latestForecastSignals(tenant.tenantId, range),
+      ]);
+
+      return {
+        from: range.fromIso,
+        to: range.toIso,
+        filters: this.serializeFilters(range),
+        sales,
+        inventory,
+        delivery,
+        supplier,
+        promotions,
+        forecastSignals,
+        generatedAt: new Date().toISOString(),
+      };
+    });
+  }
+
+  async getProductDrilldown(
+    tenant: TenantContext,
+    productId: string,
+    query: FilterReportDateRangeDto,
+  ): Promise<Record<string, unknown>> {
+    return this.withSnapshot(tenant, `drilldown-product-${productId}`, { ...query, productId }, async (range) => ({
+      productId,
+      filters: this.serializeFilters(range),
+      sales: await this.buildSalesMetrics(tenant.tenantId, { ...range, productId }),
+      inventory: await this.buildInventoryMetrics(tenant.tenantId, { ...range, productId }),
+      generatedAt: new Date().toISOString(),
+    }));
+  }
+
+  async getLocationDrilldown(
+    tenant: TenantContext,
+    locationId: string,
+    query: FilterReportDateRangeDto,
+  ): Promise<Record<string, unknown>> {
+    return this.withSnapshot(tenant, `drilldown-location-${locationId}`, { ...query, locationId }, async (range) => ({
+      locationId,
+      filters: this.serializeFilters(range),
+      sales: await this.buildSalesMetrics(tenant.tenantId, { ...range, locationId }),
+      inventory: await this.buildInventoryMetrics(tenant.tenantId, { ...range, locationId }),
+      delivery: await this.buildDeliveryMetrics(tenant.tenantId, { ...range, locationId }),
+      supplier: await this.buildSupplierPerformanceMetrics(tenant.tenantId, { ...range, locationId }),
+      generatedAt: new Date().toISOString(),
+    }));
+  }
+
+  async getSupplierDrilldown(
+    tenant: TenantContext,
+    supplierId: string,
+    query: FilterReportDateRangeDto,
+  ): Promise<Record<string, unknown>> {
+    return this.withSnapshot(tenant, `drilldown-supplier-${supplierId}`, { ...query, supplierId }, async (range) => ({
+      supplierId,
+      filters: this.serializeFilters(range),
+      supplier: await this.buildSupplierPerformanceMetrics(tenant.tenantId, { ...range, supplierId }),
+      generatedAt: new Date().toISOString(),
+    }));
   }
 
   async getSalesReport(
@@ -269,10 +354,20 @@ export class ReportsAnalyticsService {
     query: FilterReportDateRangeDto,
   ) {
     if (reportType === ReportDefinitionSlug.SUMMARY) return this.getSummaryReport(tenant, query);
+    if (reportType === ReportDefinitionSlug.DASHBOARD) return this.getDashboardReport(tenant, query);
     if (reportType === ReportDefinitionSlug.SALES) return this.getSalesReport(tenant, query);
     if (reportType === ReportDefinitionSlug.ORDERS) return this.getOrdersReport(tenant, query);
     if (reportType === ReportDefinitionSlug.CUSTOMERS) return this.getCustomersReport(tenant, query);
     if (reportType === ReportDefinitionSlug.INVENTORY) return this.getInventoryReport(tenant, query);
+    if (reportType === ReportDefinitionSlug.DELIVERY) return this.withSnapshot(tenant, ReportDefinitionSlug.DELIVERY, query, (range) =>
+      this.buildDeliveryMetrics(tenant.tenantId, range),
+    );
+    if (reportType === ReportDefinitionSlug.SUPPLIER) return this.withSnapshot(tenant, ReportDefinitionSlug.SUPPLIER, query, (range) =>
+      this.buildSupplierPerformanceMetrics(tenant.tenantId, range),
+    );
+    if (reportType === ReportDefinitionSlug.PROMOTIONS) return this.withSnapshot(tenant, ReportDefinitionSlug.PROMOTIONS, query, (range) =>
+      this.buildPromotionPerformanceMetrics(tenant.tenantId, range),
+    );
     if (reportType === ReportDefinitionSlug.TAX) return this.getTaxReport(tenant, query);
     return this.getSummaryReport(tenant, query);
   }
@@ -290,6 +385,7 @@ export class ReportsAnalyticsService {
       locationId: range.locationId ?? null,
       channel: range.channel ?? null,
       categoryId: range.categoryId ?? null,
+      productId: range.productId ?? null,
       supplierId: range.supplierId ?? null,
       staffId: range.staffId ?? null,
     });
@@ -331,6 +427,7 @@ export class ReportsAnalyticsService {
       locationId: query.locationId,
       channel: query.channel,
       categoryId: query.categoryId,
+      productId: query.productId,
       supplierId: query.supplierId,
       staffId: query.staffId,
       refresh: query.refresh === 'true',
@@ -343,13 +440,17 @@ export class ReportsAnalyticsService {
       .addSelect('COALESCE(SUM(o.total), 0)', 'totalRevenue')
       .addSelect('COALESCE(AVG(o.total), 0)', 'averageOrderValue')
       .getRawOne<{ orderCount: string; totalRevenue: string; averageOrderValue: string }>();
-    const [revenueByLocation, salesByChannel, revenueByItem, revenueByCategory, dailyRevenue] =
+    const [revenueByLocation, salesByChannel, revenueByItem, revenueByCategory, dailyRevenue, weeklyRevenue, monthlyRevenue, paymentMethods, hourlySalesHeatmap] =
       await Promise.all([
         this.revenueByLocation(tenantId, range),
         this.salesByChannel(tenantId, range),
         this.revenueByItem(tenantId, range),
         this.revenueByCategory(tenantId, range),
         this.dailyRevenue(tenantId, range),
+        this.periodRevenue(tenantId, range, 'week'),
+        this.periodRevenue(tenantId, range, 'month'),
+        this.paymentMethodMix(tenantId, range),
+        this.hourlySalesHeatmap(tenantId, range),
       ]);
 
     return {
@@ -364,6 +465,10 @@ export class ReportsAnalyticsService {
       revenueByItem,
       revenueByCategory,
       dailyRevenue,
+      weeklyRevenue,
+      monthlyRevenue,
+      paymentMethods,
+      hourlySalesHeatmap,
     };
   }
 
@@ -404,6 +509,8 @@ export class ReportsAnalyticsService {
       .addSelect('COALESCE(SUM(s.quantity_reserved), 0)', 'quantityReserved')
       .addSelect('COALESCE(SUM(s.quantity_on_hand * COALESCE(p.price, 0)), 0)', 'inventoryValue');
     if (range.locationId) stockQb.andWhere('s.location_id = :locationId', { locationId: range.locationId });
+    if (range.productId) stockQb.andWhere('s.product_id = :productId', { productId: range.productId });
+    if (range.categoryId) stockQb.andWhere('p.category_id = :categoryId', { categoryId: range.categoryId });
     const stock = await stockQb.getRawOne<{ itemCount: string; quantityOnHand: string; quantityReserved: string; inventoryValue: string }>();
 
     const movementQb = this.stockMovements
@@ -416,6 +523,7 @@ export class ReportsAnalyticsService {
       .addSelect('COALESCE(SUM(ABS(m.quantity)), 0)', 'quantity')
       .groupBy('m.type');
     if (range.locationId) movementQb.andWhere('s.location_id = :locationId', { locationId: range.locationId });
+    if (range.productId) movementQb.andWhere('s.product_id = :productId', { productId: range.productId });
     const movements = await movementQb.getRawMany<{ type: string; movements: string; quantity: string }>();
 
     const wastageQb = this.wastageRecords
@@ -427,6 +535,10 @@ export class ReportsAnalyticsService {
     if (range.locationId) wastageQb.andWhere('w.location_id = :locationId', { locationId: range.locationId });
     const waste = await wastageQb.getRawOne<{ quantity: string; records: string }>();
 
+    const stockLevels = await this.inventoryStockLevels(tenantId, range);
+    const stockouts = stockLevels.filter((item) => item.status === 'stockout');
+    const overstock = stockLevels.filter((item) => item.status === 'overstock');
+
     return {
       from: range.fromIso,
       to: range.toIso,
@@ -435,6 +547,9 @@ export class ReportsAnalyticsService {
       quantityOnHand: Number(stock?.quantityOnHand ?? 0),
       quantityReserved: Number(stock?.quantityReserved ?? 0),
       inventoryValue: this.money(stock?.inventoryValue),
+      stockouts: stockouts.length,
+      overstock: overstock.length,
+      stockLevels,
       stockMovements: movements.map((row) => ({ type: row.type, movements: Number(row.movements), quantity: Number(row.quantity) })),
       wasteShrinkage: { quantity: Number(waste?.quantity ?? 0), records: Number(waste?.records ?? 0) },
     };
@@ -517,13 +632,127 @@ export class ReportsAnalyticsService {
       .groupBy('d.status');
     if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
     const rows = await qb.getRawMany<{ status: string; deliveries: string; avgMinutes: string | null }>();
+    const driverMetrics = await this.deliveryDriverMetrics(tenantId, range);
+    const timing = await this.deliveryTimingMetrics(tenantId, range);
     return {
+      totalDeliveries: rows.reduce((sum, row) => sum + Number(row.deliveries), 0),
       deliveriesByStatus: rows.map((row) => ({
         status: row.status,
         deliveries: Number(row.deliveries),
         averageMinutes: row.avgMinutes ? Number(Number(row.avgMinutes).toFixed(1)) : null,
       })),
       completedDeliveries: rows.filter((row) => row.status === DeliveryTaskStatus.DELIVERED).reduce((sum, row) => sum + Number(row.deliveries), 0),
+      onTimeRate: timing.onTimeRate,
+      delayedDeliveries: timing.delayedDeliveries,
+      averageDeliveryMinutes: timing.averageDeliveryMinutes,
+      driverMetrics,
+    };
+  }
+
+  private async buildSupplierPerformanceMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const qb = this.purchaseOrders
+      .createQueryBuilder('po')
+      .leftJoin(SupplierEntity, 'supplier', 'supplier.id = po.supplier_id')
+      .where('po.tenant_id = :tenantId', { tenantId })
+      .andWhere('po.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('po.supplier_id', 'supplierId')
+      .addSelect("COALESCE(supplier.name, 'Supplier')", 'supplierName')
+      .addSelect('COUNT(*)', 'purchaseOrders')
+      .addSelect("SUM(CASE WHEN po.supplier_status = 'rejected' THEN 1 ELSE 0 END)", 'rejectedOrders')
+      .addSelect("SUM(CASE WHEN po.status IN ('received', 'partial') THEN 1 ELSE 0 END)", 'receivedOrders')
+      .addSelect("SUM(CASE WHEN po.expected_delivery_date IS NOT NULL AND po.received_at IS NOT NULL AND po.received_at::date <= po.expected_delivery_date THEN 1 ELSE 0 END)", 'onTimeOrders')
+      .addSelect('AVG(EXTRACT(DAY FROM (po.received_at - po.sent_at)))', 'averageLeadTimeDays')
+      .addSelect('COALESCE(SUM(po.total_cost), 0)', 'spend')
+      .groupBy('po.supplier_id')
+      .addGroupBy('supplier.name')
+      .orderBy('spend', 'DESC')
+      .limit(25);
+    if (range.locationId) qb.andWhere('po.location_id = :locationId', { locationId: range.locationId });
+    if (range.supplierId) qb.andWhere('po.supplier_id = :supplierId', { supplierId: range.supplierId });
+    const rows = await qb.getRawMany<{
+      supplierId: string;
+      supplierName: string;
+      purchaseOrders: string;
+      rejectedOrders: string;
+      receivedOrders: string;
+      onTimeOrders: string;
+      averageLeadTimeDays: string | null;
+      spend: string;
+    }>();
+    const suppliers = rows.map((row) => {
+      const purchaseOrders = Number(row.purchaseOrders);
+      const receivedOrders = Number(row.receivedOrders);
+      const rejectedOrders = Number(row.rejectedOrders);
+      const onTimeOrders = Number(row.onTimeOrders);
+      return {
+        supplierId: row.supplierId,
+        supplierName: row.supplierName,
+        purchaseOrders,
+        receivedOrders,
+        rejectedOrders,
+        rejectionRate: purchaseOrders ? Number(((rejectedOrders / purchaseOrders) * 100).toFixed(2)) : 0,
+        onTimeDeliveryRate: receivedOrders ? Number(((onTimeOrders / receivedOrders) * 100).toFixed(2)) : 0,
+        averageLeadTimeDays: row.averageLeadTimeDays ? Number(Number(row.averageLeadTimeDays).toFixed(1)) : null,
+        spend: this.money(row.spend),
+      };
+    });
+    return {
+      suppliers,
+      totalSpend: this.money(suppliers.reduce((sum, row) => sum + Number(row.spend), 0)),
+      averageOnTimeRate: this.average(suppliers.map((row) => row.onTimeDeliveryRate)),
+      averageLeadTimeDays: this.average(suppliers.map((row) => row.averageLeadTimeDays ?? 0)),
+      rejectionRate: this.average(suppliers.map((row) => row.rejectionRate)),
+    };
+  }
+
+  private async buildPromotionPerformanceMetrics(tenantId: string, range: ReportRange): Promise<Record<string, unknown>> {
+    const qb = this.promotionApplications
+      .createQueryBuilder('application')
+      .leftJoin(PromotionEntity, 'promotion', 'promotion.id = application.promotion_id')
+      .leftJoin(OrderEntity, 'o', 'o.id = application.order_id')
+      .where('application.tenant_id = :tenantId', { tenantId })
+      .andWhere('application.applied_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('application.promotion_id', 'promotionId')
+      .addSelect("COALESCE(promotion.name, 'Promotion')", 'promotionName')
+      .addSelect('COUNT(*)', 'applications')
+      .addSelect('COUNT(DISTINCT application.order_id)', 'convertedOrders')
+      .addSelect('COALESCE(SUM(application.discount_amount), 0)', 'discount')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .groupBy('application.promotion_id')
+      .addGroupBy('promotion.name')
+      .orderBy('revenue', 'DESC')
+      .limit(25);
+    if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
+    const promotions = await qb.getRawMany<{
+      promotionId: string;
+      promotionName: string;
+      applications: string;
+      convertedOrders: string;
+      discount: string;
+      revenue: string;
+    }>();
+    const activePromotions = await this.promotions.count({ where: { tenantId, isActive: true } });
+    const rows = promotions.map((row) => {
+      const revenue = Number(row.revenue);
+      const discount = Number(row.discount);
+      return {
+        promotionId: row.promotionId,
+        promotionName: row.promotionName,
+        applications: Number(row.applications),
+        convertedOrders: Number(row.convertedOrders),
+        conversionRate: Number(row.applications) ? Number(((Number(row.convertedOrders) / Number(row.applications)) * 100).toFixed(2)) : 0,
+        discount: this.money(discount),
+        revenue: this.money(revenue),
+        uplift: this.money(Math.max(0, revenue - discount)),
+        roi: discount > 0 ? Number(((revenue - discount) / discount).toFixed(2)) : 0,
+      };
+    });
+    return {
+      activePromotions,
+      totalApplications: rows.reduce((sum, row) => sum + row.applications, 0),
+      totalDiscount: this.money(rows.reduce((sum, row) => sum + Number(row.discount), 0)),
+      influencedRevenue: this.money(rows.reduce((sum, row) => sum + Number(row.revenue), 0)),
+      promotions: rows,
     };
   }
 
@@ -593,6 +822,19 @@ export class ReportsAnalyticsService {
       .andWhere('o.status NOT IN (:...excluded)', { excluded: EXCLUDED_ORDER_STATUSES });
     if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
     if (range.channel) qb.andWhere('o.order_type = :channel', { channel: range.channel });
+    if (range.productId) {
+      qb.andWhere('EXISTS (SELECT 1 FROM order_items oi_filter WHERE oi_filter.order_id = o.id AND oi_filter.product_id = :productId)', {
+        productId: range.productId,
+      });
+    }
+    if (range.categoryId) {
+      qb.andWhere(`EXISTS (
+        SELECT 1
+        FROM order_items oi_category
+        INNER JOIN products p_category ON p_category.id = oi_category.product_id
+        WHERE oi_category.order_id = o.id AND p_category.category_id = :categoryId
+      )`, { categoryId: range.categoryId });
+    }
     return qb;
   }
 
@@ -639,6 +881,7 @@ export class ReportsAnalyticsService {
       .limit(20);
     if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
     if (range.categoryId) qb.andWhere('p.category_id = :categoryId', { categoryId: range.categoryId });
+    if (range.productId) qb.andWhere('item.product_id = :productId', { productId: range.productId });
     const rows = await qb.getRawMany<{ productId: string; productName: string; quantitySold: string; revenue: string }>();
     return rows.map((row) => ({ productId: row.productId, productName: row.productName, quantitySold: Number(row.quantitySold), revenue: this.money(row.revenue) }));
   }
@@ -662,6 +905,7 @@ export class ReportsAnalyticsService {
       .limit(20);
     if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
     if (range.categoryId) qb.andWhere('p.category_id = :categoryId', { categoryId: range.categoryId });
+    if (range.productId) qb.andWhere('item.product_id = :productId', { productId: range.productId });
     const rows = await qb.getRawMany<{ categoryId: string | null; categoryName: string; quantitySold: string; revenue: string }>();
     return rows.map((row) => ({ categoryId: row.categoryId, categoryName: row.categoryName, quantitySold: Number(row.quantitySold), revenue: this.money(row.revenue) }));
   }
@@ -675,6 +919,188 @@ export class ReportsAnalyticsService {
       .orderBy('date', 'ASC')
       .getRawMany<{ date: string; orders: string; revenue: string }>();
     return rows.map((row) => ({ date: row.date, orders: Number(row.orders), revenue: this.money(row.revenue) }));
+  }
+
+  private async periodRevenue(tenantId: string, range: ReportRange, period: 'week' | 'month') {
+    const expression = period === 'week'
+      ? "TO_CHAR(DATE_TRUNC('week', o.created_at AT TIME ZONE 'UTC'), 'IYYY-IW')"
+      : "TO_CHAR(DATE_TRUNC('month', o.created_at AT TIME ZONE 'UTC'), 'YYYY-MM')";
+    const rows = await this.baseOrderQuery(tenantId, range)
+      .select(expression, 'period')
+      .addSelect('COUNT(*)', 'orders')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .groupBy(expression)
+      .orderBy('period', 'ASC')
+      .getRawMany<{ period: string; orders: string; revenue: string }>();
+    return rows.map((row) => ({ period: row.period, orders: Number(row.orders), revenue: this.money(row.revenue) }));
+  }
+
+  private async paymentMethodMix(tenantId: string, range: ReportRange) {
+    const rows = await this.baseOrderQuery(tenantId, range)
+      .select("COALESCE(o.payment_method, 'unknown')", 'paymentMethod')
+      .addSelect('COUNT(*)', 'orders')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .groupBy("COALESCE(o.payment_method, 'unknown')")
+      .orderBy('orders', 'DESC')
+      .getRawMany<{ paymentMethod: string; orders: string; revenue: string }>();
+    return rows.map((row) => ({ paymentMethod: row.paymentMethod, orders: Number(row.orders), revenue: this.money(row.revenue) }));
+  }
+
+  private async hourlySalesHeatmap(tenantId: string, range: ReportRange) {
+    const rows = await this.baseOrderQuery(tenantId, range)
+      .select("TO_CHAR(o.created_at AT TIME ZONE 'UTC', 'Dy')", 'day')
+      .addSelect("EXTRACT(HOUR FROM o.created_at AT TIME ZONE 'UTC')", 'hour')
+      .addSelect('COUNT(*)', 'orders')
+      .addSelect('COALESCE(SUM(o.total), 0)', 'revenue')
+      .groupBy("TO_CHAR(o.created_at AT TIME ZONE 'UTC', 'Dy')")
+      .addGroupBy("EXTRACT(HOUR FROM o.created_at AT TIME ZONE 'UTC')")
+      .orderBy('hour', 'ASC')
+      .getRawMany<{ day: string; hour: string; orders: string; revenue: string }>();
+    return rows.map((row) => ({
+      day: row.day.trim(),
+      hour: Number(row.hour),
+      orders: Number(row.orders),
+      revenue: this.money(row.revenue),
+    }));
+  }
+
+  private async inventoryStockLevels(tenantId: string, range: ReportRange) {
+    const qb = this.stockItems
+      .createQueryBuilder('s')
+      .leftJoin(ProductEntity, 'p', 'p.id = s.product_id')
+      .leftJoin(CategoryEntity, 'c', 'c.id = p.category_id')
+      .where('s.tenant_id = :tenantId', { tenantId })
+      .select('s.product_id', 'productId')
+      .addSelect('s.location_id', 'locationId')
+      .addSelect("COALESCE(p.name, s.name)", 'name')
+      .addSelect("COALESCE(c.name, 'Uncategorized')", 'categoryName')
+      .addSelect('s.quantity_on_hand', 'quantityOnHand')
+      .addSelect('s.quantity_reserved', 'quantityReserved')
+      .addSelect('s.reorder_level', 'reorderLevel')
+      .addSelect('s.safety_stock_level', 'safetyStockLevel')
+      .orderBy('s.quantity_on_hand', 'ASC')
+      .limit(100);
+    if (range.locationId) qb.andWhere('s.location_id = :locationId', { locationId: range.locationId });
+    if (range.productId) qb.andWhere('s.product_id = :productId', { productId: range.productId });
+    if (range.categoryId) qb.andWhere('p.category_id = :categoryId', { categoryId: range.categoryId });
+    const rows = await qb.getRawMany<{
+      productId: string | null;
+      locationId: string;
+      name: string;
+      categoryName: string;
+      quantityOnHand: string;
+      quantityReserved: string;
+      reorderLevel: string | null;
+      safetyStockLevel: string | null;
+    }>();
+    return rows.map((row) => {
+      const available = Number(row.quantityOnHand) - Number(row.quantityReserved);
+      const reorderLevel = Number(row.reorderLevel ?? 0);
+      const safetyStock = Number(row.safetyStockLevel ?? 0);
+      const overstockThreshold = Math.max(reorderLevel, safetyStock, 1) * 3;
+      const status = available <= 0 ? 'stockout' : available <= Math.max(reorderLevel, safetyStock) ? 'low' : available >= overstockThreshold ? 'overstock' : 'healthy';
+      return {
+        productId: row.productId,
+        locationId: row.locationId,
+        name: row.name,
+        categoryName: row.categoryName,
+        quantityOnHand: Number(row.quantityOnHand),
+        quantityReserved: Number(row.quantityReserved),
+        available: Number(available.toFixed(2)),
+        reorderLevel,
+        safetyStock,
+        status,
+      };
+    });
+  }
+
+  private async deliveryTimingMetrics(tenantId: string, range: ReportRange) {
+    const qb = this.deliveries
+      .createQueryBuilder('d')
+      .innerJoin(OrderEntity, 'o', 'o.id = d.order_id')
+      .where('d.tenant_id = :tenantId', { tenantId })
+      .andWhere('d.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select("SUM(CASE WHEN d.status = 'delivered' THEN 1 ELSE 0 END)", 'completed')
+      .addSelect("SUM(CASE WHEN d.status = 'delivered' AND d.eta IS NOT NULL AND d.completed_at IS NOT NULL AND d.completed_at <= d.eta THEN 1 ELSE 0 END)", 'onTime')
+      .addSelect("SUM(CASE WHEN d.eta IS NOT NULL AND d.completed_at IS NOT NULL AND d.completed_at > d.eta THEN 1 ELSE 0 END)", 'delayed')
+      .addSelect('AVG(EXTRACT(EPOCH FROM (d.completed_at - d.started_at)) / 60)', 'avgMinutes');
+    if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
+    const row = await qb.getRawOne<{ completed: string | null; onTime: string | null; delayed: string | null; avgMinutes: string | null }>();
+    const completed = Number(row?.completed ?? 0);
+    const onTime = Number(row?.onTime ?? 0);
+    return {
+      onTimeRate: completed ? Number(((onTime / completed) * 100).toFixed(2)) : 0,
+      delayedDeliveries: Number(row?.delayed ?? 0),
+      averageDeliveryMinutes: row?.avgMinutes ? Number(Number(row.avgMinutes).toFixed(1)) : null,
+    };
+  }
+
+  private async deliveryDriverMetrics(tenantId: string, range: ReportRange) {
+    const qb = this.deliveries
+      .createQueryBuilder('d')
+      .innerJoin(OrderEntity, 'o', 'o.id = d.order_id')
+      .leftJoin(DriverProfileEntity, 'driver', 'driver.id = d.driver_profile_id')
+      .where('d.tenant_id = :tenantId', { tenantId })
+      .andWhere('d.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
+      .select('d.driver_profile_id', 'driverId')
+      .addSelect("COALESCE(driver.name, 'Unassigned')", 'driverName')
+      .addSelect('COUNT(*)', 'deliveries')
+      .addSelect("SUM(CASE WHEN d.status = 'delivered' THEN 1 ELSE 0 END)", 'completed')
+      .addSelect("SUM(CASE WHEN d.eta IS NOT NULL AND d.completed_at IS NOT NULL AND d.completed_at <= d.eta THEN 1 ELSE 0 END)", 'onTime')
+      .addSelect('AVG(EXTRACT(EPOCH FROM (d.completed_at - d.started_at)) / 60)', 'avgMinutes')
+      .groupBy('d.driver_profile_id')
+      .addGroupBy('driver.name')
+      .orderBy('deliveries', 'DESC')
+      .limit(20);
+    if (range.locationId) qb.andWhere('o.location_id = :locationId', { locationId: range.locationId });
+    const rows = await qb.getRawMany<{ driverId: string | null; driverName: string; deliveries: string; completed: string; onTime: string; avgMinutes: string | null }>();
+    return rows.map((row) => {
+      const completed = Number(row.completed);
+      return {
+        driverId: row.driverId,
+        driverName: row.driverName,
+        deliveries: Number(row.deliveries),
+        completed,
+        onTimeRate: completed ? Number(((Number(row.onTime) / completed) * 100).toFixed(2)) : 0,
+        averageMinutes: row.avgMinutes ? Number(Number(row.avgMinutes).toFixed(1)) : null,
+      };
+    });
+  }
+
+  private async latestForecastSignals(tenantId: string, range: ReportRange) {
+    const rows = await this.forecastSnapshots.find({
+      where: { tenantId },
+      order: { generatedAt: 'DESC' },
+      take: 8,
+    });
+    return rows
+      .filter((row) => !range.locationId || row.locationId === range.locationId || row.locationId === null)
+      .map((row) => ({
+        forecastType: row.forecastType,
+        locationId: row.locationId,
+        horizonDays: row.horizonDays,
+        confidence: row.confidence,
+        generatedForDate: row.generatedForDate,
+        generatedAt: row.generatedAt.toISOString(),
+      }));
+  }
+
+  private serializeFilters(range: ReportRange) {
+    return {
+      from: range.fromIso,
+      to: range.toIso,
+      locationId: range.locationId ?? null,
+      channel: range.channel ?? null,
+      categoryId: range.categoryId ?? null,
+      productId: range.productId ?? null,
+      supplierId: range.supplierId ?? null,
+    };
+  }
+
+  private average(values: number[]) {
+    const valid = values.filter((value) => Number.isFinite(value));
+    if (!valid.length) return 0;
+    return Number((valid.reduce((sum, value) => sum + value, 0) / valid.length).toFixed(2));
   }
 
   private flattenForExport(report: unknown): Array<Record<string, unknown>> {
@@ -707,8 +1133,47 @@ export class ReportsAnalyticsService {
     if (format === ReportExportFormat.JSON) {
       return `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(rows))}`;
     }
+    if (format === ReportExportFormat.PDF) {
+      return this.buildPdfDataUrl(rows);
+    }
     const csv = this.csvExport.serialize(rows);
     return `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
+  }
+
+  private buildPdfDataUrl(rows: Array<Record<string, unknown>>) {
+    const lines = rows
+      .slice(0, 80)
+      .map((row) => Object.entries(row).map(([key, value]) => `${key}: ${String(value)}`).join(' | '))
+      .join('\\n')
+      .replace(/[()\\]/g, '');
+    const text = `Ordella Report\\nGenerated ${new Date().toISOString()}\\n\\n${lines || 'No rows'}`;
+    const content = [
+      'BT',
+      '/F1 10 Tf',
+      '40 780 Td',
+      ...text.split('\\n').slice(0, 90).flatMap((line, index) => [
+        index === 0 ? `(${line.slice(0, 110)}) Tj` : `0 -12 Td (${line.slice(0, 110)}) Tj`,
+      ]),
+      'ET',
+    ].join('\\n');
+    const objects = [
+      '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj',
+      '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj',
+      '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj',
+      '4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj',
+      `5 0 obj << /Length ${content.length} >> stream\\n${content}\\nendstream endobj`,
+    ];
+    let pdf = '%PDF-1.4\\n';
+    const offsets: number[] = [0];
+    for (const object of objects) {
+      offsets.push(pdf.length);
+      pdf += `${object}\\n`;
+    }
+    const xrefOffset = pdf.length;
+    pdf += `xref\\n0 ${objects.length + 1}\\n0000000000 65535 f \\n`;
+    pdf += offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n \\n`).join('');
+    pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\\nstartxref\\n${xrefOffset}\\n%%EOF`;
+    return `data:application/pdf;base64,${Buffer.from(pdf).toString('base64')}`;
   }
 
   private money(value: string | number | null | undefined): string {

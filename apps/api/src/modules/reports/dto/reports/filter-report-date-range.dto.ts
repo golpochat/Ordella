@@ -24,6 +24,10 @@ export class FilterReportDateRangeDto {
 
   @IsOptional()
   @IsUUID()
+  productId?: string;
+
+  @IsOptional()
+  @IsUUID()
   supplierId?: string;
 
   @IsOptional()

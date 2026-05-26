@@ -48,6 +48,49 @@ export class ReportsController {
     return { success: true, data };
   }
 
+  @Get('dashboard')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
+  async getDashboard(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: FilterReportDateRangeDto,
+  ): Promise<ApiSuccessResponse<Record<string, unknown>>> {
+    const data = await this.reportsAnalyticsService.getDashboardReport(tenant, query);
+    return { success: true, data };
+  }
+
+  @Get('drilldowns/product/:id')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
+  async getProductDrilldown(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: FilterReportDateRangeDto,
+  ): Promise<ApiSuccessResponse<Record<string, unknown>>> {
+    const data = await this.reportsAnalyticsService.getProductDrilldown(tenant, id, query);
+    return { success: true, data };
+  }
+
+  @Get('drilldowns/location/:id')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
+  async getLocationDrilldown(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: FilterReportDateRangeDto,
+  ): Promise<ApiSuccessResponse<Record<string, unknown>>> {
+    const data = await this.reportsAnalyticsService.getLocationDrilldown(tenant, id, query);
+    return { success: true, data };
+  }
+
+  @Get('drilldowns/supplier/:id')
+  @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
+  async getSupplierDrilldown(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: FilterReportDateRangeDto,
+  ): Promise<ApiSuccessResponse<Record<string, unknown>>> {
+    const data = await this.reportsAnalyticsService.getSupplierDrilldown(tenant, id, query);
+    return { success: true, data };
+  }
+
   @Get('orders')
   @RequirePermissions(ReportsPermissionKeys.REPORTS_READ)
   async getOrders(
