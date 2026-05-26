@@ -97,7 +97,7 @@ export function SupplierPortalPanel() {
         <MetricCard label="Portal suppliers" value={overview?.suppliers.filter((supplier) => supplier.portalEnabled).length ?? 0} />
         <MetricCard label="Confirmations" value={overview?.confirmations.length ?? 0} />
         <MetricCard label="Messages" value={messages.length} />
-        <MetricCard label="Avg fill rate" value={`${average(performance.map((row) => row.fillRate))}%`} />
+        <MetricCard label="On-time rate" value={`${average(performance.map((row) => row.onTimeDeliveryRate))}%`} />
       </div>
 
       <Card>
@@ -133,9 +133,10 @@ export function SupplierPortalPanel() {
                   <tr>
                     <th className="p-3 font-medium">Supplier</th>
                     <th className="p-3 font-medium">Portal</th>
-                    <th className="p-3 font-medium">Confirmations</th>
-                    <th className="p-3 font-medium">Delays</th>
-                    <th className="p-3 font-medium">Fill rate</th>
+                    <th className="p-3 font-medium">On-time</th>
+                    <th className="p-3 font-medium">Avg lead</th>
+                    <th className="p-3 font-medium">Rejections</th>
+                    <th className="p-3 font-medium">Shipped</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -143,9 +144,10 @@ export function SupplierPortalPanel() {
                     <tr key={row.supplierId} className="border-t">
                       <td className="p-3 font-medium">{row.name}</td>
                       <td className="p-3"><Badge variant={row.portalEnabled ? 'default' : 'secondary'}>{row.portalEnabled ? 'Enabled' : 'Off'}</Badge></td>
-                      <td className="p-3">{row.confirmations}</td>
-                      <td className="p-3">{row.delays}</td>
-                      <td className="p-3">{row.fillRate}%</td>
+                      <td className="p-3">{row.onTimeDeliveryRate}%</td>
+                      <td className="p-3">{row.averageLeadTimeDays ?? 0}d</td>
+                      <td className="p-3">{row.rejectionRate ?? 0}%</td>
+                      <td className="p-3">{row.shippedOrders ?? 0}</td>
                     </tr>
                   ))}
                 </tbody>

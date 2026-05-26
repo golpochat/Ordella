@@ -8,6 +8,7 @@ export {
   SupplierPasswordResetDto,
   SupplierProfileUpdateDto,
   SupplierPurchaseOrderActionDto,
+  SupplierUploadDeliveryDocumentsDto,
   SupplierSendMessageDto,
   SupplierUpdateDeliveryDto,
   SupplierUpdatePasswordDto,

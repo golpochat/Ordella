@@ -1,8 +1,9 @@
-import { IsArray, IsObject, IsUUID } from 'class-validator';
+import { IsArray, IsObject, IsOptional, IsUUID } from 'class-validator';
 
 export class AdminUpdateDeliveryZonesDto {
+  @IsOptional()
   @IsUUID()
-  locationId!: string;
+  locationId?: string;
 
   @IsArray()
   @IsObject({ each: true })

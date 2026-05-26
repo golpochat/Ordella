@@ -55,6 +55,11 @@ export function OrderConfirmation({ orderId, justPlaced }: OrderConfirmationProp
             Fulfilled by: {status.fulfilledByLocationName ?? 'assigned location'}
             {status.estimatedDeliveryMinutes ? ` · ETA ${status.estimatedDeliveryMinutes} min` : ''}
           </p>
+          {status.orderType === 'delivery' && status.customerDeliveryStageLabel ? (
+            <p className="rounded-[var(--storefront-radius)] bg-muted p-3 font-medium text-primary">
+              {status.customerDeliveryStageLabel}
+            </p>
+          ) : null}
           {status.routingReason ? <p className="text-muted-foreground">{status.routingReason}</p> : null}
           <p className="text-muted-foreground">{pickupOrDelivery}</p>
           <p className="text-muted-foreground">Hours: {getOpeningHours()}</p>

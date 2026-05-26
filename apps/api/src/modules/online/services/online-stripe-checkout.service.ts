@@ -16,7 +16,7 @@ import { OrderStatus } from '../../orders/enums/order-status.enum';
 import { OrderType } from '../../orders/enums/order-type.enum';
 import { OrderPaymentMethod } from '../../orders/enums/order-payment-method.enum';
 import { OrdersService } from '../../orders/services/orders.service';
-import { parseMoney, formatMoney } from '../../orders/domain/order-totals.util';
+import { parseMoney, formatMoney, sumMoney } from '../../orders/domain/order-totals.util';
 import { PaymentsService } from '../../payments/services/payments.service';
 import { DeliveryService } from '../../deliveries/services/delivery.service';
 import { KdsBroadcastService } from '../../kds/services/kds-broadcast.service';
@@ -42,6 +42,9 @@ import { GiftCardsService } from '../../giftcards/services';
 import { BundleEntity, BundlePriceType } from '../../bundles/entities';
 import { PromotionsService } from '../../promotions/services/promotions.service';
 import { TaxCalculationService } from '../../tax';
+import { RoutingService } from '../../routing';
+import { TenantSettingsEntity } from '../../onboarding/entities/tenant-settings.entity';
+import { WarehouseService } from '../../warehouse/services';
 
 const DEFAULT_CURRENCY = 'EUR';
 const TOTAL_TOLERANCE = 0.02;
@@ -63,10 +66,14 @@ export class OnlineStripeCheckoutService {
     private readonly giftCardsService: GiftCardsService,
     private readonly promotionsService: PromotionsService,
     private readonly taxCalculation: TaxCalculationService,
+    private readonly routingService: RoutingService,
+    private readonly warehouseService: WarehouseService,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
     @InjectRepository(BundleEntity)
     private readonly bundleRepository: Repository<BundleEntity>,
+    @InjectRepository(TenantSettingsEntity)
+    private readonly tenantSettingsRepository: Repository<TenantSettingsEntity>,
   ) {}
 
   getPublicConfig(): { publishableKey: string | null; stripeConfigured: boolean } {
@@ -99,11 +106,13 @@ export class OnlineStripeCheckoutService {
     if (orderType === OrderType.DELIVERY) {
       this.assertDeliveryDetails(dto.delivery);
     }
+    const deliveryFee = await this.resolveDeliveryFee(tenant.tenantId, orderType, lines);
 
-    const baseTax = await this.calculateTax(tenant, dto.locationId, lines, '0.00', orderType);
+    const baseTax = await this.calculateTax(tenant, dto.locationId, lines, '0.00', orderType, deliveryFee);
     const baseComputed = calculateOnlineTotals({
       lines,
       orderType,
+      deliveryFee,
       taxTotal: baseTax.taxTotal,
       chargeableTaxTotal: baseTax.chargeableTaxTotal,
     });
@@ -124,10 +133,11 @@ export class OnlineStripeCheckoutService {
         categoryId: line.categoryId,
       })),
     });
-    const tax = await this.calculateTax(tenant, dto.locationId, lines, promotionResult.discountTotal, orderType);
+    const tax = await this.calculateTax(tenant, dto.locationId, lines, promotionResult.discountTotal, orderType, deliveryFee);
     const computed = calculateOnlineTotals({
       lines,
       orderType,
+      deliveryFee,
       discountTotal: promotionResult.discountTotal,
       taxTotal: tax.taxTotal,
       chargeableTaxTotal: tax.chargeableTaxTotal,
@@ -384,9 +394,18 @@ export class OnlineStripeCheckoutService {
     }
 
     const tenant: TenantContext = { tenantId, source: 'header' };
+    const orderType = this.resolveOrderType(pending.orderType);
+    const routing = orderType === OrderType.DELIVERY && pending.delivery
+      ? await this.routingService.decideForOrderInput(tenant, {
+          fromLocationId: pending.locationId,
+          orderType: pending.orderType,
+          customerAddress: pending.delivery,
+          items: pending.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+        })
+      : null;
     const createDto: CreateOrderDto = {
-      locationId: pending.locationId,
-      orderType: this.resolveOrderType(pending.orderType),
+      locationId: routing?.selectedLocationId ?? pending.locationId,
+      orderType,
       paymentMethod: OrderPaymentMethod.CARD,
       customerId: pending.customerId,
       loyaltyRedeemPoints: pending.loyaltyRedeemPoints,
@@ -417,6 +436,7 @@ export class OnlineStripeCheckoutService {
     };
 
     const order = await this.ordersService.create(tenant, createDto);
+    if (routing) await this.routingService.attachOrder(routing.decisionId, tenantId, order.id);
 
     const paymentContext = {
       tenantId,
@@ -437,6 +457,11 @@ export class OnlineStripeCheckoutService {
     const updated = await this.ordersService.update(tenant, order.id, {
       status: OrderStatus.ACCEPTED,
     });
+    await this.warehouseService.createPickForOrder(
+      tenantId,
+      { id: updated.id, locationId: updated.locationId, orderType: updated.orderType, status: updated.status },
+      routing?.selectedLocationId ?? updated.locationId,
+    );
 
     if (createDto.orderType === OrderType.DELIVERY && pending.delivery) {
       await this.deliveryService.createTask({
@@ -633,6 +658,7 @@ export class OnlineStripeCheckoutService {
     lines: Awaited<ReturnType<OnlineStripeCheckoutService['validateAndPriceLines']>>,
     discountTotal: string,
     orderType: OrderType,
+    deliveryFee: string,
   ) {
     return this.taxCalculation.calculateOrderTax({
       tenant,
@@ -653,9 +679,25 @@ export class OnlineStripeCheckoutService {
         modifiers: [],
       })),
       discountTotal,
-      deliveryFee: orderType === OrderType.DELIVERY ? '3.99' : '0.00',
+      deliveryFee: orderType === OrderType.DELIVERY ? deliveryFee : '0.00',
       serviceChargeTotal: '0.00',
     });
+  }
+
+  private async resolveDeliveryFee(
+    tenantId: string,
+    orderType: OrderType,
+    lines: Awaited<ReturnType<OnlineStripeCheckoutService['validateAndPriceLines']>>,
+  ): Promise<string> {
+    if (orderType !== OrderType.DELIVERY) return '0.00';
+    const settings = await this.tenantSettingsRepository.findOne({ where: { tenantId } });
+    if (settings && !settings.deliveryEnabled) throw new BadRequestException('Delivery is disabled for this tenant');
+    const subtotal = sumMoney(lines.map((line) => line.lineSubtotal));
+    const minimum = parseMoney(settings?.minimumOrderAmount ?? '0.00');
+    if (subtotal < minimum) throw new BadRequestException(`Delivery requires a minimum order of ${settings?.minimumOrderAmount}`);
+    const freeThreshold = settings?.freeDeliveryThreshold ? parseMoney(settings.freeDeliveryThreshold) : null;
+    if (freeThreshold !== null && subtotal >= freeThreshold) return formatMoney(0);
+    return formatMoney(parseMoney(settings?.deliveryFee ?? '3.99'));
   }
 
   private assertDeliveryDetails(

@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
+import { Repository } from 'typeorm';
 import { TenantContext, AuthenticatedUser } from '../../../common/interfaces';
 import { CreateOrderDto } from '../dto';
 import { OrderResponseDto } from '../dto';
@@ -27,9 +29,10 @@ import {
 import { OrderTransitionContext } from '../types/order-transition.context';
 import { LoyaltyService } from '../../loyalty/services';
 import { GiftCardsService } from '../../giftcards/services';
-import { formatMoney, parseMoney } from '../domain/order-totals.util';
+import { formatMoney, parseMoney, sumMoney } from '../domain/order-totals.util';
 import { SearchIndexService } from '../../search';
 import { TaxCalculationService } from '../../tax';
+import { TenantSettingsEntity } from '../../onboarding/entities/tenant-settings.entity';
 
 @Injectable()
 export class OrderCreationService {
@@ -44,6 +47,8 @@ export class OrderCreationService {
     private readonly giftCardsService: GiftCardsService,
     private readonly searchIndex: SearchIndexService,
     private readonly taxCalculationService: TaxCalculationService,
+    @InjectRepository(TenantSettingsEntity)
+    private readonly tenantSettingsRepository: Repository<TenantSettingsEntity>,
   ) {}
 
   async createOrder(
@@ -59,7 +64,7 @@ export class OrderCreationService {
       assertValidLineQuantity(item.quantity);
     }
 
-    const pricingContext = this.orderPricingService.buildPricingContext(
+    const basePricingContext = this.orderPricingService.buildPricingContext(
       tenant,
       dto.locationId,
       dto.orderType,
@@ -68,12 +73,19 @@ export class OrderCreationService {
     const lines = await this.orderPricingService.calculateLineItemsFromDto(
       tenant,
       dto.items,
-      pricingContext,
+      basePricingContext,
     );
 
     this.orderDeliveryService.assertDeliveryDetailsForCreate(
       dto.orderType,
       dto.deliveryDetails,
+    );
+    const deliveryFeeOverride = await this.resolveDeliveryFeeOverride(tenant.tenantId, dto.orderType, lines);
+    const pricingContext = this.orderPricingService.buildPricingContext(
+      tenant,
+      dto.locationId,
+      dto.orderType,
+      deliveryFeeOverride,
     );
 
     const deliveryDetails =
@@ -309,5 +321,24 @@ export class OrderCreationService {
     }
 
     return items;
+  }
+
+  private async resolveDeliveryFeeOverride(
+    tenantId: string,
+    orderType: OrderType,
+    lines: CalculatedLineItem[],
+  ): Promise<string | undefined> {
+    if (orderType !== OrderType.DELIVERY) return undefined;
+    const settings = await this.tenantSettingsRepository.findOne({ where: { tenantId } });
+    if (!settings) return undefined;
+    if (!settings.deliveryEnabled) throw new BadRequestException('Delivery is disabled for this tenant');
+    const subtotal = sumMoney(lines.map((line) => line.lineSubtotal));
+    const minimum = parseMoney(settings.minimumOrderAmount ?? '0.00');
+    if (subtotal < minimum) {
+      throw new BadRequestException(`Delivery requires a minimum order of ${settings.minimumOrderAmount}`);
+    }
+    const freeThreshold = settings.freeDeliveryThreshold ? parseMoney(settings.freeDeliveryThreshold) : null;
+    if (freeThreshold !== null && subtotal >= freeThreshold) return formatMoney(0);
+    return formatMoney(parseMoney(settings.deliveryFee ?? '0.00'));
   }
 }

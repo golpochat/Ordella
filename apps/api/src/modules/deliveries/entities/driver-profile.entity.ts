@@ -25,6 +25,15 @@ export class DriverProfileEntity extends BaseTenantScopedEntity {
   @Column({ name: 'vehicle_type', type: 'varchar', length: 32, nullable: true })
   vehicleType!: string | null;
 
+  @Column({ name: 'last_lat', type: 'decimal', precision: 10, scale: 7, nullable: true })
+  lastLat!: string | null;
+
+  @Column({ name: 'last_lng', type: 'decimal', precision: 10, scale: 7, nullable: true })
+  lastLng!: string | null;
+
+  @Column({ name: 'last_seen_at', type: 'timestamptz', nullable: true })
+  lastSeenAt!: Date | null;
+
   @OneToMany(() => DeliveryAssignmentEntity, (assignment) => assignment.driverProfile)
   assignments!: DeliveryAssignmentEntity[];
 }

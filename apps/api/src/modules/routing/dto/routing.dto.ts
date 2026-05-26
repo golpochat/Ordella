@@ -16,6 +16,16 @@ class RoutingAddressDto {
   @IsOptional()
   @IsString()
   postalCode?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  lat?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  lng?: number;
 }
 
 class RoutingLineDto {
@@ -40,6 +50,12 @@ export class DecideRoutingDto {
   @IsOptional()
   @IsString()
   orderType?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  orderSubtotal?: number;
 
   @IsOptional()
   @ValidateNested()

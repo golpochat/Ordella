@@ -1,6 +1,8 @@
 export {
   CompletePickTaskDto,
+  AssignWarehouseBinItemDto,
   MoveWarehouseBinItemDto,
+  PickTaskLineConfirmationDto,
   UpdatePickTaskDto,
   UpsertWarehouseBinDto,
   UpsertWarehouseZoneDto,

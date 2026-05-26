@@ -5,4 +5,5 @@ export interface OrderPricingContext {
   tenant: TenantContext;
   locationId: string;
   orderType: OrderType;
+  deliveryFeeOverride?: string;
 }

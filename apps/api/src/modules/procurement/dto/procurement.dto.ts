@@ -177,6 +177,33 @@ export class SupplierPurchaseOrderActionDto {
   notes?: string;
 }
 
+export class SupplierDeliveryDocumentDto {
+  @IsString()
+  name!: string;
+
+  @IsString()
+  url!: string;
+
+  @IsOptional()
+  @IsString()
+  contentType?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  sizeBytes?: number;
+}
+
+export class SupplierUploadDeliveryDocumentsDto {
+  @IsUUID()
+  purchaseOrderId!: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SupplierDeliveryDocumentDto)
+  documents!: SupplierDeliveryDocumentDto[];
+}
+
 export class SupplierUpdateDeliveryDto {
   @IsUUID()
   purchaseOrderId!: string;

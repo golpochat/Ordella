@@ -9,6 +9,9 @@ export class DriverResponseDto {
   status!: DriverProfileStatus;
   active!: boolean;
   vehicleType!: string | null;
+  lastLat!: string | null;
+  lastLng!: string | null;
+  lastSeenAt!: Date | null;
   createdAt!: Date;
   updatedAt!: Date | null;
 }

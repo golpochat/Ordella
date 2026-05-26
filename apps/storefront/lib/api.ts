@@ -172,6 +172,8 @@ export const orderStatusSchema = z.object({
   fulfilledByLocationName: z.string().nullable().optional(),
   routingReason: z.string().nullable().optional(),
   estimatedDeliveryMinutes: z.number().nullable().optional(),
+  customerDeliveryStage: z.enum(['preparing', 'out_for_delivery', 'arriving_soon', 'delivered']).nullable().optional(),
+  customerDeliveryStageLabel: z.string().nullable().optional(),
 });
 
 export type OnlineProduct = z.infer<typeof onlineProductSchema>;

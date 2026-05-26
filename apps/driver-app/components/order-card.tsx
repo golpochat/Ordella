@@ -9,6 +9,7 @@ import {
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { statusLabel, type DeliveryTaskStatus } from '@/lib/delivery-status';
 import { maskPhone } from '@/lib/mask-phone';
+import { googleMapsDirectionsUrl } from '@/lib/maps';
 
 type OrderCardProps = {
   order: DriverOrder;
@@ -39,6 +40,12 @@ export function OrderCard({
     order.itemsSummary.length > 0
       ? order.itemsSummary.map((l) => `${l.quantity}× ${l.name}`).join(', ')
       : 'Items pending sync';
+  const navigationUrl = order.deliveryAddress
+    ? googleMapsDirectionsUrl(
+        { label: 'Current location' },
+        { label: order.customerName, address: order.deliveryAddress },
+      )
+    : null;
 
   return (
     <Card>
@@ -80,6 +87,13 @@ export function OrderCard({
             {showNavigate && order.deliveryAddress ? (
               <Button asChild variant="ghost" className="flex-1">
                 <Link href={`/navigation?taskId=${order.id}`}>Navigate</Link>
+              </Button>
+            ) : null}
+            {navigationUrl ? (
+              <Button asChild variant="outline" className="flex-1">
+                <a href={navigationUrl} target="_blank" rel="noreferrer">
+                  Maps
+                </a>
               </Button>
             ) : null}
           </div>

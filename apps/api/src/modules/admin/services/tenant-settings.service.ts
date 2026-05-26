@@ -19,6 +19,12 @@ const DEFAULT_TENANT_LOCALIZATION = {
   numberFormat: '1,234.56',
   country: 'IE',
   defaultTaxRate: '0.0000',
+  deliveryEnabled: true,
+  deliveryFee: '0.00',
+  minimumOrderAmount: '0.00',
+  freeDeliveryThreshold: null as string | null,
+  deliveryRadiusKm: '5.00',
+  deliveryZones: [] as Array<Record<string, unknown>>,
 };
 
 @Injectable()
@@ -69,36 +75,54 @@ export class TenantSettingsService {
     return hours;
   }
 
-  updateDeliveryZones(tenantId: string, dto: AdminUpdateDeliveryZonesDto) {
-    return this.settingsRepository.mergeSettings(tenantId, dto.locationId, {
-      deliveryZones: dto.zones,
-    });
+  async updateDeliveryZones(tenantId: string, dto: AdminUpdateDeliveryZonesDto) {
+    if (dto.locationId) {
+      const location = await this.settingsRepository.requireLocationForTenant(tenantId, dto.locationId);
+      location.deliveryZones = dto.zones;
+      return this.settingsRepository.saveLocation(location);
+    }
+    const settings = await this.settingsRepository.getOrCreateTenantSettings(tenantId);
+    settings.deliveryZones = dto.zones;
+    const saved = await this.settingsRepository.saveTenantSettings(settings);
+    return this.toTenantLocalization(saved);
   }
 
   async updateDeliverySettings(tenantId: string, dto: AdminUpdateDeliverySettingsDto) {
-    await this.settingsRepository.requireLocationForTenant(tenantId, dto.locationId);
-    const row = await this.settingsRepository.getOrCreateSettings(dto.locationId);
-    const current = (row.settings?.deliverySettings as Record<string, unknown> | undefined) ?? {};
-    const next = {
-      deliveryRadiusKm: 5,
-      deliveryFee: 0,
-      freeDeliveryThreshold: null,
-      autoAssignDrivers: false,
-      maxActiveDeliveriesPerDriver: 3,
-      ...current,
-      ...(dto.deliveryRadiusKm !== undefined ? { deliveryRadiusKm: dto.deliveryRadiusKm } : {}),
-      ...(dto.deliveryFee !== undefined ? { deliveryFee: dto.deliveryFee } : {}),
-      ...(dto.freeDeliveryThreshold !== undefined
-        ? { freeDeliveryThreshold: dto.freeDeliveryThreshold }
-        : {}),
-      ...(dto.autoAssignDrivers !== undefined ? { autoAssignDrivers: dto.autoAssignDrivers } : {}),
-      ...(dto.maxActiveDeliveriesPerDriver !== undefined
-        ? { maxActiveDeliveriesPerDriver: dto.maxActiveDeliveriesPerDriver }
-        : {}),
-    };
-    return this.settingsRepository.mergeSettings(tenantId, dto.locationId, {
-      deliverySettings: next,
-    });
+    const settings = await this.settingsRepository.getOrCreateTenantSettings(tenantId);
+    if (dto.deliveryEnabled !== undefined) settings.deliveryEnabled = dto.deliveryEnabled;
+    if (dto.deliveryFee !== undefined) settings.deliveryFee = dto.deliveryFee.toFixed(2);
+    if (dto.minimumOrderAmount !== undefined) settings.minimumOrderAmount = dto.minimumOrderAmount.toFixed(2);
+    if (dto.freeDeliveryThreshold !== undefined) {
+      settings.freeDeliveryThreshold = dto.freeDeliveryThreshold === null ? null : dto.freeDeliveryThreshold.toFixed(2);
+    }
+    if (dto.deliveryRadiusKm !== undefined) settings.deliveryRadiusKm = dto.deliveryRadiusKm.toFixed(2);
+    if (dto.deliveryZones !== undefined) settings.deliveryZones = dto.deliveryZones;
+
+    if (dto.locationId) {
+      const location = await this.settingsRepository.requireLocationForTenant(tenantId, dto.locationId);
+      if (dto.deliveryZones !== undefined) location.deliveryZones = dto.deliveryZones;
+      await this.settingsRepository.saveLocation(location);
+      const row = await this.settingsRepository.getOrCreateSettings(dto.locationId);
+      const current = (row.settings?.deliverySettings as Record<string, unknown> | undefined) ?? {};
+      await this.settingsRepository.mergeSettings(tenantId, dto.locationId, {
+        deliverySettings: {
+          deliveryRadiusKm: Number(settings.deliveryRadiusKm),
+          deliveryFee: Number(settings.deliveryFee),
+          minimumOrderAmount: Number(settings.minimumOrderAmount),
+          freeDeliveryThreshold: settings.freeDeliveryThreshold ? Number(settings.freeDeliveryThreshold) : null,
+          autoAssignDrivers: false,
+          maxActiveDeliveriesPerDriver: 3,
+          ...current,
+          ...(dto.autoAssignDrivers !== undefined ? { autoAssignDrivers: dto.autoAssignDrivers } : {}),
+          ...(dto.maxActiveDeliveriesPerDriver !== undefined
+            ? { maxActiveDeliveriesPerDriver: dto.maxActiveDeliveriesPerDriver }
+            : {}),
+        },
+      });
+    }
+
+    const saved = await this.settingsRepository.saveTenantSettings(settings);
+    return this.toTenantLocalization(saved);
   }
 
   updatePaymentSettings(tenantId: string, dto: AdminUpdatePaymentSettingsDto) {
@@ -154,6 +178,12 @@ export class TenantSettingsService {
       numberFormat: settings.numberFormat ?? DEFAULT_TENANT_LOCALIZATION.numberFormat,
       country: settings.country ?? DEFAULT_TENANT_LOCALIZATION.country,
       defaultTaxRate: settings.defaultTaxRate ?? DEFAULT_TENANT_LOCALIZATION.defaultTaxRate,
+      deliveryEnabled: settings.deliveryEnabled ?? DEFAULT_TENANT_LOCALIZATION.deliveryEnabled,
+      deliveryFee: settings.deliveryFee ?? DEFAULT_TENANT_LOCALIZATION.deliveryFee,
+      minimumOrderAmount: settings.minimumOrderAmount ?? DEFAULT_TENANT_LOCALIZATION.minimumOrderAmount,
+      freeDeliveryThreshold: settings.freeDeliveryThreshold ?? DEFAULT_TENANT_LOCALIZATION.freeDeliveryThreshold,
+      deliveryRadiusKm: settings.deliveryRadiusKm ?? DEFAULT_TENANT_LOCALIZATION.deliveryRadiusKm,
+      deliveryZones: settings.deliveryZones ?? DEFAULT_TENANT_LOCALIZATION.deliveryZones,
     };
   }
 }

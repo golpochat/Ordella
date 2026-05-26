@@ -6,6 +6,9 @@ export const DEFAULT_DATE_FORMAT = 'DD/MM/YYYY';
 export const DEFAULT_NUMBER_FORMAT = '1,234.56';
 export const DEFAULT_COUNTRY = 'IE';
 export const DEFAULT_TAX_RATE = '0.0000';
+export const DEFAULT_DELIVERY_FEE = '0.00';
+export const DEFAULT_MINIMUM_ORDER_AMOUNT = '0.00';
+export const DEFAULT_DELIVERY_RADIUS_KM = '5.00';
 export const DEFAULT_LOCATION_NAME = 'Main Location';
 
 export function defaultTenantMetadata(): Record<string, unknown> {
@@ -36,6 +39,12 @@ export function defaultTenantLocalizationSettings() {
     numberFormat: DEFAULT_NUMBER_FORMAT,
     country: DEFAULT_COUNTRY,
     defaultTaxRate: DEFAULT_TAX_RATE,
+    deliveryEnabled: true,
+    deliveryFee: DEFAULT_DELIVERY_FEE,
+    minimumOrderAmount: DEFAULT_MINIMUM_ORDER_AMOUNT,
+    freeDeliveryThreshold: null,
+    deliveryRadiusKm: DEFAULT_DELIVERY_RADIUS_KM,
+    deliveryZones: [],
   };
 }
 

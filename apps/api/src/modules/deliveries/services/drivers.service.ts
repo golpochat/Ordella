@@ -17,6 +17,9 @@ function toDriverResponseDto(driver: DriverProfileEntity): DriverResponseDto {
     status: driver.status,
     active: driver.active,
     vehicleType: driver.vehicleType,
+    lastLat: driver.lastLat,
+    lastLng: driver.lastLng,
+    lastSeenAt: driver.lastSeenAt,
     createdAt: driver.createdAt,
     updatedAt: driver.updatedAt,
   };

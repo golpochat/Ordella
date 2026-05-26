@@ -6,7 +6,7 @@ import { StockTransferEntity } from '../../inventory/entities';
 import { PickWaveEntity } from './pick-wave.entity';
 import { FulfillmentSlotEntity } from './fulfillment-slot.entity';
 
-export type WarehousePickTaskStatus = 'pending' | 'picking' | 'completed';
+export type WarehousePickTaskStatus = 'pending' | 'picking' | 'picked' | 'completed';
 
 @Entity('warehouse_pick_tasks')
 @Index(['warehouseId', 'status'])

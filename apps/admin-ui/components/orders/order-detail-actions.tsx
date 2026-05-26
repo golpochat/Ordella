@@ -11,8 +11,11 @@ import { getErrorMessage } from '@/lib/utils';
 const STATUSES = [
   'pending',
   'accepted',
+  'picking',
+  'picked',
   'preparing',
   'ready',
+  'handed_to_driver',
   'out_for_delivery',
   'completed',
   'cancelled',

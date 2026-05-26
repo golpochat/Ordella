@@ -49,9 +49,12 @@ export function mapFulfillmentDisplayStatus(status: OrderStatus): FulfillmentDis
   switch (status) {
     case OrderStatus.ACCEPTED:
       return FulfillmentDisplayStatus.NEW;
+    case OrderStatus.PICKING:
+    case OrderStatus.PICKED:
     case OrderStatus.PREPARING:
       return FulfillmentDisplayStatus.IN_PROGRESS;
     case OrderStatus.READY:
+    case OrderStatus.HANDED_TO_DRIVER:
     case OrderStatus.OUT_FOR_DELIVERY:
       return FulfillmentDisplayStatus.READY;
     case OrderStatus.COMPLETED:

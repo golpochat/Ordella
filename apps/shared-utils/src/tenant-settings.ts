@@ -9,6 +9,12 @@ export const tenantSettingsSchema = z.object({
   numberFormat: z.string().default('1,234.56'),
   country: z.string().default('IE'),
   defaultTaxRate: z.string().default('0.0000'),
+  deliveryEnabled: z.boolean().default(true),
+  deliveryFee: z.string().default('0.00'),
+  minimumOrderAmount: z.string().default('0.00'),
+  freeDeliveryThreshold: z.string().nullable().default(null),
+  deliveryRadiusKm: z.string().default('5.00'),
+  deliveryZones: z.array(z.record(z.unknown())).default([]),
 });
 
 export type TenantSettings = z.infer<typeof tenantSettingsSchema>;
@@ -22,6 +28,12 @@ export const DEFAULT_TENANT_SETTINGS: TenantSettings = {
   numberFormat: '1,234.56',
   country: 'IE',
   defaultTaxRate: '0.0000',
+  deliveryEnabled: true,
+  deliveryFee: '0.00',
+  minimumOrderAmount: '0.00',
+  freeDeliveryThreshold: null,
+  deliveryRadiusKm: '5.00',
+  deliveryZones: [],
 };
 
 export function normalizeTenantSettings(value: unknown): TenantSettings {

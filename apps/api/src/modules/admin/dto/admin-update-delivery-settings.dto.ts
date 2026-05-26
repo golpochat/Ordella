@@ -1,8 +1,13 @@
-import { IsBoolean, IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, IsUUID, Min } from 'class-validator';
 
 export class AdminUpdateDeliverySettingsDto {
+  @IsOptional()
   @IsUUID()
-  locationId!: string;
+  locationId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  deliveryEnabled?: boolean;
 
   @IsOptional()
   @IsNumber()
@@ -17,7 +22,17 @@ export class AdminUpdateDeliverySettingsDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  freeDeliveryThreshold?: number;
+  minimumOrderAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  freeDeliveryThreshold?: number | null;
+
+  @IsOptional()
+  @IsArray()
+  @IsObject({ each: true })
+  deliveryZones?: Record<string, unknown>[];
 
   @IsOptional()
   @IsBoolean()

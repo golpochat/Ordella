@@ -7,6 +7,8 @@ import { ProductEntity } from '../../catalog/entities/product.entity';
 
 export const KDS_DEFAULT_ACTIVE_STATUSES: readonly OrderStatus[] = [
   OrderStatus.ACCEPTED,
+  OrderStatus.PICKING,
+  OrderStatus.PICKED,
   OrderStatus.PREPARING,
   OrderStatus.READY,
 ];

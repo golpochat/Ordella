@@ -48,7 +48,7 @@ export class OrderFeeCalculatorService {
       `[placeholder] calculateDeliveryFee orderType=${input.context.orderType} location=${input.context.locationId}`,
     );
     if (input.context.orderType === OrderType.DELIVERY) {
-      return formatMoney(3.99);
+      return input.context.deliveryFeeOverride ?? formatMoney(3.99);
     }
     return formatMoney(0);
   }

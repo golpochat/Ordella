@@ -28,6 +28,10 @@ export async function updateDeliveryZones(api: ApiClient, body: Record<string, u
   return api.patch<{ success: boolean; data: unknown }>('admin/settings/delivery-zones', body);
 }
 
+export async function getDeliverySettings(api: ApiClient) {
+  return api.getData<unknown>('admin/settings/delivery');
+}
+
 export async function updatePaymentSettings(api: ApiClient, body: Record<string, unknown>) {
   return api.patch<{ success: boolean; data: unknown }>('admin/settings/payment', body);
 }
@@ -39,10 +43,13 @@ export async function updatePosSettings(api: ApiClient, body: Record<string, unk
 export async function updateDeliverySettings(
   api: ApiClient,
   body: {
-    locationId: string;
+    locationId?: string;
+    deliveryEnabled?: boolean;
     deliveryRadiusKm?: number;
     deliveryFee?: number;
+    minimumOrderAmount?: number;
     freeDeliveryThreshold?: number | null;
+    deliveryZones?: Record<string, unknown>[];
     autoAssignDrivers?: boolean;
     maxActiveDeliveriesPerDriver?: number;
   },
@@ -62,4 +69,15 @@ export async function updateFulfillmentSettings(
   },
 ) {
   return api.patch<{ success: boolean; data: unknown }>('admin/settings/fulfillment', body);
+}
+
+export async function createDeliveryAssignment(
+  api: ApiClient,
+  body: {
+    deliveryTaskId: string;
+    driverProfileId: string;
+    assignmentType?: 'manual' | 'auto';
+  },
+) {
+  return api.post<{ success: boolean; data: unknown }>('delivery-assignments', body);
 }

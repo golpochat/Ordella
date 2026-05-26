@@ -306,6 +306,12 @@ export class OnboardingProvisioningService {
       numberFormat: settings.numberFormat,
       country: settings.country,
       defaultTaxRate: settings.defaultTaxRate,
+      deliveryEnabled: settings.deliveryEnabled,
+      deliveryFee: settings.deliveryFee,
+      minimumOrderAmount: settings.minimumOrderAmount,
+      freeDeliveryThreshold: settings.freeDeliveryThreshold,
+      deliveryRadiusKm: settings.deliveryRadiusKm,
+      deliveryZones: settings.deliveryZones,
     };
   }
 

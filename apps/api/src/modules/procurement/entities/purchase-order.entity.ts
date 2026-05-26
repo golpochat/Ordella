@@ -53,8 +53,26 @@ export class PurchaseOrderEntity {
   @Column({ name: 'supplier_notes', type: 'text', nullable: true })
   supplierNotes!: string | null;
 
+  @Column({ name: 'delivery_documents', type: 'jsonb', default: () => "'[]'" })
+  deliveryDocuments!: Array<{
+    name: string;
+    url: string;
+    contentType?: string | null;
+    sizeBytes?: number | null;
+    uploadedAt: string;
+  }>;
+
   @Column({ name: 'sent_at', type: 'timestamptz', nullable: true })
   sentAt!: Date | null;
+
+  @Column({ name: 'confirmed_at', type: 'timestamptz', nullable: true })
+  confirmedAt!: Date | null;
+
+  @Column({ name: 'rejected_at', type: 'timestamptz', nullable: true })
+  rejectedAt!: Date | null;
+
+  @Column({ name: 'shipped_at', type: 'timestamptz', nullable: true })
+  shippedAt!: Date | null;
 
   @Column({ name: 'received_at', type: 'timestamptz', nullable: true })
   receivedAt!: Date | null;

@@ -1,9 +1,9 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
 import type { WarehousePickTaskStatus, WarehouseZoneType } from '../entities';
 
-const zoneTypes = ['picking', 'storage', 'receiving'] as const;
-const pickStatuses = ['pending', 'picking', 'completed'] as const;
+const zoneTypes = ['ambient', 'chilled', 'frozen', 'produce', 'bakery', 'picking', 'storage', 'receiving'] as const;
+const pickStatuses = ['pending', 'picking', 'picked', 'completed'] as const;
 
 export class UpsertWarehouseZoneDto {
   @IsOptional()
@@ -53,9 +53,47 @@ export class MoveWarehouseBinItemDto {
   quantity!: number;
 }
 
+export class AssignWarehouseBinItemDto {
+  @IsUUID()
+  binId!: string;
+
+  @IsUUID()
+  itemId!: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  quantity!: number;
+}
+
+export class PickTaskLineConfirmationDto {
+  @IsUUID()
+  productId!: string;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  quantityPicked!: number;
+
+  @IsOptional()
+  @IsUUID()
+  substituteProductId?: string;
+}
+
 export class CompletePickTaskDto {
   @IsUUID()
   pickTaskId!: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PickTaskLineConfirmationDto)
+  lines?: PickTaskLineConfirmationDto[];
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  missingItemIds?: string[];
 }
 
 export class UpdatePickTaskDto {

@@ -31,6 +31,10 @@ export class AdminSettingsRepository {
     return this.tenantRepository.save(tenant);
   }
 
+  saveLocation(location: LocationEntity): Promise<LocationEntity> {
+    return this.locationRepository.save(location);
+  }
+
   async getOrCreateTenantSettings(tenantId: string): Promise<TenantSettingsEntity> {
     let settings = await this.tenantSettingsRepository.findOne({ where: { tenantId } });
     if (!settings) {

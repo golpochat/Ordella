@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { TenantContext } from '../../../common/interfaces';
 import { ProductStatus } from '../../catalog/enums/product-status.enum';
 import { OrderType } from '../../orders/enums/order-type.enum';
@@ -23,6 +25,7 @@ import { OnlineCheckoutResult } from '../types';
 import { OnlineOrderType } from '../enums/online-order-type.enum';
 import { parseMoney, formatMoney, sumMoney } from '../../orders/domain/order-totals.util';
 import { TaxCalculationService } from '../../tax';
+import { TenantSettingsEntity } from '../../onboarding/entities/tenant-settings.entity';
 
 const DEFAULT_CURRENCY = 'USD';
 
@@ -33,6 +36,8 @@ export class CheckoutService {
     private readonly menuRepository: MenuQueryRepository,
     private readonly promotionsService: PromotionsService,
     private readonly taxCalculation: TaxCalculationService,
+    @InjectRepository(TenantSettingsEntity)
+    private readonly tenantSettingsRepository: Repository<TenantSettingsEntity>,
   ) {}
 
   async checkout(tenant: TenantContext, dto: OnlineCheckoutDto): Promise<OnlineCheckoutResult> {
@@ -49,11 +54,13 @@ export class CheckoutService {
     if (orderType === OrderType.DELIVERY) {
       this.assertDeliveryDetails(dto.delivery);
     }
+    const deliveryFee = await this.resolveDeliveryFee(tenant.tenantId, orderType, lines);
 
-    const baseTax = await this.calculateTax(tenant, basket.locationId, lines, '0.00', orderType);
+    const baseTax = await this.calculateTax(tenant, basket.locationId, lines, '0.00', orderType, deliveryFee);
     const baseTotals = calculateOnlineTotals({
       lines,
       orderType,
+      deliveryFee,
       taxTotal: baseTax.taxTotal,
       chargeableTaxTotal: baseTax.chargeableTaxTotal,
     });
@@ -75,11 +82,13 @@ export class CheckoutService {
       lines,
       promotionResult.discountTotal,
       orderType,
+      deliveryFee,
     );
     const totals = {
       ...calculateOnlineTotals({
         lines,
         orderType,
+        deliveryFee,
         discountTotal: promotionResult.discountTotal,
         taxTotal: tax.taxTotal,
         chargeableTaxTotal: tax.chargeableTaxTotal,
@@ -209,6 +218,7 @@ export class CheckoutService {
     lines: OnlineLinePricing[],
     discountTotal: string,
     orderType: OrderType,
+    deliveryFee: string,
   ) {
     return this.taxCalculation.calculateOrderTax({
       tenant,
@@ -229,9 +239,25 @@ export class CheckoutService {
         modifiers: [],
       })),
       discountTotal,
-      deliveryFee: orderType === OrderType.DELIVERY ? '3.99' : '0.00',
+      deliveryFee: orderType === OrderType.DELIVERY ? deliveryFee : '0.00',
       serviceChargeTotal: '0.00',
     });
+  }
+
+  private async resolveDeliveryFee(
+    tenantId: string,
+    orderType: OrderType,
+    lines: OnlineLinePricing[],
+  ): Promise<string> {
+    if (orderType !== OrderType.DELIVERY) return '0.00';
+    const settings = await this.tenantSettingsRepository.findOne({ where: { tenantId } });
+    const subtotal = sumMoney(lines.map((line) => line.lineSubtotal));
+    if (settings && !settings.deliveryEnabled) throw new BadRequestException('Delivery is disabled for this tenant');
+    const minimum = parseMoney(settings?.minimumOrderAmount ?? '0.00');
+    if (subtotal < minimum) throw new BadRequestException(`Delivery requires a minimum order of ${settings?.minimumOrderAmount}`);
+    const freeThreshold = settings?.freeDeliveryThreshold ? parseMoney(settings.freeDeliveryThreshold) : null;
+    if (freeThreshold !== null && subtotal >= freeThreshold) return formatMoney(0);
+    return formatMoney(parseMoney(settings?.deliveryFee ?? '3.99'));
   }
 
   private resolveOrderType(orderType: OnlineOrderType): OrderType {

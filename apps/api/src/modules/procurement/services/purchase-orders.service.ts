@@ -165,16 +165,27 @@ export class PurchaseOrdersService {
     const onTime = received.filter((order) =>
       !order.expectedDeliveryDate || (order.receivedAt && order.receivedAt <= new Date(order.expectedDeliveryDate)),
     ).length;
-    const topSuppliers = suppliers.map((supplier) => ({
-      supplierId: supplier.id,
-      name: supplier.name,
-      itemsSupplied: supplier.items?.length ?? 0,
-      purchaseOrders: orders.filter((order) => order.supplierId === supplier.id).length,
-      volume: orders
-        .filter((order) => order.supplierId === supplier.id)
-        .reduce((sum, order) => sum + Number(order.totalCost), 0)
-        .toFixed(2),
-    })).sort((a, b) => Number(b.volume) - Number(a.volume));
+    const topSuppliers = suppliers.map((supplier) => {
+      const supplierOrders = orders.filter((order) => order.supplierId === supplier.id);
+      const supplierReceived = supplierOrders.filter((order) => order.status === PurchaseOrderStatus.RECEIVED);
+      const supplierOnTime = supplierReceived.filter((order) =>
+        !order.expectedDeliveryDate || (order.receivedAt && order.receivedAt <= new Date(order.expectedDeliveryDate)),
+      );
+      return {
+        supplierId: supplier.id,
+        name: supplier.name,
+        itemsSupplied: supplier.items?.length ?? 0,
+        purchaseOrders: supplierOrders.length,
+        confirmedOrders: supplierOrders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.CONFIRMED).length,
+        shippedOrders: supplierOrders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.SHIPPED).length,
+        rejectionRate: supplierOrders.length
+          ? Number(((supplierOrders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.REJECTED).length / supplierOrders.length) * 100).toFixed(2))
+          : 0,
+        averageLeadTimeDays: this.averageLeadTimeDays(supplierReceived),
+        onTimeDeliveryRate: supplierReceived.length ? Number(((supplierOnTime.length / supplierReceived.length) * 100).toFixed(2)) : 0,
+        volume: supplierOrders.reduce((sum, order) => sum + Number(order.totalCost), 0).toFixed(2),
+      };
+    }).sort((a, b) => Number(b.volume) - Number(a.volume));
     return {
       totalSuppliers: suppliers.length,
       activeSuppliers: suppliers.filter((supplier) => supplier.isActive).length,
@@ -310,5 +321,14 @@ export class PurchaseOrdersService {
     } catch {
       // Notification delivery must not block stock receiving or PO state changes.
     }
+  }
+
+  private averageLeadTimeDays(orders: PurchaseOrderEntity[]) {
+    const values = orders
+      .filter((order) => order.sentAt && order.receivedAt)
+      .map((order) => (order.receivedAt!.getTime() - order.sentAt!.getTime()) / 86_400_000)
+      .filter((value) => value >= 0);
+    if (!values.length) return 0;
+    return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2));
   }
 }

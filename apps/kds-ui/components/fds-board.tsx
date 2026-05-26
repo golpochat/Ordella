@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { updateFulfillmentStatus } from '@/lib/api';
-import { loadFdsSettings, type FdsLocalSettings } from '@/lib/fds-settings';
+import { DEFAULT_FDS_SETTINGS, loadFdsSettings, type FdsLocalSettings } from '@/lib/fds-settings';
 import { useFulfillmentBoard } from '@/hooks/use-fulfillment-board';
 import { FdsHeader } from '@/components/fds-header';
 import { FdsOrderCard } from '@/components/fds-order-card';
@@ -22,7 +22,7 @@ function matchesModeFilter(orderType: string, filter: FdsLocalSettings['fulfillm
 }
 
 export function FdsBoard() {
-  const [settings, setSettings] = useState<FdsLocalSettings>(() => loadFdsSettings());
+  const [settings, setSettings] = useState<FdsLocalSettings>(DEFAULT_FDS_SETTINGS);
   const [busyId, setBusyId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -48,6 +48,13 @@ export function FdsBoard() {
     }
     return grouped;
   }, [orders, settings.fulfillmentModeFilter]);
+
+  useEffect(() => {
+    const saved = loadFdsSettings();
+    setSettings(saved);
+    if (saved.darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, []);
 
   const playNewOrderSound = useCallback(() => {
     if (!settings.soundAlerts) return;

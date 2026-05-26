@@ -5,6 +5,7 @@ import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { fetchLocations, type LocationListItem } from '@/lib/api/locations';
 import {
+  assignWarehouseBinItem,
   completePickTask,
   getWarehouseDashboard,
   listPickTasks,
@@ -17,13 +18,14 @@ import {
   type WarehouseDashboard,
   type WarehouseZone,
 } from '@/lib/api/admin/warehouse';
+import { listCatalogItems, type CatalogItem } from '@/lib/api/catalog';
 import { getErrorMessage } from '@/lib/utils';
 
 type ZoneForm = {
   id?: string;
   warehouseId: string;
   name: string;
-  type: 'picking' | 'storage' | 'receiving';
+  type: 'ambient' | 'chilled' | 'frozen' | 'produce' | 'bakery' | 'picking' | 'storage' | 'receiving';
 };
 
 type BinForm = {
@@ -33,6 +35,14 @@ type BinForm = {
   capacity: string;
 };
 
+type BinItemForm = {
+  binId: string;
+  itemId: string;
+  quantity: string;
+};
+
+const zoneTypes = ['ambient', 'chilled', 'frozen', 'produce', 'bakery', 'picking', 'storage', 'receiving'] as const;
+
 export function WarehouseManagementPanel() {
   const api = useMemo(() => createBrowserApiClient(), []);
   const [dashboard, setDashboard] = useState<WarehouseDashboard | null>(null);
@@ -40,28 +50,33 @@ export function WarehouseManagementPanel() {
   const [zones, setZones] = useState<WarehouseZone[]>([]);
   const [bins, setBins] = useState<WarehouseBin[]>([]);
   const [picks, setPicks] = useState<PickTask[]>([]);
-  const [zoneForm, setZoneForm] = useState<ZoneForm>({ warehouseId: '', name: '', type: 'storage' });
+  const [products, setProducts] = useState<CatalogItem[]>([]);
+  const [zoneForm, setZoneForm] = useState<ZoneForm>({ warehouseId: '', name: '', type: 'ambient' });
   const [binForm, setBinForm] = useState<BinForm>({ zoneId: '', code: '', capacity: '' });
+  const [binItemForm, setBinItemForm] = useState<BinItemForm>({ binId: '', itemId: '', quantity: '0' });
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const [nextDashboard, nextLocations, nextZones, nextBins, nextPicks] = await Promise.all([
+      const [nextDashboard, nextLocations, nextZones, nextBins, nextPicks, nextProducts] = await Promise.all([
         getWarehouseDashboard(api),
         fetchLocations(),
         listWarehouseZones(api),
         listWarehouseBins(api),
         listPickTasks(api),
+        listCatalogItems(api),
       ]);
       setDashboard(nextDashboard);
       setLocations(nextLocations);
       setZones(nextZones);
       setBins(nextBins);
       setPicks(nextPicks);
+      setProducts(nextProducts);
       setError(null);
       const firstWarehouse = nextLocations.find((location) => ['warehouse', 'dark_store', 'distribution_center'].includes(location.locationType ?? ''));
       setZoneForm((current) => ({ ...current, warehouseId: current.warehouseId || firstWarehouse?.id || nextLocations[0]?.id || '' }));
       setBinForm((current) => ({ ...current, zoneId: current.zoneId || nextZones[0]?.id || '' }));
+      setBinItemForm((current) => ({ ...current, binId: current.binId || nextBins[0]?.id || '', itemId: current.itemId || nextProducts[0]?.id || '' }));
     } catch (err) {
       setError(getErrorMessage(err));
     }
@@ -77,7 +92,7 @@ export function WarehouseManagementPanel() {
   const saveZone = async () => {
     try {
       await upsertWarehouseZone(api, zoneForm);
-      setZoneForm({ warehouseId: zoneForm.warehouseId, name: '', type: 'storage' });
+      setZoneForm({ warehouseId: zoneForm.warehouseId, name: '', type: 'ambient' });
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -100,6 +115,20 @@ export function WarehouseManagementPanel() {
   const completePick = async (pickTaskId: string) => {
     try {
       await completePickTask(api, pickTaskId);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
+  const saveBinItem = async () => {
+    try {
+      await assignWarehouseBinItem(api, {
+        binId: binItemForm.binId,
+        itemId: binItemForm.itemId,
+        quantity: Number(binItemForm.quantity),
+      });
+      setBinItemForm({ ...binItemForm, quantity: '0' });
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -135,9 +164,9 @@ export function WarehouseManagementPanel() {
               </select>
               <Input placeholder="Zone name" value={zoneForm.name} onChange={(e) => setZoneForm({ ...zoneForm, name: e.target.value })} />
               <select className="h-10 rounded-md border bg-background px-3 text-sm" value={zoneForm.type} onChange={(e) => setZoneForm({ ...zoneForm, type: e.target.value as ZoneForm['type'] })}>
-                <option value="picking">Picking</option>
-                <option value="storage">Storage</option>
-                <option value="receiving">Receiving</option>
+                {zoneTypes.map((type) => (
+                  <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>
+                ))}
               </select>
             </div>
             <Button type="button" onClick={saveZone} disabled={!zoneForm.warehouseId || !zoneForm.name.trim()}>
@@ -175,6 +204,25 @@ export function WarehouseManagementPanel() {
             <Button type="button" onClick={saveBin} disabled={!binForm.zoneId || !binForm.code.trim()}>
               Save bin
             </Button>
+            <div className="rounded-lg border p-3">
+              <p className="text-sm font-medium">Assign product to bin</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={binItemForm.binId} onChange={(e) => setBinItemForm({ ...binItemForm, binId: e.target.value })}>
+                  {bins.map((bin) => (
+                    <option key={bin.id} value={bin.id}>{bin.code}</option>
+                  ))}
+                </select>
+                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={binItemForm.itemId} onChange={(e) => setBinItemForm({ ...binItemForm, itemId: e.target.value })}>
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>{product.name}</option>
+                  ))}
+                </select>
+                <Input placeholder="Quantity" type="number" min="0" value={binItemForm.quantity} onChange={(e) => setBinItemForm({ ...binItemForm, quantity: e.target.value })} />
+              </div>
+              <Button type="button" className="mt-3" variant="outline" onClick={saveBinItem} disabled={!binItemForm.binId || !binItemForm.itemId}>
+                Save assignment
+              </Button>
+            </div>
             <div className="space-y-2">
               {bins.map((bin) => (
                 <div key={bin.id} className="rounded-lg border p-3 text-sm">
@@ -214,10 +262,10 @@ export function WarehouseManagementPanel() {
                   <tr key={pick.id} className="border-t">
                     <td className="p-3">{pick.warehouse?.name ?? pick.warehouseId}</td>
                     <td className="p-3">{pick.transferId ? `Transfer ${pick.transferId.slice(0, 8)}` : pick.orderId ? `Order ${pick.orderId.slice(0, 8)}` : 'Manual'}</td>
-                    <td className="p-3"><Badge variant={pick.status === 'completed' ? 'default' : 'secondary'}>{pick.status}</Badge></td>
+                    <td className="p-3"><Badge variant={pick.status === 'completed' || pick.status === 'picked' ? 'default' : 'secondary'}>{pick.status}</Badge></td>
                     <td className="p-3">{new Date(pick.createdAt).toLocaleDateString()}</td>
                     <td className="p-3">
-                      <Button type="button" size="sm" variant="outline" onClick={() => void completePick(pick.id)} disabled={pick.status === 'completed'}>
+                      <Button type="button" size="sm" variant="outline" onClick={() => void completePick(pick.id)} disabled={pick.status === 'completed' || pick.status === 'picked'}>
                         Mark picked
                       </Button>
                     </td>

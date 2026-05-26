@@ -8,7 +8,7 @@ export type FdsLocalSettings = {
   fulfillmentModeFilter: 'all' | 'pickup' | 'delivery' | 'in_store';
 };
 
-const DEFAULTS: FdsLocalSettings = {
+export const DEFAULT_FDS_SETTINGS: FdsLocalSettings = {
   soundAlerts: true,
   darkMode: false,
   showCompleted: false,
@@ -17,13 +17,13 @@ const DEFAULTS: FdsLocalSettings = {
 };
 
 export function loadFdsSettings(): FdsLocalSettings {
-  if (typeof window === 'undefined') return DEFAULTS;
+  if (typeof window === 'undefined') return DEFAULT_FDS_SETTINGS;
   const raw = localStorage.getItem(FDS_SETTINGS_KEY);
-  if (!raw) return DEFAULTS;
+  if (!raw) return DEFAULT_FDS_SETTINGS;
   try {
-    return { ...DEFAULTS, ...(JSON.parse(raw) as Partial<FdsLocalSettings>) };
+    return { ...DEFAULT_FDS_SETTINGS, ...(JSON.parse(raw) as Partial<FdsLocalSettings>) };
   } catch {
-    return DEFAULTS;
+    return DEFAULT_FDS_SETTINGS;
   }
 }
 

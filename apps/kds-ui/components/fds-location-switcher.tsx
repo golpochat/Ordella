@@ -7,11 +7,12 @@ import {
   setStoredLocationId,
   type LocationOption,
 } from '@shared-utils';
-import { getLocationId } from '@/lib/config';
+import { getApiBaseUrl, getLocationId, getTenantId } from '@/lib/config';
 
 async function fetchKdsLocations(): Promise<LocationOption[]> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
-  const tenantId = process.env.NEXT_PUBLIC_TENANT_ID ?? '';
+  const base = getApiBaseUrl();
+  const tenantId = getTenantId();
+  if (!tenantId) return [];
   const res = await fetch(`${base}/public/locations`, {
     headers: { 'X-Tenant-Id': tenantId },
   });

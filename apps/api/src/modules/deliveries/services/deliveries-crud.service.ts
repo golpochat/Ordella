@@ -116,8 +116,12 @@ export class DeliveriesCrudService {
     return Promise.resolve([]);
   }
 
-  autoAssign(tenant: TenantContext, deliveryTaskId: string): Promise<DeliveryResponseDto> {
-    return this.findOne(tenant, deliveryTaskId);
+  async autoAssign(tenant: TenantContext, deliveryTaskId: string): Promise<DeliveryResponseDto> {
+    const task = await this.deliveryService.autoAssign(tenant.tenantId, deliveryTaskId);
+    if (task.driverId) {
+      this.broadcastService.taskAssigned(tenant.tenantId, task, task.driverId);
+    }
+    return toDeliveryResponseDto(task);
   }
 
   async getStatusHistory(

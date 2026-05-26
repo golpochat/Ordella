@@ -4,8 +4,11 @@ export type TimelineStep = {
 };
 
 export const ORDER_TIMELINE: TimelineStep[] = [
+  { key: 'picking', label: 'Picking' },
+  { key: 'picked', label: 'Picked' },
   { key: 'preparing', label: 'In fulfillment' },
   { key: 'ready', label: 'Ready for pickup' },
+  { key: 'handed_to_driver', label: 'Handed to driver' },
   { key: 'out_for_delivery', label: 'Out for delivery' },
   { key: 'completed', label: 'Order delivered' },
 ];
@@ -13,8 +16,11 @@ export const ORDER_TIMELINE: TimelineStep[] = [
 const ACTIVE_STATUSES = new Set([
   'pending',
   'accepted',
+  'picking',
+  'picked',
   'preparing',
   'ready',
+  'handed_to_driver',
   'out_for_delivery',
 ]);
 

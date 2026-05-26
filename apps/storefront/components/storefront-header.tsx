@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { Badge, Logo, useTheme } from '@shared-ui';
 import { LocationPicker } from '@/components/location-picker';
@@ -20,11 +20,13 @@ export function StorefrontHeader() {
   const count = useBasketStore((s) => s.lineCount());
   const hydrate = useBasketStore((s) => s.hydrate);
   const theme = useTheme();
+  const [mounted, setMounted] = useState(false);
   const brandName = theme.name ?? getBrandName();
   const logoUrl = theme.assets?.logo ?? theme.logoUrl;
   const centeredHeader = theme.layout?.headerLayout === 'centered';
   useEffect(() => {
     hydrate();
+    setMounted(true);
   }, [hydrate]);
 
   return (
@@ -42,19 +44,22 @@ export function StorefrontHeader() {
         </Link>
 
         <nav className={`hidden items-center gap-1 md:flex ${centeredHeader ? 'mx-4' : ''}`}>
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={
-                pathname === item.href
-                  ? 'rounded-[var(--storefront-radius)] bg-background px-3 py-2 text-sm font-medium text-foreground'
-                  : 'rounded-[var(--storefront-radius)] px-3 py-2 text-sm font-medium hover:bg-background/20'
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
+          {nav.map((item) => {
+            const active = mounted && pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={
+                  active
+                    ? 'rounded-[var(--storefront-radius)] bg-background px-3 py-2 text-sm font-medium text-foreground'
+                    : 'rounded-[var(--storefront-radius)] px-3 py-2 text-sm font-medium hover:bg-background/20'
+                }
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -76,19 +81,22 @@ export function StorefrontHeader() {
       </div>
 
       <nav className="flex border-t border-primary-foreground/20 bg-primary md:hidden">
-        {nav.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={
-              pathname === item.href
-                ? 'flex-1 py-2.5 text-center text-sm font-medium text-primary-foreground'
-                : 'flex-1 py-2.5 text-center text-sm text-primary-foreground/70'
-            }
-          >
-            {item.label}
-          </Link>
-        ))}
+        {nav.map((item) => {
+          const active = mounted && pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={
+                active
+                  ? 'flex-1 py-2.5 text-center text-sm font-medium text-primary-foreground'
+                  : 'flex-1 py-2.5 text-center text-sm text-primary-foreground/70'
+              }
+            >
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
     </header>
   );

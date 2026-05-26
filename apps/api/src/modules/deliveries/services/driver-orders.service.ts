@@ -149,6 +149,13 @@ export class DriverOrdersService {
     if (lat === undefined || lng === undefined) {
       throw new BadRequestException('lat and lng are required');
     }
+    const driver = await this.driverRepository.findByIdForTenant(tenantId, driverId);
+    if (driver) {
+      driver.lastLat = lat.toFixed(7);
+      driver.lastLng = lng.toFixed(7);
+      driver.lastSeenAt = new Date();
+      await this.driverRepository.save(driver);
+    }
     return { ok: true };
   }
 

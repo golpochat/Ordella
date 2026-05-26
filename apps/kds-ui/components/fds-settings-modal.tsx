@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Button,
+  Input,
   Modal,
   ModalContent,
   ModalFooter,
@@ -11,6 +12,12 @@ import {
   ModalTrigger,
 } from '@shared-ui';
 import { saveFdsSettings, type FdsLocalSettings } from '@/lib/fds-settings';
+import {
+  getStoredKdsAccessToken,
+  getStoredKdsCredentials,
+  setKdsAccessToken,
+  setKdsCredentials,
+} from '@/lib/config';
 
 type FdsSettingsModalProps = {
   settings: FdsLocalSettings;
@@ -20,9 +27,25 @@ type FdsSettingsModalProps = {
 export function FdsSettingsModal({ settings, onChange }: FdsSettingsModalProps) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(settings);
+  const [accessToken, setAccessToken] = useState('');
+  const [kdsEmail, setKdsEmail] = useState('');
+  const [kdsPassword, setKdsPassword] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setDraft(settings);
+      return;
+    }
+    setAccessToken(getStoredKdsAccessToken());
+    const credentials = getStoredKdsCredentials();
+    setKdsEmail(credentials.email);
+    setKdsPassword(credentials.password);
+  }, [open, settings]);
 
   const onSave = () => {
     saveFdsSettings(draft);
+    setKdsAccessToken(accessToken || null);
+    if (kdsEmail || kdsPassword) setKdsCredentials(kdsEmail, kdsPassword);
     onChange(draft);
     setOpen(false);
     if (draft.darkMode) {
@@ -93,6 +116,37 @@ export function FdsSettingsModal({ settings, onChange }: FdsSettingsModalProps) 
               <option value="delivery">Delivery</option>
               <option value="in_store">In-store</option>
             </select>
+          </div>
+          <div>
+            <p className="mb-1 font-medium">KDS access token</p>
+            <Input
+              value={accessToken}
+              onChange={(e) => setAccessToken(e.target.value)}
+              placeholder="Paste a fresh staff/admin JWT"
+              type="password"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Required for protected fulfillment feed and status updates.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <p className="mb-1 font-medium">Staff email</p>
+              <Input
+                value={kdsEmail}
+                onChange={(e) => setKdsEmail(e.target.value)}
+                placeholder="staff@bella-kitchen.test"
+              />
+            </div>
+            <div>
+              <p className="mb-1 font-medium">Staff password</p>
+              <Input
+                value={kdsPassword}
+                onChange={(e) => setKdsPassword(e.target.value)}
+                placeholder="Password"
+                type="password"
+              />
+            </div>
           </div>
         </div>
         <ModalFooter>

@@ -127,6 +127,20 @@ export class DeliveryTaskRepository {
     });
   }
 
+  countActiveForDriver(tenantId: string, driverId: string, manager?: EntityManager): Promise<number> {
+    return this.repo(manager).count({
+      where: {
+        tenantId,
+        driverId,
+        status: In([
+          DeliveryTaskStatus.PENDING,
+          DeliveryTaskStatus.ASSIGNED,
+          DeliveryTaskStatus.EN_ROUTE,
+        ]),
+      },
+    });
+  }
+
   findByOrderIds(tenantId: string, orderIds: string[]): Promise<DeliveryTaskEntity[]> {
     if (!orderIds.length) {
       return Promise.resolve([]);

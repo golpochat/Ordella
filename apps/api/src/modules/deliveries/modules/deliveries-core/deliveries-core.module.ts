@@ -2,12 +2,14 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   DeliveryEventEntity,
+  DeliveryAssignmentEntity,
   DeliveryStatusHistoryEntity,
   DeliveryTaskEntity,
   DriverProfileEntity,
 } from '../../entities';
 import { DeliveryService } from '../../services/delivery.service';
 import { DeliveryTaskRepository } from '../../repositories/delivery-task.repository';
+import { DeliveryAssignmentRepository } from '../../repositories/delivery-assignment.repository';
 import { DriverProfileRepository } from '../../repositories/driver-profile.repository';
 import { DeliveryStatusHistoryRepository } from '../../repositories/delivery-status-history.repository';
 import { DeliveryEventRepository } from '../../repositories/delivery-event.repository';
@@ -22,6 +24,7 @@ import {
     TypeOrmModule.forFeature([
       DeliveryTaskEntity,
       DriverProfileEntity,
+      DeliveryAssignmentEntity,
       DeliveryStatusHistoryEntity,
       DeliveryEventEntity,
     ]),
@@ -29,6 +32,7 @@ import {
   providers: [
     DeliveryService,
     DeliveryTaskRepository,
+    DeliveryAssignmentRepository,
     DriverProfileRepository,
     DeliveryStatusHistoryRepository,
     DeliveryEventRepository,

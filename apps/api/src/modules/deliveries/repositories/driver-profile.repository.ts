@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { DriverProfileEntity } from '../entities';
+import { DriverProfileStatus } from '../enums/driver-profile-status.enum';
 
 @Injectable()
 export class DriverProfileRepository {
@@ -18,6 +19,13 @@ export class DriverProfileRepository {
     return this.repository.find({
       where: { tenantId },
       order: { name: 'ASC' },
+    });
+  }
+
+  findAvailableForTenant(tenantId: string, manager?: EntityManager): Promise<DriverProfileEntity[]> {
+    return this.repo(manager).find({
+      where: { tenantId, active: true, status: DriverProfileStatus.ACTIVE },
+      order: { lastSeenAt: 'DESC', name: 'ASC' },
     });
   }
 

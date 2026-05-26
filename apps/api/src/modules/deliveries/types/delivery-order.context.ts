@@ -8,6 +8,6 @@ export interface DeliveryOrderContext {
 export interface DeliveryOrderTransitionContext {
   tenantId: string;
   orderId: string;
-  toStatus: 'ready' | 'out_for_delivery' | 'completed' | 'cancelled';
+  toStatus: 'ready' | 'handed_to_driver' | 'out_for_delivery' | 'completed' | 'cancelled';
   reason?: string;
 }

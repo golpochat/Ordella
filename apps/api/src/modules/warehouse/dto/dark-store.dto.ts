@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsDateString, IsInt, IsOptional, IsUUID, Min, ValidateNested } from 'class-validator';
+import { PickTaskLineConfirmationDto } from './warehouse.dto';
 
 export class DarkStoreOrdersQueryDto {
   @IsOptional()
@@ -33,6 +34,12 @@ export class CompleteDarkStorePickTaskDto {
   @IsOptional()
   @IsArray()
   missingItemIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PickTaskLineConfirmationDto)
+  lines?: PickTaskLineConfirmationDto[];
 }
 
 export class CreatePickWaveDto {
@@ -47,6 +54,24 @@ export class CreatePickWaveDto {
   @IsArray()
   @IsUUID('4', { each: true })
   pickTaskIds?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  autoGenerate?: boolean;
+
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxTasks?: number;
 }
 
 export class FulfillmentSlotsQueryDto {

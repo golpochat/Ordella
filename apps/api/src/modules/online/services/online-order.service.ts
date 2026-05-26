@@ -29,6 +29,7 @@ import { OnlineOrderStatusResponseDto } from '../dto/online-order-status-respons
 import { OnlinePaymentResponseDto } from '../dto/online-payment-response.dto';
 import { LoyaltyService } from '../../loyalty/services';
 import { RoutingService } from '../../routing';
+import { WarehouseService } from '../../warehouse/services';
 
 @Injectable()
 export class OnlineOrderService {
@@ -43,6 +44,7 @@ export class OnlineOrderService {
     private readonly kdsBroadcast: KdsBroadcastService,
     private readonly loyaltyService: LoyaltyService,
     private readonly routingService: RoutingService,
+    private readonly warehouseService: WarehouseService,
   ) {}
 
   async createOnlineOrder(
@@ -110,6 +112,11 @@ export class OnlineOrderService {
     const updated = await this.ordersService.update(tenant, order.id, {
       status: OrderStatus.ACCEPTED,
     });
+    await this.warehouseService.createPickForOrder(
+      tenant.tenantId,
+      { id: updated.id, locationId: updated.locationId, orderType: updated.orderType, status: updated.status },
+      routing.selectedLocationId ?? updated.locationId,
+    );
 
     if (createDto.orderType === OrderType.DELIVERY && dto.delivery) {
       await this.deliveryService.createTask({
@@ -140,6 +147,7 @@ export class OnlineOrderService {
     const routing = await this.routingService.decideForOrderInput(tenant, {
       fromLocationId: basket.locationId,
       orderType: checkout.orderType as OnlineOrderType,
+      orderSubtotal: Number(checkout.totals.subtotal),
       customerAddress: checkout.delivery,
       items: basket.items.map((line) => ({ productId: line.productId, quantity: line.quantity })),
     });
@@ -209,6 +217,11 @@ export class OnlineOrderService {
     const refreshed = await this.ordersService.update(tenant, order.id, {
       status: OrderStatus.ACCEPTED,
     });
+    await this.warehouseService.createPickForOrder(
+      tenant.tenantId,
+      { id: refreshed.id, locationId: refreshed.locationId, orderType: refreshed.orderType, status: refreshed.status },
+      routing.selectedLocationId ?? refreshed.locationId,
+    );
     await this.routeToFulfillment(tenant.tenantId, refreshed.id);
 
     return {
@@ -279,6 +292,7 @@ export class OnlineOrderService {
     }
 
     const display = mapDriverDisplayStatus(task.status, Boolean(task.driverId));
+    const customerStage = this.customerDeliveryStage(order.status, task.status);
     let driverName: string | null = null;
     if (task.driverId) {
       const driver = await this.driverProfileRepository.findByIdForTenant(
@@ -293,6 +307,8 @@ export class OnlineOrderService {
       driverName,
       driverStatus: display,
       driverStatusLabel: labelDriverDisplayStatus(display),
+      customerDeliveryStage: customerStage,
+      customerDeliveryStageLabel: this.customerDeliveryStageLabel(customerStage),
       deliveryConfirmed:
         task.status === DeliveryTaskStatus.DELIVERED ||
         order.status === OrderStatus.COMPLETED,
@@ -315,6 +331,34 @@ export class OnlineOrderService {
       return OrderType.POS;
     }
     return OrderType.ONLINE;
+  }
+
+  private customerDeliveryStage(
+    orderStatus: OrderStatus,
+    deliveryStatus: DeliveryTaskStatus,
+  ): 'preparing' | 'out_for_delivery' | 'arriving_soon' | 'delivered' | null {
+    if (deliveryStatus === DeliveryTaskStatus.DELIVERED || orderStatus === OrderStatus.COMPLETED) {
+      return 'delivered';
+    }
+    if (deliveryStatus === DeliveryTaskStatus.EN_ROUTE) return 'arriving_soon';
+    if (orderStatus === OrderStatus.HANDED_TO_DRIVER || orderStatus === OrderStatus.OUT_FOR_DELIVERY) return 'out_for_delivery';
+    if ([OrderStatus.ACCEPTED, OrderStatus.PICKING, OrderStatus.PICKED, OrderStatus.PREPARING, OrderStatus.READY].includes(orderStatus)) {
+      return 'preparing';
+    }
+    return null;
+  }
+
+  private customerDeliveryStageLabel(
+    stage: 'preparing' | 'out_for_delivery' | 'arriving_soon' | 'delivered' | null,
+  ): string | null {
+    if (!stage) return null;
+    const labels = {
+      preparing: 'Preparing',
+      out_for_delivery: 'Out for delivery',
+      arriving_soon: 'Arriving soon',
+      delivered: 'Delivered',
+    };
+    return labels[stage];
   }
 
 }

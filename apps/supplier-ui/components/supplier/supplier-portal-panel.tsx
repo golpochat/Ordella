@@ -15,6 +15,7 @@ import {
   rejectPurchaseOrder,
   sendMessage,
   updateCatalogItem,
+  uploadDeliveryDocuments,
   updatePassword,
   updateProfile,
   updatePurchaseOrderDelivery,
@@ -29,6 +30,13 @@ import { useTenantSettings } from '@/hooks/use-tenant-settings';
 import { SupplierPortalShell } from '../layout/supplier-portal-shell';
 
 type Section = 'dashboard' | 'purchase-orders' | 'catalog' | 'messages' | 'profile';
+
+type DeliveryDocumentDraft = {
+  name: string;
+  url: string;
+  contentType?: string;
+  sizeBytes?: number;
+};
 
 type PortalState = {
   dashboard: SupplierDashboard | null;
@@ -148,19 +156,32 @@ function DashboardView({ dashboard }: { dashboard: SupplierDashboard | null }) {
   const cards = [
     ['Pending POs', metrics.pendingPOs],
     ['Confirmed POs', metrics.confirmedPOs],
-    ['Rejected POs', metrics.rejectedPOs],
-    ['Messages', metrics.unreadMessages],
+    ['Shipped POs', metrics.shippedPOs],
+    ['Delivery ETA', metrics.nextDeliveryEta ?? 'No open ETA'],
     ['On-time delivery', `${metrics.onTimeDeliveryRate}%`],
     ['Fill rate', `${metrics.fillRate}%`],
     ['Avg confirmation', `${metrics.averageConfirmationHours}h`],
-    ['Lead accuracy', `${metrics.leadTimeAccuracyDays}d`],
+    ['Messages', metrics.unreadMessages],
   ];
   return (
     <div className="space-y-6">
-      <SectionHeader title="Dashboard" description={`Welcome back, ${dashboard.profile.name}.`} />
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="rounded-3xl border bg-card p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-primary">Supplier dashboard</p>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Welcome back, {dashboard.profile.name}</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              Track pending, confirmed, and shipped purchase orders with delivery performance at a glance.
+            </p>
+          </div>
+          <Badge variant={metrics.rejectedPOs ? 'destructive' : 'secondary'}>
+            {metrics.rejectedPOs} rejected
+          </Badge>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map(([label, value]) => (
-          <Card key={label}>
+          <Card key={label} className="overflow-hidden">
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">{label}</p>
               <p className="mt-2 text-2xl font-semibold">{value}</p>
@@ -168,7 +189,29 @@ function DashboardView({ dashboard }: { dashboard: SupplierDashboard | null }) {
           </Card>
         ))}
       </div>
-      <PurchaseOrderTable orders={dashboard.recentPurchaseOrders} compact />
+      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <Card>
+          <CardContent className="space-y-4 p-4">
+            <SectionHeader title="Recent purchase orders" description="Newest POs that need confirmation, shipment, or delivery updates." />
+            <PurchaseOrderTable orders={dashboard.recentPurchaseOrders} compact />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="space-y-3 p-4">
+            <SectionHeader title="Recent notes" description="Latest tenant and supplier messages." />
+            {dashboard.recentMessages.map((message) => (
+              <div key={message.id} className="rounded-xl border bg-background p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant={message.senderType === 'supplier' ? 'secondary' : 'default'}>{message.senderType}</Badge>
+                  <span className="text-xs text-muted-foreground">{message.createdAt.slice(0, 10)}</span>
+                </div>
+                <p className="mt-2 text-muted-foreground">{message.message}</p>
+              </div>
+            ))}
+            {!dashboard.recentMessages.length ? <p className="text-sm text-muted-foreground">No recent messages.</p> : null}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -178,6 +221,7 @@ function PurchaseOrdersView({ orders, onChanged }: { orders: SupplierPurchaseOrd
   const api = useMemo(() => createBrowserApiClient(), []);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [dates, setDates] = useState<Record<string, string>>({});
+  const [documentDrafts, setDocumentDrafts] = useState<Record<string, DeliveryDocumentDraft>>({});
   const [error, setError] = useState<string | null>(null);
 
   const action = async (order: SupplierPurchaseOrder, type: 'confirm' | 'reject' | 'delivery' | 'ship') => {
@@ -198,22 +242,75 @@ function PurchaseOrdersView({ orders, onChanged }: { orders: SupplierPurchaseOrd
     }
   };
 
+  const setDocumentDraft = (orderId: string, draft: Partial<DeliveryDocumentDraft>) => {
+    setDocumentDrafts((current) => ({
+      ...current,
+      [orderId]: {
+        name: current[orderId]?.name ?? '',
+        url: current[orderId]?.url ?? '',
+        contentType: current[orderId]?.contentType,
+        sizeBytes: current[orderId]?.sizeBytes,
+        ...draft,
+      },
+    }));
+  };
+
+  const readDocumentFile = (orderId: string, file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setDocumentDraft(orderId, {
+        name: file.name,
+        url: String(reader.result ?? ''),
+        contentType: file.type,
+        sizeBytes: file.size,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadDocuments = async (order: SupplierPurchaseOrder) => {
+    const draft = documentDrafts[order.id];
+    if (!draft?.name || !draft.url) return;
+    try {
+      await uploadDeliveryDocuments(api, {
+        purchaseOrderId: order.id,
+        documents: [draft],
+      });
+      setDocumentDrafts((current) => ({ ...current, [order.id]: { name: '', url: '' } }));
+      setError(null);
+      await onChanged();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <SectionHeader title="Purchase Orders" description="Confirm, reject, ship, or update expected delivery dates." />
+      <SectionHeader title="Purchase Orders" description="Confirm, reject, ship, propose delivery dates, and upload delivery documents." />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         {orders.map((order) => (
-          <Card key={order.id}>
+          <Card key={order.id} className="overflow-hidden">
             <CardContent className="space-y-4 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold">PO {order.id.slice(0, 8)}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {order.location?.name ?? 'Location'} · Net {formatMoney(order.subtotalCost ?? order.totalCost, settings)} · Tax {formatMoney(order.taxTotal ?? '0.00', settings)} · Gross {formatMoney(order.totalCost, settings)} · Due {formatDate(order.expectedDeliveryDate, settings)}
-                  </p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Purchase order</p>
+                  <h2 className="text-xl font-semibold">PO {order.id.slice(0, 8)}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{order.location?.name ?? 'Location'}</p>
                 </div>
-                <Badge>{order.supplierStatus}</Badge>
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Badge>{order.supplierStatus}</Badge>
+                  <Badge variant="outline">{order.status}</Badge>
+                </div>
+              </div>
+              <div className="grid gap-2 text-sm sm:grid-cols-3">
+                <InfoTile label="Net" value={formatMoney(order.subtotalCost ?? order.totalCost, settings)} />
+                <InfoTile label="Tax" value={formatMoney(order.taxTotal ?? '0.00', settings)} />
+                <InfoTile label="Gross" value={formatMoney(order.totalCost, settings)} />
+                <InfoTile label="Expected" value={formatDate(order.expectedDeliveryDate, settings)} />
+                <InfoTile label="Supplier ETA" value={formatDate(order.supplierExpectedDeliveryDate, settings)} />
+                <InfoTile label="Shipped" value={formatDate(order.shippedAt, settings)} />
               </div>
               <PurchaseOrderLines order={order} />
               <div className="grid gap-3 md:grid-cols-2">
@@ -228,9 +325,45 @@ function PurchaseOrdersView({ orders, onChanged }: { orders: SupplierPurchaseOrd
                   onChange={(event) => setNotes((current) => ({ ...current, [order.id]: event.target.value }))}
                 />
               </div>
+              <div className="rounded-xl border bg-muted/20 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium">Delivery documents</p>
+                  <Badge variant="secondary">{order.deliveryDocuments.length} uploaded</Badge>
+                </div>
+                {order.deliveryDocuments.length ? (
+                  <div className="mt-3 space-y-2">
+                    {order.deliveryDocuments.map((document) => (
+                      <a key={`${document.name}-${document.uploadedAt}`} className="block truncate text-sm text-primary hover:underline" href={document.url} target="_blank" rel="noreferrer">
+                        {document.name}
+                      </a>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <Input
+                    placeholder="Document name"
+                    value={documentDrafts[order.id]?.name ?? ''}
+                    onChange={(event) => setDocumentDraft(order.id, { name: event.target.value })}
+                  />
+                  <Input
+                    placeholder="Document URL"
+                    value={documentDrafts[order.id]?.url ?? ''}
+                    onChange={(event) => setDocumentDraft(order.id, { url: event.target.value })}
+                  />
+                  <input
+                    className="rounded-md border bg-background px-3 py-2 text-sm md:col-span-2"
+                    type="file"
+                    accept="application/pdf,image/*"
+                    onChange={(event) => readDocumentFile(order.id, event.target.files?.[0])}
+                  />
+                </div>
+                <Button type="button" size="sm" variant="outline" className="mt-3" onClick={() => void uploadDocuments(order)} disabled={!documentDrafts[order.id]?.name || !documentDrafts[order.id]?.url}>
+                  Upload document
+                </Button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" onClick={() => void action(order, 'confirm')}>Confirm</Button>
-                <Button type="button" size="sm" variant="outline" onClick={() => void action(order, 'delivery')}>Update delivery</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => void action(order, 'delivery')}>Propose delivery date</Button>
                 <Button type="button" size="sm" variant="outline" onClick={() => void action(order, 'ship')}>Mark shipped</Button>
                 <Button type="button" size="sm" variant="ghost" onClick={() => void action(order, 'reject')}>Reject</Button>
               </div>
@@ -500,6 +633,15 @@ function PurchaseOrderLines({ order }: { order: SupplierPurchaseOrder }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function InfoTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border bg-background p-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 font-medium">{value}</p>
     </div>
   );
 }

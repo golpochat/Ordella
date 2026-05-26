@@ -23,6 +23,7 @@ export interface OnlineTotalsInput {
   discountTotal?: string;
   taxTotal?: string;
   chargeableTaxTotal?: string;
+  deliveryFee?: string;
 }
 
 export interface OnlineTotalsResult {
@@ -41,7 +42,7 @@ export function calculateOnlineTotals(input: OnlineTotalsInput): OnlineTotalsRes
   const chargeableTaxTotal = input.chargeableTaxTotal ?? taxTotal;
   const serviceChargeTotal = formatMoney(0);
   const deliveryFee =
-    input.orderType === OrderType.DELIVERY ? formatMoney(3.99) : formatMoney(0);
+    input.orderType === OrderType.DELIVERY ? (input.deliveryFee ?? formatMoney(3.99)) : formatMoney(0);
   const grandTotal = formatMoney(
     calculateGrandTotalAmount({
       subtotal: parseMoney(subtotal),

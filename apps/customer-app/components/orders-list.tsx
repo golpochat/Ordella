@@ -13,7 +13,7 @@ type OrdersFilter = 'active' | 'past';
 function statusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (status === 'completed') return 'default';
   if (status === 'cancelled' || status === 'failed') return 'destructive';
-  if (status === 'preparing' || status === 'ready' || status === 'out_for_delivery') {
+  if (['picking', 'picked', 'preparing', 'ready', 'handed_to_driver', 'out_for_delivery'].includes(status)) {
     return 'secondary';
   }
   return 'outline';

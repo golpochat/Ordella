@@ -12,6 +12,7 @@ import {
   SupplierProfileUpdateDto,
   SupplierPurchaseOrderActionDto,
   SupplierSendMessageDto,
+  SupplierUploadDeliveryDocumentsDto,
   SupplierUpdateDeliveryDto,
   SupplierUpdatePasswordDto,
 } from '../dto';
@@ -136,6 +137,17 @@ export class SupplierPortalController {
     @Body() dto: SupplierPurchaseOrderActionDto,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.portal.markShipped(tenant, supplier.sub, dto);
+    return { success: true, data };
+  }
+
+  @Post('po/documents')
+  @UseGuards(TenantGuard, SupplierAuthGuard)
+  async uploadDeliveryDocuments(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentSupplier() supplier: SupplierAuthPayload,
+    @Body() dto: SupplierUploadDeliveryDocumentsDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.portal.uploadDeliveryDocuments(tenant, supplier.sub, dto);
     return { success: true, data };
   }
 

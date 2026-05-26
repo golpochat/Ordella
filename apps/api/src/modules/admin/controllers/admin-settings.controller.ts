@@ -67,6 +67,14 @@ export class AdminSettingsController {
     return { success: true, data };
   }
 
+  @Get('delivery')
+  async getDelivery(
+    @CurrentTenant() tenant: TenantContext,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.tenantSettingsService.getTenantLocalization(tenant.tenantId);
+    return { success: true, data };
+  }
+
   @Patch('delivery-zones')
   async updateDeliveryZones(
     @CurrentTenant() tenant: TenantContext,

@@ -4,7 +4,7 @@ import { TenantGuard } from '../../../common/guards';
 import { ApiSuccessResponse, TenantContext } from '../../../common/interfaces';
 import { AdminPermissionKeys } from '../../admin/constants/admin-permission-keys';
 import { JwtAuthGuard, RbacGuard, RequirePermissions } from '../../auth';
-import { MoveWarehouseBinItemDto, UpsertWarehouseBinDto, UpsertWarehouseZoneDto } from '../dto';
+import { AssignWarehouseBinItemDto, MoveWarehouseBinItemDto, UpsertWarehouseBinDto, UpsertWarehouseZoneDto } from '../dto';
 import { WarehouseService } from '../services';
 
 @Controller('warehouse')
@@ -64,6 +64,15 @@ export class WarehouseController {
     @Body() dto: MoveWarehouseBinItemDto,
   ): Promise<ApiSuccessResponse<unknown[]>> {
     const data = await this.warehouseService.moveItem(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('bins/assign-item')
+  async assignItem(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: AssignWarehouseBinItemDto,
+  ): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.warehouseService.assignItem(tenant, dto);
     return { success: true, data };
   }
 }

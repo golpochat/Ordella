@@ -20,6 +20,7 @@ import {
   SupplierProfileUpdateDto,
   SupplierPurchaseOrderActionDto,
   SupplierSendMessageDto,
+  SupplierUploadDeliveryDocumentsDto,
   SupplierUpdateDeliveryDto,
   SupplierUpdatePasswordDto,
 } from '../dto';
@@ -122,6 +123,9 @@ export class SupplierPortalService {
       !order.expectedDeliveryDate || (order.receivedAt && order.receivedAt <= new Date(order.expectedDeliveryDate)),
     );
     const confirmedOrders = orders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.CONFIRMED);
+    const nextEta = orders
+      .filter((order) => order.expectedDeliveryDate && ![PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.CANCELLED].includes(order.status))
+      .sort((a, b) => new Date(a.expectedDeliveryDate!).getTime() - new Date(b.expectedDeliveryDate!).getTime())[0]?.expectedDeliveryDate ?? null;
 
     return {
       profile: await this.getProfile(tenant, supplierId),
@@ -130,6 +134,7 @@ export class SupplierPortalService {
         confirmedPOs: confirmedOrders.length,
         rejectedPOs: orders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.REJECTED).length,
         shippedPOs: orders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.SHIPPED).length,
+        nextDeliveryEta: nextEta,
         unreadMessages: messages.filter((message) => message.senderType === 'merchant').length,
         onTimeDeliveryRate: receivedOrders.length ? Number(((onTimeOrders.length / receivedOrders.length) * 100).toFixed(2)) : 0,
         fillRate: this.fillRate(orders),
@@ -151,6 +156,8 @@ export class SupplierPortalService {
     order.supplierExpectedDeliveryDate = dto.expectedDeliveryDate ?? order.expectedDeliveryDate;
     order.expectedDeliveryDate = dto.expectedDeliveryDate ?? order.expectedDeliveryDate;
     order.supplierNotes = dto.notes ?? order.supplierNotes;
+    order.confirmedAt = new Date();
+    order.rejectedAt = null;
     const saved = await this.purchaseOrders.save(order);
     await this.createSystemMessage(tenant.tenantId, supplierId, order.id, `Supplier confirmed PO ${order.id}.`);
     await this.notifyMerchant(tenant.tenantId, saved, 'confirmed');
@@ -164,6 +171,7 @@ export class SupplierPortalService {
     }
     order.supplierStatus = SupplierPurchaseOrderStatus.REJECTED;
     order.supplierNotes = dto.notes ?? order.supplierNotes;
+    order.rejectedAt = new Date();
     const saved = await this.purchaseOrders.save(order);
     await this.createSystemMessage(tenant.tenantId, supplierId, order.id, `Supplier rejected PO ${order.id}.`);
     await this.notifyMerchant(tenant.tenantId, saved, 'rejected');
@@ -175,12 +183,14 @@ export class SupplierPortalService {
     if ([PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.CANCELLED].includes(order.status)) {
       throw new BadRequestException('Closed purchase orders cannot be updated');
     }
+    const previousExpected = order.expectedDeliveryDate;
     order.supplierExpectedDeliveryDate = dto.expectedDeliveryDate;
     order.expectedDeliveryDate = dto.expectedDeliveryDate;
     order.supplierNotes = dto.notes ?? order.supplierNotes;
     const saved = await this.purchaseOrders.save(order);
     await this.createSystemMessage(tenant.tenantId, supplierId, order.id, `Expected delivery updated to ${dto.expectedDeliveryDate}.`);
-    await this.notifyMerchant(tenant.tenantId, saved, 'updated expected delivery');
+    const isDelay = Boolean(previousExpected && new Date(dto.expectedDeliveryDate) > new Date(previousExpected));
+    await this.notifyMerchant(tenant.tenantId, saved, isDelay ? 'delayed' : 'updated expected delivery');
     return this.requireSupplierPurchaseOrder(tenant.tenantId, supplierId, order.id);
   }
 
@@ -191,9 +201,29 @@ export class SupplierPortalService {
     }
     order.supplierStatus = SupplierPurchaseOrderStatus.SHIPPED;
     order.supplierNotes = dto.notes ?? order.supplierNotes;
+    order.shippedAt = new Date();
     const saved = await this.purchaseOrders.save(order);
     await this.createSystemMessage(tenant.tenantId, supplierId, order.id, `Supplier marked PO ${order.id} as shipped.`);
     await this.notifyMerchant(tenant.tenantId, saved, 'shipped');
+    return this.requireSupplierPurchaseOrder(tenant.tenantId, supplierId, order.id);
+  }
+
+  async uploadDeliveryDocuments(tenant: TenantContext, supplierId: string, dto: SupplierUploadDeliveryDocumentsDto) {
+    const order = await this.requireSupplierPurchaseOrder(tenant.tenantId, supplierId, dto.purchaseOrderId);
+    const existing = Array.isArray(order.deliveryDocuments) ? order.deliveryDocuments : [];
+    order.deliveryDocuments = [
+      ...existing,
+      ...dto.documents.map((document) => ({
+        name: document.name.trim(),
+        url: document.url.trim(),
+        contentType: document.contentType ?? null,
+        sizeBytes: document.sizeBytes ?? null,
+        uploadedAt: new Date().toISOString(),
+      })),
+    ];
+    const saved = await this.purchaseOrders.save(order);
+    await this.createSystemMessage(tenant.tenantId, supplierId, order.id, `${dto.documents.length} delivery document(s) uploaded.`);
+    await this.notifyMerchant(tenant.tenantId, saved, 'uploaded delivery documents');
     return this.requireSupplierPurchaseOrder(tenant.tenantId, supplierId, order.id);
   }
 
@@ -384,12 +414,17 @@ export class SupplierPortalService {
         portalEnabled: Boolean(supplier.portalUserEmail),
         purchaseOrders: supplierOrders.length,
         confirmations: supplierOrders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.CONFIRMED).length,
+        shippedOrders: supplierOrders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.SHIPPED).length,
         delays: supplierOrders.filter((order) =>
           order.expectedDeliveryDate &&
           ![PurchaseOrderStatus.RECEIVED, PurchaseOrderStatus.CANCELLED].includes(order.status) &&
           new Date(order.expectedDeliveryDate) < new Date(),
         ).length,
         onTimeDeliveryRate: received.length ? Number(((onTime.length / received.length) * 100).toFixed(2)) : 0,
+        averageLeadTimeDays: this.averageLeadTimeDays(received),
+        rejectionRate: supplierOrders.length
+          ? Number(((supplierOrders.filter((order) => order.supplierStatus === SupplierPurchaseOrderStatus.REJECTED).length / supplierOrders.length) * 100).toFixed(2))
+          : 0,
         fillRate: this.fillRate(supplierOrders),
       };
     });
@@ -423,6 +458,15 @@ export class SupplierPortalService {
     return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2));
   }
 
+  private averageLeadTimeDays(orders: PurchaseOrderEntity[]) {
+    const values = orders
+      .filter((order) => order.sentAt && order.receivedAt)
+      .map((order) => (order.receivedAt!.getTime() - order.sentAt!.getTime()) / 86_400_000)
+      .filter((value) => value >= 0);
+    if (!values.length) return 0;
+    return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2));
+  }
+
   private async notifySupplier(tenantId: string, supplier: SupplierEntity, title: string, message: string) {
     const recipient = supplier.portalUserEmail ?? supplier.email;
     if (!recipient) return;
@@ -445,6 +489,7 @@ export class SupplierPortalService {
         channel: NotificationChannelType.EMAIL,
         recipient: 'merchant',
         payload: {
+          templateName: `purchase_order_${action.replace(/\s+/g, '_')}`,
           title: `Supplier ${action}`,
           body: `Supplier ${order.supplierId} ${action}${order.id ? ` purchase order ${order.id}` : ''}.`,
           purchaseOrderId: order.id,

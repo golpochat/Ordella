@@ -87,7 +87,12 @@ export class KdsUpdateService {
   ): Promise<KdsOrderDetailView> {
     const detail = await this.orderQueryService.getOrderDetails(tenant.tenantId, orderId);
 
-    if (detail.status !== OrderStatus.PREPARING && detail.status !== OrderStatus.READY) {
+    if (
+      detail.status !== OrderStatus.PREPARING &&
+      detail.status !== OrderStatus.PICKED &&
+      detail.status !== OrderStatus.PICKING &&
+      detail.status !== OrderStatus.READY
+    ) {
       throwKdsOrderNotPreparing(detail.status);
     }
 

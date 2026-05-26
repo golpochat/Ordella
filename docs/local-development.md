@@ -209,7 +209,14 @@ npm run dev --workspace=@ordella/kds-ui
 
 → http://localhost:3007
 
-Requires `NEXT_PUBLIC_TENANT_ID` and `NEXT_PUBLIC_LOCATION_ID` in `apps/kds-ui/.env.local`.
+Requires tenant/location context in `apps/kds-ui/.env.local` or URL query params:
+
+```text
+http://localhost:3007/board?tenantId=<tenant-id>&locationId=<location-id>&accessToken=<staff-jwt>
+```
+
+The fulfillment feed is protected. In local demo mode the KDS app can sign in with the seeded Bella staff user automatically. For custom tenants, set `NEXT_PUBLIC_KDS_EMAIL` and `NEXT_PUBLIC_KDS_PASSWORD`, use `kdsEmail`/`kdsPassword` query params, or enter staff credentials in KDS Settings.
+If the board shows `Invalid or expired token`, open KDS Settings and enter fresh staff credentials or a fresh KDS access token.
 
 ---
 

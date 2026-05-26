@@ -2,7 +2,7 @@ import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, OneToMa
 import { LocationEntity } from '../../tenants/entities';
 import { WarehouseBinEntity } from './warehouse-bin.entity';
 
-export type WarehouseZoneType = 'picking' | 'storage' | 'receiving';
+export type WarehouseZoneType = 'ambient' | 'chilled' | 'frozen' | 'produce' | 'bakery' | 'picking' | 'storage' | 'receiving';
 
 @Entity('warehouse_zones')
 @Index(['warehouseId', 'name'], { unique: true })

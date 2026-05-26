@@ -54,7 +54,7 @@ export class DarkStoreService {
       where: {
         tenantId: tenant.tenantId,
         locationId: In(darkStoreIds),
-        status: In([OrderStatus.ACCEPTED, OrderStatus.PREPARING, OrderStatus.READY]),
+        status: In([OrderStatus.ACCEPTED, OrderStatus.PICKING, OrderStatus.PICKED, OrderStatus.PREPARING, OrderStatus.READY]),
       },
       relations: ['items'],
       order: { createdAt: 'ASC' },
@@ -121,8 +121,11 @@ export class DarkStoreService {
     }));
     if (order.locationId !== locationId) {
       order.locationId = locationId;
-      await this.orders.save(order);
     }
+    if ([OrderStatus.ACCEPTED, OrderStatus.PREPARING].includes(order.status)) {
+      order.status = OrderStatus.PICKING;
+    }
+    await this.orders.save(order);
     return this.decorateTask(task);
   }
 
@@ -137,14 +140,15 @@ export class DarkStoreService {
       task.startedAt ??= new Date();
       return this.decorateTask(await this.pickTasks.save(task), dto.missingItemIds);
     }
-    task.status = 'completed';
+    task.status = 'picked';
     task.startedAt ??= new Date();
     task.completedAt = new Date();
     const saved = await this.pickTasks.save(task);
     if (task.order) {
+      await this.decrementBinsForOrder(task.warehouseId, task.order, dto.lines);
       await this.tryDeductInventoryForOrder(tenant.tenantId, task.warehouseId, task.order);
       if (![OrderStatus.OUT_FOR_DELIVERY, OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.REFUNDED].includes(task.order.status)) {
-        task.order.status = OrderStatus.READY;
+        task.order.status = OrderStatus.PICKED;
         await this.orders.save(task.order);
       }
     }
@@ -154,6 +158,9 @@ export class DarkStoreService {
 
   async createWave(tenant: TenantContext, dto: CreatePickWaveDto) {
     await this.assertDarkStoreLocation(tenant.tenantId, dto.locationId);
+    if (dto.autoGenerate) {
+      await this.generateTasksForWindow(tenant.tenantId, dto.locationId, dto.from, dto.to, dto.maxTasks ?? 20);
+    }
     const wave = await this.pickWaves.save(this.pickWaves.create({
       tenantId: tenant.tenantId,
       locationId: dto.locationId,
@@ -166,7 +173,7 @@ export class DarkStoreService {
       : await this.pickTasks.find({
           where: { tenantId: tenant.tenantId, warehouseId: dto.locationId, status: 'pending' },
           order: { priority: 'DESC', createdAt: 'ASC' },
-          take: 20,
+          take: dto.maxTasks ?? 20,
         });
     for (const task of tasks) {
       task.waveId = wave.id;
@@ -230,7 +237,7 @@ export class DarkStoreService {
     const lines = active.order?.items ?? [];
     const bins = lines.length
       ? await this.binItems.find({
-          where: { itemId: In(lines.map((line) => line.productId)) },
+          where: { itemId: In(lines.map((line) => line.productId)), bin: { zone: { warehouseId: active.warehouseId } } },
           relations: { bin: { zone: true }, item: true },
         })
       : [];
@@ -244,7 +251,7 @@ export class DarkStoreService {
           quantity: line.quantity,
           binCode: bin?.bin?.code ?? null,
           zoneName: bin?.bin?.zone?.name ?? null,
-          status: missingItemIds.includes(line.productId) ? 'missing' : active.status === 'completed' ? 'picked' : 'pending',
+          status: missingItemIds.includes(line.productId) ? 'missing' : ['picked', 'completed'].includes(active.status) ? 'picked' : 'pending',
         };
       }),
       pickPath: bins
@@ -291,6 +298,73 @@ export class DarkStoreService {
       });
     } catch {
       // Existing order flows may already deduct or may not reserve stock yet. The task still completes for MVP operations.
+    }
+  }
+
+  private async decrementBinsForOrder(
+    warehouseId: string,
+    order: OrderEntity,
+    lines?: CompleteDarkStorePickTaskDto['lines'],
+  ) {
+    const pickedLines = lines?.length
+      ? lines
+      : (order.items ?? []).map((item) => ({ productId: item.productId, quantityPicked: item.quantity, substituteProductId: undefined }));
+    const requested = new Map(pickedLines.map((line) => [line.substituteProductId ?? line.productId, line.quantityPicked]));
+    for (const [productId, quantity] of requested) {
+      if (quantity <= 0) continue;
+      const binItem = await this.binItems.findOne({
+        where: { itemId: productId, bin: { zone: { warehouseId } } },
+        relations: { bin: { zone: true } },
+        order: { quantity: 'DESC' },
+      });
+      if (!binItem) continue;
+      binItem.quantity = Math.max(0, parseQty(binItem.quantity) - quantity).toFixed(4);
+      await this.binItems.save(binItem);
+    }
+  }
+
+  private async generateTasksForWindow(
+    tenantId: string,
+    locationId: string,
+    from?: string,
+    to?: string,
+    maxTasks = 20,
+  ) {
+    const where = {
+      tenantId,
+      locationId,
+      status: In([OrderStatus.ACCEPTED, OrderStatus.PICKING, OrderStatus.PREPARING]),
+    };
+    const orders = await this.orders.find({
+      where,
+      relations: ['items'],
+      order: { createdAt: 'ASC' },
+      take: maxTasks,
+    });
+    const start = from ? new Date(from) : null;
+    const end = to ? new Date(to) : null;
+    const filtered = orders.filter((order) => (!start || order.createdAt >= start) && (!end || order.createdAt <= end));
+    for (const order of filtered) {
+      const existing = await this.pickTasks.findOne({ where: { tenantId, orderId: order.id } });
+      if (existing) continue;
+      await this.pickTasks.save(this.pickTasks.create({
+        tenantId,
+        warehouseId: locationId,
+        orderId: order.id,
+        transferId: null,
+        status: 'pending',
+        assignedTo: null,
+        priority: this.priorityForOrder(order),
+        batchId: null,
+        waveId: null,
+        slotId: null,
+        startedAt: null,
+        completedAt: null,
+      }));
+      if (order.status === OrderStatus.ACCEPTED || order.status === OrderStatus.PREPARING) {
+        order.status = OrderStatus.PICKING;
+        await this.orders.save(order);
+      }
     }
   }
 

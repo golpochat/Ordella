@@ -17,6 +17,12 @@ const DEFAULT_TENANT_SETTINGS: TenantLocalizationSettings = {
   numberFormat: '1,234.56',
   country: 'IE',
   defaultTaxRate: '0.0000',
+  deliveryEnabled: true,
+  deliveryFee: '0.00',
+  minimumOrderAmount: '0.00',
+  freeDeliveryThreshold: null,
+  deliveryRadiusKm: '5.00',
+  deliveryZones: [],
 };
 
 @Injectable()
@@ -53,6 +59,12 @@ export class TenantSettingsMiddleware implements NestMiddleware {
             numberFormat: row.numberFormat,
             country: row.country,
             defaultTaxRate: row.defaultTaxRate,
+            deliveryEnabled: row.deliveryEnabled,
+            deliveryFee: row.deliveryFee,
+            minimumOrderAmount: row.minimumOrderAmount,
+            freeDeliveryThreshold: row.freeDeliveryThreshold,
+            deliveryRadiusKm: row.deliveryRadiusKm,
+            deliveryZones: row.deliveryZones,
           }
         : {}),
     };

@@ -7,7 +7,7 @@ import {
   type FulfillmentOrder,
   fulfillmentOrderSchema,
 } from '@/lib/api';
-import { getSocketBaseUrl, getTenantId } from '@/lib/config';
+import { bootstrapKdsRuntimeConfig, getSocketBaseUrl, getTenantId } from '@/lib/config';
 import { loadFdsSettings } from '@/lib/fds-settings';
 
 const POLL_MS = 12_000;
@@ -41,6 +41,7 @@ export function useFulfillmentBoard(includeCompleted: boolean) {
 
   const refresh = useCallback(async () => {
     try {
+      bootstrapKdsRuntimeConfig();
       const feed = await fetchFulfillmentFeed(includeCompleted);
       setOrders((prev) => mergeOrders(prev, feed));
       setError(null);
@@ -69,6 +70,7 @@ export function useFulfillmentBoard(includeCompleted: boolean) {
   }, [refresh]);
 
   useEffect(() => {
+    bootstrapKdsRuntimeConfig();
     const tenantId = getTenantId();
     if (!tenantId) return;
 

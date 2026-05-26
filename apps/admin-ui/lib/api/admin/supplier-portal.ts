@@ -20,8 +20,11 @@ const supplierPerformanceSchema = z.object({
   portalEnabled: z.boolean(),
   purchaseOrders: z.number(),
   confirmations: z.number(),
+  shippedOrders: z.number().optional(),
   delays: z.number(),
   onTimeDeliveryRate: z.number(),
+  averageLeadTimeDays: z.number().optional(),
+  rejectionRate: z.number().optional(),
   fillRate: z.number(),
 });
 

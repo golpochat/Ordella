@@ -45,6 +45,7 @@ import { GiftCardsModule } from '../../../giftcards/giftcards.module';
 import { PromotionsCoreModule } from '../../../promotions/modules/promotions-core/promotions-core.module';
 import { SearchModule } from '../../../search';
 import { TaxModule } from '../../../tax';
+import { TenantSettingsEntity } from '../../../onboarding/entities/tenant-settings.entity';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { TaxModule } from '../../../tax';
       VariantEntity,
       ModifierOptionEntity,
       BundleEntity,
+      TenantSettingsEntity,
     ]),
   ],
   controllers: [OrdersFulfillmentController, OrdersPosController, OrdersController],

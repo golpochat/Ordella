@@ -18,6 +18,13 @@ export function OrderTracking({ orderId }: { orderId: string }) {
   }
 
   const label = labelOrderStatus(status.status);
+  const steps = [
+    { id: 'preparing', label: 'Preparing' },
+    { id: 'out_for_delivery', label: 'Out for delivery' },
+    { id: 'arriving_soon', label: 'Arriving soon' },
+  ];
+  const currentStep = status.customerDeliveryStage ?? (['handed_to_driver', 'out_for_delivery'].includes(status.status) ? 'out_for_delivery' : 'preparing');
+  const currentIndex = Math.max(0, steps.findIndex((step) => step.id === currentStep));
 
   return (
     <div className="mx-auto max-w-xl px-[var(--theme-spacing)] py-[var(--storefront-section-padding)]">
@@ -37,6 +44,18 @@ export function OrderTracking({ orderId }: { orderId: string }) {
           <p>Payment: {status.paymentStatus}</p>
           <p>Type: {labelOrderType(status.orderType)}</p>
           <p>Total: {formatCurrency(status.total)}</p>
+          {status.orderType === 'delivery' ? (
+            <div className="grid gap-2 rounded-[var(--storefront-radius)] bg-muted p-3 sm:grid-cols-3">
+              {steps.map((step, index) => (
+                <div
+                  key={step.id}
+                  className={index <= currentIndex ? 'font-medium text-primary' : 'text-muted-foreground'}
+                >
+                  {step.label}
+                </div>
+              ))}
+            </div>
+          ) : null}
           <p className="text-muted-foreground">
             Fulfilled by: {status.fulfilledByLocationName ?? 'assigned location'}
             {status.estimatedDeliveryMinutes ? ` · ETA ${status.estimatedDeliveryMinutes} min` : ''}

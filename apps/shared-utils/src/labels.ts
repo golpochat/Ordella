@@ -11,8 +11,11 @@ export const ORDER_TYPE_LABELS: Record<string, string> = {
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'Order received',
   accepted: 'Confirmed',
+  picking: 'Picking',
+  picked: 'Picked',
   preparing: 'In fulfillment',
   ready: 'Ready',
+  handed_to_driver: 'Handed to driver',
   out_for_delivery: 'Out for delivery',
   completed: 'Completed',
   cancelled: 'Cancelled',

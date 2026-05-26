@@ -5,8 +5,11 @@ import { TenantContext } from '../../../common/interfaces';
 import { StockItemEntity, StockTransferEntity } from '../../inventory/entities';
 import { StockTransferStatus } from '../../inventory/enums/stock-transfer-status.enum';
 import { availableQty, formatQty, parseQty, subtractQty } from '../../inventory/domain/stock-quantity.util';
+import { InventoryService } from '../../inventory/services';
+import { OrderEntity } from '../../orders/entities';
+import { OrderStatus } from '../../orders/enums/order-status.enum';
 import { LocationEntity, LocationType } from '../../tenants/entities';
-import { CompletePickTaskDto, MoveWarehouseBinItemDto, UpdatePickTaskDto, UpsertWarehouseBinDto, UpsertWarehouseZoneDto } from '../dto';
+import { AssignWarehouseBinItemDto, CompletePickTaskDto, MoveWarehouseBinItemDto, UpdatePickTaskDto, UpsertWarehouseBinDto, UpsertWarehouseZoneDto } from '../dto';
 import { WarehouseBinEntity, WarehouseBinItemEntity, WarehousePickTaskEntity, WarehouseZoneEntity } from '../entities';
 import { SearchIndexService } from '../../search';
 
@@ -19,6 +22,8 @@ export class WarehouseService {
     private readonly stockItems: Repository<StockItemEntity>,
     @InjectRepository(StockTransferEntity)
     private readonly transfers: Repository<StockTransferEntity>,
+    @InjectRepository(OrderEntity)
+    private readonly orders: Repository<OrderEntity>,
     @InjectRepository(WarehouseZoneEntity)
     private readonly zones: Repository<WarehouseZoneEntity>,
     @InjectRepository(WarehouseBinEntity)
@@ -28,6 +33,7 @@ export class WarehouseService {
     @InjectRepository(WarehousePickTaskEntity)
     private readonly pickTasks: Repository<WarehousePickTaskEntity>,
     private readonly searchIndex: SearchIndexService,
+    private readonly inventoryService: InventoryService,
   ) {}
 
   async dashboard(tenant: TenantContext) {
@@ -116,13 +122,24 @@ export class WarehouseService {
     return this.listBins(tenant);
   }
 
-  listPicks(tenant: TenantContext) {
-    return this.pickTasks.find({
+  async assignItem(tenant: TenantContext, dto: AssignWarehouseBinItemDto) {
+    const bin = await this.requireBin(tenant.tenantId, dto.binId);
+    let item = await this.binItems.findOne({ where: { binId: bin.id, itemId: dto.itemId } });
+    item ??= this.binItems.create({ binId: bin.id, itemId: dto.itemId, quantity: '0.0000' });
+    item.quantity = formatQty(dto.quantity);
+    await this.binItems.save(item);
+    await this.searchIndex.indexBin(await this.requireBin(tenant.tenantId, bin.id));
+    return this.listBins(tenant);
+  }
+
+  async listPicks(tenant: TenantContext) {
+    const tasks = await this.pickTasks.find({
       where: { tenantId: tenant.tenantId },
       relations: { warehouse: true, transfer: { lines: { item: true } }, order: { items: true }, assignee: true, wave: true, slot: true },
       order: { priority: 'DESC', createdAt: 'DESC' },
       take: 100,
     });
+    return Promise.all(tasks.map((task) => this.decoratePickTask(task)));
   }
 
   async createPickForTransfer(tenantId: string, transfer: Pick<StockTransferEntity, 'id' | 'fromLocationId'>) {
@@ -144,18 +161,68 @@ export class WarehouseService {
     }));
   }
 
+  async createPickForOrder(
+    tenantId: string,
+    order: Pick<OrderEntity, 'id' | 'locationId' | 'orderType' | 'status'>,
+    warehouseId = order.locationId,
+  ) {
+    const existing = await this.pickTasks.findOne({ where: { tenantId, orderId: order.id } });
+    if (existing) return existing;
+    await this.assertWarehouse(tenantId, warehouseId);
+    const task = await this.pickTasks.save(this.pickTasks.create({
+      tenantId,
+      warehouseId,
+      orderId: order.id,
+      transferId: null,
+      status: 'pending',
+      assignedTo: null,
+      priority: order.orderType === 'delivery' ? 100 : 50,
+      batchId: null,
+      waveId: null,
+      slotId: null,
+      startedAt: null,
+      completedAt: null,
+    }));
+    if ([OrderStatus.ACCEPTED, OrderStatus.PREPARING].includes(order.status)) {
+      await this.orders.update({ id: order.id, tenantId }, { status: OrderStatus.PICKING });
+    }
+    return task;
+  }
+
   async updatePick(tenant: TenantContext, dto: UpdatePickTaskDto) {
     const task = await this.pickTasks.findOne({ where: { id: dto.pickTaskId, tenantId: tenant.tenantId } });
     if (!task) throw new NotFoundException('Pick task not found');
     task.status = dto.status;
     task.assignedTo = dto.assignedTo ?? task.assignedTo;
     if (dto.status === 'picking') task.startedAt ??= new Date();
-    if (dto.status === 'completed') task.completedAt = new Date();
+    if (dto.status === 'picked' || dto.status === 'completed') task.completedAt = new Date();
     return this.pickTasks.save(task);
   }
 
   async completePick(tenant: TenantContext, dto: CompletePickTaskDto) {
-    return this.updatePick(tenant, { pickTaskId: dto.pickTaskId, status: 'completed' });
+    const task = await this.pickTasks.findOne({
+      where: { id: dto.pickTaskId, tenantId: tenant.tenantId },
+      relations: { order: { items: true } },
+    });
+    if (!task) throw new NotFoundException('Pick task not found');
+    if (dto.missingItemIds?.length) {
+      task.status = 'picking';
+      task.startedAt ??= new Date();
+      return this.pickTasks.save(task);
+    }
+    task.status = 'picked';
+    task.startedAt ??= new Date();
+    task.completedAt = new Date();
+    const saved = await this.pickTasks.save(task);
+    if (task.order) {
+      await this.decrementBinsForOrder(task.warehouseId, task.order, dto.lines);
+      await this.tryDeductInventoryForOrder(tenant.tenantId, task.warehouseId, task.order);
+      if (![OrderStatus.READY, OrderStatus.HANDED_TO_DRIVER, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.COMPLETED, OrderStatus.CANCELLED, OrderStatus.REFUNDED].includes(task.order.status)) {
+        task.order.status = OrderStatus.PICKED;
+        await this.orders.save(task.order);
+      }
+    }
+    return saved;
   }
 
   private async warehouseIds(tenantId: string) {
@@ -187,5 +254,69 @@ export class WarehouseService {
     const capacity = bins.reduce((sum, bin) => sum + (bin.capacity ?? 0), 0);
     const used = bins.reduce((sum, bin) => sum + (bin.contents ?? []).reduce((inner, item) => inner + parseQty(item.quantity), 0), 0);
     return capacity > 0 ? Number(((used / capacity) * 100).toFixed(2)) : 0;
+  }
+
+  private async decoratePickTask(task: WarehousePickTaskEntity) {
+    const lines = task.order?.items ?? [];
+    const bins = lines.length
+      ? await this.binItems.find({
+          where: { itemId: In(lines.map((line) => line.productId)), bin: { zone: { warehouseId: task.warehouseId } } },
+          relations: { bin: { zone: true }, item: true },
+        })
+      : [];
+    const binsByItem = new Map(bins.map((bin) => [bin.itemId, bin]));
+    return {
+      ...task,
+      lines: lines.map((line) => {
+        const bin = binsByItem.get(line.productId);
+        return {
+          productId: line.productId,
+          productName: bin?.item?.name ?? null,
+          quantity: line.quantity,
+          binCode: bin?.bin?.code ?? null,
+          zoneName: bin?.bin?.zone?.name ?? null,
+          status: ['picked', 'completed'].includes(task.status) ? 'picked' : 'pending',
+        };
+      }),
+      pickPath: bins
+        .filter((bin) => Boolean(bin.bin?.zone))
+        .sort((a, b) => `${a.bin.zone.name}-${a.bin.code}`.localeCompare(`${b.bin.zone.name}-${b.bin.code}`))
+        .map((bin) => ({ zoneName: bin.bin.zone.name, binCode: bin.bin.code, itemId: bin.itemId })),
+    };
+  }
+
+  private async decrementBinsForOrder(
+    warehouseId: string,
+    order: OrderEntity,
+    lines?: CompletePickTaskDto['lines'],
+  ) {
+    const pickedLines = lines?.length
+      ? lines
+      : (order.items ?? []).map((item) => ({ productId: item.productId, quantityPicked: item.quantity, substituteProductId: undefined }));
+    const requested = new Map(pickedLines.map((line) => [line.substituteProductId ?? line.productId, line.quantityPicked]));
+    for (const [productId, quantity] of requested) {
+      if (quantity <= 0) continue;
+      const binItem = await this.binItems.findOne({
+        where: { itemId: productId, bin: { zone: { warehouseId } } },
+        relations: { bin: { zone: true } },
+        order: { quantity: 'DESC' },
+      });
+      if (!binItem) continue;
+      binItem.quantity = formatQty(Math.max(0, parseQty(binItem.quantity) - quantity));
+      await this.binItems.save(binItem);
+    }
+  }
+
+  private async tryDeductInventoryForOrder(tenantId: string, locationId: string, order: OrderEntity) {
+    try {
+      await this.inventoryService.deduct({
+        tenantId,
+        orderId: order.id,
+        locationId,
+        lines: (order.items ?? []).map((item) => ({ productId: item.productId, quantity: item.quantity })),
+      });
+    } catch {
+      // Orders created before picking may already be deducted by the order lifecycle.
+    }
   }
 }

@@ -37,6 +37,24 @@ export class TenantSettingsEntity {
   @Column({ name: 'default_tax_rate', type: 'numeric', precision: 7, scale: 4, default: 0 })
   defaultTaxRate!: string;
 
+  @Column({ name: 'delivery_enabled', type: 'boolean', default: true })
+  deliveryEnabled!: boolean;
+
+  @Column({ name: 'delivery_fee', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  deliveryFee!: string;
+
+  @Column({ name: 'minimum_order_amount', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  minimumOrderAmount!: string;
+
+  @Column({ name: 'free_delivery_threshold', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  freeDeliveryThreshold!: string | null;
+
+  @Column({ name: 'delivery_radius_km', type: 'decimal', precision: 8, scale: 2, default: 5 })
+  deliveryRadiusKm!: string;
+
+  @Column({ name: 'delivery_zones', type: 'jsonb', default: () => "'[]'" })
+  deliveryZones!: Array<Record<string, unknown>>;
+
   @Column({ name: 'opening_hours', type: 'jsonb', default: {} })
   openingHours!: Record<string, unknown>;
 

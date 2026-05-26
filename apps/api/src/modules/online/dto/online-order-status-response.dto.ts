@@ -26,6 +26,8 @@ export class OnlineOrderStatusResponseDto {
   driverName?: string | null;
   driverStatus?: string | null;
   driverStatusLabel?: string | null;
+  customerDeliveryStage?: 'preparing' | 'out_for_delivery' | 'arriving_soon' | 'delivered' | null;
+  customerDeliveryStageLabel?: string | null;
   deliveryConfirmed?: boolean;
   fulfilledByLocationId?: string | null;
   fulfilledByLocationName?: string | null;

@@ -301,8 +301,9 @@ export class OrderPricingService {
     tenant: TenantContext,
     locationId: string,
     orderType: OrderPricingContext['orderType'],
+    deliveryFeeOverride?: string,
   ): OrderPricingContext {
-    return { tenant, locationId, orderType };
+    return { tenant, locationId, orderType, deliveryFeeOverride };
   }
 
   private async resolveModifierSelections(

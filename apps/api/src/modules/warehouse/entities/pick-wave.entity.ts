@@ -2,7 +2,7 @@ import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, Primary
 import { UserEntity } from '../../auth/entities';
 import { LocationEntity } from '../../tenants/entities';
 
-export type PickWaveStatus = 'pending' | 'picking' | 'completed';
+export type PickWaveStatus = 'pending' | 'picking' | 'picked' | 'completed';
 
 @Entity('pick_waves')
 @Index(['tenantId', 'locationId', 'status'])

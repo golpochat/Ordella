@@ -23,6 +23,8 @@ import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { GiftCardsModule } from '../giftcards/giftcards.module';
 import { RoutingModule } from '../routing';
 import { TaxModule } from '../tax';
+import { WarehouseModule } from '../warehouse/warehouse.module';
+import { TenantSettingsEntity } from '../onboarding/entities/tenant-settings.entity';
 import { PublicController } from './controllers';
 import { PublicCatalogController } from './controllers/public-catalog.controller';
 import { OrdersOnlinePublicController } from './controllers/orders-online-public.controller';
@@ -70,6 +72,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
       BundleEntity,
       BundleItemEntity,
       StockItemEntity,
+      TenantSettingsEntity,
     ]),
     OrdersFeatureModule,
     PaymentsModule,
@@ -80,6 +83,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
     GiftCardsModule,
     RoutingModule,
     TaxModule,
+    WarehouseModule,
   ],
   controllers: [
     PublicController,

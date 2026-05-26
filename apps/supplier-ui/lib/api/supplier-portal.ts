@@ -34,6 +34,14 @@ const purchaseOrderItemSchema = z.object({
   item: z.object({ id: z.string().uuid(), name: z.string() }).optional(),
 });
 
+const deliveryDocumentSchema = z.object({
+  name: z.string(),
+  url: z.string(),
+  contentType: z.string().nullable().optional(),
+  sizeBytes: z.number().nullable().optional(),
+  uploadedAt: z.string(),
+});
+
 const purchaseOrderSchema = z.object({
   id: z.string().uuid(),
   supplierId: z.string().uuid(),
@@ -46,7 +54,11 @@ const purchaseOrderSchema = z.object({
   expectedDeliveryDate: z.string().nullable().optional(),
   supplierExpectedDeliveryDate: z.string().nullable().optional(),
   supplierNotes: z.string().nullable().optional(),
+  deliveryDocuments: z.array(deliveryDocumentSchema).default([]),
   sentAt: z.string().nullable().optional(),
+  confirmedAt: z.string().nullable().optional(),
+  rejectedAt: z.string().nullable().optional(),
+  shippedAt: z.string().nullable().optional(),
   receivedAt: z.string().nullable().optional(),
   createdAt: z.string(),
   location: z.object({ id: z.string().uuid(), name: z.string() }).optional(),
@@ -81,6 +93,7 @@ const dashboardSchema = z.object({
     confirmedPOs: z.number(),
     rejectedPOs: z.number(),
     shippedPOs: z.number(),
+    nextDeliveryEta: z.string().nullable().optional(),
     unreadMessages: z.number(),
     onTimeDeliveryRate: z.number(),
     fillRate: z.number(),
@@ -146,6 +159,11 @@ export async function updatePurchaseOrderDelivery(api: ApiClient, body: Record<s
 
 export async function markPurchaseOrderShipped(api: ApiClient, body: Record<string, unknown>) {
   const data = await api.postData<unknown>('supplier/po/ship', body);
+  return purchaseOrderSchema.parse(data);
+}
+
+export async function uploadDeliveryDocuments(api: ApiClient, body: Record<string, unknown>) {
+  const data = await api.postData<unknown>('supplier/po/documents', body);
   return purchaseOrderSchema.parse(data);
 }
 

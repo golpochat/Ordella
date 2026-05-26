@@ -42,6 +42,14 @@ const purchaseOrderItemSchema = z.object({
   item: z.object({ id: z.string().uuid(), name: z.string() }).optional(),
 });
 
+const deliveryDocumentSchema = z.object({
+  name: z.string(),
+  url: z.string(),
+  contentType: z.string().nullable().optional(),
+  sizeBytes: z.number().nullable().optional(),
+  uploadedAt: z.string(),
+});
+
 export const purchaseOrderSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -55,7 +63,11 @@ export const purchaseOrderSchema = z.object({
   expectedDeliveryDate: z.string().nullable().optional(),
   supplierExpectedDeliveryDate: z.string().nullable().optional(),
   supplierNotes: z.string().nullable().optional(),
+  deliveryDocuments: z.array(deliveryDocumentSchema).default([]),
   sentAt: z.string().nullable().optional(),
+  confirmedAt: z.string().nullable().optional(),
+  rejectedAt: z.string().nullable().optional(),
+  shippedAt: z.string().nullable().optional(),
   receivedAt: z.string().nullable().optional(),
   createdAt: z.string(),
   supplier: z.object({ id: z.string().uuid(), name: z.string() }).optional(),
@@ -74,6 +86,11 @@ export const procurementAnalyticsSchema = z.object({
     name: z.string(),
     itemsSupplied: z.number(),
     purchaseOrders: z.number(),
+    confirmedOrders: z.number().optional(),
+    shippedOrders: z.number().optional(),
+    onTimeDeliveryRate: z.number().optional(),
+    averageLeadTimeDays: z.number().optional(),
+    rejectionRate: z.number().optional(),
     volume: z.string(),
   })),
 });
