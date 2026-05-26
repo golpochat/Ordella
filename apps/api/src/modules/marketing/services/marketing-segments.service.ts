@@ -5,7 +5,7 @@ import { TenantContext } from '../../../common/interfaces';
 import { CustomerEntity } from '../../loyalty/entities';
 import { OrderEntity, OrderItemEntity } from '../../orders/entities';
 import { CreateMarketingSegmentDto, UpdateMarketingSegmentDto } from '../dto';
-import { MarketingSegmentEntity } from '../entities';
+import { MarketingBehaviorEventEntity, MarketingSegmentEntity } from '../entities';
 
 type SegmentFilters = {
   minOrderCount?: number;
@@ -13,7 +13,17 @@ type SegmentFilters = {
   lastOrderBefore?: string;
   lastOrderAfter?: string;
   minTotalSpend?: number;
+  maxTotalSpend?: number;
   minLoyaltyPoints?: number;
+  minAvgOrderValue?: number;
+  churnRisk?: 'low' | 'medium' | 'high';
+  rfm?: 'champions' | 'loyal' | 'at_risk' | 'new';
+  behaviorEvent?: 'view' | 'click' | 'purchase';
+  minViews?: number;
+  minClicks?: number;
+  minPurchases?: number;
+  minFrequency?: number;
+  maxFrequency?: number;
   locationId?: string;
   orderType?: string;
   categoryPurchased?: string;
@@ -33,6 +43,8 @@ export class MarketingSegmentsService {
     private readonly orders: Repository<OrderEntity>,
     @InjectRepository(OrderItemEntity)
     private readonly orderItems: Repository<OrderItemEntity>,
+    @InjectRepository(MarketingBehaviorEventEntity)
+    private readonly behaviorEvents: Repository<MarketingBehaviorEventEntity>,
   ) {}
 
   list(tenant: TenantContext): Promise<MarketingSegmentEntity[]> {
@@ -44,6 +56,8 @@ export class MarketingSegmentsService {
       tenantId: tenant.tenantId,
       name: dto.name.trim(),
       filters: dto.filters,
+      builderType: dto.builderType ?? 'custom',
+      ruleSummary: dto.ruleSummary ?? this.summarizeRules(dto.filters),
     }));
   }
 
@@ -51,6 +65,8 @@ export class MarketingSegmentsService {
     const segment = await this.requireSegment(tenant.tenantId, id);
     segment.name = dto.name.trim();
     segment.filters = dto.filters;
+    segment.builderType = dto.builderType ?? segment.builderType ?? 'custom';
+    segment.ruleSummary = dto.ruleSummary ?? this.summarizeRules(dto.filters);
     return this.segments.save(segment);
   }
 
@@ -78,10 +94,19 @@ export class MarketingSegmentsService {
       });
       if (!this.matchesCustomer(customer, orders, typed)) continue;
       if (typed.categoryPurchased && !(await this.hasPurchasedCategory(orders, typed.categoryPurchased))) continue;
+      if (!(await this.matchesBehaviorEvents(tenantId, customer.id, typed))) continue;
       matches.push(customer);
     }
 
     return matches;
+  }
+
+  findCustomer(tenantId: string, customerId: string): Promise<CustomerEntity | null> {
+    return this.customers.findOne({ where: { tenantId, id: customerId } });
+  }
+
+  saveCustomer(customer: CustomerEntity): Promise<CustomerEntity> {
+    return this.customers.save(customer);
   }
 
   private async requireSegment(tenantId: string, id: string): Promise<MarketingSegmentEntity> {
@@ -93,10 +118,25 @@ export class MarketingSegmentsService {
   private matchesCustomer(customer: CustomerEntity, orders: OrderEntity[], filters: SegmentFilters): boolean {
     const orderCount = orders.length;
     const totalSpend = Number(customer.lifetimeValue);
+    const avgOrderValue = Number(customer.avgOrderValue ?? 0);
+    const daysSinceLastOrder = customer.lastOrderAt
+      ? (Date.now() - customer.lastOrderAt.getTime()) / 86_400_000
+      : Number.POSITIVE_INFINITY;
     if (filters.minOrderCount !== undefined && orderCount < Number(filters.minOrderCount)) return false;
     if (filters.maxOrderCount !== undefined && orderCount > Number(filters.maxOrderCount)) return false;
     if (filters.minTotalSpend !== undefined && totalSpend < Number(filters.minTotalSpend)) return false;
+    if (filters.maxTotalSpend !== undefined && totalSpend > Number(filters.maxTotalSpend)) return false;
+    if (filters.minAvgOrderValue !== undefined && avgOrderValue < Number(filters.minAvgOrderValue)) return false;
     if (filters.minLoyaltyPoints !== undefined && customer.pointsBalance < Number(filters.minLoyaltyPoints)) return false;
+    if (filters.minFrequency !== undefined && orderCount < Number(filters.minFrequency)) return false;
+    if (filters.maxFrequency !== undefined && orderCount > Number(filters.maxFrequency)) return false;
+    if (filters.churnRisk === 'high' && daysSinceLastOrder <= 60) return false;
+    if (filters.churnRisk === 'medium' && (daysSinceLastOrder <= 30 || daysSinceLastOrder > 60)) return false;
+    if (filters.churnRisk === 'low' && daysSinceLastOrder > 30) return false;
+    if (filters.rfm === 'champions' && (totalSpend < 500 || orderCount < 5 || daysSinceLastOrder > 30)) return false;
+    if (filters.rfm === 'loyal' && (orderCount < 3 || daysSinceLastOrder > 60)) return false;
+    if (filters.rfm === 'at_risk' && (orderCount < 2 || daysSinceLastOrder <= 60)) return false;
+    if (filters.rfm === 'new' && orderCount > 1) return false;
     if (filters.crmSegment && !(customer.segments ?? []).includes(filters.crmSegment)) return false;
     if (filters.tag && !(customer.tags ?? []).includes(filters.tag)) return false;
     if (filters.locationId && !orders.some((order) => order.locationId === filters.locationId)) return false;
@@ -120,6 +160,25 @@ export class MarketingSegmentsService {
     return count > 0;
   }
 
+  private async matchesBehaviorEvents(
+    tenantId: string,
+    customerId: string,
+    filters: SegmentFilters,
+  ): Promise<boolean> {
+    const checks: Array<[SegmentFilters['behaviorEvent'], number | undefined]> = [
+      ['view', filters.minViews],
+      ['click', filters.minClicks],
+      ['purchase', filters.minPurchases],
+      [filters.behaviorEvent, filters.behaviorEvent ? 1 : undefined],
+    ];
+    for (const [eventType, minimum] of checks) {
+      if (!eventType || minimum === undefined) continue;
+      const count = await this.behaviorEvents.count({ where: { tenantId, customerId, eventType } });
+      if (count < Number(minimum)) return false;
+    }
+    return true;
+  }
+
   private toPreviewCustomer(customer: CustomerEntity) {
     return {
       id: customer.id,
@@ -130,5 +189,9 @@ export class MarketingSegmentsService {
       lifetimeValue: customer.lifetimeValue,
       lastOrderAt: customer.lastOrderAt,
     };
+  }
+
+  private summarizeRules(filters: Record<string, unknown>): Array<Record<string, unknown>> {
+    return Object.entries(filters).map(([field, value]) => ({ field, operator: 'matches', value }));
   }
 }

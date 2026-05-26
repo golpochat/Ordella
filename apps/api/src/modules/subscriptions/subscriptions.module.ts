@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { BillingModule } from '../billing/billing.module';
+import { CustomerSessionEntity } from '../customer-accounts/entities';
 import { CustomerAuthGuard } from '../customer-accounts/guards/customer-auth.guard';
 import { CustomerEntity } from '../loyalty/entities';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -20,7 +21,7 @@ import { SubscriptionSchedulerService, SubscriptionsService } from './services';
     BillingModule,
     NotificationsModule,
     OrdersFeatureModule,
-    TypeOrmModule.forFeature([...SUBSCRIPTION_ENTITIES, CustomerEntity]),
+    TypeOrmModule.forFeature([...SUBSCRIPTION_ENTITIES, CustomerEntity, CustomerSessionEntity]),
   ],
   controllers: [
     AdminSubscriptionsController,

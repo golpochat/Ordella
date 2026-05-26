@@ -4,6 +4,7 @@ import { ProductEntity } from '../../../catalog/entities/product.entity';
 import { VariantEntity } from '../../../catalog/entities/variant.entity';
 import { ModifierOptionEntity } from '../../../catalog/entities/modifier-option.entity';
 import { BundleEntity } from '../../../bundles/entities/bundle.entity';
+import { CustomerEntity } from '../../../loyalty/entities';
 import { PromotionsCoreModule } from '../../../promotions/modules/promotions-core/promotions-core.module';
 import { OrderEntity } from '../../entities';
 import { OrderItemEntity } from '../../entities';
@@ -27,6 +28,7 @@ import { PromotionsService } from '../../integrations';
       VariantEntity,
       ModifierOptionEntity,
       BundleEntity,
+      CustomerEntity,
     ]),
   ],
   controllers: [OrderItemsController],

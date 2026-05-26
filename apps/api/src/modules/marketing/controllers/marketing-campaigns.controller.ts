@@ -3,7 +3,12 @@ import { CurrentTenant } from '../../../common/decorators';
 import { TenantGuard } from '../../../common/guards';
 import { ApiSuccessResponse, TenantContext } from '../../../common/interfaces';
 import { JwtAuthGuard, RbacGuard, RequirePermissions } from '../../auth';
-import { CreateMarketingCampaignDto, UpdateMarketingCampaignDto } from '../dto';
+import {
+  CreateMarketingCampaignDto,
+  TrackMarketingEventDto,
+  UpdateMarketingCampaignDto,
+  UpsertMarketingJourneyDto,
+} from '../dto';
 import { MarketingCampaignsService } from '../services';
 
 @Controller('campaigns')
@@ -22,6 +27,32 @@ export class MarketingCampaignsController {
   @RequirePermissions('marketing.read')
   async analytics(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.campaigns.analytics(tenant);
+    return { success: true, data };
+  }
+
+  @Get('journeys')
+  @RequirePermissions('marketing.read')
+  async journeys(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.campaigns.listJourneys(tenant);
+    return { success: true, data };
+  }
+
+  @Post('journeys')
+  @RequirePermissions('marketing.write')
+  async upsertJourney(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpsertMarketingJourneyDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.campaigns.upsertJourney(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Post('track')
+  async track(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: TrackMarketingEventDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.campaigns.trackEvent(tenant, dto);
     return { success: true, data };
   }
 

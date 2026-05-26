@@ -31,4 +31,22 @@ export class MarketingCampaignLogEntity {
 
   @Column({ name: 'sent_at', type: 'timestamptz', default: () => 'NOW()' })
   sentAt!: Date;
+
+  @Column({ name: 'opened_at', type: 'timestamptz', nullable: true })
+  openedAt!: Date | null;
+
+  @Column({ name: 'clicked_at', type: 'timestamptz', nullable: true })
+  clickedAt!: Date | null;
+
+  @Column({ name: 'converted_at', type: 'timestamptz', nullable: true })
+  convertedAt!: Date | null;
+
+  @Column({ name: 'revenue_attributed', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  revenueAttributed!: string;
+
+  @Column({ name: 'unsubscribed_at', type: 'timestamptz', nullable: true })
+  unsubscribedAt!: Date | null;
+
+  @Column({ type: 'jsonb', default: () => "'{}'" })
+  metadata!: Record<string, unknown>;
 }

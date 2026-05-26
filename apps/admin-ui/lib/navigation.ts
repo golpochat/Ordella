@@ -97,6 +97,7 @@ export const REPORTS_SUBNAV = [
 export const MARKETING_SUBNAV = [
   { label: 'Campaigns', href: '/marketing/campaigns' },
   { label: 'Customer segments', href: '/marketing/segments' },
+  { label: 'Journeys', href: '/marketing/journeys' },
 ];
 
 export const CRM_SUBNAV = [
