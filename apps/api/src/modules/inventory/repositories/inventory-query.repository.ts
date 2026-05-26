@@ -341,7 +341,7 @@ export class InventoryQueryRepository {
       })
       .groupBy('oi.product_id')
       .addGroupBy('p.name')
-      .orderBy('quantitySold', 'DESC');
+      .orderBy('SUM(oi.quantity)', 'DESC');
 
     if (locationId) {
       qb.andWhere('o.location_id = :locationId', { locationId });

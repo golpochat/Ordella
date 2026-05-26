@@ -1,15 +1,87 @@
-import { createApiClient, productSchema } from '@shared-utils';
+import { ApiError, createApiClient, productSchema } from '@shared-utils';
 import { z } from 'zod';
 import { getSession } from './session';
 
-const api = createApiClient({
+type PosJwtPayload = {
+  sub?: string;
+  exp?: number;
+  type?: string;
+};
+
+function decodeJwtPayload(token: string): PosJwtPayload | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const [, payload] = token.split('.');
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    return JSON.parse(window.atob(padded)) as PosJwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function isValidPosAccessToken(token: string | null | undefined): token is string {
+  const trimmed = token?.trim();
+  if (!trimmed) return false;
+
+  const payload = decodeJwtPayload(trimmed);
+  if (!payload?.sub) return false;
+  if (payload.type === 'customer' || payload.type === 'refresh' || payload.type === 'sso_state') {
+    return false;
+  }
+  if (payload.exp && payload.exp * 1000 <= Date.now()) return false;
+  return true;
+}
+
+export function getPosAccessToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  const token = localStorage.getItem('ordella.accessToken');
+  return isValidPosAccessToken(token) ? token.trim() : null;
+}
+
+export function hasPosAuthSession(): boolean {
+  if (typeof window === 'undefined') return false;
+  return Boolean(getPosAccessToken() && localStorage.getItem('ordella.tenantId')?.trim());
+}
+
+function clearPosAuthSession(options: { redirectToLogin?: boolean } = {}) {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('ordella.accessToken');
+
+  if (options.redirectToLogin && window.location.pathname !== '/login') {
+    window.location.replace('/login');
+  }
+}
+
+async function withPosAuth<T>(request: Promise<T>): Promise<T> {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+      clearPosAuthSession({ redirectToLogin: true });
+    }
+    throw error;
+  }
+}
+
+const rawApi = createApiClient({
   baseUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1',
-  getAccessToken: () => (typeof window === 'undefined' ? null : localStorage.getItem('ordella.accessToken')),
+  getAccessToken: () => getPosAccessToken(),
   getTenantId: () => {
     if (typeof window === 'undefined') return process.env.NEXT_PUBLIC_TENANT_ID ?? null;
     return localStorage.getItem('ordella.tenantId') ?? process.env.NEXT_PUBLIC_TENANT_ID ?? null;
   },
 });
+
+const api = new Proxy(rawApi, {
+  get(target, prop, receiver) {
+    const value = Reflect.get(target, prop, receiver);
+    if (typeof value !== 'function') return value;
+    return (...args: never[]) => withPosAuth(value.apply(target, args));
+  },
+}) as typeof rawApi;
 
 const posCartLineSchema = z.object({
   productId: z.string().uuid(),
@@ -434,6 +506,11 @@ export async function trackPosRecommendationEvent(body: {
   await api.postData('recommendations/events', body);
 }
 
+function getPosContext() {
+  const { terminalId, cashierId, shiftId } = getSession();
+  return { terminalId, cashierId, shiftId };
+}
+
 type CartLinePayload = {
   productId: string;
   bundleId?: string;
@@ -454,7 +531,7 @@ export async function createOrPatchCart(
 ) {
   const session = getSession();
   if ('action' in body) {
-    const data = await api.patch('pos/cart/items', { ...session, ...body });
+    const data = await api.patch('pos/cart/items', { ...getPosContext(), ...body });
     return posCartSchema.parse((data as { data: unknown }).data);
   }
 
@@ -466,8 +543,7 @@ export async function checkoutCart(
   cartId: string,
   options: { customerId?: string; couponCode?: string; discountPercent?: number; discountFixed?: number } = {},
 ) {
-  const session = getSession();
-  const data = await api.postData<unknown>('pos/checkout', { ...session, cartId, ...options });
+  const data = await api.postData<unknown>('pos/checkout', { ...getPosContext(), cartId, ...options });
   return checkoutSchema.parse(data);
 }
 
@@ -534,8 +610,7 @@ export async function completeSale(body: {
   discountPercent?: number;
   discountFixed?: number;
 }) {
-  const session = getSession();
-  const data = await api.postData<unknown>('pos/complete-sale', { ...session, ...body });
+  const data = await api.postData<unknown>('pos/complete-sale', { ...getPosContext(), ...body });
   return completeSaleSchema.parse(data);
 }
 

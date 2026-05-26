@@ -10,10 +10,6 @@ import {
   ModalFooter,
   ModalHeader,
   ModalTitle,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '@shared-ui';
 import {
   checkoutCart,
@@ -48,6 +44,18 @@ type PosCheckoutModalProps = {
   onOpenChange: (open: boolean) => void;
   online: boolean;
 };
+
+const ORDER_TYPE_OPTIONS = [
+  { value: 'pos', label: 'In-store' },
+  { value: 'pickup', label: 'Pickup' },
+  { value: 'delivery', label: 'Delivery' },
+] as const;
+
+const PAYMENT_METHOD_OPTIONS = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'card', label: 'Card' },
+  { value: 'external', label: 'External' },
+] as const;
 
 export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModalProps) {
   const router = useRouter();
@@ -409,36 +417,38 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
         <div className="space-y-4 py-2">
           <div>
             <p className="mb-2 text-sm font-medium">Order type</p>
-            <Tabs value={orderType} onValueChange={(v) => setOrderType(v as typeof orderType)}>
-              <TabsList className="grid h-12 grid-cols-3">
-                <TabsTrigger value="pos" className="text-sm">
-                  In-store
-                </TabsTrigger>
-                <TabsTrigger value="pickup" className="text-sm">
-                  Pickup
-                </TabsTrigger>
-                <TabsTrigger value="delivery" className="text-sm">
-                  Delivery
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="pos" />
-              <TabsContent value="pickup" />
-              <TabsContent value="delivery" />
-            </Tabs>
+            <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-1">
+              {ORDER_TYPE_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={orderType === option.value ? 'default' : 'ghost'}
+                  className="h-10"
+                  aria-pressed={orderType === option.value}
+                  onClick={() => setOrderType(option.value)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <div>
             <p className="mb-2 text-sm font-medium">Payment</p>
-            <Tabs
-              value={paymentMethod}
-              onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)}
-            >
-              <TabsList className="grid h-12 grid-cols-3">
-                <TabsTrigger value="cash">Cash</TabsTrigger>
-                <TabsTrigger value="card">Card</TabsTrigger>
-                <TabsTrigger value="external">External</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-1">
+              {PAYMENT_METHOD_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={paymentMethod === option.value ? 'default' : 'ghost'}
+                  className="h-10"
+                  aria-pressed={paymentMethod === option.value}
+                  onClick={() => setPaymentMethod(option.value)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <Input

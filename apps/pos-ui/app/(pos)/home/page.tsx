@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PosRegister } from '@/components/pos-register';
 import { loadCatalogCache, saveCatalogCache } from '@/lib/catalog-cache';
-import { listPosCatalog, type PosCatalogCategory, type PosCatalogItem } from '@/lib/api';
+import { hasPosAuthSession, listPosCatalog, type PosCatalogCategory, type PosCatalogItem } from '@/lib/api';
 import { getSession } from '@/lib/session';
 
 export default function HomePage() {
@@ -15,13 +15,16 @@ export default function HomePage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const accessToken = window.localStorage.getItem('ordella.accessToken');
     const tenantId = window.localStorage.getItem('ordella.tenantId') ?? process.env.NEXT_PUBLIC_TENANT_ID;
-    if (!accessToken || !tenantId) {
+    if (!tenantId) {
       router.replace('/login');
       return;
     }
     window.localStorage.setItem('ordella.tenantId', tenantId);
+    if (!hasPosAuthSession()) {
+      router.replace('/login');
+      return;
+    }
 
     const cached = loadCatalogCache();
     if (cached) {

@@ -23,10 +23,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
     setLoading(true);
 
     try {
+      const requestedTenantId = tenantId.trim();
       const res = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, tenantId }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-tenant-id': requestedTenantId,
+        },
+        body: JSON.stringify({ email, password, tenantId: requestedTenantId }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -36,7 +40,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
 
       const accessToken = (body as { accessToken?: string }).accessToken;
       if (accessToken) browserTokenStorage.setAccessToken(accessToken);
-      browserTokenStorage.setTenantId(tenantId);
+      browserTokenStorage.setTenantId(requestedTenantId);
       router.push(redirectTo);
       router.refresh();
     } catch {

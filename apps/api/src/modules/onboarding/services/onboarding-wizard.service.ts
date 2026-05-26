@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AuthenticatedUser, TenantContext } from '../../../common/interfaces';
 import {
+  ONBOARDING_WIZARD_STEP_ORDER,
   OnboardingStep,
   resolveOnboardingStepOrder,
 } from '../enums/onboarding-step.enum';
@@ -96,10 +97,22 @@ export class OnboardingWizardService {
 
   private async requireOnboarding(tenantId: string): Promise<TenantOnboardingEntity> {
     const record = await this.repository.findOnboarding(tenantId);
-    if (!record) {
+    if (record) {
+      return record;
+    }
+
+    const tenant = await this.repository.findTenantById(tenantId);
+    if (!tenant) {
       throwOnboardingNotFound(tenantId);
     }
-    return record;
+
+    return this.repository.saveOnboarding({
+      tenantId,
+      currentStep: OnboardingStep.COMPLETED,
+      completedSteps: ONBOARDING_WIZARD_STEP_ORDER,
+      isComplete: true,
+      completedAt: new Date(),
+    });
   }
 
   private assertStepOrder(

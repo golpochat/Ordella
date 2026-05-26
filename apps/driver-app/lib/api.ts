@@ -1,16 +1,30 @@
-import { createApiClient } from '@shared-utils';
+import { ApiError, createApiClient } from '@shared-utils';
 import { z } from 'zod';
 import { getApiBaseUrl } from './config';
-import { getSession } from './session';
+import { clearSession, getDriverAccessToken, getSession } from './session';
 import type { DeliveryTaskStatus } from './delivery-status';
 
 function createDriverApiClient() {
   const session = getSession();
   return createApiClient({
     baseUrl: getApiBaseUrl(),
-    getAccessToken: () => session.accessToken || null,
+    getAccessToken: () => getDriverAccessToken(session),
     getTenantId: () => session.tenantId || null,
   });
+}
+
+async function withDriverSession<T>(request: Promise<T>): Promise<T> {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      clearSession();
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
+    }
+    throw error;
+  }
 }
 
 const locationSchema = z.object({
@@ -120,9 +134,11 @@ export async function fetchDeliveryTasks(status?: DeliveryTaskStatus): Promise<D
     filterParts.push(`status:${status}`);
   }
 
-  const response = await api.get<{ success: boolean; data: unknown[] }>('deliveries', {
-    params: { filter: filterParts.join(',') },
-  });
+  const response = await withDriverSession(
+    api.get<{ success: boolean; data: unknown[] }>('deliveries', {
+      params: { filter: filterParts.join(',') },
+    }),
+  );
 
   const tasks = z.array(deliveryTaskSchema).parse(response.data);
   return tasks.filter(
@@ -133,7 +149,9 @@ export async function fetchDeliveryTasks(status?: DeliveryTaskStatus): Promise<D
 export async function fetchDeliveryTask(taskId: string): Promise<DeliveryTaskDetails> {
   const api = createDriverApiClient();
   const session = getSession();
-  const response = await api.get<{ success: boolean; data: unknown }>(`deliveries/${taskId}`);
+  const response = await withDriverSession(
+    api.get<{ success: boolean; data: unknown }>(`deliveries/${taskId}`),
+  );
   const task = deliveryTaskSchema.parse(response.data);
 
   if (!belongsToTenant(task, session.tenantId)) {
@@ -152,9 +170,8 @@ export async function updateDeliveryTask(
 ): Promise<DeliveryTask> {
   const api = createDriverApiClient();
   const session = getSession();
-  const response = await api.patch<{ success: boolean; data: unknown }>(
-    `deliveries/${taskId}`,
-    body,
+  const response = await withDriverSession(
+    api.patch<{ success: boolean; data: unknown }>(`deliveries/${taskId}`, body),
   );
   const task = deliveryTaskSchema.parse(response.data);
 
@@ -170,7 +187,9 @@ export async function updateDeliveryTask(
 
 export async function fetchDriverProfile(driverId: string): Promise<DriverProfile> {
   const api = createDriverApiClient();
-  const response = await api.get<{ success: boolean; data: unknown }>(`drivers/${driverId}`);
+  const response = await withDriverSession(
+    api.get<{ success: boolean; data: unknown }>(`drivers/${driverId}`),
+  );
   return driverProfileSchema.parse(response.data);
 }
 
@@ -179,9 +198,8 @@ export async function updateDriverProfile(
   body: { status?: string },
 ): Promise<DriverProfile> {
   const api = createDriverApiClient();
-  const response = await api.patch<{ success: boolean; data: unknown }>(
-    `drivers/${driverId}`,
-    body,
+  const response = await withDriverSession(
+    api.patch<{ success: boolean; data: unknown }>(`drivers/${driverId}`, body),
   );
   return driverProfileSchema.parse(response.data);
 }

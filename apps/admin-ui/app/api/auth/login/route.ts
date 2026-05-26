@@ -8,12 +8,13 @@ export async function POST(request: Request) {
     password: string;
     tenantId: string;
   };
+  const tenantId = body.tenantId.trim();
 
   const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Tenant-Id': body.tenantId,
+      'x-tenant-id': tenantId,
     },
     body: JSON.stringify({ email: body.email, password: body.password }),
   });
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
     secure,
     path: '/',
   });
-  res.cookies.set(AUTH_COOKIE_TENANT, body.tenantId, {
+  res.cookies.set(AUTH_COOKIE_TENANT, tenantId, {
     httpOnly: true,
     sameSite: 'lax',
     secure,

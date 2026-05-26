@@ -4,14 +4,14 @@ import type { DomainResolveResult, TenantTheme } from './types';
 
 export async function fetchThemeByTenantId(
   api: ApiClient,
-  tenantId: string,
+  _tenantId: string,
 ): Promise<TenantTheme> {
   const data = await api.getData<{
     tenantId: string;
     logoUrl: string | null;
     iconUrl?: string | null;
     theme: Record<string, unknown>;
-  }>(`themes/current`, { params: { tenantId }, skipTenant: true });
+  }>('themes/current');
 
   return getTheme(data.tenantId, data);
 }

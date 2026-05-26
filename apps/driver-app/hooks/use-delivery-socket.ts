@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { deliveryTaskSchema } from '@/lib/api';
 import { getApiBaseUrl } from '@/lib/config';
-import { getSession } from '@/lib/session';
+import { getDriverAccessToken, getSession } from '@/lib/session';
 import { useTasksStore } from '@/stores/tasks-store';
 
 type TaskEventPayload = {
@@ -41,6 +41,7 @@ export function useDeliverySocket() {
   useEffect(() => {
     const session = getSession();
     if (!session.tenantId || !session.driverId) return;
+    const accessToken = getDriverAccessToken(session);
 
     const baseUrl = getApiBaseUrl().replace('/api/v1', '');
     const socket: Socket = io(`${baseUrl}/deliveries`, {
@@ -50,7 +51,7 @@ export function useDeliverySocket() {
         driverId: session.driverId,
       },
       extraHeaders: { 'X-Tenant-Id': session.tenantId },
-      auth: session.accessToken ? { token: session.accessToken } : undefined,
+      auth: accessToken ? { token: accessToken } : undefined,
     });
 
     socket.emit('deliveries.subscribe', {

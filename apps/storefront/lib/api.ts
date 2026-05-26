@@ -1,13 +1,13 @@
 import { createApiClient, createBrowserTokenStorage } from '@shared-utils';
 import { z } from 'zod';
-import { getApiBaseUrl, getLocationId, getTenantId } from './config';
+import { getApiBaseUrl, getConfiguredValue, getLocationId, getTenantId } from './config';
 
 const tokenStorage = createBrowserTokenStorage();
 
 const api = createApiClient({
   baseUrl: getApiBaseUrl(),
   getAccessToken: () => tokenStorage.getAccessToken(),
-  getTenantId: () => tokenStorage.getTenantId() ?? getTenantId(),
+  getTenantId: () => getConfiguredValue(tokenStorage.getTenantId(), getTenantId()),
 });
 
 const modifierOptionSchema = z.object({
@@ -254,14 +254,14 @@ const publicBundleSchema = z.object({
 export async function fetchCatalog() {
   const locationId = getLocationId();
   const [data, bundlesData] = await Promise.all([
-    api.getData<unknown>('catalog', { params: { locationId } }),
+    api.getData<unknown>('public/menu', { params: { locationId } }),
     api.getData<unknown[]>('public/bundles/list', { params: { locationId } }).catch(() => []),
   ]);
-  const bundle = catalogBundleSchema.parse(data);
-  const products = bundle.items.map(mapCatalogItemToProduct);
+  const menu = onlineMenuSchema.parse(data);
+  const products = menu.products.map(mapCatalogItemToProduct);
   const bundles = z.array(publicBundleSchema).parse(bundlesData);
   return {
-    categories: bundle.categories,
+    categories: menu.categories,
     products: [
       ...products,
       ...bundles.map((catalogBundle) => mapBundleToProduct(catalogBundle, products)),
@@ -346,13 +346,7 @@ function mapBundleToProduct(
 }
 
 export async function fetchPublicMenu() {
-  const locationId = getLocationId();
-  try {
-    return await fetchCatalog();
-  } catch {
-    const data = await api.getData<unknown>('public/menu', { params: { locationId } });
-    return onlineMenuSchema.parse(data);
-  }
+  return fetchCatalog();
 }
 
 function recommendationParams(options?: { locationId?: string; customerId?: string; itemIds?: string[]; limit?: number }) {
@@ -650,7 +644,26 @@ const customerAccountSchema = z.object({
 export type StorefrontCustomerAccount = z.infer<typeof customerAccountSchema>;
 export type StorefrontCustomerAddress = z.infer<typeof customerAddressSchema>;
 
+export function hasCustomerSession(): boolean {
+  const token = tokenStorage.getAccessToken()?.trim();
+  if (!token) return false;
+
+  try {
+    const [, payload] = token.split('.');
+    if (!payload || typeof window === 'undefined') return false;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    const decoded = JSON.parse(window.atob(padded)) as { type?: string };
+    return decoded.type === 'customer';
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchCustomerAccount() {
+  if (!hasCustomerSession()) {
+    return null;
+  }
   const data = await api.getData<unknown>('public/customer/me');
   return customerAccountSchema.parse(data);
 }

@@ -1,19 +1,27 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@shared-ui';
-import { browserTokenStorage } from '@/lib/api/browser';
-import { parseJwtPayload } from '@shared-utils';
+import {
+  ADMIN_SESSION_CHANGED_EVENT,
+  clearBrowserAuthSession,
+  getAdminUserLabel,
+} from '@/lib/api/browser';
 
 export function UserMenu() {
   const router = useRouter();
-  const token = browserTokenStorage.getAccessToken();
-  const payload = token ? parseJwtPayload<{ email?: string; sub?: string }>(token) : null;
-  const label = payload?.email ?? payload?.sub ?? 'Admin';
+  const [label, setLabel] = useState('Admin');
+
+  useEffect(() => {
+    const syncLabel = () => setLabel(getAdminUserLabel());
+    syncLabel();
+    window.addEventListener(ADMIN_SESSION_CHANGED_EVENT, syncLabel);
+    return () => window.removeEventListener(ADMIN_SESSION_CHANGED_EVENT, syncLabel);
+  }, []);
 
   async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    browserTokenStorage.clear();
+    await clearBrowserAuthSession();
     router.push('/login');
     router.refresh();
   }

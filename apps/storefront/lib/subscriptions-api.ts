@@ -1,13 +1,13 @@
 import { createApiClient, createBrowserTokenStorage } from '@shared-utils';
 import { z } from 'zod';
-import { getApiBaseUrl, getLocationId, getTenantId } from './config';
+import { getApiBaseUrl, getConfiguredValue, getLocationId, getTenantId } from './config';
 
 const tokenStorage = createBrowserTokenStorage();
 
 const api = createApiClient({
   baseUrl: getApiBaseUrl(),
   getAccessToken: () => tokenStorage.getAccessToken(),
-  getTenantId: () => tokenStorage.getTenantId() ?? getTenantId(),
+  getTenantId: () => getConfiguredValue(tokenStorage.getTenantId(), getTenantId()),
 });
 
 const subscriptionCheckoutSchema = z.object({

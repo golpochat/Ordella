@@ -111,7 +111,16 @@ const CATALOG = [
   'kds:read',
   'kds:update',
   'deliveries:read',
+  'deliveries:create',
   'deliveries:update',
+  'deliveries:assign',
+  'delivery-assignments:read',
+  'delivery-assignments:create',
+  'delivery-assignments:update',
+  'drivers:read',
+  'drivers:create',
+  'drivers:update',
+  'drivers:delete',
   'reports:read',
   ...Object.values(OnboardingPermissionKeys),
   'admin:access',
@@ -229,7 +238,12 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
     'orders:read',
     'orders:create',
   ],
-  [SystemRoleNames.DRIVER]: ['deliveries:read', 'deliveries:update'],
+  [SystemRoleNames.DRIVER]: [
+    'deliveries:read',
+    'deliveries:update',
+    'drivers:read',
+    'drivers:update',
+  ],
   [SystemRoleNames.FULFILLMENT]: [
     'fulfillment.read',
     'fulfillment.write',
@@ -257,10 +271,7 @@ export const ROLE_PERMISSION_MAP: Record<string, string[]> = {
 };
 
 export function resolveRolePermissions(roleName: string, assigned: string[]): string[] {
-  if (assigned.length > 0) {
-    return assigned;
-  }
-  return ROLE_PERMISSION_MAP[roleName] ?? [];
+  return [...new Set([...(ROLE_PERMISSION_MAP[roleName] ?? []), ...assigned])];
 }
 
 export function permissionAllowed(userPermissions: string[], required: string): boolean {

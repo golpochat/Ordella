@@ -1,4 +1,4 @@
-import { createApiClient } from '@shared-utils';
+import { ApiError, createApiClient } from '@shared-utils';
 import { z } from 'zod';
 import { getApiBaseUrl, getTenantId } from './config';
 import {
@@ -9,14 +9,29 @@ import {
   type CustomerAddress,
   type UpdateAddressInput,
 } from './schemas/address';
-import { getCustomerId, tokenStorage } from './session';
+import { clearCustomerSession, getCustomerAccessToken, getCustomerId, tokenStorage } from './session';
 
 function createCustomerApiClient() {
   return createApiClient({
     baseUrl: getApiBaseUrl(),
-    getAccessToken: () => tokenStorage.getAccessToken(),
+    getAccessToken: () => getCustomerAccessToken(),
     getTenantId: () => tokenStorage.getTenantId() ?? getTenantId() ?? null,
   });
+}
+
+async function withCustomerSession<T>(request: Promise<T>): Promise<T> {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401 && /customer session/i.test(error.message)) {
+      const tenantId = tokenStorage.getTenantId();
+      clearCustomerSession();
+      if (tenantId) {
+        tokenStorage.setTenantId(tenantId);
+      }
+    }
+    throw error;
+  }
 }
 
 const loginResponseSchema = z.object({
@@ -184,16 +199,18 @@ export async function requestPasswordReset(email: string) {
 
 export async function fetchCustomerOrders(filter?: 'active' | 'past') {
   const api = createCustomerApiClient();
-  const data = await api.getData<unknown[]>('public/customer/orders', {
-    params: filter ? { filter } : undefined,
-  });
+  const data = await withCustomerSession(
+    api.getData<unknown[]>('public/customer/orders', {
+      params: filter ? { filter } : undefined,
+    }),
+  );
   return z.array(customerOrderSchema).parse(data);
 }
 
 export async function fetchCustomerOrder(orderId: string) {
   const api = createCustomerApiClient();
   const customerId = getCustomerId();
-  const data = await api.getData<unknown>(`public/customer/orders/${orderId}`);
+  const data = await withCustomerSession(api.getData<unknown>(`public/customer/orders/${orderId}`));
   const order = customerOrderDetailSchema.parse(data);
   if (customerId && (data as { customerId?: string }).customerId) {
     const ownerId = (data as { customerId: string }).customerId;
@@ -212,13 +229,13 @@ export async function fetchOrderStatus(orderId: string) {
 
 export async function fetchCustomerProfile() {
   const api = createCustomerApiClient();
-  const data = await api.getData<unknown>('public/customer/profile');
+  const data = await withCustomerSession(api.getData<unknown>('public/customer/profile'));
   return customerProfileSchema.parse(data);
 }
 
 export async function fetchCustomerSubscriptions() {
   const api = createCustomerApiClient();
-  const data = await api.getData<unknown[]>('public/customer/subscriptions');
+  const data = await withCustomerSession(api.getData<unknown[]>('public/customer/subscriptions'));
   return z.array(customerSubscriptionSchema).parse(data);
 }
 
@@ -227,22 +244,28 @@ export async function updateCustomerSubscription(
   body: { schedule?: string; nextRunAt?: string; status?: string; items?: unknown[] },
 ) {
   const api = createCustomerApiClient();
-  const data = await api.patch<{ success: boolean; data: unknown }>(
-    `public/customer/subscriptions/${subscriptionId}`,
-    body,
+  const data = await withCustomerSession(
+    api.patch<{ success: boolean; data: unknown }>(
+      `public/customer/subscriptions/${subscriptionId}`,
+      body,
+    ),
   );
   return customerSubscriptionSchema.parse((data as { data: unknown }).data);
 }
 
 export async function pauseCustomerSubscription(subscriptionId: string) {
   const api = createCustomerApiClient();
-  const data = await api.postData<unknown>(`public/customer/subscriptions/${subscriptionId}/pause`);
+  const data = await withCustomerSession(
+    api.postData<unknown>(`public/customer/subscriptions/${subscriptionId}/pause`),
+  );
   return customerSubscriptionSchema.parse(data);
 }
 
 export async function cancelCustomerSubscription(subscriptionId: string) {
   const api = createCustomerApiClient();
-  const data = await api.postData<unknown>(`public/customer/subscriptions/${subscriptionId}/cancel`);
+  const data = await withCustomerSession(
+    api.postData<unknown>(`public/customer/subscriptions/${subscriptionId}/cancel`),
+  );
   return customerSubscriptionSchema.parse(data);
 }
 
@@ -255,20 +278,22 @@ export async function updateCustomerProfile(body: {
   marketingSmsOptIn?: boolean;
 }) {
   const api = createCustomerApiClient();
-  const data = await api.patch<{ success: boolean; data: unknown }>('public/customer/profile', body);
+  const data = await withCustomerSession(
+    api.patch<{ success: boolean; data: unknown }>('public/customer/profile', body),
+  );
   return customerProfileSchema.parse((data as { data: unknown }).data);
 }
 
 export async function fetchAddresses(): Promise<CustomerAddress[]> {
   const api = createCustomerApiClient();
-  const data = await api.getData<unknown[]>('public/customer/addresses');
+  const data = await withCustomerSession(api.getData<unknown[]>('public/customer/addresses'));
   return z.array(customerAddressSchema).parse(data);
 }
 
 export async function createAddress(input: CreateAddressInput): Promise<CustomerAddress> {
   const body = createAddressSchema.parse(input);
   const api = createCustomerApiClient();
-  const data = await api.postData<unknown>('public/customer/addresses', body);
+  const data = await withCustomerSession(api.postData<unknown>('public/customer/addresses', body));
   return customerAddressSchema.parse(data);
 }
 
@@ -278,14 +303,13 @@ export async function updateAddress(
 ): Promise<CustomerAddress> {
   const body = updateAddressSchema.parse(input);
   const api = createCustomerApiClient();
-  const data = await api.patch<{ success: boolean; data: unknown }>(
-    `public/customer/addresses/${addressId}`,
-    body,
+  const data = await withCustomerSession(
+    api.patch<{ success: boolean; data: unknown }>(`public/customer/addresses/${addressId}`, body),
   );
   return customerAddressSchema.parse((data as { data: unknown }).data);
 }
 
 export async function deleteAddress(addressId: string): Promise<void> {
   const api = createCustomerApiClient();
-  await api.delete(`public/customer/addresses/${addressId}`);
+  await withCustomerSession(api.delete(`public/customer/addresses/${addressId}`));
 }

@@ -4,17 +4,17 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
 import { createBrowserTokenStorage } from '@shared-utils';
-import { getApiBaseUrl } from '@/lib/config';
+import { getApiBaseUrl, getDefaultDriverId, getTenantId } from '@/lib/config';
 import { setSession, type DriverSession } from '@/lib/session';
 
 const storage = createBrowserTokenStorage();
 
 export function LoginForm() {
   const router = useRouter();
-  const [tenantId, setTenantId] = useState('');
+  const [tenantId, setTenantId] = useState(getTenantId());
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [driverId, setDriverId] = useState('');
+  const [driverId, setDriverId] = useState(getDefaultDriverId());
   const [driverName, setDriverName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,11 +25,13 @@ export function LoginForm() {
     setLoading(true);
 
     try {
+      const requestedTenantId = tenantId.trim();
+      const requestedDriverId = driverId.trim();
       const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Tenant-Id': tenantId,
+          'X-Tenant-Id': requestedTenantId,
         },
         body: JSON.stringify({ email, password }),
       });
@@ -43,11 +45,11 @@ export function LoginForm() {
 
       const data = (payload as { data: { accessToken: string; refreshToken?: string } }).data;
       storage.setAccessToken(data.accessToken);
-      storage.setTenantId(tenantId);
+      storage.setTenantId(requestedTenantId);
 
       const session: DriverSession = {
-        tenantId,
-        driverId,
+        tenantId: requestedTenantId,
+        driverId: requestedDriverId,
         driverName: driverName || 'Driver',
         accessToken: data.accessToken,
         status: 'available',

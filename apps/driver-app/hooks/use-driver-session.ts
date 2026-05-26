@@ -1,16 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getSession, hasValidSession, type DriverSession } from '@/lib/session';
+import {
+  DRIVER_SESSION_CHANGED_EVENT,
+  getSession,
+  hasValidSession,
+  type DriverSession,
+} from '@/lib/session';
 
 export function useDriverSession() {
   const [session, setSessionState] = useState<DriverSession | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const current = getSession();
-    setSessionState(current);
-    setReady(true);
+    const syncSession = () => {
+      const current = getSession();
+      setSessionState(current);
+      setReady(true);
+    };
+
+    syncSession();
+    window.addEventListener(DRIVER_SESSION_CHANGED_EVENT, syncSession);
+    return () => window.removeEventListener(DRIVER_SESSION_CHANGED_EVENT, syncSession);
   }, []);
 
   const refresh = () => {

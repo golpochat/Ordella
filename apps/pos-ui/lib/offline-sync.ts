@@ -67,6 +67,15 @@ function shouldSendEvent(event: OfflineEvent): boolean {
   return event.type === 'sync_failure' || event.type === 'payment_failure';
 }
 
+export async function hasPendingOfflineWork(): Promise<boolean> {
+  const [orders, adjustments] = await Promise.all([
+    listPendingOfflineOrders(),
+    listInventoryAdjustments(),
+  ]);
+
+  return orders.length > 0 || adjustments.length > 0;
+}
+
 export async function syncPendingOfflineWork(settings?: OfflineModeSettings): Promise<OfflineSyncSummary> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
     return { synced: 0, failed: 0, requiresReview: 0 };

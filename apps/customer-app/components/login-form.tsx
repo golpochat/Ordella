@@ -17,7 +17,7 @@ export function LoginForm() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [tenantId, setTenantId] = useState(getTenantId());
+  const [tenantId, setTenantId] = useState(tokenStorage.getTenantId() ?? getTenantId());
   const [resetSent, setResetSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

@@ -71,6 +71,9 @@ export function CheckoutForm() {
   useEffect(() => {
     void fetchCustomerAccount()
       .then((account) => {
+        if (!account) {
+          return;
+        }
         setAccountCustomerId(account.id);
         setName(account.name);
         setEmail(account.email);

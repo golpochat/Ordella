@@ -225,7 +225,7 @@ export class AnalyticsQueryRepository {
       .andWhere('o.status NOT IN (:...excluded)', { excluded: EXCLUDED_STATUSES })
       .groupBy('item.product_id')
       .addGroupBy('p.name')
-      .orderBy('quantitySold', 'DESC')
+      .orderBy('SUM(item.quantity)', 'DESC')
       .limit(limit);
 
     if (locationId) {

@@ -10,6 +10,40 @@ export type DriverSession = {
 
 const STORAGE_KEY = 'ordella.driver.session';
 const ACTIVE_TASK_KEY = 'ordella.driver.activeTaskId';
+export const DRIVER_SESSION_CHANGED_EVENT = 'ordella:driver-session-changed';
+
+type DriverJwtPayload = {
+  sub?: string;
+  exp?: number;
+  type?: string;
+};
+
+function decodeJwtPayload(token: string): DriverJwtPayload | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const [, payload] = token.split('.');
+    if (!payload) return null;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    return JSON.parse(window.atob(padded)) as DriverJwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function isValidAccessToken(token: string | null | undefined): token is string {
+  const trimmed = token?.trim();
+  if (!trimmed) return false;
+
+  const payload = decodeJwtPayload(trimmed);
+  if (!payload?.sub) return false;
+  if (payload.type === 'customer' || payload.type === 'refresh' || payload.type === 'sso_state') {
+    return false;
+  }
+  if (payload.exp && payload.exp * 1000 <= Date.now()) return false;
+  return true;
+}
 
 export function statusLabel(status: DriverStatus): string {
   const labels: Record<DriverStatus, string> = {
@@ -40,16 +74,24 @@ export function getSession(): DriverSession {
 export function setSession(session: DriverSession): void {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  window.dispatchEvent(new Event(DRIVER_SESSION_CHANGED_EVENT));
 }
 
 export function clearSession(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(STORAGE_KEY);
   window.localStorage.removeItem(ACTIVE_TASK_KEY);
+  window.localStorage.removeItem('ordella.accessToken');
+  window.localStorage.removeItem('ordella.tenantId');
+  window.dispatchEvent(new Event(DRIVER_SESSION_CHANGED_EVENT));
 }
 
 export function hasValidSession(session: DriverSession): boolean {
-  return Boolean(session.driverId && session.tenantId && session.accessToken);
+  return Boolean(session.driverId && session.tenantId && getDriverAccessToken(session));
+}
+
+export function getDriverAccessToken(session: DriverSession = getSession()): string | null {
+  return isValidAccessToken(session.accessToken) ? session.accessToken.trim() : null;
 }
 
 export function getActiveTaskId(): string | null {

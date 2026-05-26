@@ -1,16 +1,30 @@
-import { createApiClient } from '@shared-utils';
+import { ApiError, createApiClient } from '@shared-utils';
 import { z } from 'zod';
 import { getApiBaseUrl } from './config';
-import { getSession } from './session';
+import { clearSession, getDriverAccessToken, getSession } from './session';
 import type { DeliveryTaskStatus } from './delivery-status';
 
 function createDriverApiClient() {
   const session = getSession();
   return createApiClient({
     baseUrl: getApiBaseUrl(),
-    getAccessToken: () => session.accessToken || null,
+    getAccessToken: () => getDriverAccessToken(session),
     getTenantId: () => session.tenantId || null,
   });
+}
+
+async function withDriverSession<T>(request: Promise<T>): Promise<T> {
+  try {
+    return await request;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      clearSession();
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
+    }
+    throw error;
+  }
 }
 
 const orderLineSchema = z.object({
@@ -52,66 +66,80 @@ function parseOrders(data: unknown): DriverOrder[] {
 export async function fetchAssignedOrders(): Promise<DriverOrder[]> {
   const api = createDriverApiClient();
   const { driverId } = getSession();
-  const response = await api.get<{ success: boolean; data: unknown }>('driver/orders/assigned', {
-    params: { driverId },
-  });
+  const response = await withDriverSession(
+    api.get<{ success: boolean; data: unknown }>('driver/orders/assigned', {
+      params: { driverId },
+    }),
+  );
   return parseOrders(response.data);
 }
 
 export async function fetchAvailableOrders(): Promise<DriverOrder[]> {
   const api = createDriverApiClient();
   const { driverId } = getSession();
-  const response = await api.get<{ success: boolean; data: unknown }>('driver/orders/available', {
-    params: { driverId },
-  });
+  const response = await withDriverSession(
+    api.get<{ success: boolean; data: unknown }>('driver/orders/available', {
+      params: { driverId },
+    }),
+  );
   return parseOrders(response.data);
 }
 
 export async function fetchCompletedOrders(): Promise<DriverOrder[]> {
   const api = createDriverApiClient();
   const { driverId } = getSession();
-  const response = await api.get<{ success: boolean; data: unknown }>('driver/orders/completed', {
-    params: { driverId },
-  });
+  const response = await withDriverSession(
+    api.get<{ success: boolean; data: unknown }>('driver/orders/completed', {
+      params: { driverId },
+    }),
+  );
   return parseOrders(response.data);
 }
 
 export async function acceptDriverOrder(orderId: string): Promise<DriverOrder> {
   const api = createDriverApiClient();
   const { driverId } = getSession();
-  const response = await api.post<{ success: boolean; data: unknown }>('driver/orders/accept', {
-    orderId,
-    driverId,
-  });
+  const response = await withDriverSession(
+    api.post<{ success: boolean; data: unknown }>('driver/orders/accept', {
+      orderId,
+      driverId,
+    }),
+  );
   return driverOrderSchema.parse(response.data);
 }
 
 export async function startDriverOrder(orderId: string): Promise<DriverOrder> {
   const api = createDriverApiClient();
   const { driverId } = getSession();
-  const response = await api.post<{ success: boolean; data: unknown }>('driver/orders/start', {
-    orderId,
-    driverId,
-  });
+  const response = await withDriverSession(
+    api.post<{ success: boolean; data: unknown }>('driver/orders/start', {
+      orderId,
+      driverId,
+    }),
+  );
   return driverOrderSchema.parse(response.data);
 }
 
 export async function completeDriverOrder(orderId: string): Promise<DriverOrder> {
   const api = createDriverApiClient();
   const { driverId } = getSession();
-  const response = await api.post<{ success: boolean; data: unknown }>('driver/orders/complete', {
-    orderId,
-    driverId,
-  });
+  const response = await withDriverSession(
+    api.post<{ success: boolean; data: unknown }>('driver/orders/complete', {
+      orderId,
+      driverId,
+    }),
+  );
   return driverOrderSchema.parse(response.data);
 }
 
 export async function pickupCompleteDriverOrder(orderId: string): Promise<DriverOrder> {
   const api = createDriverApiClient();
   const { driverId } = getSession();
-  const response = await api.post<{ success: boolean; data: unknown }>(
-    'driver/orders/pickup-complete',
-    { orderId, driverId },
+  const response = await withDriverSession(
+    api.post<{ success: boolean; data: unknown }>('driver/orders/pickup-complete', {
+      orderId,
+      driverId,
+    }),
   );
   return driverOrderSchema.parse(response.data);
 }

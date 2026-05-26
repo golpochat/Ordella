@@ -13,6 +13,7 @@ import {
   type OfflineModeSettings,
 } from '@/lib/offline-db';
 import {
+  hasPendingOfflineWork,
   recordConnectivityEvent,
   refreshOfflineBootstrap,
   syncPendingOfflineWork,
@@ -101,13 +102,19 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
 
   const syncOfflineQueue = useCallback(async () => {
     if (!navigator.onLine || syncingOffline) return;
-    setSyncingOffline(true);
+
     try {
       const settings = await loadOfflineSettings();
       setOfflineSettings(settings);
-      const summary = await syncPendingOfflineWork(settings);
       const count = await countPendingOfflineOrders();
       setPendingOrders(count);
+      if (!settings.enabled || !(await hasPendingOfflineWork())) {
+        return;
+      }
+
+      setSyncingOffline(true);
+      const summary = await syncPendingOfflineWork(settings);
+      setPendingOrders(await countPendingOfflineOrders());
       if (summary.synced > 0 || summary.requiresReview > 0 || summary.failed > 0) {
         setSyncMessage(
           `Synced ${summary.synced} offline order(s). ${summary.requiresReview} need review, ${summary.failed} failed.`,
