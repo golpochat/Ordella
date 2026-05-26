@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DEFAULT_ORDER_TAX_RATE } from '../constants/order-tax.constants';
 import { OrderType } from '../enums/order-type.enum';
 import { formatMoney } from '../domain/order-totals.util';
 import { OrderPricingContext } from '../types/order-pricing.context';
@@ -18,24 +17,20 @@ export interface CalculateDeliveryFeeInput {
   context: OrderPricingContext;
 }
 
-/**
- * Placeholder fee rules — replace with tenant/location configuration later.
- */
 @Injectable()
 export class OrderFeeCalculatorService {
   private readonly logger = new Logger(OrderFeeCalculatorService.name);
 
   calculateLineTax(lineSubtotal: number, _context: OrderPricingContext): string {
-    const tax = lineSubtotal * DEFAULT_ORDER_TAX_RATE;
-    return formatMoney(tax);
+    this.logger.debug(`[tax-preview] line tax deferred to TaxCalculationService subtotal=${lineSubtotal}`);
+    return formatMoney(0);
   }
 
   calculateTax(input: CalculateTaxInput): string {
     this.logger.debug(
       `[placeholder] calculateTax tenant=${input.context.tenant.tenantId} location=${input.context.locationId} taxable=${input.taxableSubtotal}`,
     );
-    const tax = input.taxableSubtotal * DEFAULT_ORDER_TAX_RATE;
-    return formatMoney(tax);
+    return formatMoney(0);
   }
 
   calculateServiceCharge(input: CalculateServiceChargeInput): string {

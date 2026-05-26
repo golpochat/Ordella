@@ -8,6 +8,7 @@ export const productSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
+  taxCategoryId: z.string().uuid().nullable().optional(),
   price: z.string(),
   status: productStatusSchema,
   sortOrder: z.number().int(),

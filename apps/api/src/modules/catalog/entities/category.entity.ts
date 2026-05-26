@@ -21,6 +21,9 @@ export class CategoryEntity extends BaseTenantScopedEntity {
   @Column({ name: 'global_category_id', type: 'uuid', nullable: true })
   globalCategoryId!: string | null;
 
+  @Column({ name: 'tax_category_id', type: 'uuid', nullable: true })
+  taxCategoryId!: string | null;
+
   @OneToMany(() => ProductEntity, (product) => product.category)
   products!: ProductEntity[];
 }

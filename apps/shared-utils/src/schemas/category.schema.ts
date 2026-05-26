@@ -8,6 +8,7 @@ export const categorySchema = z.object({
   sortOrder: z.number().int(),
   isActive: z.boolean().optional(),
   globalCategoryId: z.string().uuid().nullable().optional(),
+  taxCategoryId: z.string().uuid().nullable().optional(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().nullable().optional(),
 });

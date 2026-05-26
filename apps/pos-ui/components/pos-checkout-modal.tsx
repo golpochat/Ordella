@@ -59,7 +59,7 @@ const PAYMENT_METHOD_OPTIONS = [
 ] as const;
 
 export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModalProps) {
-  const { formatCurrency, formatDate } = useTenantSettings();
+  const { settings, formatCurrency, formatDate } = useTenantSettings();
   const router = useRouter();
   const cartId = useCartStore((s) => s.cartId);
   const lines = useCartStore((s) => s.lines);
@@ -236,7 +236,13 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
       subtotal,
       (discountPercent ? subtotal * (discountPercent / 100) : 0) + (discountFixed || 0),
     );
-    const estimate = calculatePosTotals({ subtotal, discountPercent, discountFixed });
+    const estimate = calculatePosTotals({
+      subtotal,
+      discountPercent,
+      discountFixed,
+      taxRate: Number(settings.defaultTaxRate) || 23,
+      priceMode: 'inclusive',
+    });
     const total = estimate.total;
     const localCustomerId =
       !selectedCustomer && (customerName || customerPhone || customerEmail) ? `local-${crypto.randomUUID()}` : undefined;

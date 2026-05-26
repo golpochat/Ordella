@@ -17,6 +17,7 @@ import {
   type Supplier,
 } from '@/lib/api/admin/procurement';
 import { getErrorMessage } from '@/lib/utils';
+import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 type PoLineForm = {
   itemId: string;
@@ -43,6 +44,7 @@ const emptyForm: PoForm = {
 
 export function PurchaseOrdersPanel() {
   const api = useMemo(() => createBrowserApiClient(), []);
+  const { formatCurrency } = useTenantSettings();
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
@@ -256,7 +258,7 @@ export function PurchaseOrdersPanel() {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3 text-sm">
-            <span>Total cost: £{total.toFixed(2)}</span>
+            <span>Estimated gross cost: {formatCurrency(total)}</span>
             <Button type="button" onClick={save} disabled={!form.supplierId || !form.locationId || form.items.length === 0}>
               Save purchase order
             </Button>
@@ -271,7 +273,9 @@ export function PurchaseOrdersPanel() {
               <th className="p-3 font-medium">Supplier</th>
               <th className="p-3 font-medium">Location</th>
               <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Total cost</th>
+              <th className="p-3 font-medium">Net cost</th>
+              <th className="p-3 font-medium">Tax</th>
+              <th className="p-3 font-medium">Gross cost</th>
               <th className="p-3 font-medium">Expected delivery</th>
               <th className="p-3 font-medium">Actions</th>
             </tr>
@@ -282,7 +286,9 @@ export function PurchaseOrdersPanel() {
                 <td className="p-3 font-medium">{order.supplier?.name ?? supplierById[order.supplierId]?.name ?? 'Supplier'}</td>
                 <td className="p-3">{order.location?.name ?? order.locationId}</td>
                 <td className="p-3"><StatusBadge status={order.status} /></td>
-                <td className="p-3">£{Number(order.totalCost).toFixed(2)}</td>
+                <td className="p-3">{formatCurrency(order.subtotalCost ?? order.totalCost)}</td>
+                <td className="p-3">{formatCurrency(order.taxTotal ?? '0.00')}</td>
+                <td className="p-3">{formatCurrency(order.totalCost)}</td>
                 <td className="p-3">{order.expectedDeliveryDate ?? 'Not set'}</td>
                 <td className="p-3">
                   <div className="flex flex-wrap gap-2">

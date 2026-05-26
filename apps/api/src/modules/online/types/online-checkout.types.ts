@@ -1,4 +1,5 @@
 import { PaymentOrderContext } from '../../payments/types/payment-order.context';
+import { TaxBreakdownLine } from '../../tax';
 import { OnlineCustomerDetails, OnlineDeliveryDetails } from './online-basket.types';
 
 export interface OnlineCheckoutSnapshot {
@@ -12,6 +13,7 @@ export interface OnlineCheckoutSnapshot {
     serviceChargeTotal: string;
     deliveryFee: string;
     grandTotal: string;
+    taxLines?: TaxBreakdownLine[];
   };
   appliedPromotions: Array<{ promotionId: string; code?: string | null; discountAmount: string }>;
   paymentContext: PaymentOrderContext;

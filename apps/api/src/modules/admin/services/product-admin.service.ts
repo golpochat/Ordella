@@ -78,6 +78,7 @@ export class ProductAdminService {
       tenantId,
       name: dto.name,
       sortOrder: dto.sortOrder ?? 0,
+      taxCategoryId: dto.taxCategoryId ?? null,
     });
     const saved = await this.catalogRepository.saveCategory(category);
     await this.searchIndex.indexCategory(saved);

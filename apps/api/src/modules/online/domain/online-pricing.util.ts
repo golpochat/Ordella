@@ -1,4 +1,3 @@
-import { DEFAULT_ORDER_TAX_RATE } from '../../orders/constants/order-tax.constants';
 import { OrderType } from '../../orders/enums/order-type.enum';
 import {
   calculateGrandTotalAmount,
@@ -15,12 +14,15 @@ export interface OnlineLinePricing {
   modifierTotal: string;
   lineSubtotal: string;
   categoryId: string | null;
+  taxCategoryId?: string | null;
 }
 
 export interface OnlineTotalsInput {
   lines: OnlineLinePricing[];
   orderType: OrderType;
   discountTotal?: string;
+  taxTotal?: string;
+  chargeableTaxTotal?: string;
 }
 
 export interface OnlineTotalsResult {
@@ -35,8 +37,8 @@ export interface OnlineTotalsResult {
 export function calculateOnlineTotals(input: OnlineTotalsInput): OnlineTotalsResult {
   const subtotal = formatMoney(sumMoney(input.lines.map((line) => line.lineSubtotal)));
   const discountTotal = input.discountTotal ?? '0.00';
-  const taxableSubtotal = Math.max(0, parseMoney(subtotal) - parseMoney(discountTotal));
-  const taxTotal = formatMoney(taxableSubtotal * DEFAULT_ORDER_TAX_RATE);
+  const taxTotal = input.taxTotal ?? '0.00';
+  const chargeableTaxTotal = input.chargeableTaxTotal ?? taxTotal;
   const serviceChargeTotal = formatMoney(0);
   const deliveryFee =
     input.orderType === OrderType.DELIVERY ? formatMoney(3.99) : formatMoney(0);
@@ -44,7 +46,7 @@ export function calculateOnlineTotals(input: OnlineTotalsInput): OnlineTotalsRes
     calculateGrandTotalAmount({
       subtotal: parseMoney(subtotal),
       discountTotal: parseMoney(discountTotal),
-      taxTotal: parseMoney(taxTotal),
+      taxTotal: parseMoney(chargeableTaxTotal),
       serviceChargeTotal: parseMoney(serviceChargeTotal),
       deliveryFee: parseMoney(deliveryFee),
     }),

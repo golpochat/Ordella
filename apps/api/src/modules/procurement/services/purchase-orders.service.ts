@@ -1,10 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
+import { ProductEntity } from '../../catalog/entities';
 import { InventoryService } from '../../inventory/services/inventory.service';
 import { NotificationChannelType } from '../../notifications/enums/notification-channel-type.enum';
 import { NotificationType } from '../../notifications/enums/notification-type.enum';
 import { NotificationsService } from '../../notifications/services';
+import { TaxCalculationService } from '../../tax';
+import { formatMoney, parseMoney } from '../../orders/domain/order-totals.util';
 import { ReceivePurchaseOrderDto, UpsertPurchaseOrderDto } from '../dto';
 import {
   PurchaseOrderEntity,
@@ -26,8 +29,11 @@ export class PurchaseOrdersService {
     private readonly suppliers: Repository<SupplierEntity>,
     @InjectRepository(SupplierItemEntity)
     private readonly supplierItems: Repository<SupplierItemEntity>,
+    @InjectRepository(ProductEntity)
+    private readonly products: Repository<ProductEntity>,
     private readonly inventoryService: InventoryService,
     private readonly notifications: NotificationsService,
+    private readonly taxCalculation: TaxCalculationService,
   ) {}
 
   list(tenantId: string) {
@@ -50,20 +56,22 @@ export class PurchaseOrdersService {
 
   async create(tenantId: string, dto: UpsertPurchaseOrderDto) {
     await this.assertSupplier(tenantId, dto.supplierId);
-    const totalCost = this.total(dto.items);
+    const totals = await this.quoteTax(tenantId, dto.locationId, dto.items);
     const order = await this.purchaseOrders.save(this.purchaseOrders.create({
       tenantId,
       supplierId: dto.supplierId,
       locationId: dto.locationId,
       status: dto.status ?? PurchaseOrderStatus.DRAFT,
       supplierStatus: dto.supplierStatus ?? SupplierPurchaseOrderStatus.PENDING,
-      totalCost,
+      subtotalCost: totals.subtotalCost,
+      taxTotal: totals.taxTotal,
+      totalCost: totals.totalCost,
       expectedDeliveryDate: dto.expectedDeliveryDate ?? null,
       supplierExpectedDeliveryDate: dto.supplierExpectedDeliveryDate ?? null,
       supplierNotes: dto.supplierNotes ?? null,
       sentAt: dto.status === PurchaseOrderStatus.SENT ? new Date() : null,
     }));
-    await this.replaceItems(order.id, dto.items);
+    await this.replaceItems(order.id, dto.items, totals.lineTaxByProductId);
     const saved = await this.get(tenantId, order.id);
     await this.notifySupplier(tenantId, saved, saved.status === PurchaseOrderStatus.SENT ? 'sent' : 'created');
     return saved;
@@ -79,17 +87,20 @@ export class PurchaseOrdersService {
       throw new BadRequestException('Supplier-confirmed purchase orders are locked');
     }
     await this.assertSupplier(tenantId, dto.supplierId);
+    const totals = await this.quoteTax(tenantId, dto.locationId, dto.items);
     order.supplierId = dto.supplierId;
     order.locationId = dto.locationId;
     order.status = dto.status ?? order.status;
     order.supplierStatus = dto.supplierStatus ?? order.supplierStatus;
-    order.totalCost = this.total(dto.items);
+    order.subtotalCost = totals.subtotalCost;
+    order.taxTotal = totals.taxTotal;
+    order.totalCost = totals.totalCost;
     order.expectedDeliveryDate = dto.expectedDeliveryDate ?? null;
     order.supplierExpectedDeliveryDate = dto.supplierExpectedDeliveryDate ?? order.supplierExpectedDeliveryDate;
     order.supplierNotes = dto.supplierNotes ?? order.supplierNotes;
     order.sentAt = order.status === PurchaseOrderStatus.SENT && !order.sentAt ? new Date() : order.sentAt;
     await this.purchaseOrders.save(order);
-    await this.replaceItems(order.id, dto.items);
+    await this.replaceItems(order.id, dto.items, totals.lineTaxByProductId);
     const saved = await this.get(tenantId, order.id);
     if (saved.status === PurchaseOrderStatus.SENT) await this.notifySupplier(tenantId, saved, 'sent');
     return saved;
@@ -191,13 +202,18 @@ export class PurchaseOrdersService {
     if (!supplier) throw new BadRequestException('Supplier is not active or does not exist');
   }
 
-  private total(items: UpsertPurchaseOrderDto['items']) {
-    return items
-      .reduce((sum, item) => sum + item.quantityOrdered * item.costPrice, 0)
-      .toFixed(2);
-  }
-
-  private async replaceItems(orderId: string, items: UpsertPurchaseOrderDto['items']) {
+  private async replaceItems(
+    orderId: string,
+    items: UpsertPurchaseOrderDto['items'],
+    lineTaxByProductId: Map<string, {
+      taxCategoryId: string | null;
+      taxRuleId: string | null;
+      priceMode: 'inclusive' | 'exclusive';
+      taxRate: string;
+      taxableAmount: string;
+      taxAmount: string;
+    }>,
+  ) {
     await this.purchaseOrderItems.delete({ purchaseOrderId: orderId });
     await this.purchaseOrderItems.save(items.map((item) => this.purchaseOrderItems.create({
       purchaseOrderId: orderId,
@@ -205,7 +221,69 @@ export class PurchaseOrdersService {
       quantityOrdered: item.quantityOrdered,
       quantityReceived: 0,
       costPrice: item.costPrice.toFixed(2),
+      taxCategoryId: lineTaxByProductId.get(item.itemId)?.taxCategoryId ?? null,
+      taxRuleId: lineTaxByProductId.get(item.itemId)?.taxRuleId ?? null,
+      priceMode: lineTaxByProductId.get(item.itemId)?.priceMode ?? 'inclusive',
+      taxRate: lineTaxByProductId.get(item.itemId)?.taxRate ?? '0.0000',
+      taxableAmount: lineTaxByProductId.get(item.itemId)?.taxableAmount ?? '0.00',
+      taxAmount: lineTaxByProductId.get(item.itemId)?.taxAmount ?? '0.00',
     })));
+  }
+
+  private async quoteTax(tenantId: string, locationId: string, items: UpsertPurchaseOrderDto['items']) {
+    const products = await this.products.find({ where: { tenantId, id: In(items.map((item) => item.itemId)) } });
+    const productById = new Map(products.map((product) => [product.id, product]));
+    const lines = items.map((item) => {
+      const product = productById.get(item.itemId);
+      const lineSubtotal = formatMoney(item.quantityOrdered * item.costPrice);
+      return {
+        productId: item.itemId,
+        categoryId: product?.categoryId ?? null,
+        taxCategoryId: product?.taxCategoryId ?? null,
+        variantId: null,
+        quantity: item.quantityOrdered,
+        unitPrice: formatMoney(item.costPrice),
+        modifierTotal: '0.00',
+        unitPriceWithModifiers: formatMoney(item.costPrice),
+        lineSubtotal,
+        lineTax: '0.00',
+        lineDiscount: '0.00',
+        notes: null,
+        modifiers: [],
+      };
+    });
+    const tax = await this.taxCalculation.calculateOrderTax({
+      tenant: { tenantId, source: 'header' },
+      locationId,
+      lines,
+      discountTotal: '0.00',
+      deliveryFee: '0.00',
+      serviceChargeTotal: '0.00',
+    });
+    const grossCost = items.reduce((sum, item) => sum + item.quantityOrdered * item.costPrice, 0);
+    const taxableCost = tax.lines.length
+      ? tax.lines.reduce((sum, line) => sum + parseMoney(line.taxableAmount), 0)
+      : grossCost;
+    return {
+      subtotalCost: formatMoney(taxableCost),
+      taxTotal: tax.taxTotal,
+      totalCost: formatMoney(grossCost + parseMoney(tax.chargeableTaxTotal)),
+      lineTaxByProductId: new Map(
+        tax.lines
+          .filter((line) => line.productId)
+          .map((line) => [
+            line.productId!,
+            {
+              taxCategoryId: line.taxCategoryId,
+              taxRuleId: line.taxRuleId,
+              priceMode: line.priceMode,
+              taxRate: line.taxRate,
+              taxableAmount: line.taxableAmount,
+              taxAmount: line.taxAmount,
+            },
+          ]),
+      ),
+    };
   }
 
   private async notifySupplier(

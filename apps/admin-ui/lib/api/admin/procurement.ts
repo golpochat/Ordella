@@ -35,6 +35,10 @@ const purchaseOrderItemSchema = z.object({
   quantityOrdered: z.number().int(),
   quantityReceived: z.number().int(),
   costPrice: z.string(),
+  priceMode: z.enum(['inclusive', 'exclusive']).optional(),
+  taxRate: z.string().optional(),
+  taxableAmount: z.string().optional(),
+  taxAmount: z.string().optional(),
   item: z.object({ id: z.string().uuid(), name: z.string() }).optional(),
 });
 
@@ -45,6 +49,8 @@ export const purchaseOrderSchema = z.object({
   locationId: z.string().uuid(),
   status: z.enum(['draft', 'sent', 'received', 'partial', 'cancelled']),
   supplierStatus: z.enum(['pending', 'confirmed', 'rejected', 'shipped']).default('pending'),
+  subtotalCost: z.string().optional(),
+  taxTotal: z.string().optional(),
   totalCost: z.string(),
   expectedDeliveryDate: z.string().nullable().optional(),
   supplierExpectedDeliveryDate: z.string().nullable().optional(),

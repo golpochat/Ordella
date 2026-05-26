@@ -5,6 +5,13 @@ import { UpsertTaxRuleDto } from '../dto';
 import { TaxRuleEntity } from '../entities';
 import { LocationEntity } from '../../tenants/entities';
 
+const IRISH_VAT_RULES = [
+  { taxName: 'Standard VAT', taxRate: 23, isDefault: true },
+  { taxName: 'Reduced VAT', taxRate: 13.5, isDefault: false },
+  { taxName: 'Second reduced VAT', taxRate: 9, isDefault: false },
+  { taxName: 'Zero VAT', taxRate: 0, isDefault: false },
+] as const;
+
 @Injectable()
 export class TaxRulesService {
   constructor(
@@ -14,8 +21,43 @@ export class TaxRulesService {
     private readonly locations: Repository<LocationEntity>,
   ) {}
 
-  list(tenantId: string) {
+  async list(tenantId: string) {
+    await this.ensureDefaultIrishVatRules(tenantId);
     return this.rules.find({ where: { tenantId }, order: { isDefault: 'DESC', country: 'ASC', taxName: 'ASC' } });
+  }
+
+  async ensureDefaultIrishVatRules(tenantId: string): Promise<TaxRuleEntity[]> {
+    const existing = await this.rules.find({ where: { tenantId } });
+    const existingByRate = new Map(existing.map((rule) => [Number(rule.taxRate).toFixed(4), rule]));
+    const created: TaxRuleEntity[] = [];
+
+    for (const defaultRule of IRISH_VAT_RULES) {
+      const rateKey = defaultRule.taxRate.toFixed(4);
+      if (existingByRate.has(rateKey)) continue;
+      created.push(
+        this.rules.create({
+          tenantId,
+          locationId: null,
+          country: 'IE',
+          region: null,
+          taxName: defaultRule.taxName,
+          taxRate: rateKey,
+          taxType: 'vat',
+          appliesTo: ['items', 'categories', 'delivery', 'service_fee'],
+          priceMode: 'inclusive',
+          isDefault: defaultRule.isDefault && !existing.some((rule) => rule.isDefault),
+          roundingMode: 'half_up',
+          decimalPlaces: 2,
+          taxIdLabel: 'VAT number',
+          taxIdValue: null,
+          invoiceFields: {},
+        }),
+      );
+    }
+
+    if (!created.length) return existing;
+    await this.rules.save(created);
+    return this.rules.find({ where: { tenantId } });
   }
 
   async create(tenantId: string, dto: UpsertTaxRuleDto) {

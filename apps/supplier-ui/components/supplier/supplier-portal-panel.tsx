@@ -210,7 +210,7 @@ function PurchaseOrdersView({ orders, onChanged }: { orders: SupplierPurchaseOrd
                 <div>
                   <h2 className="font-semibold">PO {order.id.slice(0, 8)}</h2>
                   <p className="text-sm text-muted-foreground">
-                    {order.location?.name ?? 'Location'} · {formatMoney(order.totalCost, settings)} · Due {formatDate(order.expectedDeliveryDate, settings)}
+                    {order.location?.name ?? 'Location'} · Net {formatMoney(order.subtotalCost ?? order.totalCost, settings)} · Tax {formatMoney(order.taxTotal ?? '0.00', settings)} · Gross {formatMoney(order.totalCost, settings)} · Due {formatDate(order.expectedDeliveryDate, settings)}
                   </p>
                 </div>
                 <Badge>{order.supplierStatus}</Badge>
@@ -442,7 +442,9 @@ function PurchaseOrderTable({ orders, compact = false }: { orders: SupplierPurch
             <th className="p-3 font-medium">Location</th>
             <th className="p-3 font-medium">Supplier status</th>
             <th className="p-3 font-medium">Due</th>
-            <th className="p-3 font-medium">Total</th>
+            <th className="p-3 font-medium">Net</th>
+            <th className="p-3 font-medium">Tax</th>
+            <th className="p-3 font-medium">Gross</th>
           </tr>
         </thead>
         <tbody>
@@ -452,12 +454,14 @@ function PurchaseOrderTable({ orders, compact = false }: { orders: SupplierPurch
               <td className="p-3">{order.location?.name ?? 'Location'}</td>
               <td className="p-3"><Badge>{order.supplierStatus}</Badge></td>
               <td className="p-3">{formatDate(order.expectedDeliveryDate, settings)}</td>
+              <td className="p-3">{formatMoney(order.subtotalCost ?? order.totalCost, settings)}</td>
+              <td className="p-3">{formatMoney(order.taxTotal ?? '0.00', settings)}</td>
               <td className="p-3">{formatMoney(order.totalCost, settings)}</td>
             </tr>
           ))}
           {!orders.length ? (
             <tr>
-              <td className="p-3 text-muted-foreground" colSpan={5}>
+              <td className="p-3 text-muted-foreground" colSpan={7}>
                 {compact ? 'No recent purchase orders.' : 'No purchase orders assigned yet.'}
               </td>
             </tr>
@@ -479,6 +483,8 @@ function PurchaseOrderLines({ order }: { order: SupplierPurchaseOrder }) {
             <th className="p-2 font-medium">Ordered</th>
             <th className="p-2 font-medium">Received</th>
             <th className="p-2 font-medium">Cost</th>
+            <th className="p-2 font-medium">Tax</th>
+            <th className="p-2 font-medium">Line total</th>
           </tr>
         </thead>
         <tbody>
@@ -488,6 +494,8 @@ function PurchaseOrderLines({ order }: { order: SupplierPurchaseOrder }) {
               <td className="p-2">{item.quantityOrdered}</td>
               <td className="p-2">{item.quantityReceived}</td>
               <td className="p-2">{formatMoney(item.costPrice, settings)}</td>
+              <td className="p-2">{formatMoney(item.taxAmount ?? '0.00', settings)} ({Number(item.taxRate ?? 0).toFixed(2)}%)</td>
+              <td className="p-2">{formatMoney(Number(item.costPrice) * item.quantityOrdered, settings)}</td>
             </tr>
           ))}
         </tbody>

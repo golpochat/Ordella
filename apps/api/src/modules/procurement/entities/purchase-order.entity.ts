@@ -35,6 +35,12 @@ export class PurchaseOrderEntity {
   @Column({ name: 'supplier_status', type: 'varchar', length: 32, default: SupplierPurchaseOrderStatus.PENDING })
   supplierStatus!: SupplierPurchaseOrderStatus;
 
+  @Column({ name: 'subtotal_cost', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  subtotalCost!: string;
+
+  @Column({ name: 'tax_total', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  taxTotal!: string;
+
   @Column({ name: 'total_cost', type: 'decimal', precision: 12, scale: 2, default: 0 })
   totalCost!: string;
 

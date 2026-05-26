@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input } from '@shared-ui';
 import type { Category, Product } from '@shared-utils';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { createProduct, updateProduct } from '@/lib/api/admin/products';
+import { listTaxCategories, type TaxCategory } from '@/lib/api/admin/tax';
 import { getErrorMessage } from '@/lib/utils';
 
 type ProductFormProps = {
@@ -15,14 +16,22 @@ type ProductFormProps = {
 
 export function ProductForm({ categories, product }: ProductFormProps) {
   const router = useRouter();
-  const api = createBrowserApiClient();
+  const api = useMemo(() => createBrowserApiClient(), []);
   const [name, setName] = useState(product?.name ?? '');
   const [description, setDescription] = useState(product?.description ?? '');
   const [price, setPrice] = useState(product?.price ?? '');
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? '');
+  const [taxCategoryId, setTaxCategoryId] = useState(product?.taxCategoryId ?? '');
+  const [taxCategories, setTaxCategories] = useState<TaxCategory[]>([]);
   const [status, setStatus] = useState(product?.status ?? 'active');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    listTaxCategories(api)
+      .then(setTaxCategories)
+      .catch((err) => setError(getErrorMessage(err)));
+  }, [api]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +43,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
       description: description || undefined,
       price,
       categoryId: categoryId || undefined,
+      taxCategoryId: taxCategoryId || undefined,
       status,
     };
 
@@ -60,6 +70,24 @@ export function ProductForm({ categories, product }: ProductFormProps) {
           Name
         </label>
         <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="taxCategory">
+          Tax category
+        </label>
+        <select
+          id="taxCategory"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          value={taxCategoryId}
+          onChange={(e) => setTaxCategoryId(e.target.value)}
+        >
+          <option value="">Inherit from product category</option>
+          {taxCategories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="description">

@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class AdminCreateCategoryDto {
   @IsString()
@@ -8,4 +8,8 @@ export class AdminCreateCategoryDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsUUID()
+  taxCategoryId?: string;
 }

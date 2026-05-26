@@ -35,6 +35,7 @@ export type CatalogCategoryView = {
   sortOrder: number;
   isActive: boolean;
   globalCategoryId?: string | null;
+  taxCategoryId?: string | null;
 };
 
 export type GlobalCategoryView = {
@@ -100,6 +101,7 @@ export type CatalogItemView = {
   inventoryTrackingEnabled: boolean;
   stockLevel: number | null;
   channelVisibility: Record<string, boolean>;
+  taxCategoryId: string | null;
   variants: CatalogVariantView[];
   modifiers: CatalogModifierView[];
   globalItemId?: string | null;
@@ -252,6 +254,7 @@ export class CatalogBuilderService {
         description: dto.description?.trim() ?? null,
         sortOrder: dto.sortOrder ?? 0,
         isActive: dto.isActive ?? true,
+        taxCategoryId: dto.taxCategoryId ?? null,
       }),
     );
     await this.searchIndex.indexCategory(saved);
@@ -264,6 +267,7 @@ export class CatalogBuilderService {
     if (dto.description !== undefined) row.description = dto.description?.trim() ?? null;
     if (dto.sortOrder !== undefined) row.sortOrder = dto.sortOrder;
     if (dto.isActive !== undefined) row.isActive = dto.isActive;
+    if (dto.taxCategoryId !== undefined) row.taxCategoryId = dto.taxCategoryId ?? null;
     const saved = await this.repository.saveCategory(row);
     await this.searchIndex.indexCategory(saved);
     return this.mapCategory(saved);
@@ -430,6 +434,7 @@ export class CatalogBuilderService {
       inventoryTrackingEnabled: product.inventoryTrackingEnabled,
       stockLevel: product.stockLevel,
       channelVisibility: product.channelVisibility,
+      taxCategoryId: product.taxCategoryId,
       variants: variants.map((v) => this.mapVariant(v)),
       modifiers,
       globalItemId: product.globalItemId,
@@ -478,6 +483,7 @@ export class CatalogBuilderService {
       sortOrder: row.sortOrder,
       isActive: row.isActive,
       globalCategoryId: row.globalCategoryId,
+      taxCategoryId: row.taxCategoryId,
     };
   }
 

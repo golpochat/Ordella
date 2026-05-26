@@ -5,8 +5,9 @@ import { TenantContext } from '../../../common/interfaces';
 import { CalculatedLineItem } from '../../orders/types/draft-order.types';
 import { formatMoney, parseMoney } from '../../orders/domain/order-totals.util';
 import { OrderItemEntity } from '../../orders/entities/order-item.entity';
+import { CategoryEntity } from '../../catalog/entities/category.entity';
 import { OrderTaxLineEntity, TaxCategoryEntity, TaxRuleEntity } from '../entities';
-import { DEFAULT_ORDER_TAX_RATE } from '../../orders/constants/order-tax.constants';
+import { TaxRulesService } from './tax-rules.service';
 
 export type TaxBreakdownLine = {
   orderItemId?: string | null;
@@ -37,6 +38,9 @@ export class TaxCalculationService {
     private readonly taxCategories: Repository<TaxCategoryEntity>,
     @InjectRepository(OrderTaxLineEntity)
     private readonly orderTaxLines: Repository<OrderTaxLineEntity>,
+    @InjectRepository(CategoryEntity)
+    private readonly catalogCategories: Repository<CategoryEntity>,
+    private readonly taxRulesService: TaxRulesService,
   ) {}
 
   async calculateOrderTax(input: {
@@ -49,7 +53,12 @@ export class TaxCalculationService {
     serviceChargeTotal: string;
   }): Promise<TaxCalculationResult> {
     const rules = await this.loadRules(input.tenant.tenantId, input.locationId);
-    const categories = await this.taxCategories.find({ where: { tenantId: input.tenant.tenantId } });
+    const [taxCategories, catalogCategories] = await Promise.all([
+      this.taxCategories.find({ where: { tenantId: input.tenant.tenantId } }),
+      this.catalogCategories.find({ where: { tenantId: input.tenant.tenantId } }),
+    ]);
+    const taxCategoryById = new Map(taxCategories.map((category) => [category.id, category]));
+    const catalogCategoryById = new Map(catalogCategories.map((category) => [category.id, category]));
     const itemByProduct = new Map((input.items ?? []).map((item) => [item.productId, item]));
     const subtotal = input.lines.reduce((sum, line) => sum + parseMoney(line.lineSubtotal), 0);
     const discount = parseMoney(input.discountTotal);
@@ -59,9 +68,9 @@ export class TaxCalculationService {
       const lineSubtotal = parseMoney(line.lineSubtotal);
       const discountShare = subtotal > 0 ? discount * (lineSubtotal / subtotal) : 0;
       const baseAmount = Math.max(0, lineSubtotal - discountShare);
-      const category = line.taxCategoryId
-        ? categories.find((candidate) => candidate.id === line.taxCategoryId)
-        : null;
+      const assignedTaxCategoryId =
+        line.taxCategoryId ?? (line.categoryId ? catalogCategoryById.get(line.categoryId)?.taxCategoryId : null) ?? null;
+      const category = assignedTaxCategoryId ? taxCategoryById.get(assignedTaxCategoryId) ?? null : null;
       const rule = this.resolveRule(rules, 'items', category?.defaultTaxRuleId ?? null) ??
         this.resolveRule(rules, 'categories', category?.defaultTaxRuleId ?? null);
       if (!rule) continue;
@@ -148,6 +157,7 @@ export class TaxCalculationService {
   }
 
   private async loadRules(tenantId: string, locationId: string): Promise<TaxRuleEntity[]> {
+    await this.taxRulesService.ensureDefaultIrishVatRules(tenantId);
     const all = await this.taxRules.find({ where: [{ tenantId, locationId }, { tenantId, locationId: IsNull() }] });
     if (!all.length) {
       return [
@@ -155,13 +165,13 @@ export class TaxCalculationService {
           id: null,
           tenantId,
           locationId: null,
-          country: 'XX',
+          country: 'IE',
           region: null,
-          taxName: 'Standard tax',
-          taxRate: (DEFAULT_ORDER_TAX_RATE * 100).toFixed(4),
-          taxType: 'sales_tax',
+          taxName: 'Standard VAT',
+          taxRate: '23.0000',
+          taxType: 'vat',
           appliesTo: ['items'],
-          priceMode: 'exclusive',
+          priceMode: 'inclusive',
           isDefault: true,
           roundingMode: 'half_up',
           decimalPlaces: 2,

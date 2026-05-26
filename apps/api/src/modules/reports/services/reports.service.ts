@@ -474,15 +474,19 @@ export class ReportsAnalyticsService {
       .andWhere('tax.created_at BETWEEN :from AND :to', { from: range.from, to: range.to })
       .select('tax.tax_type', 'taxType')
       .addSelect('tax.tax_name', 'taxName')
+      .addSelect('tax.tax_rate', 'taxRate')
+      .addSelect('tax.price_mode', 'priceMode')
       .addSelect('tax.jurisdiction', 'jurisdiction')
       .addSelect('COALESCE(SUM(tax.taxable_amount), 0)', 'taxableAmount')
       .addSelect('COALESCE(SUM(tax.tax_amount), 0)', 'taxAmount')
       .groupBy('tax.tax_type')
       .addGroupBy('tax.tax_name')
+      .addGroupBy('tax.tax_rate')
+      .addGroupBy('tax.price_mode')
       .addGroupBy('tax.jurisdiction')
       .orderBy('taxAmount', 'DESC');
     if (range.locationId) qb.andWhere('tax.location_id = :locationId', { locationId: range.locationId });
-    const rows = await qb.getRawMany<{ taxType: string; taxName: string; jurisdiction: string; taxableAmount: string; taxAmount: string }>();
+    const rows = await qb.getRawMany<{ taxType: string; taxName: string; taxRate: string; priceMode: string; jurisdiction: string; taxableAmount: string; taxAmount: string }>();
     const totalTax = rows.reduce((sum, row) => sum + Number(row.taxAmount), 0);
     return {
       from: range.fromIso,
@@ -492,6 +496,8 @@ export class ReportsAnalyticsService {
       lines: rows.map((row) => ({
         taxType: row.taxType,
         taxName: row.taxName,
+        taxRate: row.taxRate,
+        priceMode: row.priceMode,
         jurisdiction: row.jurisdiction,
         taxableAmount: this.money(row.taxableAmount),
         taxAmount: this.money(row.taxAmount),

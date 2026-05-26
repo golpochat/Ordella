@@ -1,6 +1,3 @@
-/** Fallback tax rate used before server-configured tax rules are synced to the client. */
-export const POS_TAX_RATE = 0.1;
-
 export function parseMoney(value: string | number): number {
   const n = typeof value === 'number' ? value : Number.parseFloat(value);
   return Number.isFinite(n) ? n : 0;
@@ -14,6 +11,17 @@ export type PosTotalsInput = {
   subtotal: number;
   discountPercent?: number;
   discountFixed?: number;
+  taxRate?: string | number;
+  priceMode?: 'inclusive' | 'exclusive';
+  taxName?: string;
+};
+
+type TaxBreakdownLine = {
+  taxName: string;
+  taxRate: number;
+  taxableAmount: number;
+  taxAmount: number;
+  priceMode: 'inclusive' | 'exclusive';
 };
 
 export function calculatePosTotals(input: PosTotalsInput): {
@@ -21,7 +29,7 @@ export function calculatePosTotals(input: PosTotalsInput): {
   discount: number;
   taxable: number;
   tax: number;
-  taxBreakdown: Array<{ taxName: string; taxRate: number; taxableAmount: number; taxAmount: number; priceMode: 'exclusive' }>;
+  taxBreakdown: TaxBreakdownLine[];
   total: number;
 } {
   const subtotal = Math.max(0, input.subtotal);
@@ -31,16 +39,20 @@ export function calculatePosTotals(input: PosTotalsInput): {
       : 0;
   const fixedOff = input.discountFixed && input.discountFixed > 0 ? input.discountFixed : 0;
   const discount = Math.min(subtotal, percentOff + fixedOff);
-  const taxable = Math.max(0, subtotal - discount);
-  const tax = taxable * POS_TAX_RATE;
-  const total = taxable + tax;
+  const discounted = Math.max(0, subtotal - discount);
+  const ratePercent = Number(input.taxRate ?? 23);
+  const rate = Number.isFinite(ratePercent) ? Math.max(0, ratePercent) / 100 : 0;
+  const priceMode = input.priceMode ?? 'inclusive';
+  const taxable = priceMode === 'inclusive' && rate > 0 ? discounted / (1 + rate) : discounted;
+  const tax = priceMode === 'inclusive' ? discounted - taxable : taxable * rate;
+  const total = priceMode === 'inclusive' ? discounted : discounted + tax;
   return {
     subtotal,
     discount,
     taxable,
     tax,
-    taxBreakdown: taxable > 0
-      ? [{ taxName: 'Standard tax', taxRate: POS_TAX_RATE * 100, taxableAmount: taxable, taxAmount: tax, priceMode: 'exclusive' }]
+    taxBreakdown: discounted > 0
+      ? [{ taxName: input.taxName ?? 'Standard VAT', taxRate: ratePercent, taxableAmount: taxable, taxAmount: tax, priceMode }]
       : [],
     total,
   };

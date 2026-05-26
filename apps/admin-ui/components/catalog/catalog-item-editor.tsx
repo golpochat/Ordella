@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Input } from '@shared-ui';
 import type { CatalogCategory, CatalogItem } from '@/lib/api/catalog';
 import {
@@ -11,6 +11,7 @@ import {
   uploadCatalogItemImage,
 } from '@/lib/api/catalog';
 import type { ApiClient } from '@shared-utils';
+import { listTaxCategories, type TaxCategory } from '@/lib/api/admin/tax';
 import { getErrorMessage } from '@/lib/utils';
 
 type CatalogItemEditorProps = {
@@ -34,6 +35,8 @@ export function CatalogItemEditor({
   const [sku, setSku] = useState(item?.sku ?? '');
   const [barcode, setBarcode] = useState(item?.barcode ?? '');
   const [categoryId, setCategoryId] = useState(item?.categoryId ?? '');
+  const [taxCategoryId, setTaxCategoryId] = useState(item?.taxCategoryId ?? '');
+  const [taxCategories, setTaxCategories] = useState<TaxCategory[]>([]);
   const [imageUrl, setImageUrl] = useState(item?.imageUrl ?? '');
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
   const [inventoryTracking, setInventoryTracking] = useState(
@@ -50,6 +53,12 @@ export function CatalogItemEditor({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    listTaxCategories(api)
+      .then(setTaxCategories)
+      .catch((err) => setError(getErrorMessage(err)));
+  }, [api]);
+
   async function saveItem() {
     setLoading(true);
     setError(null);
@@ -61,6 +70,7 @@ export function CatalogItemEditor({
       sku: sku.trim() || undefined,
       barcode: barcode.trim() || undefined,
       categoryId: categoryId || undefined,
+      taxCategoryId: taxCategoryId || undefined,
       imageUrl: imageUrl.trim() || undefined,
       status: isActive ? 'active' : 'inactive',
       inventoryTrackingEnabled: inventoryTracking,
@@ -149,6 +159,24 @@ export function CatalogItemEditor({
             Description
           </label>
           <Input id="itemDesc" value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium" htmlFor="itemTaxCategory">
+            Tax category
+          </label>
+          <select
+            id="itemTaxCategory"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+            value={taxCategoryId}
+            onChange={(e) => setTaxCategoryId(e.target.value)}
+          >
+            <option value="">Inherit from product category</option>
+            {taxCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="itemPrice">

@@ -10,6 +10,7 @@ import { PROCUREMENT_ENTITIES } from './entities';
 import { PurchaseOrdersService, SupplierPortalService, SuppliersService } from './services';
 import { SearchModule } from '../search';
 import { SupplierAuthGuard } from './guards/supplier-auth.guard';
+import { TaxModule } from '../tax';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { SupplierAuthGuard } from './guards/supplier-auth.guard';
     InventoryModule,
     NotificationsModule,
     SearchModule,
+    TaxModule,
     TypeOrmModule.forFeature([
       ...PROCUREMENT_ENTITIES,
       ProductEntity,

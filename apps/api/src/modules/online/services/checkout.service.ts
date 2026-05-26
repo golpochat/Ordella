@@ -22,6 +22,7 @@ import { OnlineCheckoutDto } from '../dto/online-checkout.dto';
 import { OnlineCheckoutResult } from '../types';
 import { OnlineOrderType } from '../enums/online-order-type.enum';
 import { parseMoney, formatMoney, sumMoney } from '../../orders/domain/order-totals.util';
+import { TaxCalculationService } from '../../tax';
 
 const DEFAULT_CURRENCY = 'USD';
 
@@ -31,6 +32,7 @@ export class CheckoutService {
     private readonly basketService: BasketService,
     private readonly menuRepository: MenuQueryRepository,
     private readonly promotionsService: PromotionsService,
+    private readonly taxCalculation: TaxCalculationService,
   ) {}
 
   async checkout(tenant: TenantContext, dto: OnlineCheckoutDto): Promise<OnlineCheckoutResult> {
@@ -48,7 +50,13 @@ export class CheckoutService {
       this.assertDeliveryDetails(dto.delivery);
     }
 
-    const baseTotals = calculateOnlineTotals({ lines, orderType });
+    const baseTax = await this.calculateTax(tenant, basket.locationId, lines, '0.00', orderType);
+    const baseTotals = calculateOnlineTotals({
+      lines,
+      orderType,
+      taxTotal: baseTax.taxTotal,
+      chargeableTaxTotal: baseTax.chargeableTaxTotal,
+    });
     const promotionContext = this.buildPromotionContext(
       tenant.tenantId,
       basket.couponCode,
@@ -61,11 +69,23 @@ export class CheckoutService {
     }
 
     const promotionResult = await this.promotionsService.applyPromotions(promotionContext);
-    const totals = calculateOnlineTotals({
+    const tax = await this.calculateTax(
+      tenant,
+      basket.locationId,
       lines,
+      promotionResult.discountTotal,
       orderType,
-      discountTotal: promotionResult.discountTotal,
-    });
+    );
+    const totals = {
+      ...calculateOnlineTotals({
+        lines,
+        orderType,
+        discountTotal: promotionResult.discountTotal,
+        taxTotal: tax.taxTotal,
+        chargeableTaxTotal: tax.chargeableTaxTotal,
+      }),
+      taxLines: tax.lines,
+    };
 
     const paymentContext: PaymentOrderContext = {
       tenantId: tenant.tenantId,
@@ -154,6 +174,7 @@ export class CheckoutService {
         modifierTotal,
         lineSubtotal,
         categoryId: product.categoryId,
+        taxCategoryId: product.taxCategoryId,
       });
     }
 
@@ -180,6 +201,37 @@ export class CheckoutService {
         categoryId: line.categoryId,
       })),
     };
+  }
+
+  private calculateTax(
+    tenant: TenantContext,
+    locationId: string,
+    lines: OnlineLinePricing[],
+    discountTotal: string,
+    orderType: OrderType,
+  ) {
+    return this.taxCalculation.calculateOrderTax({
+      tenant,
+      locationId,
+      lines: lines.map((line) => ({
+        productId: line.productId,
+        categoryId: line.categoryId,
+        taxCategoryId: line.taxCategoryId ?? null,
+        variantId: line.variantId,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        modifierTotal: line.modifierTotal,
+        unitPriceWithModifiers: formatMoney(parseMoney(line.unitPrice) + parseMoney(line.modifierTotal)),
+        lineSubtotal: line.lineSubtotal,
+        lineTax: '0.00',
+        lineDiscount: '0.00',
+        notes: null,
+        modifiers: [],
+      })),
+      discountTotal,
+      deliveryFee: orderType === OrderType.DELIVERY ? '3.99' : '0.00',
+      serviceChargeTotal: '0.00',
+    });
   }
 
   private resolveOrderType(orderType: OnlineOrderType): OrderType {

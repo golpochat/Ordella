@@ -18,12 +18,12 @@ import { getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
 
 const DEFAULT_RULE: TaxRulePayload = {
-  country: 'GB',
+  country: 'IE',
   taxName: 'Standard VAT',
-  taxRate: 20,
+  taxRate: 23,
   taxType: 'vat',
   appliesTo: ['items', 'delivery', 'service_fee'],
-  priceMode: 'exclusive',
+  priceMode: 'inclusive',
   isDefault: true,
 };
 

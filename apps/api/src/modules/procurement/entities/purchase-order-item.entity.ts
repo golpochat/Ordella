@@ -29,4 +29,22 @@ export class PurchaseOrderItemEntity {
 
   @Column({ name: 'cost_price', type: 'decimal', precision: 12, scale: 2, default: 0 })
   costPrice!: string;
+
+  @Column({ name: 'tax_category_id', type: 'uuid', nullable: true })
+  taxCategoryId!: string | null;
+
+  @Column({ name: 'tax_rule_id', type: 'uuid', nullable: true })
+  taxRuleId!: string | null;
+
+  @Column({ name: 'price_mode', type: 'varchar', length: 32, default: 'inclusive' })
+  priceMode!: 'inclusive' | 'exclusive';
+
+  @Column({ name: 'tax_rate', type: 'decimal', precision: 8, scale: 4, default: 0 })
+  taxRate!: string;
+
+  @Column({ name: 'taxable_amount', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  taxableAmount!: string;
+
+  @Column({ name: 'tax_amount', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  taxAmount!: string;
 }

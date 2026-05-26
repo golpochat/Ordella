@@ -27,6 +27,7 @@ export const catalogItemSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
   categoryId: z.string().uuid().nullable(),
+  taxCategoryId: z.string().uuid().nullable().optional(),
   name: z.string(),
   description: z.string().nullable().optional(),
   price: z.string(),

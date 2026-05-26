@@ -52,7 +52,7 @@ export async function listCategories(api: ApiClient) {
   return z.array(categorySchema).parse(data);
 }
 
-export async function createCategory(api: ApiClient, body: { name: string; sortOrder?: number }) {
+export async function createCategory(api: ApiClient, body: { name: string; sortOrder?: number; taxCategoryId?: string }) {
   const data = await api.postData<unknown>('admin/products/categories', body);
   return categorySchema.parse(data);
 }

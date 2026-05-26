@@ -24,7 +24,7 @@ import { createSubscriptionCheckoutSession } from '@/lib/subscriptions-api';
 import { useBasketStore } from '@/stores/basket-store';
 
 export function CheckoutForm() {
-  const { formatCurrency } = useTenantSettings();
+  const { settings, formatCurrency } = useTenantSettings();
   const router = useRouter();
   const lines = useBasketStore((s) => s.lines);
   const hydrate = useBasketStore((s) => s.hydrate);
@@ -149,7 +149,13 @@ export function CheckoutForm() {
   }, [addressLine1, city, lines, orderType, postalCode]);
 
   const subtotal = useMemo(() => basketSubtotal(lines), [lines]);
-  const totals = useMemo(() => calculateStorefrontTotals(subtotal), [subtotal]);
+  const totals = useMemo(
+    () => calculateStorefrontTotals(subtotal, {
+      taxRate: Number(settings.defaultTaxRate) || 23,
+      priceMode: 'inclusive',
+    }),
+    [settings.defaultTaxRate, subtotal],
+  );
   const loyaltyDiscount = useMemo(() => {
     if (!loyaltyCustomer || !loyaltySettings?.isEnabled || !loyaltyRedeemPoints) return 0;
     const requested = Math.min(Number(loyaltyRedeemPoints), loyaltyCustomer.pointsBalance);

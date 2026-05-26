@@ -9,7 +9,7 @@ import { basketSubtotal, calculateStorefrontTotals } from '@/lib/storefront-pric
 import { useBasketStore } from '@/stores/basket-store';
 
 export function CartView() {
-  const { formatCurrency } = useTenantSettings();
+  const { settings, formatCurrency } = useTenantSettings();
   const lines = useBasketStore((s) => s.lines);
   const hydrate = useBasketStore((s) => s.hydrate);
   const updateQuantity = useBasketStore((s) => s.updateQuantity);
@@ -23,7 +23,10 @@ export function CartView() {
   }, [hydrate]);
 
   const subtotal = basketSubtotal(lines);
-  const totals = calculateStorefrontTotals(subtotal);
+  const totals = calculateStorefrontTotals(subtotal, {
+    taxRate: Number(settings.defaultTaxRate) || 23,
+    priceMode: 'inclusive',
+  });
   const cartProductIds = useMemo(() => lines.map((line) => line.productId), [lines]);
 
   if (lines.length === 0) {

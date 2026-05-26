@@ -9,7 +9,7 @@ import { TaxCategoriesService, TaxReportService, TaxRulesService } from '../serv
 
 @Controller('tax')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
-@RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.SETTINGS)
+@RequirePermissions(AdminPermissionKeys.ACCESS)
 export class TaxController {
   constructor(
     private readonly taxRules: TaxRulesService,
@@ -23,6 +23,7 @@ export class TaxController {
   }
 
   @Post('rules/create')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.SETTINGS)
   async createRule(
     @CurrentTenant() tenant: TenantContext,
     @Body() dto: UpsertTaxRuleDto,
@@ -31,6 +32,7 @@ export class TaxController {
   }
 
   @Post('rules/update')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.SETTINGS)
   async updateRule(
     @CurrentTenant() tenant: TenantContext,
     @Body() dto: UpsertTaxRuleDto,
@@ -44,6 +46,7 @@ export class TaxController {
   }
 
   @Post('categories/create')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.SETTINGS)
   async createCategory(
     @CurrentTenant() tenant: TenantContext,
     @Body() dto: UpsertTaxCategoryDto,
@@ -52,6 +55,7 @@ export class TaxController {
   }
 
   @Post('categories/update')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.SETTINGS)
   async updateCategory(
     @CurrentTenant() tenant: TenantContext,
     @Body() dto: UpsertTaxCategoryDto,
@@ -60,6 +64,7 @@ export class TaxController {
   }
 
   @Get('report')
+  @RequirePermissions(AdminPermissionKeys.ACCESS, AdminPermissionKeys.SETTINGS)
   async report(
     @CurrentTenant() tenant: TenantContext,
     @Query() query: TaxReportQueryDto,

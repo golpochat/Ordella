@@ -19,6 +19,7 @@ export class TaxReportService {
     const rows = await qb.getMany();
 
     const byType = this.group(rows, (line) => line.taxType);
+    const byRate = this.group(rows, (line) => `${line.taxName} ${line.taxRate}% ${line.priceMode}`);
     const byLocation = this.group(rows, (line) => line.locationId);
     const byCategory = this.group(rows, (line) => line.taxCategoryId ?? 'uncategorized');
 
@@ -31,6 +32,7 @@ export class TaxReportService {
       vat: byType.vat ?? this.empty(),
       gst: byType.gst ?? this.empty(),
       salesTax: byType.sales_tax ?? this.empty(),
+      byRate,
       byLocation,
       byCategory,
       generatedAt: new Date().toISOString(),

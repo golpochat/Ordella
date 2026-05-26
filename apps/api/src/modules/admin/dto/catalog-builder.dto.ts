@@ -30,6 +30,10 @@ export class CatalogCategoryCreateDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  taxCategoryId?: string;
 }
 
 export class CatalogCategoryUpdateDto {
@@ -53,6 +57,10 @@ export class CatalogCategoryUpdateDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  taxCategoryId?: string | null;
 }
 
 export class CatalogCategoryDeleteDto {

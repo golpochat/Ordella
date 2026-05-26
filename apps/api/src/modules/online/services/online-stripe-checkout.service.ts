@@ -41,6 +41,7 @@ import { LoyaltyService } from '../../loyalty/services';
 import { GiftCardsService } from '../../giftcards/services';
 import { BundleEntity, BundlePriceType } from '../../bundles/entities';
 import { PromotionsService } from '../../promotions/services/promotions.service';
+import { TaxCalculationService } from '../../tax';
 
 const DEFAULT_CURRENCY = 'EUR';
 const TOTAL_TOLERANCE = 0.02;
@@ -61,6 +62,7 @@ export class OnlineStripeCheckoutService {
     private readonly loyaltyService: LoyaltyService,
     private readonly giftCardsService: GiftCardsService,
     private readonly promotionsService: PromotionsService,
+    private readonly taxCalculation: TaxCalculationService,
     @InjectRepository(LocationEntity)
     private readonly locationRepository: Repository<LocationEntity>,
     @InjectRepository(BundleEntity)
@@ -98,7 +100,13 @@ export class OnlineStripeCheckoutService {
       this.assertDeliveryDetails(dto.delivery);
     }
 
-    const baseComputed = calculateOnlineTotals({ lines, orderType });
+    const baseTax = await this.calculateTax(tenant, dto.locationId, lines, '0.00', orderType);
+    const baseComputed = calculateOnlineTotals({
+      lines,
+      orderType,
+      taxTotal: baseTax.taxTotal,
+      chargeableTaxTotal: baseTax.chargeableTaxTotal,
+    });
     const promotionResult = await this.promotionsService.applyPromotions({
       tenantId: tenant.tenantId,
       couponCode: dto.couponCode ?? null,
@@ -116,10 +124,13 @@ export class OnlineStripeCheckoutService {
         categoryId: line.categoryId,
       })),
     });
+    const tax = await this.calculateTax(tenant, dto.locationId, lines, promotionResult.discountTotal, orderType);
     const computed = calculateOnlineTotals({
       lines,
       orderType,
       discountTotal: promotionResult.discountTotal,
+      taxTotal: tax.taxTotal,
+      chargeableTaxTotal: tax.chargeableTaxTotal,
     });
     const customer = dto.customerId
       ? await this.loyaltyService.getCustomerProfile(tenant, dto.customerId)
@@ -534,6 +545,7 @@ export class OnlineStripeCheckoutService {
         modifierTotal,
         lineSubtotal,
         categoryId: product.categoryId,
+        taxCategoryId: product.taxCategoryId,
       });
     }
 
@@ -582,6 +594,7 @@ export class OnlineStripeCheckoutService {
         modifierTotal: formatMoney(0),
         lineSubtotal: formatMoney(parseMoney(product.price) * quantity),
         categoryId: product.categoryId,
+        taxCategoryId: product.taxCategoryId,
       });
     }
     const rawSubtotal = componentLines.reduce((sum, line) => sum + parseMoney(line.lineSubtotal), 0);
@@ -612,6 +625,37 @@ export class OnlineStripeCheckoutService {
       return OrderType.POS;
     }
     return OrderType.ONLINE;
+  }
+
+  private calculateTax(
+    tenant: TenantContext,
+    locationId: string,
+    lines: Awaited<ReturnType<OnlineStripeCheckoutService['validateAndPriceLines']>>,
+    discountTotal: string,
+    orderType: OrderType,
+  ) {
+    return this.taxCalculation.calculateOrderTax({
+      tenant,
+      locationId,
+      lines: lines.map((line) => ({
+        productId: line.productId,
+        categoryId: line.categoryId,
+        taxCategoryId: line.taxCategoryId ?? null,
+        variantId: line.variantId,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        modifierTotal: line.modifierTotal,
+        unitPriceWithModifiers: formatMoney(parseMoney(line.unitPrice) + parseMoney(line.modifierTotal)),
+        lineSubtotal: line.lineSubtotal,
+        lineTax: '0.00',
+        lineDiscount: '0.00',
+        notes: null,
+        modifiers: [],
+      })),
+      discountTotal,
+      deliveryFee: orderType === OrderType.DELIVERY ? '3.99' : '0.00',
+      serviceChargeTotal: '0.00',
+    });
   }
 
   private assertDeliveryDetails(

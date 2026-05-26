@@ -35,8 +35,10 @@ export function PosCartSidebar({ onCheckout }: PosCartSidebarProps) {
         subtotal,
         discountPercent,
         discountFixed,
+        taxRate: Number(settings.defaultTaxRate) || 23,
+        priceMode: 'inclusive',
       }),
-    [subtotal, discountPercent, discountFixed],
+    [subtotal, discountPercent, discountFixed, settings.defaultTaxRate],
   );
 
   const saveNotes = async () => {

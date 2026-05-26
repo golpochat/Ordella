@@ -95,15 +95,6 @@ export const onlineBasketSchema = z.object({
   updatedAt: z.string(),
 });
 
-const checkoutTotalsSchema = z.object({
-  subtotal: z.string(),
-  discountTotal: z.string(),
-  taxTotal: z.string(),
-  serviceChargeTotal: z.string(),
-  deliveryFee: z.string(),
-  grandTotal: z.string(),
-});
-
 const taxLineSchema = z.object({
   taxName: z.string(),
   taxType: z.string(),
@@ -112,6 +103,16 @@ const taxLineSchema = z.object({
   taxableAmount: z.string(),
   taxAmount: z.string(),
   jurisdiction: z.string(),
+});
+
+const checkoutTotalsSchema = z.object({
+  subtotal: z.string(),
+  discountTotal: z.string(),
+  taxTotal: z.string(),
+  serviceChargeTotal: z.string(),
+  deliveryFee: z.string(),
+  grandTotal: z.string(),
+  taxLines: z.array(taxLineSchema).optional().default([]),
 });
 
 export const checkoutResultSchema = z.object({
@@ -160,6 +161,10 @@ export const orderStatusSchema = z.object({
   status: z.string(),
   paymentStatus: z.string(),
   orderType: z.string(),
+  subtotal: z.string().optional(),
+  discountTotal: z.string().optional(),
+  tax: z.string().optional(),
+  taxLines: z.array(taxLineSchema).optional().default([]),
   total: z.string(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
@@ -227,17 +232,6 @@ const searchResponseSchema = z.object({
 });
 
 export type StorefrontSearchResult = z.infer<typeof searchResultSchema>;
-
-const catalogBundleSchema = z.object({
-  categories: z.array(
-    z.object({
-      id: z.string().uuid(),
-      name: z.string(),
-      sortOrder: z.number().int(),
-    }),
-  ),
-  items: z.array(onlineProductSchema),
-});
 
 const publicBundleSchema = z.object({
   id: z.string().uuid(),
