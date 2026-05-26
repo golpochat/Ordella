@@ -4,8 +4,12 @@ import { z } from 'zod';
 export type ForecastParams = {
   forecastType?: 'summary' | 'demand' | 'inventory' | 'staffing' | 'delivery_capacity' | 'warehouse_replenishment';
   locationId?: string;
+  categoryId?: string;
+  productId?: string;
   horizonDays?: number;
   generatedForDate?: string;
+  fromDate?: string;
+  toDate?: string;
 };
 
 const forecastSchema = z.record(z.unknown());

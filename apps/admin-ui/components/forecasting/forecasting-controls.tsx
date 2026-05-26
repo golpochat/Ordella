@@ -24,7 +24,7 @@ export function ForecastingControls() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const params = new URLSearchParams(searchParams.toString());
-    for (const key of ['horizonDays', 'locationId', 'generatedForDate']) {
+    for (const key of ['horizonDays', 'locationId', 'categoryId', 'productId', 'generatedForDate', 'fromDate', 'toDate']) {
       const value = String(formData.get(key) ?? '').trim();
       if (value) params.set(key, value);
       else params.delete(key);
@@ -81,7 +81,11 @@ export function ForecastingControls() {
     return {
       horizonDays: Number(searchParams.get('horizonDays') ?? 7),
       locationId: searchParams.get('locationId') ?? undefined,
+      categoryId: searchParams.get('categoryId') ?? undefined,
+      productId: searchParams.get('productId') ?? undefined,
       generatedForDate: searchParams.get('generatedForDate') ?? undefined,
+      fromDate: searchParams.get('fromDate') ?? undefined,
+      toDate: searchParams.get('toDate') ?? undefined,
     };
   }
 
@@ -100,6 +104,10 @@ export function ForecastingControls() {
           ))}
         </select>
         <Input name="locationId" placeholder="Location UUID" defaultValue={searchParams.get('locationId') ?? ''} />
+        <Input name="categoryId" placeholder="Category UUID" defaultValue={searchParams.get('categoryId') ?? ''} />
+        <Input name="productId" placeholder="Product UUID" defaultValue={searchParams.get('productId') ?? ''} />
+        <Input name="fromDate" type="date" defaultValue={searchParams.get('fromDate') ?? ''} />
+        <Input name="toDate" type="date" defaultValue={searchParams.get('toDate') ?? ''} />
         <Input name="generatedForDate" type="date" defaultValue={searchParams.get('generatedForDate') ?? ''} />
         <Button type="submit">Apply forecast filters</Button>
       </form>

@@ -26,8 +26,20 @@ export class ForecastQueryDto {
   generatedForDate?: string;
 
   @IsOptional()
+  @IsDateString()
+  fromDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  toDate?: string;
+
+  @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  productId?: string;
 
   @IsOptional()
   @IsString()
