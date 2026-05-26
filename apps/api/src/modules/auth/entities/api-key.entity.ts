@@ -17,6 +17,12 @@ export class ApiKeyEntity extends BaseTenantEntity {
   @Column({ type: 'jsonb', default: [] })
   scopes!: string[];
 
+  @Column({ name: 'rate_limit_per_minute', type: 'int', default: 1000 })
+  rateLimitPerMinute!: number;
+
+  @Column({ name: 'ip_allowlist', type: 'text', array: true, default: () => "'{}'" })
+  ipAllowlist!: string[];
+
   @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
   expiresAt!: Date | null;
 

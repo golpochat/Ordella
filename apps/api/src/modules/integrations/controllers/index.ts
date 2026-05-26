@@ -1,3 +1,4 @@
+export * from './developer-platform.controller';
 export * from './integration-events.controller';
 export * from './integration-logs.controller';
 export * from './integration-public-api.controller';

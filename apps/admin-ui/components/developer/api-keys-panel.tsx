@@ -6,12 +6,27 @@ import { createBrowserApiClient } from '@/lib/api/browser';
 import { createApiKey, revokeApiKey, rotateApiKey, type DeveloperApiKey } from '@/lib/api/admin/developer';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
-const SCOPES = ['orders.read', 'catalog.read', 'inventory.read', 'customers.read', 'locations.read', 'orders.write'];
+const SCOPES = [
+  'orders.read',
+  'orders.write',
+  'products.read',
+  'catalog.read',
+  'inventory.read',
+  'inventory.write',
+  'customers.read',
+  'customers.write',
+  'locations.read',
+  'subscriptions.read',
+  'webhooks.write',
+  'integrations.write',
+];
 
 export function ApiKeysPanel({ initialKeys }: { initialKeys: DeveloperApiKey[] }) {
   const [keys, setKeys] = useState(initialKeys);
   const [name, setName] = useState('');
   const [scopes, setScopes] = useState<string[]>(SCOPES.slice(0, 5));
+  const [rateLimitPerMinute, setRateLimitPerMinute] = useState(1000);
+  const [ipAllowlist, setIpAllowlist] = useState('');
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +34,12 @@ export function ApiKeysPanel({ initialKeys }: { initialKeys: DeveloperApiKey[] }
     event.preventDefault();
     setError(null);
     try {
-      const key = await createApiKey(createBrowserApiClient(), { name, scopes });
+      const key = await createApiKey(createBrowserApiClient(), {
+        name,
+        scopes,
+        rateLimitPerMinute,
+        ipAllowlist: ipAllowlist.split(',').map((ip) => ip.trim()).filter(Boolean),
+      });
       setKeys((current) => [key, ...current]);
       setRevealedKey(key.key ?? null);
       setName('');
@@ -48,6 +68,21 @@ export function ApiKeysPanel({ initialKeys }: { initialKeys: DeveloperApiKey[] }
         <form className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={createKey}>
           <Input placeholder="Key name" value={name} onChange={(event) => setName(event.target.value)} required />
           <Button type="submit">Generate key</Button>
+          <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+            <Input
+              type="number"
+              min={60}
+              max={10000}
+              value={rateLimitPerMinute}
+              onChange={(event) => setRateLimitPerMinute(Number(event.target.value))}
+              aria-label="Rate limit per minute"
+            />
+            <Input
+              placeholder="IP allowlist, comma separated"
+              value={ipAllowlist}
+              onChange={(event) => setIpAllowlist(event.target.value)}
+            />
+          </div>
           <div className="flex flex-wrap gap-2 md:col-span-2">
             {SCOPES.map((scope) => (
               <label key={scope} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
@@ -78,6 +113,7 @@ export function ApiKeysPanel({ initialKeys }: { initialKeys: DeveloperApiKey[] }
               <TableHead>Name</TableHead>
               <TableHead>Scopes</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Limit</TableHead>
               <TableHead>Last used</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -90,8 +126,12 @@ export function ApiKeysPanel({ initialKeys }: { initialKeys: DeveloperApiKey[] }
                   <p className="font-medium">{key.name}</p>
                   <p className="font-mono text-xs text-muted-foreground">{key.keyPrefix}</p>
                 </TableCell>
-                <TableCell className="max-w-xs">{key.scopes.join(', ')}</TableCell>
+                <TableCell className="max-w-xs">
+                  <p>{key.scopes.join(', ')}</p>
+                  {key.ipAllowlist.length ? <p className="mt-1 text-xs text-muted-foreground">IPs: {key.ipAllowlist.join(', ')}</p> : null}
+                </TableCell>
                 <TableCell>{formatDate(key.createdAt)}</TableCell>
+                <TableCell>{key.rateLimitPerMinute}/min</TableCell>
                 <TableCell>{formatDate(key.lastUsedAt ?? undefined)}</TableCell>
                 <TableCell>
                   <Badge variant={key.isActive ? 'outline' : 'destructive'}>{key.isActive ? 'Active' : 'Revoked'}</Badge>

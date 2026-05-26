@@ -6,7 +6,26 @@ import { createBrowserApiClient } from '@/lib/api/browser';
 import { createWebhook, disableWebhook, rotateWebhookSecret, testWebhook, type DeveloperWebhook } from '@/lib/api/admin/developer';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
-const EVENTS = ['order.created', 'order.updated', 'order.ready', 'order.delivered', 'inventory.low', 'inventory.out', 'customer.created', 'customer.updated', 'payment.succeeded', 'payment.failed', 'item.updated', 'item.outOfStock'];
+const EVENTS = [
+  'order.created',
+  'order.updated',
+  'order.ready',
+  'order.delivered',
+  'inventory.changed',
+  'inventory.low',
+  'inventory.out',
+  'customer.created',
+  'customer.updated',
+  'subscription.renewed',
+  'subscription.canceled',
+  'promotion.created',
+  'promotion.updated',
+  'payment.succeeded',
+  'payment.failed',
+  'product.updated',
+  'item.updated',
+  'item.outOfStock',
+];
 
 export function WebhooksPanel({ initialWebhooks }: { initialWebhooks: DeveloperWebhook[] }) {
   const [webhooks, setWebhooks] = useState(initialWebhooks);

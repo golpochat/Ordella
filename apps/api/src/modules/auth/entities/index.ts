@@ -1,4 +1,5 @@
 import { ApiKeyEntity } from './api-key.entity';
+import { ApiKeyUsageLogEntity } from './api-key-usage-log.entity';
 import { MfaFactorEntity } from './mfa-factor.entity';
 import { PermissionEntity } from './permission.entity';
 import { RolePermissionEntity } from './role-permission.entity';
@@ -10,6 +11,7 @@ import { UserDeviceEntity } from './user-device.entity';
 import { UserEntity } from './user.entity';
 
 export { ApiKeyEntity } from './api-key.entity';
+export { ApiKeyUsageLogEntity } from './api-key-usage-log.entity';
 export { BaseTenantEntity } from './base-tenant.entity';
 export { MfaFactorEntity } from './mfa-factor.entity';
 export { PermissionEntity } from './permission.entity';
@@ -23,6 +25,7 @@ export { UserEntity } from './user.entity';
 
 export const AUTH_ENTITIES = [
   ApiKeyEntity,
+  ApiKeyUsageLogEntity,
   MfaFactorEntity,
   PermissionEntity,
   RolePermissionEntity,

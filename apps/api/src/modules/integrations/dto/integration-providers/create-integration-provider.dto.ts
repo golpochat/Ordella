@@ -1,4 +1,4 @@
-import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { IntegrationProviderCategory } from '../../enums/integration-provider-category.enum';
 
 export class CreateIntegrationProviderDto {
@@ -14,4 +14,8 @@ export class CreateIntegrationProviderDto {
   @IsOptional()
   @IsObject()
   configSchema?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

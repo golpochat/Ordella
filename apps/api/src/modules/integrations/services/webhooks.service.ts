@@ -15,6 +15,12 @@ export const SUPPORTED_WEBHOOK_EVENTS = [
   'inventory.out',
   'customer.created',
   'customer.updated',
+  'subscription.renewed',
+  'subscription.canceled',
+  'promotion.created',
+  'promotion.updated',
+  'inventory.changed',
+  'product.updated',
   'payment.succeeded',
   'payment.failed',
   'item.updated',
@@ -108,10 +114,12 @@ export class WebhooksService {
   }
 
   private async deliver(webhook: WebhookEntity, eventType: string, payload: Record<string, unknown>): Promise<void> {
-    const body = JSON.stringify(payload);
-    const signature = createHmac('sha256', webhook.secret).update(body).digest('hex');
+    const eventId = typeof payload.id === 'string' ? payload.id : `evt_${Date.now()}`;
+    const body = JSON.stringify({ ...payload, id: eventId, type: eventType });
     let delivered = false;
     for (const attempt of [1, 2, 3]) {
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const signature = createHmac('sha256', webhook.secret).update(`${timestamp}.${body}`).digest('hex');
       let statusCode: number | null = null;
       let responseBody: string | null = null;
       try {
@@ -120,7 +128,9 @@ export class WebhooksService {
           headers: {
             'Content-Type': 'application/json',
             'X-Ordella-Event': eventType,
-            'X-Ordella-Signature': signature,
+            'X-Ordella-Event-Id': eventId,
+            'X-Ordella-Timestamp': timestamp,
+            'X-Ordella-Signature': `t=${timestamp},v1=${signature}`,
           },
           body,
           signal: AbortSignal.timeout(5000),
@@ -144,7 +154,7 @@ export class WebhooksService {
         }),
       );
       if (delivered) break;
-      await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+      await new Promise((resolve) => setTimeout(resolve, 2 ** attempt * 250));
     }
     webhook.lastDeliveryAt = new Date();
     await this.webhooks.save(webhook);

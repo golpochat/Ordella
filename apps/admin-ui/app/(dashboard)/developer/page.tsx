@@ -1,6 +1,7 @@
 import { createServerApiClient } from '@/lib/api/server';
-import { listApiKeys, listWebhookLogs, listWebhooks } from '@/lib/api/admin/developer';
+import { listApiKeys, listIntegrationApps, listIntegrationProviders, listWebhookLogs, listWebhooks } from '@/lib/api/admin/developer';
 import { ApiKeysPanel } from '@/components/developer/api-keys-panel';
+import { AppStorePanel } from '@/components/developer/app-store-panel';
 import { DeveloperDocsPanel } from '@/components/developer/developer-docs-panel';
 import { WebhookLogsTable } from '@/components/developer/webhook-logs-table';
 import { WebhooksPanel } from '@/components/developer/webhooks-panel';
@@ -13,13 +14,17 @@ export default async function DeveloperPage() {
   let apiKeys: Awaited<ReturnType<typeof listApiKeys>> = [];
   let webhooks: Awaited<ReturnType<typeof listWebhooks>> = [];
   let webhookLogs: Awaited<ReturnType<typeof listWebhookLogs>> = [];
+  let providers: Awaited<ReturnType<typeof listIntegrationProviders>> = [];
+  let apps: Awaited<ReturnType<typeof listIntegrationApps>> = [];
   let error: string | null = null;
 
   try {
-    [apiKeys, webhooks, webhookLogs] = await Promise.all([
+    [apiKeys, webhooks, webhookLogs, providers, apps] = await Promise.all([
       listApiKeys(api),
       listWebhooks(api),
       listWebhookLogs(api),
+      listIntegrationProviders(api),
+      listIntegrationApps(api),
     ]);
   } catch (err) {
     error = getErrorMessage(err);
@@ -35,6 +40,7 @@ export default async function DeveloperPage() {
       <div className="space-y-6">
         <ApiKeysPanel initialKeys={apiKeys} />
         <WebhooksPanel initialWebhooks={webhooks} />
+        <AppStorePanel initialProviders={providers} initialApps={apps} />
         <WebhookLogsTable logs={webhookLogs} />
         <DeveloperDocsPanel />
       </div>

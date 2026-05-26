@@ -4,8 +4,10 @@ import { CreateApiKeyDto, RotateApiKeyDto } from '../dto';
 import { ApiKeyResponseDto } from '../dto';
 import { FilterPaginationDto } from '../dto';
 import { TenantContext } from '../../../common/interfaces';
-import { ApiKeyEntity } from '../entities';
+import { ApiKeyEntity, ApiKeyUsageLogEntity } from '../entities';
 import { ApiKeyRepository } from '../repositories/api-key.repository';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 export type VerifiedApiKey = {
   id: string;
@@ -13,14 +15,38 @@ export type VerifiedApiKey = {
   name: string;
   scopes: string[];
   keyPrefix: string;
+  rateLimitPerMinute: number;
+  ipAllowlist: string[];
 };
 
 const KEY_PREFIX = 'ord_live';
+export const API_KEY_SCOPE_CATALOG = [
+  'orders.read',
+  'orders.write',
+  'products.read',
+  'products.write',
+  'catalog.read',
+  'inventory.read',
+  'inventory.write',
+  'customers.read',
+  'customers.write',
+  'locations.read',
+  'subscriptions.read',
+  'subscriptions.write',
+  'webhooks.read',
+  'webhooks.write',
+  'integrations.read',
+  'integrations.write',
+];
 const DEFAULT_SCOPES = ['orders.read', 'catalog.read', 'inventory.read', 'customers.read', 'locations.read'];
 
 @Injectable()
 export class ApiKeysService {
-  constructor(private readonly apiKeys: ApiKeyRepository) {}
+  constructor(
+    private readonly apiKeys: ApiKeyRepository,
+    @InjectRepository(ApiKeyUsageLogEntity)
+    private readonly usageLogs: Repository<ApiKeyUsageLogEntity>,
+  ) {}
 
   async findAll(tenant: TenantContext, query: FilterPaginationDto): Promise<ApiKeyResponseDto[]> {
     const page = query.page ?? 1;
@@ -31,13 +57,16 @@ export class ApiKeysService {
 
   async create(tenant: TenantContext, dto: CreateApiKeyDto): Promise<ApiKeyResponseDto> {
     const token = this.generateToken();
+    const scopes = this.normalizeScopes(dto.scopes);
     const key = await this.apiKeys.save(
       this.apiKeys.create({
         tenantId: tenant.tenantId,
         name: dto.name.trim(),
         keyPrefix: this.extractPrefix(token),
         keyHash: this.hashToken(token),
-        scopes: dto.scopes?.length ? dto.scopes : DEFAULT_SCOPES,
+        scopes,
+        rateLimitPerMinute: dto.rateLimitPerMinute ?? 1000,
+        ipAllowlist: dto.ipAllowlist?.map((ip) => ip.trim()).filter(Boolean) ?? [],
         expiresAt: null,
         lastUsedAt: null,
         isActive: true,
@@ -53,7 +82,7 @@ export class ApiKeysService {
     const token = this.generateToken();
     existing.keyPrefix = this.extractPrefix(token);
     existing.keyHash = this.hashToken(token);
-    existing.scopes = dto.scopes?.length ? dto.scopes : existing.scopes;
+    existing.scopes = dto.scopes?.length ? this.normalizeScopes(dto.scopes) : existing.scopes;
     existing.lastUsedAt = null;
     const saved = await this.apiKeys.save(existing);
     return { ...this.toDto(saved), key: token };
@@ -68,6 +97,15 @@ export class ApiKeysService {
 
   async remove(tenant: TenantContext, id: string): Promise<void> {
     await this.revoke(tenant, id);
+  }
+
+  async usage(tenant: TenantContext, id: string): Promise<ApiKeyUsageLogEntity[]> {
+    await this.requireForTenant(tenant.tenantId, id);
+    return this.usageLogs.find({
+      where: { tenantId: tenant.tenantId, apiKeyId: id },
+      order: { createdAt: 'DESC' },
+      take: 100,
+    });
   }
 
   async verify(rawToken: string): Promise<VerifiedApiKey> {
@@ -87,6 +125,8 @@ export class ApiKeysService {
       name: key.name,
       scopes: key.scopes,
       keyPrefix: key.keyPrefix,
+      rateLimitPerMinute: key.rateLimitPerMinute,
+      ipAllowlist: key.ipAllowlist,
     };
   }
 
@@ -103,6 +143,8 @@ export class ApiKeysService {
       name: key.name,
       keyPrefix: key.keyPrefix,
       scopes: key.scopes,
+      rateLimitPerMinute: key.rateLimitPerMinute,
+      ipAllowlist: key.ipAllowlist,
       isActive: key.isActive && !key.revokedAt,
       expiresAt: key.expiresAt,
       lastUsedAt: key.lastUsedAt,
@@ -114,6 +156,17 @@ export class ApiKeysService {
     const prefix = randomBytes(6).toString('hex');
     const secret = randomBytes(24).toString('base64url');
     return `${KEY_PREFIX}_${prefix}_${secret}`;
+  }
+
+  scopeCatalog(): string[] {
+    return API_KEY_SCOPE_CATALOG;
+  }
+
+  private normalizeScopes(scopes?: string[]): string[] {
+    const requested = scopes?.length ? [...new Set(scopes)] : DEFAULT_SCOPES;
+    const invalid = requested.filter((scope) => scope !== '*' && !API_KEY_SCOPE_CATALOG.includes(scope));
+    if (invalid.length) throw new BadRequestException(`Unsupported API key scopes: ${invalid.join(', ')}`);
+    return requested;
   }
 
   private extractPrefix(token: string): string {

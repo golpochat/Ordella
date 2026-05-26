@@ -23,6 +23,7 @@ import { CreateApiKeyDto, RotateApiKeyDto } from '../dto';
 import { ApiKeyResponseDto } from '../dto';
 import { FilterPaginationDto } from '../dto';
 import { ApiKeysService } from '../services';
+import { ApiKeyUsageLogEntity } from '../entities';
 
 /** API Spec §13.5 API Keys */
 @Controller('api-keys')
@@ -37,6 +38,22 @@ export class ApiKeysController {
     @Query() query: FilterPaginationDto,
   ): Promise<ApiSuccessResponse<ApiKeyResponseDto[]>> {
     const data = await this.apiKeysService.findAll(tenant, query);
+    return { success: true, data };
+  }
+
+  @Get('scopes')
+  @RequirePermissions('api-keys:read')
+  async scopes(): Promise<ApiSuccessResponse<string[]>> {
+    return { success: true, data: this.apiKeysService.scopeCatalog() };
+  }
+
+  @Get(':id/usage')
+  @RequirePermissions('api-keys:read')
+  async usage(
+    @CurrentTenant() tenant: TenantContext,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiSuccessResponse<ApiKeyUsageLogEntity[]>> {
+    const data = await this.apiKeysService.usage(tenant, id);
     return { success: true, data };
   }
 

@@ -12,7 +12,7 @@ import { CustomerEntity } from '../loyalty/entities';
 import { OrderEntity } from '../orders/entities';
 import { LocationEntity } from '../tenants/entities/location.entity';
 import { INTEGRATIONS_ENTITIES } from './entities';
-import { IntegrationPublicApiController, WebhooksController } from './controllers';
+import { DeveloperPlatformController, IntegrationPublicApiController, WebhooksController } from './controllers';
 import { WebhookEventsInterceptor } from './interceptors/webhook-events.interceptor';
 import { IntegrationsAppsModule } from './modules/integrations-apps/integrations-apps.module';
 import { IntegrationProvidersModule } from './modules/integration-providers/integration-providers.module';
@@ -46,7 +46,7 @@ import { IntegrationPublicApiService, WebhooksService } from './services';
     IntegrationEventsModule,
     IntegrationLogsModule,
   ],
-  controllers: [IntegrationPublicApiController, WebhooksController],
+  controllers: [DeveloperPlatformController, IntegrationPublicApiController, WebhooksController],
   providers: [
     IntegrationPublicApiService,
     WebhooksService,

@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { TENANT_CONTEXT_KEY } from '../../../common/constants/tenant-context-key';
 import { RateLimitService } from '../../../platform/security/rate-limit.service';
 import { AuditLogEntity } from '../../audit/entities';
+import { ApiKeyUsageLogEntity } from '../entities';
 import { API_KEY_CONTEXT_KEY } from '../decorators/current-api-key.decorator';
 import { API_KEY_SCOPES_KEY } from '../decorators/require-api-key-scopes.decorator';
 import { ApiKeysService, VerifiedApiKey } from '../services/api-keys.service';
@@ -31,6 +32,8 @@ export class ApiKeyAuthGuard implements CanActivate {
     private readonly reflector: Reflector,
     @InjectRepository(AuditLogEntity)
     private readonly auditLogs: Repository<AuditLogEntity>,
+    @InjectRepository(ApiKeyUsageLogEntity)
+    private readonly usageLogs: Repository<ApiKeyUsageLogEntity>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -39,7 +42,12 @@ export class ApiKeyAuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('API key is required');
 
     const apiKey = await this.apiKeys.verify(token);
-    const rate = await this.rateLimit.check(`rl:api-key:${apiKey.id}`, 1000, 60);
+    const ipAddress = this.extractIpAddress(request);
+    if (apiKey.ipAllowlist.length && (!ipAddress || !apiKey.ipAllowlist.includes(ipAddress))) {
+      await this.logUsage(request, apiKey, 403, { reason: 'ip_not_allowed' });
+      throw new ForbiddenException('API key IP is not allowed');
+    }
+    const rate = await this.rateLimit.check(`rl:api-key:${apiKey.id}`, apiKey.rateLimitPerMinute, 60);
     if (!rate.allowed) throw new HttpException('API key rate limit exceeded', HttpStatus.TOO_MANY_REQUESTS);
 
     const required = this.reflector.getAllAndOverride<string[]>(API_KEY_SCOPES_KEY, [
@@ -52,7 +60,7 @@ export class ApiKeyAuthGuard implements CanActivate {
 
     request[TENANT_CONTEXT_KEY] = { tenantId: apiKey.tenantId, source: 'api_key' };
     request[API_KEY_CONTEXT_KEY] = apiKey;
-    await this.logUsage(request, apiKey);
+    await this.logUsage(request, apiKey, 200);
     return true;
   }
 
@@ -68,11 +76,25 @@ export class ApiKeyAuthGuard implements CanActivate {
     return actual.includes('*') || required.every((scope) => actual.includes(scope));
   }
 
-  private async logUsage(request: ApiKeyRequest, apiKey: VerifiedApiKey): Promise<void> {
+  private extractIpAddress(request: ApiKeyRequest): string | null {
     const forwardedFor = request.headers['x-forwarded-for'];
-    const ipAddress =
-      (typeof forwardedFor === 'string' ? forwardedFor.split(',')[0]?.trim() : null) ?? request.ip ?? null;
+    return (typeof forwardedFor === 'string' ? forwardedFor.split(',')[0]?.trim() : null) ?? request.ip ?? null;
+  }
+
+  private async logUsage(request: ApiKeyRequest, apiKey: VerifiedApiKey, statusCode: number, metadata: Record<string, unknown> = {}): Promise<void> {
+    const ipAddress = this.extractIpAddress(request);
     const userAgent = request.headers['user-agent'];
+    await this.usageLogs.save(this.usageLogs.create({
+      tenantId: apiKey.tenantId,
+      apiKeyId: apiKey.id,
+      method: request.method,
+      path: request.path,
+      statusCode,
+      ipAddress,
+      userAgent: Array.isArray(userAgent) ? userAgent[0] ?? null : userAgent ?? null,
+      rateLimitPerMinute: apiKey.rateLimitPerMinute,
+      metadata,
+    }));
     await this.auditLogs.save(
       this.auditLogs.create({
         tenantId: apiKey.tenantId,
@@ -89,6 +111,9 @@ export class ApiKeyAuthGuard implements CanActivate {
           method: request.method,
           path: request.path,
           scopes: apiKey.scopes,
+          statusCode,
+          rateLimitPerMinute: apiKey.rateLimitPerMinute,
+          ...metadata,
         },
       }),
     );
