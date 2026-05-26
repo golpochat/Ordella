@@ -320,6 +320,9 @@ export function ProfileView() {
           ) : (
             <p className="text-muted-foreground">No loyalty activity yet.</p>
           )}
+          <Button asChild variant="outline">
+            <Link href="/rewards">View rewards and referrals</Link>
+          </Button>
         </CardContent>
       </Card>
 

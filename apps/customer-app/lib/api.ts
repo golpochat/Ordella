@@ -114,6 +114,10 @@ export const customerProfileSchema = z.object({
   orderFrequency: z.string().optional(),
   segments: z.array(z.string()).optional(),
   loyaltyHistory: z.array(z.unknown()).optional(),
+  loyaltyPointsSummary: z.record(z.unknown()).optional(),
+  loyaltyTierDetail: z.record(z.unknown()).nullable().optional(),
+  availableRewards: z.array(z.record(z.unknown())).optional(),
+  referral: z.record(z.unknown()).optional(),
   storeCreditHistory: z.array(z.unknown()).optional(),
   giftCards: z.array(z.unknown()).optional(),
   notificationPreferences: z.object({

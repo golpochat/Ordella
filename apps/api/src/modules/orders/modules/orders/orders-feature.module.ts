@@ -46,6 +46,7 @@ import { PromotionsCoreModule } from '../../../promotions/modules/promotions-cor
 import { SearchModule } from '../../../search';
 import { TaxModule } from '../../../tax';
 import { TenantSettingsEntity } from '../../../onboarding/entities/tenant-settings.entity';
+import { CustomerEntity } from '../../../loyalty/entities';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { TenantSettingsEntity } from '../../../onboarding/entities/tenant-settin
       VariantEntity,
       ModifierOptionEntity,
       BundleEntity,
+      CustomerEntity,
       TenantSettingsEntity,
     ]),
   ],

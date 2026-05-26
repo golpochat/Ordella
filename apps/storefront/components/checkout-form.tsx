@@ -54,6 +54,7 @@ export function CheckoutForm() {
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [loyaltySettings, setLoyaltySettings] = useState<{
     isEnabled: boolean;
+    earnRate?: string;
     redeemRate: string;
     minRedeemPoints: number;
     maxRedeemPercent: number;
@@ -177,6 +178,9 @@ export function CheckoutForm() {
     );
   }, [giftCardDiscount, loyaltyCustomer, loyaltyDiscount, storeCreditAmount, totals.total]);
   const payableTotal = Math.max(0, totals.total - loyaltyDiscount - giftCardDiscount - storeCreditDiscount);
+  const estimatedEarnedPoints = loyaltySettings?.isEnabled
+    ? Math.max(0, Math.floor(payableTotal * Number(loyaltySettings.earnRate ?? 1)))
+    : 0;
   const subscriptionLines = lines.filter((line) => line.purchaseType === 'subscription');
   const hasSubscriptionLines = subscriptionLines.length > 0;
   const cartProductIds = useMemo(() => lines.map((line) => line.productId), [lines]);
@@ -571,6 +575,12 @@ export function CheckoutForm() {
                 <span>{formatCurrency(line.taxAmount)}</span>
               </div>
             ))}
+            {loyaltyDiscount > 0 ? (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Loyalty points</span>
+                <span>-{formatCurrency(loyaltyDiscount)}</span>
+              </div>
+            ) : null}
             {giftCardDiscount > 0 ? (
               <div className="flex justify-between text-muted-foreground">
                 <span>Gift card</span>
@@ -587,6 +597,11 @@ export function CheckoutForm() {
               <span>Total (est.)</span>
               <span>{formatCurrency(payableTotal)}</span>
             </div>
+            {accountCustomerId && estimatedEarnedPoints > 0 ? (
+              <p className="pt-1 text-xs text-muted-foreground">
+                Estimated points after checkout: {estimatedEarnedPoints}
+              </p>
+            ) : null}
           </div>
           <RecommendationSection
             title="Recommended add-ons"

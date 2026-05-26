@@ -23,4 +23,25 @@ export class LoyaltySettingsEntity {
 
   @Column({ name: 'max_redeem_percent', type: 'int', default: 50 })
   maxRedeemPercent!: number;
+
+  @Column({ name: 'currency', type: 'varchar', length: 3, nullable: true })
+  currency!: string | null;
+
+  @Column({ name: 'points_expire_days', type: 'int', nullable: true })
+  pointsExpireDays!: number | null;
+
+  @Column({ name: 'referral_enabled', type: 'boolean', default: true })
+  referralEnabled!: boolean;
+
+  @Column({ name: 'referrer_bonus_points', type: 'int', default: 250 })
+  referrerBonusPoints!: number;
+
+  @Column({ name: 'referee_bonus_points', type: 'int', default: 100 })
+  refereeBonusPoints!: number;
+
+  @Column({ name: 'max_daily_redemptions', type: 'int', default: 5 })
+  maxDailyRedemptions!: number;
+
+  @Column({ name: 'max_daily_referrals', type: 'int', default: 10 })
+  maxDailyReferrals!: number;
 }

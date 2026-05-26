@@ -18,6 +18,15 @@ export class LoyaltyTransactionEntity extends BaseTenantScopedEntity {
   @Column({ type: 'int' })
   points!: number;
 
+  @Column({ name: 'points_earned', type: 'int', default: 0 })
+  pointsEarned!: number;
+
+  @Column({ name: 'points_redeemed', type: 'int', default: 0 })
+  pointsRedeemed!: number;
+
+  @Column({ type: 'varchar', length: 32, default: 'order' })
+  source!: 'order' | 'promotion' | 'referral' | 'manual' | 'fraud' | 'system';
+
   @Column({ type: 'varchar', length: 32 })
   type!: LoyaltyTransactionType;
 
@@ -27,4 +36,16 @@ export class LoyaltyTransactionEntity extends BaseTenantScopedEntity {
   @ManyToOne(() => OrderEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'order_id' })
   order!: OrderEntity | null;
+
+  @Column({ name: 'balance_after', type: 'int', default: 0 })
+  balanceAfter!: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  reason!: string | null;
+
+  @Column({ name: 'external_ref', type: 'varchar', length: 128, nullable: true })
+  externalRef!: string | null;
+
+  @Column({ type: 'jsonb', default: () => "'{}'" })
+  metadata!: Record<string, unknown>;
 }

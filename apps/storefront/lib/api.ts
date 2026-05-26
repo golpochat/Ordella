@@ -611,6 +611,7 @@ export async function fetchLoyaltyCustomer(params: { email?: string; phone?: str
 
 const loyaltySettingsSchema = z.object({
   isEnabled: z.boolean(),
+  earnRate: z.string().optional(),
   redeemRate: z.string(),
   minRedeemPoints: z.number(),
   maxRedeemPercent: z.number(),

@@ -14,6 +14,7 @@ import { ProductEntity } from '../catalog/entities/product.entity';
 import { VariantEntity } from '../catalog/entities/variant.entity';
 import { GiftCardEntity, StoreCreditTransactionEntity } from '../giftcards/entities';
 import { CustomerEntity, LoyaltyTransactionEntity } from '../loyalty/entities';
+import { LoyaltyService } from '../loyalty/services';
 import { hashPassword, verifyPassword } from '../onboarding/utils/password.util';
 import { NotificationChannelType } from '../notifications/enums/notification-channel-type.enum';
 import { NotificationType } from '../notifications/enums/notification-type.enum';
@@ -82,6 +83,7 @@ export class CustomerAccountsService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly notifications: NotificationsService,
+    private readonly loyalty: LoyaltyService,
   ) {}
 
   async register(tenant: TenantContext, dto: RegisterCustomerDto) {
@@ -172,7 +174,17 @@ export class CustomerAccountsService {
 
   async getAccount(tenant: TenantContext, customerId: string) {
     const customer = await this.requireCustomer(tenant.tenantId, customerId);
-    const [addresses, loyaltyHistory, storeCreditHistory, giftCards, recentOrders, savedBaskets, savedItems, sessions] =
+    const [
+      addresses,
+      loyaltyHistory,
+      storeCreditHistory,
+      giftCards,
+      recentOrders,
+      savedBaskets,
+      savedItems,
+      sessions,
+      rewards,
+    ] =
       await Promise.all([
         this.listAddresses(tenant, customerId),
         this.listLoyaltyHistory(tenant, customerId),
@@ -182,6 +194,7 @@ export class CustomerAccountsService {
         this.listSavedBaskets(tenant, customerId),
         this.listSavedItems(tenant, customerId),
         this.listSessions(tenant, customerId),
+        this.loyalty.getCustomerRewardsOverview(tenant, customerId),
       ]);
     return {
       ...this.toProfile(customer),
@@ -193,6 +206,10 @@ export class CustomerAccountsService {
       savedBaskets,
       savedItems,
       sessions,
+      availableRewards: rewards.rewards,
+      referral: rewards.referral,
+      loyaltyPointsSummary: rewards.points,
+      loyaltyTierDetail: rewards.tier,
       tenantSettings: tenant.settings ?? null,
       locale: tenant.settings?.locale,
       currency: tenant.settings?.currency,

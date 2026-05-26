@@ -19,15 +19,24 @@ import {
 } from '@shared-ui';
 import {
   adjustLoyaltyPoints,
+  createLoyaltyReferral,
   getLoyaltyAnalytics,
   getLoyaltyCustomer,
   getLoyaltySettings,
+  listLoyaltyReferrals,
+  listLoyaltyRewards,
+  listLoyaltyTiers,
   listLoyaltyTransactions,
   searchLoyaltyCustomers,
+  upsertLoyaltyReward,
+  upsertLoyaltyTier,
   updateLoyaltySettings,
   type LoyaltyAnalytics,
   type LoyaltyCustomer,
+  type LoyaltyReferral,
+  type LoyaltyReward,
   type LoyaltySettings,
+  type LoyaltyTier,
   type LoyaltyTransaction,
 } from '@/lib/api/loyalty';
 import { getErrorMessage } from '@/lib/utils';
@@ -38,11 +47,17 @@ export function LoyaltyPanel() {
   const [settings, setSettings] = useState<LoyaltySettings | null>(null);
   const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([]);
   const [customers, setCustomers] = useState<LoyaltyCustomer[]>([]);
+  const [tiers, setTiers] = useState<LoyaltyTier[]>([]);
+  const [rewards, setRewards] = useState<LoyaltyReward[]>([]);
+  const [referrals, setReferrals] = useState<LoyaltyReferral[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<LoyaltyCustomer | null>(null);
   const [analytics, setAnalytics] = useState<LoyaltyAnalytics | null>(null);
   const [customerFilter, setCustomerFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [adjustment, setAdjustment] = useState('');
+  const [tierDraft, setTierDraft] = useState({ name: 'Silver', pointsThreshold: '500', spendThreshold: '100', pointsMultiplier: '1', discountPercent: '0', perks: '' });
+  const [rewardDraft, setRewardDraft] = useState({ name: '', type: 'voucher' as LoyaltyReward['type'], pointsCost: '500', discountAmount: '', discountPercent: '', tierNames: '' });
+  const [referralDraft, setReferralDraft] = useState({ referrerCustomerId: '', referredCustomerId: '', code: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,16 +66,22 @@ export function LoyaltyPanel() {
     setLoading(true);
     setError(null);
     try {
-      const [settingsData, transactionData, customerData, analyticsData] = await Promise.all([
+      const [settingsData, transactionData, customerData, analyticsData, tierData, rewardData, referralData] = await Promise.all([
         getLoyaltySettings(),
         listLoyaltyTransactions(),
         searchLoyaltyCustomers(),
         getLoyaltyAnalytics(),
+        listLoyaltyTiers(),
+        listLoyaltyRewards(),
+        listLoyaltyReferrals(),
       ]);
       setSettings(settingsData);
       setTransactions(transactionData);
       setCustomers(customerData);
       setAnalytics(analyticsData);
+      setTiers(tierData);
+      setRewards(rewardData);
+      setReferrals(referralData);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -95,8 +116,78 @@ export function LoyaltyPanel() {
         autoEnroll: next.autoEnroll,
         minRedeemPoints: next.minRedeemPoints,
         maxRedeemPercent: next.maxRedeemPercent,
+        currency: next.currency ?? undefined,
+        pointsExpireDays: next.pointsExpireDays ?? undefined,
+        referralEnabled: next.referralEnabled,
+        referrerBonusPoints: next.referrerBonusPoints,
+        refereeBonusPoints: next.refereeBonusPoints,
+        maxDailyRedemptions: next.maxDailyRedemptions,
+        maxDailyReferrals: next.maxDailyReferrals,
       });
       setSettings(updated);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submitTier() {
+    setSaving(true);
+    setError(null);
+    try {
+      const tier = await upsertLoyaltyTier({
+        name: tierDraft.name,
+        pointsThreshold: Number(tierDraft.pointsThreshold),
+        spendThreshold: Number(tierDraft.spendThreshold),
+        pointsMultiplier: Number(tierDraft.pointsMultiplier),
+        discountPercent: Number(tierDraft.discountPercent || 0),
+        perks: tierDraft.perks.split(',').map((perk) => perk.trim()).filter(Boolean),
+        isActive: true,
+      });
+      setTiers((current) => [tier, ...current.filter((row) => row.id !== tier.id)].sort((a, b) => a.pointsThreshold - b.pointsThreshold));
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submitReward() {
+    if (!rewardDraft.name.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const reward = await upsertLoyaltyReward({
+        name: rewardDraft.name,
+        type: rewardDraft.type,
+        pointsCost: Number(rewardDraft.pointsCost),
+        discountAmount: rewardDraft.discountAmount ? Number(rewardDraft.discountAmount) : undefined,
+        discountPercent: rewardDraft.discountPercent ? Number(rewardDraft.discountPercent) : undefined,
+        tierNames: rewardDraft.tierNames.split(',').map((tier) => tier.trim()).filter(Boolean),
+        isActive: true,
+      });
+      setRewards((current) => [reward, ...current.filter((row) => row.id !== reward.id)]);
+      setRewardDraft({ name: '', type: 'voucher', pointsCost: '500', discountAmount: '', discountPercent: '', tierNames: '' });
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submitReferral() {
+    if (!referralDraft.referrerCustomerId.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const referral = await createLoyaltyReferral({
+        referrerCustomerId: referralDraft.referrerCustomerId.trim(),
+        referredCustomerId: referralDraft.referredCustomerId.trim() || undefined,
+        code: referralDraft.code.trim() || undefined,
+      });
+      setReferrals((current) => [referral, ...current]);
+      setReferralDraft({ referrerCustomerId: '', referredCustomerId: '', code: '' });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -161,9 +252,94 @@ export function LoyaltyPanel() {
             <SettingInput label="Value per point" value={settings.redeemRate} onChange={(redeemRate) => setSettings({ ...settings, redeemRate })} onBlur={() => void saveSettings(settings)} />
             <SettingInput label="Minimum redeemable points" value={String(settings.minRedeemPoints)} onChange={(value) => setSettings({ ...settings, minRedeemPoints: Number(value) })} onBlur={() => void saveSettings(settings)} />
             <SettingInput label="Maximum discount %" value={String(settings.maxRedeemPercent)} onChange={(value) => setSettings({ ...settings, maxRedeemPercent: Number(value) })} onBlur={() => void saveSettings(settings)} />
+            <SettingInput label="Currency" value={settings.currency ?? ''} onChange={(currency) => setSettings({ ...settings, currency })} onBlur={() => void saveSettings(settings)} />
+            <SettingInput label="Referrer bonus points" value={String(settings.referrerBonusPoints ?? 0)} onChange={(value) => setSettings({ ...settings, referrerBonusPoints: Number(value) })} onBlur={() => void saveSettings(settings)} />
+            <SettingInput label="Referee bonus points" value={String(settings.refereeBonusPoints ?? 0)} onChange={(value) => setSettings({ ...settings, refereeBonusPoints: Number(value) })} onBlur={() => void saveSettings(settings)} />
+            <SettingInput label="Daily redemption limit" value={String(settings.maxDailyRedemptions ?? 5)} onChange={(value) => setSettings({ ...settings, maxDailyRedemptions: Number(value) })} onBlur={() => void saveSettings(settings)} />
+            <SettingInput label="Daily referral limit" value={String(settings.maxDailyReferrals ?? 10)} onChange={(value) => setSettings({ ...settings, maxDailyReferrals: Number(value) })} onBlur={() => void saveSettings(settings)} />
+            <Toggle label="Referral program" enabled={settings.referralEnabled} onClick={() => void saveSettings({ ...settings, referralEnabled: !settings.referralEnabled })} />
           </CardContent>
         </Card>
       ) : null}
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loyalty tiers</CardTitle>
+            <CardDescription>Define thresholds and tier benefits for promotions and rewards.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-2 md:grid-cols-2">
+              <Input placeholder="Tier name" value={tierDraft.name} onChange={(event) => setTierDraft({ ...tierDraft, name: event.target.value })} />
+              <Input placeholder="Points threshold" value={tierDraft.pointsThreshold} onChange={(event) => setTierDraft({ ...tierDraft, pointsThreshold: event.target.value })} />
+              <Input placeholder="Spend threshold" value={tierDraft.spendThreshold} onChange={(event) => setTierDraft({ ...tierDraft, spendThreshold: event.target.value })} />
+              <Input placeholder="Points multiplier" value={tierDraft.pointsMultiplier} onChange={(event) => setTierDraft({ ...tierDraft, pointsMultiplier: event.target.value })} />
+              <Input placeholder="Discount %" value={tierDraft.discountPercent} onChange={(event) => setTierDraft({ ...tierDraft, discountPercent: event.target.value })} />
+              <Input placeholder="Perks, comma separated" value={tierDraft.perks} onChange={(event) => setTierDraft({ ...tierDraft, perks: event.target.value })} />
+            </div>
+            <Button type="button" disabled={saving} onClick={() => void submitTier()}>Save tier</Button>
+            <div className="space-y-2">
+              {tiers.map((tier) => (
+                <div key={tier.id} className="rounded-md border p-3 text-sm">
+                  <p className="font-medium">{tier.name}</p>
+                  <p className="text-muted-foreground">{tier.pointsThreshold} pts or {formatCurrency(tier.spendThreshold)} spend · {tier.pointsMultiplier}x</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Rewards catalog</CardTitle>
+            <CardDescription>Create vouchers, discounts, and free-item rewards.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Input placeholder="Reward name" value={rewardDraft.name} onChange={(event) => setRewardDraft({ ...rewardDraft, name: event.target.value })} />
+            <select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={rewardDraft.type} onChange={(event) => setRewardDraft({ ...rewardDraft, type: event.target.value as LoyaltyReward['type'] })}>
+              <option value="voucher">Voucher</option>
+              <option value="discount">Discount</option>
+              <option value="free_item">Free item</option>
+            </select>
+            <div className="grid gap-2 md:grid-cols-2">
+              <Input placeholder="Points cost" value={rewardDraft.pointsCost} onChange={(event) => setRewardDraft({ ...rewardDraft, pointsCost: event.target.value })} />
+              <Input placeholder="Discount amount" value={rewardDraft.discountAmount} onChange={(event) => setRewardDraft({ ...rewardDraft, discountAmount: event.target.value })} />
+              <Input placeholder="Discount %" value={rewardDraft.discountPercent} onChange={(event) => setRewardDraft({ ...rewardDraft, discountPercent: event.target.value })} />
+              <Input placeholder="Tier names" value={rewardDraft.tierNames} onChange={(event) => setRewardDraft({ ...rewardDraft, tierNames: event.target.value })} />
+            </div>
+            <Button type="button" disabled={saving} onClick={() => void submitReward()}>Create reward</Button>
+            <div className="space-y-2">
+              {rewards.map((reward) => (
+                <div key={reward.id} className="rounded-md border p-3 text-sm">
+                  <p className="font-medium">{reward.name}</p>
+                  <p className="text-muted-foreground">{reward.type} · {reward.pointsCost} points · {reward.isActive ? 'Active' : 'Inactive'}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Referral bonuses</CardTitle>
+            <CardDescription>Track referral codes, conversions, and fraud flags.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Input placeholder="Referrer customer ID" value={referralDraft.referrerCustomerId} onChange={(event) => setReferralDraft({ ...referralDraft, referrerCustomerId: event.target.value })} />
+            <Input placeholder="Referred customer ID (optional)" value={referralDraft.referredCustomerId} onChange={(event) => setReferralDraft({ ...referralDraft, referredCustomerId: event.target.value })} />
+            <Input placeholder="Referral code (optional)" value={referralDraft.code} onChange={(event) => setReferralDraft({ ...referralDraft, code: event.target.value })} />
+            <Button type="button" disabled={saving} onClick={() => void submitReferral()}>Create referral</Button>
+            <div className="space-y-2">
+              {referrals.slice(0, 8).map((referral) => (
+                <div key={referral.id} className="rounded-md border p-3 text-sm">
+                  <p className="font-medium">{referral.code}</p>
+                  <p className="text-muted-foreground">{referral.status} · {referral.referrerBonusPoints}/{referral.refereeBonusPoints} points</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
@@ -230,6 +406,8 @@ export function LoyaltyPanel() {
               <option value="earn">Earn</option>
               <option value="redeem">Redeem</option>
               <option value="adjustment">Adjustment</option>
+          <option value="referral">Referral</option>
+          <option value="promotion">Promotion</option>
             </select>
           </div>
           <TransactionTable transactions={filteredTransactions} />
@@ -274,7 +452,9 @@ function TransactionTable({ transactions }: { transactions: LoyaltyTransaction[]
         <TableRow>
           <TableHead>Customer</TableHead>
           <TableHead>Type</TableHead>
+          <TableHead>Source</TableHead>
           <TableHead>Points</TableHead>
+          <TableHead>Balance</TableHead>
           <TableHead>Date</TableHead>
         </TableRow>
       </TableHeader>
@@ -283,12 +463,14 @@ function TransactionTable({ transactions }: { transactions: LoyaltyTransaction[]
           <TableRow key={transaction.id}>
             <TableCell>{transaction.customer?.name ?? transaction.customerId}</TableCell>
             <TableCell><Badge variant="outline">{transaction.type}</Badge></TableCell>
+            <TableCell>{transaction.source ?? 'order'}</TableCell>
             <TableCell>{transaction.points}</TableCell>
+            <TableCell>{transaction.balanceAfter ?? 'N/A'}</TableCell>
             <TableCell>{formatDateTime(transaction.createdAt)}</TableCell>
           </TableRow>
         )) : (
           <TableRow>
-            <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">No loyalty transactions yet.</TableCell>
+            <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">No loyalty transactions yet.</TableCell>
           </TableRow>
         )}
       </TableBody>

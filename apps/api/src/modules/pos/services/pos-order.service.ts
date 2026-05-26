@@ -25,7 +25,7 @@ import {
   throwPosPaymentFailed,
 } from '../domain/pos-domain.errors';
 import { PosFulfillmentService } from './pos-fulfillment.service';
-const DEFAULT_CURRENCY = 'USD';
+const DEFAULT_CURRENCY = 'EUR';
 
 @Injectable()
 export class PosOrderService {
@@ -189,7 +189,7 @@ export class PosOrderService {
       tenantId: tenant.tenantId,
       orderId: order.id,
       amount: order.total,
-      currency: dto.currency ?? DEFAULT_CURRENCY,
+      currency: dto.currency ?? tenant.settings?.currency ?? DEFAULT_CURRENCY,
       method: dto.method,
       customerId: order.customerId,
       reason: 'pos_sale',

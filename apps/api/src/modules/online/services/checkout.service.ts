@@ -26,6 +26,7 @@ import { OnlineOrderType } from '../enums/online-order-type.enum';
 import { parseMoney, formatMoney, sumMoney } from '../../orders/domain/order-totals.util';
 import { TaxCalculationService } from '../../tax';
 import { TenantSettingsEntity } from '../../onboarding/entities/tenant-settings.entity';
+import { CustomerEntity } from '../../loyalty/entities';
 
 const DEFAULT_CURRENCY = 'EUR';
 
@@ -38,6 +39,8 @@ export class CheckoutService {
     private readonly taxCalculation: TaxCalculationService,
     @InjectRepository(TenantSettingsEntity)
     private readonly tenantSettingsRepository: Repository<TenantSettingsEntity>,
+    @InjectRepository(CustomerEntity)
+    private readonly customersRepository: Repository<CustomerEntity>,
   ) {}
 
   async checkout(tenant: TenantContext, dto: OnlineCheckoutDto): Promise<OnlineCheckoutResult> {
@@ -64,6 +67,9 @@ export class CheckoutService {
       taxTotal: baseTax.taxTotal,
       chargeableTaxTotal: baseTax.chargeableTaxTotal,
     });
+    const customerSegmentIds = dto.customerId
+      ? await this.customerSegments(tenant.tenantId, dto.customerId)
+      : [];
     const promotionContext = this.buildPromotionContext(
       tenant.tenantId,
       basket.couponCode,
@@ -72,6 +78,7 @@ export class CheckoutService {
       basket.locationId,
       dto.customerId,
       orderType,
+      customerSegmentIds,
     );
 
     if (basket.couponCode) {
@@ -202,6 +209,7 @@ export class CheckoutService {
     locationId: string,
     customerId: string | undefined,
     orderType: OrderType,
+    customerSegmentIds: string[],
   ): PromotionOrderDraftContext {
     return {
       tenantId,
@@ -212,6 +220,7 @@ export class CheckoutService {
       serviceChargeTotal: totals.serviceChargeTotal,
       locationId,
       customerId: customerId ?? null,
+      customerSegmentIds,
       channel: 'online',
       orderType,
       lines: lines.map((line) => ({
@@ -292,5 +301,10 @@ export class CheckoutService {
 
   private resolveCurrency(tenant: TenantContext, currency?: string): string {
     return (currency ?? tenant.settings?.currency ?? DEFAULT_CURRENCY).trim().toUpperCase();
+  }
+
+  private async customerSegments(tenantId: string, customerId: string): Promise<string[]> {
+    const customer = await this.customersRepository.findOne({ where: { tenantId, id: customerId } });
+    return customer?.segments ?? [];
   }
 }

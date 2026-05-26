@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ProductEntity } from '../catalog/entities/product.entity';
 import { VariantEntity } from '../catalog/entities/variant.entity';
 import { GiftCardEntity, StoreCreditTransactionEntity } from '../giftcards/entities';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { CustomerEntity, LoyaltyTransactionEntity } from '../loyalty/entities';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { OrderEntity } from '../orders/entities/order.entity';
@@ -15,6 +16,7 @@ import { CustomerAuthGuard } from './guards/customer-auth.guard';
 @Module({
   imports: [
     AuthModule,
+    LoyaltyModule,
     NotificationsModule,
     TypeOrmModule.forFeature([
       ...CUSTOMER_ACCOUNT_ENTITIES,

@@ -33,4 +33,10 @@ export class PublicLoyaltyController {
     const data = await this.loyalty.quoteRedemption(tenant.tenantId, dto);
     return { success: true, data };
   }
+
+  @Get('rewards')
+  async rewards(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.loyalty.listRewards(tenant);
+    return { success: true, data };
+  }
 }

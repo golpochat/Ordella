@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bookmark, Home, ListOrdered, User } from 'lucide-react';
+import { Bookmark, Gift, Home, ListOrdered, User } from 'lucide-react';
 import { cn } from '@shared-ui';
 
 const links = [
   { href: '/home', label: 'Home', icon: Home },
   { href: '/orders', label: 'Orders', icon: ListOrdered },
+  { href: '/rewards', label: 'Rewards', icon: Gift },
   { href: '/saved', label: 'Saved', icon: Bookmark },
   { href: '/profile', label: 'Profile', icon: User },
 ];

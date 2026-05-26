@@ -25,6 +25,7 @@ import { RoutingModule } from '../routing';
 import { TaxModule } from '../tax';
 import { WarehouseModule } from '../warehouse/warehouse.module';
 import { TenantSettingsEntity } from '../onboarding/entities/tenant-settings.entity';
+import { CustomerEntity } from '../loyalty/entities';
 import { PublicController } from './controllers';
 import { PublicCatalogController } from './controllers/public-catalog.controller';
 import { OrdersOnlinePublicController } from './controllers/orders-online-public.controller';
@@ -72,6 +73,7 @@ import { MenuQueryRepository } from './repositories/menu-query.repository';
       BundleEntity,
       BundleItemEntity,
       StockItemEntity,
+      CustomerEntity,
       TenantSettingsEntity,
     ]),
     OrdersFeatureModule,

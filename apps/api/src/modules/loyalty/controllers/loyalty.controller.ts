@@ -5,11 +5,14 @@ import { TenantGuard } from '../../../common/guards';
 import { JwtAuthGuard, RbacGuard, RequirePermissions } from '../../auth';
 import { AdminPermissionKeys } from '../../admin/constants/admin-permission-keys';
 import {
+  CreateReferralDto,
   CustomerSearchDto,
   LoyaltyAdjustmentDto,
   LoyaltyRedeemQuoteDto,
   LoyaltyTransactionQueryDto,
   UpdateLoyaltySettingsDto,
+  UpsertLoyaltyRewardDto,
+  UpsertLoyaltyTierDto,
   UpsertCustomerDto,
 } from '../dto';
 import { LoyaltyService } from '../services/loyalty.service';
@@ -86,6 +89,51 @@ export class LoyaltyController {
     @Body() dto: LoyaltyRedeemQuoteDto,
   ): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.loyalty.quoteRedemption(tenant.tenantId, dto);
+    return { success: true, data };
+  }
+
+  @Get('tiers')
+  async tiers(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.loyalty.listTiers(tenant);
+    return { success: true, data };
+  }
+
+  @Post('tiers')
+  async upsertTier(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpsertLoyaltyTierDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.loyalty.upsertTier(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Get('rewards')
+  async rewards(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.loyalty.listRewards(tenant);
+    return { success: true, data };
+  }
+
+  @Post('rewards')
+  async upsertReward(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: UpsertLoyaltyRewardDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.loyalty.upsertReward(tenant, dto);
+    return { success: true, data };
+  }
+
+  @Get('referrals')
+  async referrals(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown[]>> {
+    const data = await this.loyalty.listReferrals(tenant);
+    return { success: true, data };
+  }
+
+  @Post('referrals')
+  async createReferral(
+    @CurrentTenant() tenant: TenantContext,
+    @Body() dto: CreateReferralDto,
+  ): Promise<ApiSuccessResponse<unknown>> {
+    const data = await this.loyalty.createReferral(tenant, dto);
     return { success: true, data };
   }
 

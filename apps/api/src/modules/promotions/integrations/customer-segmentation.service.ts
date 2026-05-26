@@ -18,6 +18,12 @@ export class CustomerSegmentationService {
   }
 
   matchesContext(context: PromotionOrderDraftContext, segmentId: string): boolean {
+    if (context.customerSegmentIds?.includes(segmentId)) {
+      return true;
+    }
+    if (segmentId.startsWith('Loyalty: ')) {
+      return false;
+    }
     return this.isInSegment(context.tenantId, context.customerId, segmentId);
   }
 }
