@@ -1,26 +1,38 @@
 # Real-Time Event Bus
 
-Durable events, topics, publish/subscribe, and replay for event-driven workflows.
+Event Bus: canonical domain events, subscriptions, and replay for integrators.
+
+All major systems publish versioned domain events to the Event Bus with schemas registered for consumer compatibility.
+
+Integrators subscribe via webhooks or streaming connectors; replay supports backfill and disaster recovery patterns.
+
+Event Flow architecture documentation describes ordering, idempotency, and dead-letter handling.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Event catalog (placeholder)
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Event Flow](../architecture/event-flow.md)
+- [Webhooks](../developers/webhooks.md)
+- [Orchestration Engine](../systems/orchestration.md)
 
 ---
 

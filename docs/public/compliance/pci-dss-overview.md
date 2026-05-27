@@ -1,26 +1,34 @@
 # PCI DSS Overview
 
-Payment card data handling and PCI-aligned controls on Ordella (public summary).
+PCI DSS responsibilities for payment data when using Ordella commerce features.
+
+Ordella supports PCI-aligned integrations by keeping cardholder data in certified payment processors and limiting platform storage to tokens and metadata.
+
+Merchants remain responsible for their SAQ or ROC scope depending on integration model—consult your QSA for final determination.
+
+Subscriptions and POS guides describe tokenization patterns that reduce PCI scope for common architectures.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Scope and boundaries
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Payment integrations
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Merchant responsibilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Related documentation
+## Related pages
 
-<!-- Content coming soon -->
+- [Subscriptions Engine](../systems/subscriptions.md)
+- [POS Integration Guide](../guides/pos-integration.md)
+- [Security Architecture](../architecture/security-architecture.md)
 
 ---
 

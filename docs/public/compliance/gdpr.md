@@ -1,26 +1,38 @@
 # GDPR and Privacy
 
-Data subject rights, processing principles, and privacy controls (public summary).
+GDPR and privacy: lawful basis, data subject rights, and processor obligations.
+
+Ordella acts as a processor for tenant customer data; tenants are controllers for end-customer PII they upload or collect.
+
+Data subject access, erasure, and portability requests are supported via documented APIs and admin workflows.
+
+Privacy-by-design principles apply to Loyalty, Marketing, and Retail Genome feature usage.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Lawful basis and purposes
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Data subject rights
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Sub-processors and DPA
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Regional privacy laws
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Data Residency](../compliance/data-residency.md)
+- [Loyalty Engine](../systems/loyalty.md)
+- [Marketing Automation](../systems/marketing.md)
 
 ---
 

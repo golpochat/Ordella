@@ -1,26 +1,38 @@
 # Edge Architecture
 
-Offline-first clients, edge nodes, sync gateways, and low-latency routing.
+Store-edge gateways, offline tolerance, and local processing for latency-sensitive retail.
+
+Edge nodes run catalog caches, POS offline queues, and optional twin or vision workloads when cloud round-trips are unacceptable.
+
+Synchronization protocols reconcile edge state with the control plane using conflict rules defined per domain.
+
+IoT and Autonomous Retail deployments should start with this document and the IoT integration guide.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Edge node types
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Offline sync
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## POS and IoT at the edge
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Routing and failover
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [IoT Device Integration](../guides/iot-device-integration.md)
+- [Digital Twins](../systems/digital-twins.md)
+- [Deployment Architecture](../architecture/deployment-architecture.md)
 
 ---
 

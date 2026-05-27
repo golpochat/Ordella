@@ -1,26 +1,38 @@
 # Partner Program
 
-Overview of the Ordella partner ecosystem: technology, services, and marketplace partners.
+Ordella Partner Program: tiers, benefits, and how to join the ecosystem.
+
+Technology partners build apps, integrations, and services distributed through the Ordella marketplace and co-sell motions.
+
+Program tiers reflect certification depth, support SLAs, and go-to-market benefits—application details are in the sections below.
+
+Commercial terms including revenue share are documented separately for approved partners.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Partner types
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Benefits
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Requirements
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## How to apply
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Partner Onboarding](../partners/partner-onboarding.md)
+- [Partner Integration Guide](../guides/partner-integration.md)
+- [Revenue Share](../partners/revenue-share.md)
 
 ---
 

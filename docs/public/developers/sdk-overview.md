@@ -1,26 +1,38 @@
 # SDK Overview
 
-Client libraries and integration patterns for building on Ordella (placeholder for future SDK releases).
+Client libraries and patterns for building on Ordella without hand-rolling HTTP calls.
+
+Official SDKs are planned for TypeScript, Python, and Java. Until they ship, use any HTTP client with the conventions described in API Overview and Authentication.
+
+SDKs will handle token refresh, pagination helpers, and typed resource methods aligned with OpenAPI definitions.
+
+For mobile and POS, prefer thin clients that cache catalog offline and sync via documented offline endpoints.
 
 ## Supported languages
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Installation
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Configuration
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Common operations
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Direct REST alternative
+## REST without an SDK
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [API Overview](./api-overview.md)
+- [Mobile App Integration](../guides/mobile-app-integration.md)
+- [API Reference](../api-reference.md)
 
 ---
 

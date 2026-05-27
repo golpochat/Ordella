@@ -1,30 +1,42 @@
 # Webhooks
 
-Subscribe to Ordella events and receive signed HTTP callbacks at your endpoint.
+Receive signed HTTP callbacks when events occur in your Ordella tenant.
+
+Webhooks complement pull-based APIs by pushing notifications to your HTTPS endpoint when subscribed event types fire.
+
+Payloads align with Event Bus records. Verify signatures before processing; use idempotent handlers because retries may occur.
+
+Delivery logs help debug failed endpoints; see Integrations Hub in the product for configuration.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Creating a webhook subscription
+## Creating subscriptions
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Event types
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Payload format
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Verification and security
+## Verification
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Retries and delivery logs
+## Retries
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Event Bus](../systems/event-bus.md)
+- [Event Flow](../architecture/event-flow.md)
+- [API Overview](./api-overview.md)
 
 ---
 

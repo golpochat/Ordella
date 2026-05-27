@@ -1,26 +1,38 @@
 # Digital Twins
 
-Simulation entities and scenarios for stores, supply chain, and regions.
+Digital Twins: virtual models of stores, assets, and real-time state mirrors.
+
+Digital Twins maintain a live graph of store layout, devices, and environmental state synchronized from IoT and operations data.
+
+Simulation and what-if scenarios help planograms, staffing, and energy use without disrupting live stores.
+
+Edge deployments may run twin updates locally—see Edge Architecture for latency requirements.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Simulation workflow
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Edge Architecture](../architecture/edge-architecture.md)
+- [IoT Device Integration](../guides/iot-device-integration.md)
+- [Autonomous Retail Engine](../systems/autonomous-engine.md)
 
 ---
 

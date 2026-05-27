@@ -1,26 +1,38 @@
 # Partner Onboarding
 
-Steps to join the Ordella partner network and complete marketplace listing.
+Steps to register, certify, and launch a partner app on Ordella.
+
+Onboarding includes legal agreements, sandbox tenant access, security review, and marketplace listing approval.
+
+Certification validates OAuth scopes, webhook reliability, and data handling against partner policies.
+
+Technical setup follows the Partner Integration guide and Partner API reference.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Application process
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Capabilities profile
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Compliance and review
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Go-live checklist
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Partner API](../partners/partner-api.md)
+- [Partner Integration Guide](../guides/partner-integration.md)
+- [Authentication](../developers/authentication.md)
 
 ---
 

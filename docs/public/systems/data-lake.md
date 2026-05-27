@@ -1,26 +1,38 @@
 # Enterprise Data Lake & ETL
 
-Analytics zones, pipelines, streaming ingest, and governed data exports.
+Data Lake & ETL: ingestion, warehousing, analytics exports, and feature pipelines.
+
+The Data Lake ingests operational and event data for BI, ML features, and compliance reporting.
+
+ETL jobs transform raw streams into curated datasets with lineage metadata for enterprise governance.
+
+Analytics teams export to warehouse tools; ML pipelines feed Retail Genome and Autonomous Retail Engine.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Pipeline types
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Retail Genome](../systems/retail-genome.md)
+- [Data Flow](../architecture/data-flow.md)
+- [Data Residency](../compliance/data-residency.md)
 
 ---
 

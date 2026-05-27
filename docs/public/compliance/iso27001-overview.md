@@ -1,26 +1,34 @@
 # ISO 27001 Overview
 
-Information security management controls aligned with ISO 27001 (public summary).
+Information security management alignment with ISO 27001 for Ordella operations.
+
+Ordella’s ISMS covers risk assessment, asset management, supplier security, and incident response across product and corporate functions.
+
+Certification scope and statement of applicability are available to enterprise customers during procurement.
+
+Technical controls intersect with Security Architecture and Data Residency documentation.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Control mapping
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Risk and governance
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Customer responsibilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Related documentation
+## Related pages
 
-<!-- Content coming soon -->
+- [SOC 2 Overview](../compliance/soc2-overview.md)
+- [GDPR & Privacy](../compliance/gdpr.md)
+- [Data Residency](../compliance/data-residency.md)
 
 ---
 

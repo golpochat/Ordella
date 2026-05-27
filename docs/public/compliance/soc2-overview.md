@@ -1,26 +1,34 @@
 # SOC 2 Overview
 
-How Ordella supports SOC 2 Type I and Type II control objectives (public summary).
+SOC 2 Type II scope, trust service criteria, and customer assurance for Ordella Cloud.
+
+Ordella maintains SOC 2 controls covering security, availability, and confidentiality for the hosted platform.
+
+Customers receive summary reports under NDA; control mappings to platform features are outlined in the sections below.
+
+This overview is not a substitute for your auditor’s assessment—engage your Ordella account team for evidence requests.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Control domains
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Evidence and audit center
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Customer responsibilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Related documentation
+## Related pages
 
-<!-- Content coming soon -->
+- [ISO 27001 Overview](../compliance/iso27001-overview.md)
+- [Security Architecture](../architecture/security-architecture.md)
+- [Cloud Platform](../systems/cloud-platform.md)
 
 ---
 

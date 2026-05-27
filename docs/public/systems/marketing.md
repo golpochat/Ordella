@@ -1,26 +1,38 @@
 # Marketing Automation
 
-Campaigns, segments, and outbound marketing orchestration.
+Marketing Automation: journeys, segments, campaigns, and cross-channel messaging hooks.
+
+Marketing Automation consumes Event Bus and Data Lake segments to trigger email, SMS, and in-app journeys.
+
+Audiences are built from behavioral and transactional signals with consent-aware filtering.
+
+Partners can extend channels via approved connectors documented in the Partner Integration guide.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Trigger patterns
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Event Bus](../systems/event-bus.md)
+- [Data Lake & ETL](../systems/data-lake.md)
+- [Promotions Engine](../systems/promotions.md)
 
 ---
 

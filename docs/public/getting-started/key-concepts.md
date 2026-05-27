@@ -1,26 +1,38 @@
 # Key Concepts
 
-Essential terminology and ideas used across Ordella public documentation.
+Essential ideas and terminology used throughout Ordella public documentation.
+
+Understanding these concepts makes it easier to read API docs, system pages, and architecture guides without ambiguity.
+
+Terms align with the product UI and API where possible; see the glossary for alphabetized definitions.
+
+Concepts build from tenancy outward: tenant → location → catalog → order → fulfillment.
 
 ## Multi-tenancy
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Orders and fulfillment
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Catalog and inventory
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Events and integrations
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Intelligence and automation
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Glossary](./glossary.md)
+- [Systems Overview](../systems/overview.md)
+- [Authentication](../developers/authentication.md)
 
 ---
 

@@ -1,26 +1,38 @@
 # Revenue Share
 
-Commission models, reporting, and payout overview for Ordella partners.
+Revenue share models, reporting, and payout mechanics for Ordella partners.
+
+Revenue share applies to qualifying marketplace transactions and subscription attach defined in your partner agreement.
+
+Partners access statements and export APIs through the partner portal; tax and invoicing requirements vary by region.
+
+This document summarizes public program structure—specific rates are provided during contracting.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Commission tiers
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Reporting
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Payout schedule
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Disputes and adjustments
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Partner Program](../partners/partner-program.md)
+- [Partner Onboarding](../partners/partner-onboarding.md)
+- [Changelog](../changelog.md)
 
 ---
 

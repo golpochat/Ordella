@@ -1,26 +1,38 @@
 # Ordella Cloud Platform
 
-SaaS regions, multi-cloud topology, edge nodes, routing, and deployment controls.
+Cloud Platform: multi-tenant infrastructure, regions, scaling, and platform services.
+
+Ordella Cloud Platform manages tenant isolation, regional deployment, secrets, and observability for hosted SaaS.
+
+Enterprise customers may choose dedicated cells or hybrid edge topologies per Data Residency requirements.
+
+Platform SLOs, maintenance windows, and status communications are published alongside the public changelog.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Regions and residency
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Deployment Architecture](../architecture/deployment-architecture.md)
+- [Data Residency](../compliance/data-residency.md)
+- [SOC 2 Overview](../compliance/soc2-overview.md)
 
 ---
 

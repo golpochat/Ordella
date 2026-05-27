@@ -1,26 +1,36 @@
 # How Ordella Works
 
-A high-level walkthrough of tenants, locations, channels, and how work flows through the platform.
+Ordella organizes retail around tenants, locations, channels, and event-driven modules that stay in sync.
 
-## Platform model
+Each retailer operates in an isolated tenant. Locations, staff, catalog, and inventory belong to that tenant. Storefront, POS, admin, and partner apps all call the same API with tenant context.
 
-<!-- Content coming soon -->
+When something important happens—an order placed, stock adjusted, a promotion applied—Ordella records it in the Event Bus so analytics, orchestration, and integrations can react without polling.
 
-## Tenant and location hierarchy
+## Tenant and location model
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Channels (storefront, POS, admin, apps)
+## Channels and clients
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Event-driven updates
+## Domain modules
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## Where to go next
+## Event-driven sync
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Enterprise overlays
+
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Introduction](./introduction.md)
+- [Event Flow](../architecture/event-flow.md)
+- [High-Level Architecture](../architecture/high-level-architecture.md)
 
 ---
 

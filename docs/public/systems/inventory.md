@@ -1,26 +1,38 @@
 # Inventory Engine
 
-Stock levels, movements, transfers, and multi-location inventory truth.
+Inventory Engine: stock levels, reservations, transfers, and availability signals.
+
+Inventory tracks on-hand, reserved, and in-transit quantities per location and channel, with APIs for adjustments and audits.
+
+Availability feeds pricing, promotions, and storefront displays; stale inventory triggers orchestration or alerting workflows.
+
+Integrators should use idempotent adjustment APIs and subscribe to inventory change webhooks for near-real-time sync.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Best practices
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Operations Core](../systems/operations.md)
+- [Pricing Engine](../systems/pricing.md)
+- [Data Flow](../architecture/data-flow.md)
 
 ---
 

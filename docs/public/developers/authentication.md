@@ -1,30 +1,39 @@
 # Authentication
 
-How to authenticate API requests against Ordella using JWT, API keys, and tenant context.
+Authenticate API requests to Ordella using JWT sessions, API keys, and tenant headers.
 
-## Overview
+All tenant-scoped API routes require proof of identity and an explicit tenant context. Ordella supports interactive login for staff users and machine-to-machine access for integrations.
 
-<!-- Content coming soon -->
+Enterprise tenants may enable SSO (SAML/OAuth) and MFA through security policies documented under Compliance. Partner and auditor portals use separate scoped token types.
+
+Never embed long-lived secrets in client-side code; use server-side token exchange and rotate API keys periodically.
 
 ## JWT and sessions
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API keys
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Tenant headers
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
-## SSO and MFA (enterprise)
+## SSO and MFA
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Error responses
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [API Overview](./api-overview.md)
+- [Rate Limits](./rate-limits.md)
+- [Security Architecture](../architecture/security-architecture.md)
+- [API Reference](../api-reference.md)
 
 ---
 

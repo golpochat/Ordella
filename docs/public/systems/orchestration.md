@@ -1,26 +1,38 @@
 # Orchestration Engine
 
-Cross-system workflows, triggers, and automated action graphs.
+Orchestration Engine: workflows, automations, and cross-system sagas.
+
+Orchestration defines multi-step workflows triggered by events, schedules, or API calls with compensating actions.
+
+Retailers automate replenishment, alerts, and partner callbacks without custom middleware for every integration.
+
+Workflow definitions are versioned; failed steps surface in Admin UI with retry and manual intervention options.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Trigger sources
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Event Bus](../systems/event-bus.md)
+- [IoT Device Integration](../guides/iot-device-integration.md)
+- [Autonomous Retail Engine](../systems/autonomous-engine.md)
 
 ---
 

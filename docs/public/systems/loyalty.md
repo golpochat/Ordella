@@ -1,26 +1,38 @@
 # Loyalty Engine
 
-Points, tiers, rewards, and customer loyalty lifecycle.
+Loyalty Engine: points, tiers, rewards, and member identity across channels.
+
+Loyalty unifies member profiles across POS, mobile, and e-commerce with earn/burn rules and tier progression.
+
+Integrations identify members by phone, email, or external ID; privacy controls align with GDPR documentation.
+
+Reward redemptions interact with Promotions and Subscriptions for bundled membership experiences.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Customer-facing flows
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Subscriptions Engine](../systems/subscriptions.md)
+- [Mobile App Integration](../guides/mobile-app-integration.md)
+- [GDPR & Privacy](../compliance/gdpr.md)
 
 ---
 

@@ -1,30 +1,42 @@
 # Storefront Integration Guide
 
-Build or connect a customer-facing storefront to Ordella catalog, checkout, and loyalty.
+Integrate e-commerce storefronts with Ordella catalog, cart, checkout, and fulfillment APIs.
+
+Storefront integrations typically use server-side API keys for catalog sync and customer-scoped tokens for checkout sessions.
+
+Ordella exposes consistent product, variant, and inventory views so your storefront reflects store-level availability and channel-specific pricing.
+
+For headless commerce, combine REST resources with webhook subscriptions for order and inventory events.
 
 ## Prerequisites
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Public catalog APIs
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Cart and checkout
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Payments
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Customer accounts and loyalty
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Go-live checklist
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [POS Integration](../guides/pos-integration.md)
+- [Pricing Engine](../systems/pricing.md)
+- [Inventory Engine](../systems/inventory.md)
 
 ---
 

@@ -1,26 +1,38 @@
 # Data Residency
 
-Where tenant data may be stored and processed; EU, US, and APAC residency modes.
+Regional data storage, cross-border transfers, and residency options for enterprise tenants.
+
+Tenants select primary regions at provisioning; replication and backup stay within approved geographic boundaries unless contractually extended.
+
+Subprocessors and transfer mechanisms (SCCs, etc.) are listed in enterprise agreements and DPA annexes.
+
+Cloud Platform and Deployment Architecture docs describe technical enforcement of residency policies.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Residency policies
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Region selection
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Cross-border restrictions
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Cloud Platform](../systems/cloud-platform.md)
+- [Deployment Architecture](../architecture/deployment-architecture.md)
+- [GDPR & Privacy](../compliance/gdpr.md)
 
 ---
 

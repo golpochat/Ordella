@@ -1,26 +1,38 @@
 # AI Assistant
 
-Natural-language insights, suggested actions, and operational Q&A for managers.
+AI Assistant: copilots for operators, natural-language queries, and guided workflows.
+
+The AI Assistant layer provides tenant-scoped copilots grounded in operational data and policy guardrails.
+
+Use cases include inventory questions, promotion planning, and anomaly explanations fed by Retail Genome features.
+
+Enterprise tenants configure model policies, data retention, and audit logging through compliance controls.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Usage guidelines
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Retail Genome](../systems/retail-genome.md)
+- [Data Lake & ETL](../systems/data-lake.md)
+- [Security Architecture](../architecture/security-architecture.md)
 
 ---
 

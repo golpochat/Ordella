@@ -1,26 +1,38 @@
 # Partner API
 
-APIs and portal endpoints for partners building on Ordella.
+Partner API surface: installation, capabilities, billing hooks, and tenant context.
+
+The Partner API lets apps register metadata, request capabilities, and manage per-tenant installations with consent flows.
+
+Endpoints complement the public REST API—partners use both for marketplace apps versus direct tenant integrations.
+
+Rate limits and versioning follow global API policies described in the API Reference hub.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Portal authentication
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Admin vs portal routes
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Marketplace APIs
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Rate limits and support
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [API Reference](../api-reference.md)
+- [Partner Integration Guide](../guides/partner-integration.md)
+- [Webhooks](../developers/webhooks.md)
 
 ---
 

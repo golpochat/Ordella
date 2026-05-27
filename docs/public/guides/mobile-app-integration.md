@@ -1,30 +1,42 @@
 # Mobile App Integration Guide
 
-Integrate customer or staff mobile apps with Ordella APIs and push notifications.
+Build consumer or associate mobile apps on Ordella APIs with secure session handling.
+
+Mobile apps should use short-lived access tokens, refresh flows, and device binding where required by your tenant policy.
+
+Associate apps often need location context, role-based permissions, and offline-friendly catalog caches—patterns covered in the sections below.
+
+Consumer apps integrate loyalty, subscriptions, and push notification hooks through documented platform endpoints.
 
 ## Prerequisites
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Authentication flows
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Customer app patterns
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Staff and driver patterns
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Push and deep links
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Security considerations
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [SDK Overview](../developers/sdk-overview.md)
+- [Loyalty Engine](../systems/loyalty.md)
+- [Authentication](../developers/authentication.md)
 
 ---
 

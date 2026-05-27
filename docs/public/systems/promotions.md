@@ -1,26 +1,38 @@
 # Promotions Engine 2.0
 
-Discount rules, conditions, coupons, and promotional campaigns.
+Promotions Engine: campaigns, coupons, bundles, and stackable offer logic.
+
+Promotions apply at cart or line level with configurable stacking, eligibility, and budget caps.
+
+Marketing teams define campaigns in Admin UI; developers integrate via cart APIs and promotion preview endpoints.
+
+Event emissions allow analytics and attribution through the Data Lake and Marketing Automation modules.
 
 ## Overview
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Key capabilities
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## API surface
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Related systems
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Examples (placeholder)
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Pricing Engine](../systems/pricing.md)
+- [Loyalty Engine](../systems/loyalty.md)
+- [Marketing Automation](../systems/marketing.md)
 
 ---
 

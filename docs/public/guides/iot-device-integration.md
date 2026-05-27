@@ -1,30 +1,42 @@
 # IoT Device Integration Guide
 
-Register devices, send telemetry, and receive commands through the Hardware & IoT layer.
+Connect sensors, edge gateways, and in-store IoT devices to Ordella telemetry and automation.
+
+IoT integrations publish device telemetry to the Event Bus and may trigger Orchestration workflows or Digital Twin updates.
+
+Devices authenticate with device credentials or mutual TLS depending on deployment; edge architecture docs describe latency-sensitive paths.
+
+Use this guide when instrumenting coolers, shelves, cameras, or environmental sensors tied to autonomous retail scenarios.
 
 ## Prerequisites
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Device registration
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Telemetry and events
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Commands and acknowledgements
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Edge gateways
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
 
 ## Operational monitoring
 
-<!-- Content coming soon -->
+<!-- Expanded content planned -->
+
+## Related pages
+
+- [Edge Architecture](../architecture/edge-architecture.md)
+- [Event Bus](../systems/event-bus.md)
+- [Digital Twins](../systems/digital-twins.md)
 
 ---
 

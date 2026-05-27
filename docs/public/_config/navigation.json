@@ -1,0 +1,59 @@
+{
+  "site": {
+    "name": "Ordella Docs",
+    "baseUrl": "https://docs.ordella.com",
+    "home": "/index.md"
+  },
+  "primaryNav": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "path": "/getting-started/introduction.md",
+      "icon": "book-open"
+    },
+    {
+      "id": "developers",
+      "title": "Developers",
+      "path": "/developers/api-overview.md",
+      "icon": "code"
+    },
+    {
+      "id": "guides",
+      "title": "Guides",
+      "path": "/guides/pos-integration.md",
+      "icon": "map"
+    },
+    {
+      "id": "systems",
+      "title": "Systems",
+      "path": "/systems/overview.md",
+      "icon": "layers"
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "path": "/architecture/high-level-architecture.md",
+      "icon": "git-branch"
+    },
+    {
+      "id": "compliance",
+      "title": "Compliance",
+      "path": "/compliance/soc2-overview.md",
+      "icon": "shield"
+    },
+    {
+      "id": "partners",
+      "title": "Partners",
+      "path": "/partners/partner-program.md",
+      "icon": "users"
+    }
+  ],
+  "utilityNav": [
+    { "title": "API Reference", "path": "/api-reference.md" },
+    { "title": "Changelog", "path": "/changelog.md" },
+    { "title": "Master Index (internal)", "path": "/../MASTER_INDEX.md", "external": true }
+  ],
+  "ordering": {
+    "rule": "primaryNav order is fixed top-to-bottom; within sections use sidebar.json"
+  }
+}
