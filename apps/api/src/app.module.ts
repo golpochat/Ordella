@@ -51,6 +51,10 @@ import { DataLakeModule } from './modules/data-lake';
 import { OrchestrationModule } from './modules/orchestration';
 import { DigitalTwinsModule } from './modules/digital-twins';
 import { AutonomousRetailModule } from './modules/autonomous-retail';
+import { PartnerNetworkModule } from './modules/partner-network';
+import { ComplianceSuiteModule } from './modules/compliance-suite';
+import { CloudPlatformModule } from './modules/cloud-platform';
+import { RetailGenomeModule } from './modules/retail-genome';
 
 @Module({
   imports: [
@@ -108,6 +112,10 @@ import { AutonomousRetailModule } from './modules/autonomous-retail';
     OrchestrationModule,
     DigitalTwinsModule,
     AutonomousRetailModule,
+    PartnerNetworkModule,
+    ComplianceSuiteModule,
+    CloudPlatformModule,
+    RetailGenomeModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,

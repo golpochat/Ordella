@@ -26,6 +26,9 @@ import {
   Warehouse,
   Boxes,
   TrendingUp,
+  Shield,
+  Cloud,
+  Network,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -76,6 +79,10 @@ export const DASHBOARD_NAV: NavItem[] = [
   { id: 'marketing', label: 'Marketing', href: '/marketing/campaigns', icon: Megaphone },
   { id: 'audit-logs', label: 'Audit Logs', href: '/audit-logs', icon: FileClock },
   { id: 'app-store', label: 'App Store', href: '/app-store', icon: Package },
+  { id: 'partner-network', label: 'Partner Network', href: '/partner-network', icon: Users },
+  { id: 'compliance-suite', label: 'Compliance Suite', href: '/compliance-suite', icon: Shield },
+  { id: 'cloud-platform', label: 'Cloud Platform', href: '/cloud-platform', icon: Cloud },
+  { id: 'retail-genome', label: 'Retail Genome', href: '/retail-genome', icon: Network },
   { id: 'integrations-hub', label: 'Integrations Hub', href: '/integrations-hub', icon: Code2 },
   { id: 'developer', label: 'Developer', href: '/developer', icon: Code2 },
   { id: 'reports', label: 'Reports', href: '/reports', icon: ClipboardList },
