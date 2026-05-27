@@ -45,6 +45,12 @@ import { AppStoreModule } from './modules/app-store';
 import { HardwareModule } from './modules/hardware';
 import { AiAssistantModule } from './modules/ai-assistant';
 import { OfflineSyncModule } from './modules/offline-sync';
+import { EventBusModule } from './modules/event-bus';
+import { GlobalizationModule } from './modules/globalization';
+import { DataLakeModule } from './modules/data-lake';
+import { OrchestrationModule } from './modules/orchestration';
+import { DigitalTwinsModule } from './modules/digital-twins';
+import { AutonomousRetailModule } from './modules/autonomous-retail';
 
 @Module({
   imports: [
@@ -96,6 +102,12 @@ import { OfflineSyncModule } from './modules/offline-sync';
     HardwareModule,
     AiAssistantModule,
     OfflineSyncModule,
+    EventBusModule,
+    GlobalizationModule,
+    DataLakeModule,
+    OrchestrationModule,
+    DigitalTwinsModule,
+    AutonomousRetailModule,
     AuditModule,
     CustomerAccountsModule,
     LoyaltyModule,
