@@ -1,7 +1,21 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import { Pencil, RotateCcw } from 'lucide-react';
+import { Select, Button, Card, CardContent, IconButton, Input , Stack } from '@shared-ui';
+import {
+  AdminTableShell,
+  Table,
+  TableActions,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   createSsoProvider,
@@ -16,6 +30,7 @@ import {
   type SsoRoleMapping,
 } from '@/lib/api/admin/enterprise-sso';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 type ProviderForm = {
   id?: string;
@@ -49,16 +64,16 @@ const emptyProvider: ProviderForm = {
 const INTERNAL_ROLES = ['admin', 'manager', 'staff', 'fulfillment', 'driver', 'owner', 'FranchiseHQ'];
 
 export function EnterpriseSsoPanel() {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = useMemo(() => createBrowserApiClient(), []);
   const [providers, setProviders] = useState<SsoProvider[]>([]);
   const [mappings, setMappings] = useState<SsoRoleMapping[]>([]);
   const [federatedUsers, setFederatedUsers] = useState<FederatedUser[]>([]);
   const [providerForm, setProviderForm] = useState<ProviderForm>(emptyProvider);
   const [mappingDrafts, setMappingDrafts] = useState<Array<{ externalRole: string; internalRole: string; providerId?: string }>>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    const load = useCallback(async () => {
 
-  const load = useCallback(async () => {
     try {
       const [nextProviders, nextMappings, nextUsers] = await Promise.all([
         listSsoProviders(api),
@@ -73,9 +88,8 @@ export function EnterpriseSsoPanel() {
         internalRole: mapping.internalRole,
         providerId: mapping.providerId ?? undefined,
       })));
-      setError(null);
-    } catch (err) {
-      setError(getErrorMessage(err));
+      } catch (err) {
+      toastError(getErrorMessage(err));
     }
   }, [api]);
 
@@ -119,27 +133,27 @@ export function EnterpriseSsoPanel() {
       if (providerForm.id) await updateSsoProvider(api, body);
       else await createSsoProvider(api, body);
       setProviderForm(emptyProvider);
-      setMessage('Provider saved');
+      toastSuccess('Provider saved');
       await load();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   };
 
   const saveMappings = async () => {
     try {
       await updateSsoRoleMappings(api, mappingDrafts.filter((mapping) => mapping.externalRole && mapping.internalRole));
-      setMessage('Role mappings saved');
+      toastSuccess('Role mappings saved');
       await load();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   };
 
   const testConnection = async () => {
     const provider = providers.find((row) => row.id === providerForm.id) ?? providers[0];
     if (!provider) {
-      setError('Save an SSO provider before testing');
+      toastError('Save an SSO provider before testing');
       return;
     }
     const res = await fetch('/api/auth/sso/start', {
@@ -153,20 +167,17 @@ export function EnterpriseSsoPanel() {
     });
     const body = await res.json().catch(() => null);
     if (!res.ok) {
-      setError((body as { message?: string } | null)?.message ?? 'Connection test failed');
+      toastError((body as { message?: string } | null)?.message ?? 'Connection test failed');
       return;
     }
-    setMessage('Connection test generated a valid SSO authorization URL');
+    toastSuccess('Connection test generated a valid SSO authorization URL');
   };
 
   const activeProviders = providers.filter((provider) => provider.isActive).length;
   const mappedRoles = mappings.length;
 
   return (
-    <div className="space-y-6">
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
+    <Stack gap="lg" className="min-w-0">
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard label="Active providers" value={activeProviders} />
         <MetricCard label="Role mappings" value={mappedRoles} />
@@ -190,13 +201,13 @@ export function EnterpriseSsoPanel() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={providerForm.providerType} onChange={(event) => setProviderForm({ ...providerForm, providerType: event.target.value as ProviderForm['providerType'] })}>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={providerForm.providerType} onChange={(event) => setProviderForm({ ...providerForm, providerType: event.target.value as ProviderForm['providerType'] })}>
               <option value="azure_ad">Azure AD</option>
               <option value="okta">Okta</option>
               <option value="google">Google Workspace</option>
               <option value="oidc">Generic OIDC</option>
               <option value="saml">Generic SAML</option>
-            </select>
+            </Select>
             <Input placeholder="Default internal role" value={providerForm.defaultRole} onChange={(event) => setProviderForm({ ...providerForm, defaultRole: event.target.value })} />
             <Input placeholder="Client ID / Audience" value={providerForm.clientId} onChange={(event) => setProviderForm({ ...providerForm, clientId: event.target.value })} />
             <Input placeholder="Client secret" type="password" value={providerForm.clientSecret} onChange={(event) => setProviderForm({ ...providerForm, clientSecret: event.target.value })} />
@@ -219,30 +230,48 @@ export function EnterpriseSsoPanel() {
         </CardContent>
       </Card>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left">
-            <tr>
-              <th className="p-3 font-medium">Provider</th>
-              <th className="p-3 font-medium">Issuer</th>
-              <th className="p-3 font-medium">Redirect</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
+      <AdminTableShell
+        isEmpty={providers.length === 0}
+        emptyTitle="No SSO providers"
+        emptyDescription="Configure an identity provider to enable enterprise SSO."
+      >
+        <Table>
+          <TableHeader sticky>
+            <TableRow>
+              <TableHead>Provider</TableHead>
+              <TableHead>Issuer</TableHead>
+              <TableHead>Redirect</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-[1%] text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody zebra>
             {providers.map((provider) => (
-              <tr key={provider.id} className="border-t">
-                <td className="p-3 font-medium">{provider.providerType}</td>
-                <td className="p-3 text-muted-foreground">{provider.issuerUrl ?? provider.metadataUrl ?? 'Not set'}</td>
-                <td className="p-3 text-muted-foreground">{provider.redirectUrl ?? 'Not set'}</td>
-                <td className="p-3"><Badge variant={provider.isActive ? 'default' : 'secondary'}>{provider.isActive ? 'Active' : 'Off'}</Badge></td>
-                <td className="p-3"><Button type="button" size="sm" variant="outline" onClick={() => editProvider(provider)}>Edit</Button></td>
-              </tr>
+              <TableRow key={provider.id}>
+                <TableCell className="font-medium">{provider.providerType}</TableCell>
+                <TableCell className="text-muted-foreground">{provider.issuerUrl ?? provider.metadataUrl ?? 'Not set'}</TableCell>
+                <TableCell className="text-muted-foreground">{provider.redirectUrl ?? 'Not set'}</TableCell>
+                <TableCell>
+                  <Tag variant={provider.isActive ? 'brand' : 'neutral'}><TagLabel>{provider.isActive ? 'Active' : 'Off'}</TagLabel></Tag>
+                </TableCell>
+                <TableCell className="text-right">
+                  <TableActions>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-label={`Edit ${provider.providerType} provider`}
+                      onClick={() => editProvider(provider)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </IconButton>
+                  </TableActions>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </AdminTableShell>
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -261,13 +290,13 @@ export function EnterpriseSsoPanel() {
             {mappingDrafts.map((mapping, index) => (
               <div key={`${mapping.externalRole}-${index}`} className="grid gap-2 rounded-lg border p-3 md:grid-cols-4">
                 <Input placeholder="External role/group" value={mapping.externalRole} onChange={(event) => setMappingDrafts((current) => current.map((row, i) => i === index ? { ...row, externalRole: event.target.value } : row))} />
-                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={mapping.internalRole} onChange={(event) => setMappingDrafts((current) => current.map((row, i) => i === index ? { ...row, internalRole: event.target.value } : row))}>
+                <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={mapping.internalRole} onChange={(event) => setMappingDrafts((current) => current.map((row, i) => i === index ? { ...row, internalRole: event.target.value } : row))}>
                   {INTERNAL_ROLES.map((role) => <option key={role} value={role}>{role}</option>)}
-                </select>
-                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={mapping.providerId ?? ''} onChange={(event) => setMappingDrafts((current) => current.map((row, i) => i === index ? { ...row, providerId: event.target.value || undefined } : row))}>
+                </Select>
+                <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={mapping.providerId ?? ''} onChange={(event) => setMappingDrafts((current) => current.map((row, i) => i === index ? { ...row, providerId: event.target.value || undefined } : row))}>
                   <option value="">All providers</option>
                   {providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.providerType}</option>)}
-                </select>
+                </Select>
                 <Button type="button" variant="ghost" onClick={() => setMappingDrafts((current) => current.filter((_, i) => i !== index))}>Remove</Button>
               </div>
             ))}
@@ -279,50 +308,52 @@ export function EnterpriseSsoPanel() {
       <Card>
         <CardContent className="space-y-4 p-4">
           <h2 className="text-lg font-semibold">Staff provisioning</h2>
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th className="p-3 font-medium">Staff</th>
-                  <th className="p-3 font-medium">Role</th>
-                  <th className="p-3 font-medium">External roles</th>
-                  <th className="p-3 font-medium">Last login</th>
-                  <th className="p-3 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
+          <AdminTableShell
+            isEmpty={federatedUsers.length === 0}
+            emptyTitle="No federated users"
+            emptyDescription="Staff who sign in via SSO will appear here."
+          >
+            <Table>
+              <TableHeader sticky>
+                <TableRow>
+                  <TableHead>Staff</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>External roles</TableHead>
+                  <TableHead>Last login</TableHead>
+                  <TableHead className="w-[1%] text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody zebra>
                 {federatedUsers.map((user) => (
-                  <tr key={user.id} className="border-t">
-                    <td className="p-3">
+                  <TableRow key={user.id}>
+                    <TableCell>
                       <p className="font-medium">{user.name}</p>
                       <p className="text-xs text-muted-foreground">{user.email}</p>
-                    </td>
-                    <td className="p-3">{user.roleName ?? user.roleId}</td>
-                    <td className="p-3">{user.federatedRoles.join(', ') || 'None'}</td>
-                    <td className="p-3">{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</td>
-                    <td className="p-3">
-                      <Button type="button" size="sm" variant="outline" onClick={() => void resetFederatedUser(api, user.id).then(load)}>
-                        Reset local overrides
-                      </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell>{user.roleName ?? user.roleId}</TableCell>
+                    <TableCell>{user.federatedRoles.join(', ') || 'None'}</TableCell>
+                    <TableCell>{user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : 'Never'}</TableCell>
+                    <TableCell className="text-right">
+                      <TableActions>
+                        <IconButton
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          aria-label={`Reset local overrides for ${user.name}`}
+                          onClick={() => void resetFederatedUser(api, user.id).then(load)}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </IconButton>
+                      </TableActions>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </AdminTableShell>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-2 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}

@@ -1,8 +1,15 @@
 import { createServerApiClient } from '@/lib/api/server';
 import { getCohortInsight, type AnalyticsInsightsParams } from '@/lib/api/admin/analytics-insights';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
-import { PageHeader } from '@/components/ui/page-header';
-import { Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { DetailPage, DetailPageHeader, DetailSectionCard } from '@/components/ui/admin-detail';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { formatMoney, getErrorMessage } from '@/lib/utils';
 
 type CohortInsightPageProps = {
@@ -21,47 +28,52 @@ export default async function CohortInsightPage({ params, searchParams }: Cohort
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <DetailPage>
+      <DetailPageHeader
+        breadcrumb={[
+          { label: 'Analytics insights', href: '/analytics-insights' },
+          { label: cohort },
+        ]}
         title={`${cohort} cohort performance`}
         description="Retention, revenue, and order frequency by cohort month."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       {insight ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Cohort month breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Month</TableHead>
-                  <TableHead>Customers</TableHead>
-                  <TableHead>Retention</TableHead>
-                  <TableHead>Revenue</TableHead>
-                  <TableHead>Orders/customer</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {insight.retention.months.map((month) => {
-                  const revenue = insight.revenue?.months.find((row) => row.month === month.month);
-                  const frequency = insight.orderFrequency?.months.find((row) => row.month === month.month);
-                  return (
-                    <TableRow key={month.month}>
-                      <TableCell>{month.month}</TableCell>
-                      <TableCell>{month.customers ?? 0}</TableCell>
-                      <TableCell>{month.retentionRate?.toFixed(1) ?? '0'}%</TableCell>
-                      <TableCell>{formatMoney(revenue?.revenue ?? '0.00')}</TableCell>
-                      <TableCell>{frequency?.ordersPerCustomer?.toFixed(2) ?? '0.00'}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <DetailSectionCard title="Cohort month breakdown" description="Monthly retention and revenue metrics.">
+          <Table>
+            <TableHeader sticky>
+              <TableRow>
+                <TableHead>Month</TableHead>
+                <TableHead>Customers</TableHead>
+                <TableHead>Retention</TableHead>
+                <TableHead>Revenue</TableHead>
+                <TableHead>Orders/customer</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody zebra>
+              {insight.retention.months.map((month) => {
+                const revenue = insight.revenue?.months.find((row) => row.month === month.month);
+                const frequency = insight.orderFrequency?.months.find((row) => row.month === month.month);
+                return (
+                  <TableRow key={month.month}>
+                    <TableCell>{month.month}</TableCell>
+                    <TableCell className="tabular-nums">{month.customers ?? '—'}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {month.retentionRate != null ? `${(month.retentionRate * 100).toFixed(1)}%` : '—'}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {formatMoney(revenue?.revenue ?? month.revenue ?? '0')}
+                    </TableCell>
+                    <TableCell className="tabular-nums">
+                      {frequency?.ordersPerCustomer?.toFixed(2) ?? month.ordersPerCustomer?.toFixed(2) ?? '—'}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </DetailSectionCard>
       ) : null}
-    </div>
+    </DetailPage>
   );
 }

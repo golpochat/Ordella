@@ -1,7 +1,17 @@
 'use client';
 
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input , Stack } from '@shared-ui';
+import {
+  AdminTableShell,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   createGlobalCatalogCategory,
@@ -16,6 +26,7 @@ import {
   type BrandLocalItem,
 } from '@/lib/api/admin/brand-catalog';
 import { getErrorMessage } from '@/lib/utils';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 type GlobalItemDraft = {
   name: string;
@@ -46,6 +57,8 @@ export function BrandCatalogPanel({
   initialGlobalCategories: BrandGlobalCategory[];
   initialLocalItems: BrandLocalItem[];
 }) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = useMemo(() => createBrowserApiClient(), []);
   const [globalItems, setGlobalItems] = useState(initialGlobalItems);
   const [globalCategories, setGlobalCategories] = useState(initialGlobalCategories);
@@ -53,11 +66,10 @@ export function BrandCatalogPanel({
   const [categoryName, setCategoryName] = useState('');
   const [itemDraft, setItemDraft] = useState<GlobalItemDraft>(EMPTY_GLOBAL_ITEM);
   const [overrideDraft, setOverrideDraft] = useState<Record<string, { price: string; name: string; isActive: boolean }>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+
     const drafts: Record<string, { price: string; name: string; isActive: boolean }> = {};
     for (const item of localItems) {
       if (!item.globalItemId) continue;
@@ -83,14 +95,12 @@ export function BrandCatalogPanel({
 
   async function run(action: () => Promise<void>, success: string) {
     setLoading(true);
-    setError(null);
-    setMessage(null);
     try {
       await action();
-      setMessage(success);
+      toastSuccess(success);
       await refresh();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -140,10 +150,7 @@ export function BrandCatalogPanel({
   const localOnlyItems = localItems.filter((item) => !item.globalItemId);
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-
+    <Stack gap="lg" className="min-w-0">
       <Card>
         <CardHeader>
           <CardTitle>Global categories</CardTitle>
@@ -174,40 +181,46 @@ export function BrandCatalogPanel({
             <Input placeholder="Base price" value={itemDraft.basePrice} onChange={(e) => setItemDraft({ ...itemDraft, basePrice: e.target.value })} />
             <Input placeholder="SKU" value={itemDraft.sku} onChange={(e) => setItemDraft({ ...itemDraft, sku: e.target.value })} />
             <Input placeholder="Barcode" value={itemDraft.barcode} onChange={(e) => setItemDraft({ ...itemDraft, barcode: e.target.value })} />
-            <select className="h-10 rounded-md border border-input bg-background px-3" value={itemDraft.globalCategoryId} onChange={(e) => setItemDraft({ ...itemDraft, globalCategoryId: e.target.value })}>
+            <Select className="h-10 rounded-md border border-input bg-background px-3" value={itemDraft.globalCategoryId} onChange={(e) => setItemDraft({ ...itemDraft, globalCategoryId: e.target.value })}>
               <option value="">No global category</option>
               {globalCategories.map((category) => (
                 <option key={category.id} value={category.id}>{category.name}</option>
               ))}
-            </select>
+            </Select>
             <Input placeholder='Attributes JSON, e.g. {"size":"large"}' value={itemDraft.attributesJson} onChange={(e) => setItemDraft({ ...itemDraft, attributesJson: e.target.value })} />
           </div>
           <Input placeholder="Description" value={itemDraft.description} onChange={(e) => setItemDraft({ ...itemDraft, description: e.target.value })} />
           <Button type="button" disabled={loading} onClick={addGlobalItem}>Create global item</Button>
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th className="p-3">Name</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Base price</th>
-                  <th className="p-3">SKU</th>
-                  <th className="p-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
+          <AdminTableShell
+            isEmpty={globalItems.length === 0}
+            emptyTitle="No global items"
+            emptyDescription="Create a global catalog item to share across brands."
+          >
+            <Table>
+              <TableHeader sticky>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Base price</TableHead>
+                  <TableHead>SKU</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody zebra>
                 {globalItems.map((item) => (
-                  <tr key={item.id} className="border-t">
-                    <td className="p-3">{item.name}</td>
-                    <td className="p-3 text-muted-foreground">{globalCategories.find((category) => category.id === item.globalCategoryId)?.name ?? '—'}</td>
-                    <td className="p-3">{item.basePrice}</td>
-                    <td className="p-3 text-muted-foreground">{item.sku ?? '—'}</td>
-                    <td className="p-3">{item.isActive ? 'Active' : 'Inactive'}</td>
-                  </tr>
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {globalCategories.find((category) => category.id === item.globalCategoryId)?.name ?? '—'}
+                    </TableCell>
+                    <TableCell>{item.basePrice}</TableCell>
+                    <TableCell className="text-muted-foreground">{item.sku ?? '—'}</TableCell>
+                    <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </AdminTableShell>
         </CardContent>
       </Card>
 
@@ -237,7 +250,7 @@ export function BrandCatalogPanel({
               </div>
             );
           })}
-          {inheritedItems.length === 0 ? <p className="text-sm text-muted-foreground">No inherited items yet. Create global items to start inheritance.</p> : null}
+          {inheritedItems.length === 0 ? <PanelEmpty title="No inherited items yet. Create global items to start inheritance" description="Content will appear here when available." /> : null}
         </CardContent>
       </Card>
 
@@ -252,9 +265,9 @@ export function BrandCatalogPanel({
               <p className="text-sm text-muted-foreground">{item.price} · {item.isActive ? 'Active' : 'Inactive'}</p>
             </div>
           ))}
-          {localOnlyItems.length === 0 ? <p className="text-sm text-muted-foreground">No local-only catalog items.</p> : null}
+          {localOnlyItems.length === 0 ? <PanelEmpty title="No local-only catalog items" description="Content will appear here when available." /> : null}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }

@@ -1,33 +1,47 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Button, Input } from '@shared-ui';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  DateRangePicker,
+  FilterActions,
+  FilterApplyButton,
+  FilterBar,
+  FilterResetButton,
+  paramsFromForm,
+  useFilterReset,
+} from '@/components/ui/admin-filter';
 
 export function ReportDateFilter() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const reset = useFilterReset();
+
+  const from = searchParams.get('from') ?? '';
+  const to = searchParams.get('to') ?? '';
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const params = new URLSearchParams(searchParams.toString());
-    const from = String(formData.get('from') ?? '');
-    const to = String(formData.get('to') ?? '');
-    if (from) params.set('from', from);
-    else params.delete('from');
-    if (to) params.set('to', to);
-    else params.delete('to');
+    const params = paramsFromForm(e.currentTarget, ['from', 'to'], { preserve: searchParams });
     router.push(`${pathname}?${params.toString()}`);
   }
 
   return (
-    <form className="mb-4 flex flex-wrap gap-2" onSubmit={onSubmit}>
-      <Input name="from" type="date" defaultValue={searchParams.get('from') ?? ''} />
-      <Input name="to" type="date" defaultValue={searchParams.get('to') ?? ''} />
-      <Button type="submit" variant="secondary">
-        Apply range
-      </Button>
-    </form>
+    <FilterBar onSubmit={onSubmit}>
+      <DateRangePicker
+        fromId="report-from"
+        toId="report-to"
+        fromDefaultValue={from}
+        toDefaultValue={to}
+        fromActive={Boolean(from)}
+        toActive={Boolean(to)}
+      />
+      <FilterActions>
+        <FilterApplyButton>Apply range</FilterApplyButton>
+        <FilterResetButton type="button" onClick={reset}>
+          Clear
+        </FilterResetButton>
+      </FilterActions>
+    </FilterBar>
   );
 }

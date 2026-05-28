@@ -1,123 +1,155 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared-ui';
+import { useCallback, useState } from 'react';
+import { Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { EmptyState, EmptyStateActionLink } from '@/components/ui/empty-state';
+import { TablePanelSkeleton } from '@/components/ui/admin-loader';
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+import { PageHeader, PageHeaderActionLink } from '@/components/ui/page-header';
+import { MapPin } from 'lucide-react';
 import {
   disableLocation,
   fetchLocations,
   type LocationListItem,
 } from '@/lib/api/locations';
 import { getErrorMessage } from '@/lib/utils';
+import { DisableConfirmDialog } from '@/components/ui/admin-dialog';
+import { usePageRefreshShortcut } from '@/components/ui/admin-shortcuts';
+import { useAdminQuery } from '@/components/ui/admin-performance';
+import { timedAdminFetcher } from '@/lib/admin-timing';
+import { useTranslation } from '@/components/ui/admin-i18n';
 
 export default function LocationsPage() {
-  const [locations, setLocations] = useState<LocationListItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
+  const [disableTarget, setDisableTarget] = useState<LocationListItem | null>(null);
+  const [disableLoading, setDisableLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const {
+    data: locations = [],
+    error,
+    isLoading,
+    mutate,
+  } = useAdminQuery(['locations', 'list'], timedAdminFetcher('locations.list', fetchLocations));
+
+  const load = useCallback(() => mutate(), [mutate]);
+  const listError = actionError ?? (error ? getErrorMessage(error) : null);
+
+  usePageRefreshShortcut({ onRefresh: () => void load() });
+
+  async function confirmDisable() {
+    if (!disableTarget) return;
+    setDisableLoading(true);
+    setActionError(null);
     try {
-      setLocations(await fetchLocations());
+      await disableLocation(disableTarget.id);
+      setDisableTarget(null);
+      await load();
     } catch (e) {
-      setError(getErrorMessage(e));
+      setActionError(getErrorMessage(e));
     } finally {
-      setLoading(false);
+      setDisableLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Locations</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage sites for your business — shops, kitchens, warehouses, and pickup points.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/locations/new">Add location</Link>
-        </Button>
-      </div>
+    <>
+      <DisableConfirmDialog
+        open={!!disableTarget}
+        onOpenChange={(open) => {
+          if (!open) setDisableTarget(null);
+        }}
+        itemName={disableTarget?.name}
+        title={
+          disableTarget
+            ? t('locations.disableTitleNamed', { name: disableTarget.name })
+            : t('locations.disableTitle')
+        }
+        description={t('locations.disableDescription')}
+        confirmLabel={t('common.disable')}
+        loading={disableLoading}
+        onConfirm={confirmDisable}
+      />
+      <PageHeader
+        title={t('locations.title')}
+        description={t('locations.description')}
+        actions={
+          <PageHeaderActionLink
+            label={t('locations.addLocation')}
+            href="/locations/new"
+            shortcut="n"
+          />
+        }
+      />
 
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <FormErrorAlert message={listError} title={t('error.loadLocations')} />
 
       <Card>
         <CardHeader>
-          <CardTitle>All locations</CardTitle>
+          <CardTitle>{t('locations.allLocations')}</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+          {isLoading ? (
+            <TablePanelSkeleton rows={5} columns={4} />
           ) : locations.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No locations yet.</p>
+            <EmptyState
+              title={t('empty.noLocations')}
+              description={t('empty.noLocationsDescription')}
+              icon={MapPin}
+              action={
+                <EmptyStateActionLink label={t('locations.addLocation')} href="/locations/new" />
+              }
+            />
           ) : (
-            <Table>
-              <TableHeader>
+            <Table aria-label={t('table.locationsAria')}>
+              <TableHeader sticky>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Staff</TableHead>
-                  <TableHead>Inventory</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('table.name')}</TableHead>
+                  <TableHead>{t('table.address')}</TableHead>
+                  <TableHead>{t('table.status')}</TableHead>
+                  <TableHead>{t('table.staff')}</TableHead>
+                  <TableHead>{t('table.inventory')}</TableHead>
+                  <TableHead className="text-right">{t('table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {locations.map((loc) => (
                   <TableRow key={loc.id}>
                     <TableCell className="font-medium">{loc.name}</TableCell>
                     <TableCell>{loc.address ?? '—'}</TableCell>
                     <TableCell>
-                      <Badge variant={loc.isActive ? 'default' : 'secondary'}>
-                        {loc.status}
-                      </Badge>
+                      <Tag variant={loc.isActive ? 'brand' : 'neutral'}>
+                        <TagLabel>{loc.status}</TagLabel>
+                      </Tag>
                     </TableCell>
                     <TableCell>{loc.staffCount}</TableCell>
                     <TableCell>
                       {loc.inventoryStatus === 'low_stock' ? (
-                        <Badge variant="destructive">Low stock ({loc.lowStockCount})</Badge>
+                        <Tag variant="error">
+                          <TagLabel>
+                            {t('table.lowStock', { count: loc.lowStockCount })}
+                          </TagLabel>
+                        </Tag>
                       ) : loc.inventoryStatus === 'empty' ? (
-                        <span className="text-muted-foreground">No stock</span>
+                        <span className="text-muted-foreground">{t('table.noStock')}</span>
                       ) : (
-                        <span>OK</span>
+                        <span>{t('table.stockOk')}</span>
                       )}
                     </TableCell>
                     <TableCell className="space-x-2 text-right">
                       <Button asChild size="sm" variant="outline">
-                        <Link href={`/locations/${loc.id}`}>Edit</Link>
+                        <Link href={`/locations/${loc.id}`}>{t('common.edit')}</Link>
                       </Button>
                       {loc.isActive ? (
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => {
-                            void disableLocation(loc.id).then(load);
-                          }}
+                          onClick={() => setDisableTarget(loc)}
                         >
-                          Disable
+                          {t('common.disable')}
                         </Button>
                       ) : null}
                     </TableCell>
@@ -128,6 +160,6 @@ export default function LocationsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

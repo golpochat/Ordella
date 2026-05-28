@@ -70,6 +70,8 @@ export class RetailGenomeService {
     private readonly auditLogs: AuditLogService,
   ) {}
 
+  private readonly ensureDefaultsLocks = new Map<string, Promise<void>>();
+
   async dashboard(tenant: TenantContext) {
     await this.ensureDefaults(tenant);
     const [entityCount, relationshipCount, embeddingCount, lastIngestion, cacheHits, reasoningCount] =
@@ -673,7 +675,21 @@ export class RetailGenomeService {
     );
   }
 
-  private async ensureDefaults(tenant: TenantContext) {
+  private ensureDefaults(tenant: TenantContext): Promise<void> {
+    const tenantId = tenant.tenantId;
+    const inFlight = this.ensureDefaultsLocks.get(tenantId);
+    if (inFlight) return inFlight;
+
+    const run = this.seedDefaults(tenant).finally(() => {
+      if (this.ensureDefaultsLocks.get(tenantId) === run) {
+        this.ensureDefaultsLocks.delete(tenantId);
+      }
+    });
+    this.ensureDefaultsLocks.set(tenantId, run);
+    return run;
+  }
+
+  private async seedDefaults(tenant: TenantContext) {
     const tenantId = tenant.tenantId;
     const schemaExisting = await this.schemas.findOne({
       where: { tenantId, schemaKey: 'retail_genome_core' },

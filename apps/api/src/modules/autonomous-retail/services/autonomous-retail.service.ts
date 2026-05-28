@@ -50,6 +50,8 @@ export class AutonomousRetailService {
     private readonly auditLogs: AuditLogService,
   ) {}
 
+  private readonly ensureDefaultsLocks = new Map<string, Promise<void>>();
+
   async dashboard(tenant: TenantContext) {
     await this.ensureDefaults(tenant.tenantId);
     const [pendingDecisions, recentActions, blockedActions, policies] = await Promise.all([
@@ -426,7 +428,20 @@ export class AutonomousRetailService {
     return alerts;
   }
 
-  private async ensureDefaults(tenantId: string) {
+  private ensureDefaults(tenantId: string): Promise<void> {
+    const inFlight = this.ensureDefaultsLocks.get(tenantId);
+    if (inFlight) return inFlight;
+
+    const run = this.seedDefaults(tenantId).finally(() => {
+      if (this.ensureDefaultsLocks.get(tenantId) === run) {
+        this.ensureDefaultsLocks.delete(tenantId);
+      }
+    });
+    this.ensureDefaultsLocks.set(tenantId, run);
+    return run;
+  }
+
+  private async seedDefaults(tenantId: string) {
     let policy = await this.policies.findOne({ where: { tenantId, locationId: IsNull() } });
     if (!policy) {
       policy = await this.policies.save(this.policies.create({

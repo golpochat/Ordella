@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   generateAutonomousDecisions,
@@ -16,6 +19,9 @@ import {
   type AutonomousPolicy,
 } from '@/lib/api/admin/autonomous-retail';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 type AutonomousRetailPanelProps = {
   dashboard: AutonomousDashboard | null;
@@ -25,12 +31,11 @@ type AutonomousRetailPanelProps = {
 };
 
 export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: initialPending, actions: initialActions }: AutonomousRetailPanelProps) {
+  const { success: toastSuccess, error: toastError } = useAdminToast();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [tenantPolicy, setTenantPolicy] = useState(policies.find((p) => !p.locationId) ?? policies[0]);
   const [pending, setPending] = useState(initialPending);
   const [actions, setActions] = useState(initialActions);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
     setPending(await listAutonomousDecisions(api, 'pending'));
@@ -39,60 +44,53 @@ export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: i
 
   async function handleModeChange(mode: AutonomousPolicy['mode']) {
     if (!tenantPolicy) return;
-    setError(null);
     try {
       const updated = await updateAutonomousPolicy(api, { mode, locationId: tenantPolicy.locationId });
       setTenantPolicy(updated);
-      setMessage(`Autonomy mode set to ${mode}.`);
+      toastSuccess(`Autonomy mode set to ${mode}.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleGenerate() {
-    setError(null);
     try {
       await generateAutonomousDecisions(api, { batch: true });
-      setMessage('Generated decisions across all models (parallel).');
+      toastSuccess('Generated decisions across all models (parallel).');
       await refresh();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleResolve(id: string, decision: 'approved' | 'rejected') {
-    setError(null);
     try {
       await resolveAutonomousDecision(api, id, decision);
-      setMessage(`Decision ${decision}.`);
+      toastSuccess(`Decision ${decision}.`);
       await refresh();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleRollback(actionId: string) {
-    setError(null);
     try {
       await rollbackAutonomousAction(api, actionId);
-      setMessage('Action rolled back.');
+      toastSuccess('Action rolled back.');
       await refresh();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <Metric title="Pending approvals" value={dashboard?.pendingDecisions ?? pending.length} />
         <Metric title="Blocked actions" value={dashboard?.blockedActions ?? 0} />
         <Metric title="Policies" value={policies.length} />
         <Metric title="Risk alerts" value={dashboard?.riskAlerts.length ?? 0} />
-      </div>
-
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -100,9 +98,9 @@ export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: i
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           {(dashboard?.riskAlerts ?? []).map((alert, i) => (
-            <Badge key={i} variant={alert.level === 'high' ? 'destructive' : 'secondary'}>
+            <Tag key={i} variant={alert.level === 'high' ? 'error' : 'neutral'}><TagLabel>
               {alert.message}
-            </Badge>
+            </TagLabel></Tag>
           ))}
         </CardContent>
       </Card>
@@ -141,7 +139,7 @@ export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: i
               <div key={d.id} className="rounded-md border p-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{d.actionType}</span>
-                  <Badge variant="secondary">{d.modelType}</Badge>
+                  <Tag variant="neutral"><TagLabel>{d.modelType}</TagLabel></Tag>
                 </div>
                 <p className="mt-1 text-muted-foreground">{d.explanation}</p>
                 <p className="text-xs">Confidence: {(Number(d.confidence) * 100).toFixed(0)}%</p>
@@ -155,7 +153,7 @@ export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: i
                 </div>
               </div>
             )) : (
-              <p className="text-sm text-muted-foreground">No pending decisions.</p>
+              <PanelEmpty title="No pending decisions" description="Content will appear here when available." />
             )}
           </CardContent>
         </Card>
@@ -167,7 +165,7 @@ export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: i
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Action</TableHead>
                 <TableHead>Status</TableHead>
@@ -175,12 +173,12 @@ export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: i
                 <TableHead />
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {actions.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.actionType}</TableCell>
                   <TableCell>
-                    <Badge variant={row.status === 'failed' || row.status === 'blocked' ? 'destructive' : 'secondary'}>{row.status}</Badge>
+                    <Tag variant={row.status === 'failed' || row.status === 'blocked' ? 'error' : 'neutral'}><TagLabel>{row.status}</TagLabel></Tag>
                   </TableCell>
                   <TableCell>{formatDate(row.createdAt)}</TableCell>
                   <TableCell>
@@ -194,20 +192,10 @@ export function AutonomousRetailPanel({ dashboard, policies, pendingDecisions: i
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ title, value }: { title: string; value: number }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-sm text-muted-foreground">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function ImpactRow({ impact }: { impact: Record<string, number> }) {
   const keys = ['revenue', 'margin', 'stockouts', 'laborCost', 'deliveryMinutes'];

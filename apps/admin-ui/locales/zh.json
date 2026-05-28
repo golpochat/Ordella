@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "dashboard": "分析",
+    "settings": "设置"
+  },
+  "common": {
+    "confirm": "确认",
+    "cancel": "取消"
+  }
+}

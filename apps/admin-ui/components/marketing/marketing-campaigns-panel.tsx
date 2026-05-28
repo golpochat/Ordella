@@ -1,10 +1,16 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { createCampaign, deleteCampaign, duplicateCampaign, sendCampaignNow, updateCampaign, type MarketingAnalytics, type MarketingCampaign, type MarketingSegment } from '@/lib/api/admin/marketing';
+import { DeleteConfirmDialog } from '@/components/ui/admin-dialog';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 const TEMPLATES = [
   { label: 'Welcome series', type: 'email', category: 'welcome_series', subject: 'Welcome to Ordella', message: 'Hi {{name}}, welcome. Your first reward is waiting.' },
@@ -48,6 +54,8 @@ export function MarketingCampaignsPanel({
     frequencyCapDays: '7',
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MarketingCampaign | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function applyTemplate(index: string) {
@@ -115,43 +123,63 @@ export function MarketingCampaignsPanel({
     setCampaigns((current) => [copy, ...current]);
   }
 
-  async function remove(id: string) {
-    await deleteCampaign(createBrowserApiClient(), id);
-    setCampaigns((current) => current.filter((campaign) => campaign.id !== id));
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await deleteCampaign(createBrowserApiClient(), deleteTarget.id);
+      setCampaigns((current) => current.filter((campaign) => campaign.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setDeleteLoading(false);
+    }
   }
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-4">
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Campaigns</p><p className="text-2xl font-semibold">{analytics.campaigns}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Sent</p><p className="text-2xl font-semibold">{analytics.sent}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Delivered</p><p className="text-2xl font-semibold">{analytics.delivered}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Failed</p><p className="text-2xl font-semibold">{analytics.failed}</p></CardContent></Card>
-      </div>
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        itemName={deleteTarget?.name}
+        title={deleteTarget ? `Delete campaign "${deleteTarget.name}"?` : 'Delete campaign?'}
+        description="This campaign and its schedule will be permanently removed."
+        loading={deleteLoading}
+        onConfirm={confirmDelete}
+      />
+      <MetricGrid columns={4}>
+        <Metric title="Campaigns" value={analytics.campaigns} />
+        <Metric title="Sent" value={analytics.sent} />
+        <Metric title="Delivered" value={analytics.delivered} />
+        <Metric title="Failed" value={analytics.failed} />
+      </MetricGrid>
       <Card>
         <CardHeader><CardTitle>Campaign Builder</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <form className="grid gap-3 md:grid-cols-2" onSubmit={save}>
             <Input placeholder="Campaign name" value={form.name} onChange={(event) => setForm((f) => ({ ...f, name: event.target.value }))} required />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" onChange={(event) => applyTemplate(event.target.value)} defaultValue="">
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" onChange={(event) => applyTemplate(event.target.value)} defaultValue="">
               <option value="">Choose a template</option>
               {TEMPLATES.map((template, index) => <option key={template.label} value={index}>{template.label}</option>)}
-            </select>
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.campaignType} onChange={(event) => setForm((f) => ({ ...f, campaignType: event.target.value as typeof form.campaignType }))}>
+            </Select>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.campaignType} onChange={(event) => setForm((f) => ({ ...f, campaignType: event.target.value as typeof form.campaignType }))}>
               <option value="broadcast">Broadcast</option>
               <option value="trigger-based">Trigger-based</option>
               <option value="journey">Journey</option>
-            </select>
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(event) => setForm((f) => ({ ...f, type: event.target.value as 'email' | 'sms' | 'push', channels: [event.target.value as 'email' | 'sms' | 'push'] }))}>
+            </Select>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(event) => setForm((f) => ({ ...f, type: event.target.value as 'email' | 'sms' | 'push', channels: [event.target.value as 'email' | 'sms' | 'push'] }))}>
               <option value="email">Email</option>
               <option value="sms">SMS</option>
               <option value="push">Push</option>
-            </select>
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.segmentId} onChange={(event) => setForm((f) => ({ ...f, segmentId: event.target.value }))} required>
+            </Select>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.segmentId} onChange={(event) => setForm((f) => ({ ...f, segmentId: event.target.value }))} required>
               <option value="">Select segment</option>
               {segments.map((segment) => <option key={segment.id} value={segment.id}>{segment.name}</option>)}
-            </select>
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.campaignCategory} onChange={(event) => setForm((f) => ({ ...f, campaignCategory: event.target.value }))}>
+            </Select>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.campaignCategory} onChange={(event) => setForm((f) => ({ ...f, campaignCategory: event.target.value }))}>
               <option value="welcome_series">Welcome series</option>
               <option value="abandoned_cart">Abandoned cart</option>
               <option value="win_back">Win-back</option>
@@ -159,43 +187,45 @@ export function MarketingCampaignsPanel({
               <option value="tier_upgrade">Loyalty tier upgrade</option>
               <option value="product_recommendations">Product recommendations</option>
               <option value="low_stock_alert">Low-stock customer alert</option>
-            </select>
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.scheduleType} onChange={(event) => setForm((f) => ({ ...f, scheduleType: event.target.value as typeof form.scheduleType }))}>
+            </Select>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.scheduleType} onChange={(event) => setForm((f) => ({ ...f, scheduleType: event.target.value as typeof form.scheduleType }))}>
               <option value="one-time">One-time</option>
               <option value="recurring">Recurring</option>
-            </select>
+            </Select>
             {form.type === 'email' ? <Input placeholder="Subject" value={form.subject} onChange={(event) => setForm((f) => ({ ...f, subject: event.target.value }))} /> : null}
             <Input type="datetime-local" value={form.scheduleAt} onChange={(event) => setForm((f) => ({ ...f, scheduleAt: event.target.value }))} />
             <Input placeholder="Recurrence, e.g. every 7 days" value={form.recurrenceRule} onChange={(event) => setForm((f) => ({ ...f, recurrenceRule: event.target.value }))} />
             <Input placeholder="Frequency cap per customer" type="number" value={form.frequencyCap} onChange={(event) => setForm((f) => ({ ...f, frequencyCap: event.target.value }))} />
             <Input placeholder="Frequency cap window days" type="number" value={form.frequencyCapDays} onChange={(event) => setForm((f) => ({ ...f, frequencyCapDays: event.target.value }))} />
-            <textarea className="min-h-28 rounded-md border border-input bg-background p-3 text-sm md:col-span-2" placeholder="Message. Supports {{name}} and {{points}}." value={form.message} onChange={(event) => setForm((f) => ({ ...f, message: event.target.value }))} required />
+            <Textarea className="min-h-28 rounded-md border border-input bg-background p-3 text-sm md:col-span-2" placeholder="Message. Supports {{name}} and {{points}}." value={form.message} onChange={(event) => setForm((f) => ({ ...f, message: event.target.value }))} required />
             <Button type="submit">{editingId ? 'Update campaign' : 'Save campaign'}</Button>
             {editingId ? <Button type="button" variant="outline" onClick={() => setEditingId(null)}>Cancel edit</Button> : null}
           </form>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <FormErrorAlert message={error} /> : null}
         </CardContent>
       </Card>
       <Card>
         <CardHeader><CardTitle>Campaigns</CardTitle></CardHeader>
         <CardContent>
           <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Channels</TableHead><TableHead>Segment</TableHead><TableHead>Status</TableHead><TableHead>Perf.</TableHead><TableHead>Schedule</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-            <TableBody>
+            <TableHeader sticky><TableRow><TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>Channels</TableHead><TableHead>Segment</TableHead><TableHead>Status</TableHead><TableHead>Perf.</TableHead><TableHead>Schedule</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableBody zebra>
               {campaigns.map((campaign) => (
                 <TableRow key={campaign.id}>
                   <TableCell className="font-medium">{campaign.name}</TableCell>
                   <TableCell>{campaign.campaignType}</TableCell>
                   <TableCell>{(campaign.channels.length ? campaign.channels : [campaign.type]).join(', ')}</TableCell>
                   <TableCell>{campaign.segmentName ?? campaign.segmentId.slice(0, 8)}</TableCell>
-                  <TableCell><Badge variant={campaign.status === 'sent' ? 'outline' : 'secondary'}>{campaign.status}</Badge></TableCell>
+                  <TableCell><Tag variant={campaign.status === 'sent' ? 'outline' : 'neutral'}><TagLabel>{campaign.status}</TagLabel></Tag></TableCell>
                   <TableCell>{campaign.sentCount ?? 0} sent · {campaign.openCount ?? 0} opens · {campaign.clickCount ?? 0} clicks · {campaign.conversionCount ?? 0} conv.</TableCell>
                   <TableCell>{formatDate(campaign.scheduleAt ?? undefined)}</TableCell>
                   <TableCell className="space-x-2 text-right">
                     <Button size="sm" variant="outline" onClick={() => edit(campaign)}>Edit</Button>
                     <Button size="sm" variant="outline" onClick={() => void send(campaign.id)}>Send now</Button>
                     <Button size="sm" variant="outline" onClick={() => void duplicate(campaign.id)}>Duplicate</Button>
-                    <Button size="sm" variant="destructive" onClick={() => void remove(campaign.id)}>Delete</Button>
+                    <Button size="sm" variant="error" onClick={() => setDeleteTarget(campaign)}>
+                      Delete
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

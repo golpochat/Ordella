@@ -22,13 +22,13 @@ export default async function DigitalTwinsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Digital Twins"
         description="Sandbox simulations for demand, inventory, staffing, delivery, pricing, and promotions — reproducible, tenant-isolated, no production writes."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       <DigitalTwinsPanel dashboard={dashboard} twins={twins} initialDetail={initialDetail} />
-    </div>
+    </>
   );
 }

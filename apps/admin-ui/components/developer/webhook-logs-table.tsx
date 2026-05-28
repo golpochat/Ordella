@@ -1,4 +1,5 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+import { Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { formatDate } from '@/lib/utils';
 import type { DeveloperWebhookLog } from '@/lib/api/admin/developer';
 
@@ -10,7 +11,7 @@ export function WebhookLogsTable({ logs }: { logs: DeveloperWebhookLog[] }) {
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader>
+          <TableHeader sticky>
             <TableRow>
               <TableHead>Timestamp</TableHead>
               <TableHead>Event</TableHead>
@@ -19,16 +20,16 @@ export function WebhookLogsTable({ logs }: { logs: DeveloperWebhookLog[] }) {
               <TableHead>Response</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody zebra>
             {logs.map((log) => (
               <TableRow key={log.id}>
                 <TableCell>{formatDate(log.createdAt)}</TableCell>
                 <TableCell>{log.eventType}</TableCell>
                 <TableCell>{log.attempt}</TableCell>
                 <TableCell>
-                  <Badge variant={log.success ? 'outline' : 'destructive'}>
+                  <Tag variant={log.success ? 'outline' : 'error'}><TagLabel>
                     {log.statusCode ?? 'Failed'}
-                  </Badge>
+                  </TagLabel></Tag>
                 </TableCell>
                 <TableCell className="max-w-md truncate">{log.responseBody ?? 'No response'}</TableCell>
               </TableRow>

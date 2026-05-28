@@ -26,6 +26,7 @@
       ]
     },
     "allowJs": true,
+    "resolveJsonModule": true,
     "incremental": true,
     "jsx": "preserve"
   },

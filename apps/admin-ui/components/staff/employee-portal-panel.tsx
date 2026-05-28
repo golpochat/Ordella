@@ -1,42 +1,39 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { clockIn, clockOut, requestShiftSwap, requestTimeOff, type EmployeeSchedulePortal } from '@/lib/api/admin/staff-scheduling';
 import { getErrorMessage } from '@/lib/utils';
 
 export function EmployeePortalPanel({ initialPortal }: { initialPortal: EmployeeSchedulePortal }) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = createBrowserApiClient();
   const [portal] = useState(initialPortal);
   const [timeOff, setTimeOff] = useState({ startAt: '', endAt: '', reason: '' });
   const [swapNote, setSwapNote] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function action(label: string, run: () => Promise<unknown>) {
-    setMessage(null);
-    setError(null);
+    async function action(label: string, run: () => Promise<unknown>) {
     try {
       await run();
-      setMessage(label);
+      toastSuccess(label);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
+    <Stack gap="lg" className="min-w-0">
       <Card>
         <CardHeader>
           <CardTitle>Assigned shifts</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Shift</TableHead>
                 <TableHead>Role</TableHead>
@@ -44,14 +41,14 @@ export function EmployeePortalPanel({ initialPortal }: { initialPortal: Employee
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {portal.shifts.map((shift) => (
                 <TableRow key={shift.id}>
                   <TableCell>
                     <p>{new Date(shift.shiftStart).toLocaleString()} - {new Date(shift.shiftEnd).toLocaleTimeString()}</p>
                   </TableCell>
                   <TableCell>{shift.role}</TableCell>
-                  <TableCell><Badge variant="secondary">{shift.status}</Badge></TableCell>
+                  <TableCell><Tag variant="neutral"><TagLabel>{shift.status}</TagLabel></Tag></TableCell>
                   <TableCell className="space-x-2">
                     <Button type="button" size="sm" onClick={() => void action('Clocked in.', () => clockIn(api, shift.id))}>Clock in</Button>
                     <Button type="button" size="sm" variant="outline" onClick={() => void action('Clocked out.', () => clockOut(api, shift.id))}>Clock out</Button>
@@ -105,6 +102,6 @@ export function EmployeePortalPanel({ initialPortal }: { initialPortal: Employee
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Stack>
   );
 }

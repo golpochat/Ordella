@@ -1,12 +1,15 @@
 'use client';
 
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { updateFulfillmentSettings } from '@/lib/api/admin/settings';
 import { getErrorMessage } from '@/lib/utils';
 
 export function FulfillmentDisplayPanel() {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = createBrowserApiClient();
   const [locationId, setLocationId] = useState('');
   const [autoAcceptOrders, setAutoAcceptOrders] = useState(false);
@@ -14,18 +17,15 @@ export function FulfillmentDisplayPanel() {
   const [showCustomerInfo, setShowCustomerInfo] = useState(true);
   const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid');
   const [autoCompleteMinutes, setAutoCompleteMinutes] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
   const onSave = async () => {
+
     if (!locationId.trim()) {
-      setError('Location ID is required');
+      toastError('Location ID is required');
       return;
     }
     setLoading(true);
-    setError(null);
-    setMessage(null);
     try {
       await updateFulfillmentSettings(api, {
         locationId: locationId.trim(),
@@ -35,9 +35,9 @@ export function FulfillmentDisplayPanel() {
         displayMode,
         autoCompleteMinutes: autoCompleteMinutes ? Number(autoCompleteMinutes) : null,
       });
-      setMessage('Fulfillment display settings saved');
+      toastSuccess('Fulfillment display settings saved');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -80,14 +80,14 @@ export function FulfillmentDisplayPanel() {
         </label>
         <div className="space-y-1">
           <p className="text-sm font-medium">Display mode</p>
-          <select
+          <Select
             className="h-10 w-full rounded-md border bg-background px-2 text-sm"
             value={displayMode}
             onChange={(e) => setDisplayMode(e.target.value as 'grid' | 'list')}
           >
             <option value="grid">Grid (columns)</option>
             <option value="list">List</option>
-          </select>
+          </Select>
         </div>
         <Input
           type="number"
@@ -96,10 +96,8 @@ export function FulfillmentDisplayPanel() {
           value={autoCompleteMinutes}
           onChange={(e) => setAutoCompleteMinutes(e.target.value)}
         />
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        <Button onClick={onSave} disabled={loading}>
-          {loading ? 'Saving…' : 'Save fulfillment settings'}
+        <Button onClick={onSave} isLoading={loading} loadingLabel="Saving…">
+          Save fulfillment settings
         </Button>
       </CardContent>
     </Card>

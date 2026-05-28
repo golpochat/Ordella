@@ -38,6 +38,12 @@ cd path/to/ordella
 npm install
 ```
 
+`npm install` runs `@ordella/shared-ui` `prepare`, which builds `dist/styles.css` (required by admin-ui and other apps). If you see **Can't resolve '@ordella/shared-ui/styles.css'**, run:
+
+```bash
+npm run build:css --workspace=@ordella/shared-ui
+```
+
 Copy environment files:
 
 ```bash
@@ -287,5 +293,6 @@ Authenticated requests from apps typically send:
 | Driver app empty orders | Driver user role, `driver_profiles` row, delivery tasks for tenant |
 | KDS board empty | `NEXT_PUBLIC_LOCATION_ID`, orders in fulfillment statuses for that location |
 | WebSockets not updating | API running, same tenant ID in client env/query, `WS_REQUIRE_AUTH=false` locally |
+| Storefront blank / hydration errors (`reading 'call'`) | Stale `.next` after a failed CSS resolve. Stop dev, delete `apps/storefront/.next`, run `npm run build:css --workspace=@ordella/shared-ui`, then `npm run dev --workspace=@ordella/storefront`. Storefront loads ODS tokens from `shared-ui/src/styles/design-tokens.css` (no `styles.css` import). |
 
 For module-level API notes, see `apps/api/README.md` and per-module READMEs under `apps/api/src/modules/`.

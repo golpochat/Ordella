@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 import { createServerApiClient } from '@/lib/api/server';
 import { listOrders } from '@/lib/api/admin/orders';
 import { PageHeader } from '@/components/ui/page-header';
-import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { OrdersTable } from '@/components/orders/orders-table';
 import { OrdersFilters } from '@/components/orders/orders-filters';
@@ -34,11 +33,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         <OrdersFilters />
       </Suspense>
       {error ? <ApiErrorBanner message={error} /> : null}
-      {orders.length === 0 && !error ? (
-        <EmptyState title="No orders" description="Orders matching your filters will appear here." />
-      ) : (
-        <OrdersTable orders={orders} />
-      )}
+      {!error ? <OrdersTable orders={orders} /> : null}
     </>
   );
 }

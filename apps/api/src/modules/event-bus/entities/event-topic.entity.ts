@@ -14,7 +14,7 @@ export class EventTopicEntity {
   @Column({ name: 'topic_key', type: 'varchar', length: 64 })
   topicKey!: EventTopicKey;
 
-  @Column({ type: 'varchar', length: 180 })
+  @Column({ name: 'display_name', type: 'varchar', length: 180 })
   displayName!: string;
 
   @Column({ type: 'text', nullable: true })

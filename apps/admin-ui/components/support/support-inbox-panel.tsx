@@ -1,10 +1,21 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack, Textarea } from '@shared-ui';
 import { addSupportMessage, updateSupportTicket, type CannedResponse, type SupportAnalytics, type SupportTicket } from '@/lib/api/admin/support';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { formatDate } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+import {
+  FilterActions,
+  FilterBar,
+  FilterGroup,
+  FilterItem,
+  FilterResetButton,
+  FilterSelect,
+} from '@/components/ui/admin-filter';
 
 export function SupportInboxPanel({
   initialTickets,
@@ -44,14 +55,14 @@ export function SupportInboxPanel({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-5">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={5}>
         <Metric title="Total tickets" value={analytics.totalTickets} />
         <Metric title="Open tickets" value={analytics.openTickets} />
         <Metric title="Avg resolution" value={`${analytics.averageResolutionHours}h`} />
         <Metric title="SLA compliance" value={`${analytics.slaCompliance}%`} />
         <Metric title="CSAT" value={analytics.csatAverage ?? 'No ratings'} />
-      </div>
+      </MetricGrid>
 
       <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
         <Card>
@@ -59,36 +70,64 @@ export function SupportInboxPanel({
             <CardTitle>Support Inbox</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
-              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
-                <option value="">All statuses</option>
-                <option value="open">Open</option>
-                <option value="in_progress">In progress</option>
-                <option value="waiting_customer">Waiting customer</option>
-                <option value="resolved">Resolved</option>
-                <option value="closed">Closed</option>
-              </select>
-              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={filters.category} onChange={(event) => setFilters((current) => ({ ...current, category: event.target.value }))}>
-                <option value="">All categories</option>
-                <option value="order_issue">Order issue</option>
-                <option value="delivery_issue">Delivery issue</option>
-                <option value="refund">Refund</option>
-                <option value="product_issue">Product issue</option>
-                <option value="subscription">Subscription</option>
-                <option value="loyalty">Loyalty</option>
-                <option value="general">General</option>
-              </select>
-              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={filters.priority} onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}>
-                <option value="">All priorities</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
-            </div>
+            <FilterBar as="div">
+              <FilterGroup columns={3}>
+                <FilterItem label="Status" htmlFor="support-status" active={Boolean(filters.status)}>
+                  <FilterSelect
+                    id="support-status"
+                    value={filters.status}
+                    onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}
+                  >
+                    <option value="">All statuses</option>
+                    <option value="open">Open</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="waiting_customer">Waiting customer</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </FilterSelect>
+                </FilterItem>
+                <FilterItem label="Category" htmlFor="support-category" active={Boolean(filters.category)}>
+                  <FilterSelect
+                    id="support-category"
+                    value={filters.category}
+                    onChange={(event) => setFilters((current) => ({ ...current, category: event.target.value }))}
+                  >
+                    <option value="">All categories</option>
+                    <option value="order_issue">Order issue</option>
+                    <option value="delivery_issue">Delivery issue</option>
+                    <option value="refund">Refund</option>
+                    <option value="product_issue">Product issue</option>
+                    <option value="subscription">Subscription</option>
+                    <option value="loyalty">Loyalty</option>
+                    <option value="general">General</option>
+                  </FilterSelect>
+                </FilterItem>
+                <FilterItem label="Priority" htmlFor="support-priority" active={Boolean(filters.priority)}>
+                  <FilterSelect
+                    id="support-priority"
+                    value={filters.priority}
+                    onChange={(event) => setFilters((current) => ({ ...current, priority: event.target.value }))}
+                  >
+                    <option value="">All priorities</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </FilterSelect>
+                </FilterItem>
+              </FilterGroup>
+              <FilterActions>
+                <FilterResetButton
+                  type="button"
+                  onClick={() => setFilters({ status: '', category: '', priority: '' })}
+                >
+                  Clear
+                </FilterResetButton>
+              </FilterActions>
+            </FilterBar>
 
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Ticket</TableHead>
                   <TableHead>Customer</TableHead>
@@ -96,7 +135,7 @@ export function SupportInboxPanel({
                   <TableHead>SLA</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {filtered.map((ticket) => (
                   <TableRow key={ticket.id} className="cursor-pointer" onClick={() => setSelectedId(ticket.id)}>
                     <TableCell>
@@ -104,8 +143,8 @@ export function SupportInboxPanel({
                       <p className="text-xs text-muted-foreground">{ticket.category} · {ticket.priority}</p>
                     </TableCell>
                     <TableCell>{ticket.customer?.name ?? ticket.customerId.slice(0, 8)}</TableCell>
-                    <TableCell><Badge variant={ticket.status === 'open' ? 'default' : 'secondary'}>{ticket.status}</Badge></TableCell>
-                    <TableCell>{ticket.sla?.breached ? <Badge variant="destructive">Breached</Badge> : 'On track'}</TableCell>
+                    <TableCell><Tag variant={ticket.status === 'open' ? 'brand' : 'neutral'}><TagLabel>{ticket.status}</TagLabel></Tag></TableCell>
+                    <TableCell>{ticket.sla?.breached ? <Tag variant="error"><TagLabel>Breached</TagLabel></Tag> : 'On track'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -127,19 +166,19 @@ export function SupportInboxPanel({
                   <p>SLA due: {selected.slaDueAt ? formatDate(selected.slaDueAt) : 'Not set'}</p>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
-                  <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={selected.status} onChange={(event) => void patchTicket(selected.id, { status: event.target.value })}>
+                  <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={selected.status} onChange={(event) => void patchTicket(selected.id, { status: event.target.value })}>
                     <option value="open">Open</option>
                     <option value="in_progress">In progress</option>
                     <option value="waiting_customer">Waiting customer</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
-                  </select>
-                  <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={selected.priority} onChange={(event) => void patchTicket(selected.id, { priority: event.target.value })}>
+                  </Select>
+                  <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={selected.priority} onChange={(event) => void patchTicket(selected.id, { priority: event.target.value })}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                     <option value="urgent">Urgent</option>
-                  </select>
+                  </Select>
                 </div>
                 <div className="flex gap-2">
                   <Input placeholder="Staff user ID" value={assignee} onChange={(event) => setAssignee(event.target.value)} />
@@ -155,11 +194,11 @@ export function SupportInboxPanel({
                     </div>
                   ))}
                 </div>
-                <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" onChange={(event) => setReply(event.target.value)} defaultValue="">
+                <Select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" onChange={(event) => setReply(event.target.value)} defaultValue="">
                   <option value="">Use canned response</option>
                   {cannedResponses.map((response) => <option key={response.id} value={response.body}>{response.title}</option>)}
-                </select>
-                <textarea className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reply or internal note" />
+                </Select>
+                <Textarea className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reply or internal note" />
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={internalOnly} onChange={(event) => setInternalOnly(event.target.checked)} />
                   Internal note
@@ -174,17 +213,7 @@ export function SupportInboxPanel({
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{title}</p>
-        <p className="mt-1 text-xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}

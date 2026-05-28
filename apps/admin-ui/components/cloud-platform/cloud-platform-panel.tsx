@@ -1,20 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   listCloudRegions,
@@ -30,6 +20,7 @@ import {
   type CloudResidencyPolicy,
 } from '@/lib/api/admin/cloud-platform';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricGrid } from '@/components/ui/admin-card';
 
 type CloudPlatformPanelProps = {
   dashboard: CloudDashboard | null;
@@ -41,16 +32,6 @@ type CloudPlatformPanelProps = {
   deployments: CloudDeployment[];
 };
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-xs text-muted-foreground">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 const PROVIDER_LABELS: Record<string, string> = {
   aws: 'AWS',
@@ -67,6 +48,7 @@ export function CloudPlatformPanel({
   edgeNodes: initialEdgeNodes,
   deployments: initialDeployments,
 }: CloudPlatformPanelProps) {
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useAdminToast();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [regions, setRegions] = useState(initialRegions);
   const [residency, setResidency] = useState(initialResidency);
@@ -75,27 +57,20 @@ export function CloudPlatformPanel({
   const [edgeNodes] = useState(initialEdgeNodes);
   const [deployments, setDeployments] = useState(initialDeployments);
   const [selectedRegionId, setSelectedRegionId] = useState(initialRegions[0]?.id ?? '');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const heatmap = dashboard?.latencyHeatmap ?? {};
+    const heatmap = dashboard?.latencyHeatmap ?? {};
 
   async function handleResidencyToggle(field: 'euOnlyMode' | 'usOnlyMode' | 'apacResidency', value: boolean) {
-    setMessage(null);
-    setError(null);
     try {
       const updated = await saveCloudResidency(api, { [field]: value });
       setResidency(updated);
-      setMessage('Residency policy updated.');
+      toastSuccess('Residency policy updated.');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleDeploy(deploymentType: 'blue_green' | 'canary') {
     if (!selectedRegionId) return;
-    setMessage(null);
-    setError(null);
     try {
       const row = await startCloudDeployment(api, {
         regionId: selectedRegionId,
@@ -104,21 +79,19 @@ export function CloudPlatformPanel({
         canaryPercent: deploymentType === 'canary' ? 10 : 0,
       });
       setDeployments((current) => [row, ...current]);
-      setMessage(`${deploymentType} deployment started.`);
+      toastSuccess(`${deploymentType} deployment started.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleRollback(deploymentId: string) {
-    setMessage(null);
-    setError(null);
     try {
       const row = await rollbackCloudDeployment(api, deploymentId);
       setDeployments((current) => [row, ...current]);
-      setMessage('Rollback deployment initiated.');
+      toastSuccess('Rollback deployment initiated.');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
@@ -127,25 +100,22 @@ export function CloudPlatformPanel({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-6">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={6}>
         <Metric title="Regions" value={dashboard?.regions ?? regions.length} />
         <Metric title="AWS" value={dashboard?.multiCloud.aws ?? 0} />
         <Metric title="Azure" value={dashboard?.multiCloud.azure ?? 0} />
         <Metric title="GCP" value={dashboard?.multiCloud.gcp ?? 0} />
         <Metric title="Edge uptime" value={`${dashboard?.edgeUptimePercent ?? 100}%`} />
         <Metric title="Open alerts" value={dashboard?.openAlerts ?? 0} />
-      </div>
-
-      {message ? <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm">{message}</p> : null}
-      {error ? <p className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <Card>
         <CardHeader>
           <CardTitle>Region selector</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <select
+          <Select
             className="w-full max-w-md rounded-md border bg-background px-3 py-2 text-sm"
             value={selectedRegionId}
             onChange={(e) => setSelectedRegionId(e.target.value)}
@@ -156,7 +126,7 @@ export function CloudPlatformPanel({
                 {r.isPrimary ? ' — primary' : ''}
               </option>
             ))}
-          </select>
+          </Select>
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" onClick={() => void handleDeploy('blue_green')}>
               Blue/green deploy
@@ -198,7 +168,7 @@ export function CloudPlatformPanel({
               <Button
                 type="button"
                 size="sm"
-                variant={residency?.euOnlyMode ? 'default' : 'outline'}
+                variant={residency?.euOnlyMode ? 'brand' : 'outline'}
                 onClick={() => void handleResidencyToggle('euOnlyMode', !residency?.euOnlyMode)}
               >
                 EU-only
@@ -206,7 +176,7 @@ export function CloudPlatformPanel({
               <Button
                 type="button"
                 size="sm"
-                variant={residency?.usOnlyMode ? 'default' : 'outline'}
+                variant={residency?.usOnlyMode ? 'brand' : 'outline'}
                 onClick={() => void handleResidencyToggle('usOnlyMode', !residency?.usOnlyMode)}
               >
                 US-only
@@ -214,7 +184,7 @@ export function CloudPlatformPanel({
               <Button
                 type="button"
                 size="sm"
-                variant={residency?.apacResidency ? 'default' : 'outline'}
+                variant={residency?.apacResidency ? 'brand' : 'outline'}
                 onClick={() => void handleResidencyToggle('apacResidency', !residency?.apacResidency)}
               >
                 APAC residency
@@ -235,7 +205,7 @@ export function CloudPlatformPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Region</TableHead>
                 <TableHead>Provider</TableHead>
@@ -244,15 +214,15 @@ export function CloudPlatformPanel({
                 <TableHead>Residency</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {regions.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell>
                     {r.displayName}
                     {r.isPrimary ? (
-                      <Badge className="ml-2" variant="outline">
+                      <Tag className="ml-2" variant="outline"><TagLabel>
                         primary
-                      </Badge>
+                      </TagLabel></Tag>
                     ) : null}
                   </TableCell>
                   <TableCell>{PROVIDER_LABELS[r.cloudProvider] ?? r.cloudProvider}</TableCell>
@@ -277,7 +247,7 @@ export function CloudPlatformPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Region</TableHead>
                   <TableHead>Health</TableHead>
@@ -285,14 +255,14 @@ export function CloudPlatformPanel({
                   <TableHead>Error %</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {metrics.map((m) => (
                   <TableRow key={m.regionId}>
                     <TableCell>{m.regionCode}</TableCell>
                     <TableCell>
-                      <Badge variant={m.metrics?.healthStatus === 'healthy' ? 'outline' : 'destructive'}>
+                      <Tag variant={m.metrics?.healthStatus === 'healthy' ? 'outline' : 'error'}><TagLabel>
                         {m.metrics?.healthStatus ?? 'unknown'}
-                      </Badge>
+                      </TagLabel></Tag>
                     </TableCell>
                     <TableCell>{m.metrics?.latencyP50Ms ?? '—'}ms</TableCell>
                     <TableCell>{m.metrics ? String(m.metrics.errorRatePercent) : '—'}</TableCell>
@@ -309,7 +279,7 @@ export function CloudPlatformPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Mode</TableHead>
                   <TableHead>Auto</TableHead>
@@ -317,7 +287,7 @@ export function CloudPlatformPanel({
                   <TableHead>RTO</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {failoverRules.length ? (
                   failoverRules.map((f) => (
                     <TableRow key={f.id}>
@@ -347,7 +317,7 @@ export function CloudPlatformPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Type</TableHead>
@@ -355,13 +325,13 @@ export function CloudPlatformPanel({
                   <TableHead>Uptime</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {edgeNodes.map((n) => (
                   <TableRow key={n.id}>
                     <TableCell>{n.displayName}</TableCell>
                     <TableCell>{n.nodeType}</TableCell>
                     <TableCell>
-                      <Badge variant={n.status === 'online' ? 'outline' : 'secondary'}>{n.status}</Badge>
+                      <Tag variant={n.status === 'online' ? 'outline' : 'neutral'}><TagLabel>{n.status}</TagLabel></Tag>
                     </TableCell>
                     <TableCell>{String(n.uptimePercent)}%</TableCell>
                   </TableRow>
@@ -377,7 +347,7 @@ export function CloudPlatformPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Key</TableHead>
                   <TableHead>Type</TableHead>
@@ -385,13 +355,13 @@ export function CloudPlatformPanel({
                   <TableHead className="w-[120px]">Action</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {deployments.slice(0, 8).map((d) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-mono text-xs">{d.deploymentKey}</TableCell>
                     <TableCell>{d.deploymentType}</TableCell>
                     <TableCell>
-                      <Badge variant={d.status === 'completed' ? 'outline' : 'secondary'}>{d.status}</Badge>
+                      <Tag variant={d.status === 'completed' ? 'outline' : 'neutral'}><TagLabel>{d.status}</TagLabel></Tag>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -411,6 +381,6 @@ export function CloudPlatformPanel({
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Stack>
   );
 }

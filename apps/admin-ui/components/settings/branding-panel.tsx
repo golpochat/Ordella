@@ -1,21 +1,15 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useEffect, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Logo,
-  ThemeProvider,
-  useTheme,
-} from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Logo, ThemeProvider, useTheme } from '@shared-ui';
 import { DEFAULT_THEME, type TenantTheme, type ThemePreset } from '@shared-utils';
 import { fetchTenantTheme, updateTenantIcon, updateTenantLogo, updateTenantTheme } from '@/lib/api/branding';
 import { getErrorMessage } from '@/lib/utils';
+import { InlineLoader } from '@/components/ui/admin-loader';
 
 const PRESETS: ThemePreset[] = ['light', 'dark', 'custom'];
 
@@ -41,10 +35,10 @@ function BrandingPreview() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm">Primary action</Button>
-          <Button size="sm" variant="secondary">
+          <Button size="sm" variant="neutral">
             Secondary
           </Button>
-          <Badge>Status</Badge>
+          <Tag><TagLabel>Status</TagLabel></Tag>
         </div>
         <Card>
           <CardContent className="p-3 text-sm">Product card preview with themed surface.</CardContent>
@@ -93,7 +87,7 @@ export function BrandingPanel() {
           <CardContent className="space-y-4">
             <div className="space-y-1">
               <label className="text-sm font-medium">Theme preset</label>
-              <select
+              <Select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={theme.preset}
                 onChange={(e) => void saveTheme({ preset: e.target.value as ThemePreset })}
@@ -103,7 +97,7 @@ export function BrandingPanel() {
                     {preset}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -174,8 +168,8 @@ export function BrandingPanel() {
               />
             </div>
 
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            {loading ? <p className="text-sm text-muted-foreground">Saving…</p> : null}
+            {error ? <FormErrorAlert message={error} /> : null}
+            {loading ? <InlineLoader label="Saving…" size="sm" /> : null}
           </CardContent>
         </Card>
 

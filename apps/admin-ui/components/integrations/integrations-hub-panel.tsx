@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   installIntegration,
@@ -15,6 +18,8 @@ import {
   type IntegrationProvider,
 } from '@/lib/api/admin/integrations';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { IrreversibleConfirmDialog } from '@/components/ui/admin-dialog';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 const CATEGORY_LABELS: Record<string, string> = {
   accounting: 'Accounting',
@@ -36,6 +41,8 @@ export function IntegrationsHubPanel({
   initialLogs: IntegrationLog[];
   initialEvents: IntegrationEvent[];
 }) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const [providers] = useState(initialProviders);
   const [apps, setApps] = useState(initialApps);
   const [logs, setLogs] = useState(initialLogs);
@@ -47,10 +54,9 @@ export function IntegrationsHubPanel({
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [syncSchedule, setSyncSchedule] = useState('manual');
   const [conflictResolution, setConflictResolution] = useState('provider_wins');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const selectedProvider = providers.find((provider) => provider.id === providerId) ?? providers[0];
+  const [disconnectTarget, setDisconnectTarget] = useState<IntegrationApp | null>(null);
+  const [disconnectLoading, setDisconnectLoading] = useState(false);
+    const selectedProvider = providers.find((provider) => provider.id === providerId) ?? providers[0];
   const visibleProviders = category === 'all' ? providers : providers.filter((provider) => provider.category === category);
   const installedProviderIds = useMemo(() => new Set(apps.filter((app) => app.status !== 'disconnected').map((app) => app.providerId)), [apps]);
   const fields = schemaList(selectedProvider?.configSchema.fields);
@@ -58,8 +64,6 @@ export function IntegrationsHubPanel({
 
   async function submitInstall(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
-    setMessage(null);
     try {
       const app = await installIntegration(createBrowserApiClient(), {
         providerId,
@@ -70,46 +74,47 @@ export function IntegrationsHubPanel({
         conflictResolution,
       });
       setApps((current) => [app, ...current.filter((item) => item.id !== app.id)]);
-      setMessage(`${app.providerName} installed`);
+      toastSuccess(`${app.providerName} installed`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
-  async function disconnect(id: string) {
-    setError(null);
+  async function confirmDisconnect() {
+    if (!disconnectTarget) return;
+    setDisconnectLoading(true);
     try {
-      await uninstallIntegration(createBrowserApiClient(), id);
-      setApps((current) => current.map((app) => (app.id === id ? { ...app, status: 'disconnected' } : app)));
-      setMessage('Connector uninstalled');
+      await uninstallIntegration(createBrowserApiClient(), disconnectTarget.id);
+      setApps((current) => current.map((app) => (app.id === disconnectTarget.id ? { ...app, status: 'disconnected' } : app)));
+      setDisconnectTarget(null);
+      toastSuccess('Connector uninstalled');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
+    } finally {
+      setDisconnectLoading(false);
     }
   }
 
   async function reconnect(app: IntegrationApp) {
-    setError(null);
     try {
       const updated = await updateIntegration(createBrowserApiClient(), app.id, { status: 'active', config: app.config });
       setApps((current) => current.map((item) => (item.id === updated.id ? updated : item)));
-      setMessage('Connector reconnected');
+      toastSuccess('Connector reconnected');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function test(app: IntegrationApp) {
-    setError(null);
     try {
       const result = await testIntegrationConnection(createBrowserApiClient(), app.id);
-      setMessage(result.message);
+      toastSuccess(result.message);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function sync(app: IntegrationApp) {
-    setError(null);
     try {
       const result = await syncIntegrationNow(createBrowserApiClient(), app.id);
       const updated = { ...app, lastSyncAt: new Date().toISOString(), lastSyncStatus: 'success' };
@@ -144,23 +149,31 @@ export function IntegrationsHubPanel({
         },
         ...current,
       ]);
-      setMessage(`Sync queued for ${result.syncedObjects.join(', ')}`);
+      toastInfo(`Sync queued for ${result.syncedObjects.join(', ')}`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      {message ? <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm">{message}</p> : null}
-      {error ? <p className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{error}</p> : null}
-
-      <div className="grid gap-4 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <IrreversibleConfirmDialog
+        open={!!disconnectTarget}
+        onOpenChange={(open) => {
+          if (!open) setDisconnectTarget(null);
+        }}
+        title={disconnectTarget ? `Uninstall ${disconnectTarget.name}?` : 'Uninstall connector?'}
+        description="Sync jobs and credentials for this connector will be removed."
+        confirmLabel="Uninstall"
+        loading={disconnectLoading}
+        onConfirm={confirmDisconnect}
+      />
+      <MetricGrid columns={4}>
         <MetricCard title="Installed" value={String(apps.filter((app) => app.status === 'active').length)} detail="Active connectors" />
         <MetricCard title="Marketplace" value={String(providers.length)} detail="Available providers" />
         <MetricCard title="Sync errors" value={String(logs.filter((log) => log.level === 'error').length)} detail="Recent log entries" />
         <MetricCard title="Last sync" value={formatDate(apps.find((app) => app.lastSyncAt)?.lastSyncAt ?? undefined)} detail="Most recent connector run" />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -169,7 +182,7 @@ export function IntegrationsHubPanel({
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {['all', ...Object.keys(CATEGORY_LABELS)].map((item) => (
-              <Button key={item} type="button" variant={category === item ? 'default' : 'outline'} size="sm" onClick={() => setCategory(item)}>
+              <Button key={item} type="button" variant={category === item ? 'brand' : 'outline'} size="sm" onClick={() => setCategory(item)}>
                 {item === 'all' ? 'All' : CATEGORY_LABELS[item]}
               </Button>
             ))}
@@ -181,6 +194,7 @@ export function IntegrationsHubPanel({
                 type="button"
                 className="rounded-md border bg-background p-3 text-left"
                 onClick={() => {
+
                   setProviderId(provider.id);
                   setName(provider.name);
                   setConfig({});
@@ -189,9 +203,9 @@ export function IntegrationsHubPanel({
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-medium">{provider.name}</p>
-                  <Badge variant={installedProviderIds.has(provider.id) ? 'outline' : 'secondary'}>
+                  <Tag variant={installedProviderIds.has(provider.id) ? 'outline' : 'neutral'}><TagLabel>
                     {installedProviderIds.has(provider.id) ? 'Installed' : CATEGORY_LABELS[provider.category] ?? provider.category}
-                  </Badge>
+                  </TagLabel></Tag>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">{provider.authType} authentication</p>
                 <p className="mt-2 text-xs">{provider.capabilities.slice(0, 4).join(', ')}</p>
@@ -208,7 +222,7 @@ export function IntegrationsHubPanel({
         <CardContent>
           <form className="space-y-4" onSubmit={submitInstall}>
             <div className="grid gap-3 md:grid-cols-2">
-              <select
+              <Select
                 className="rounded-md border bg-background px-3 py-2 text-sm"
                 value={providerId}
                 onChange={(event) => {
@@ -222,7 +236,7 @@ export function IntegrationsHubPanel({
                 {providers.map((provider) => (
                   <option key={provider.id} value={provider.id}>{provider.name}</option>
                 ))}
-              </select>
+              </Select>
               <Input placeholder="Connector name" value={name} onChange={(event) => setName(event.target.value)} required />
             </div>
             <div className="grid gap-3 md:grid-cols-2">
@@ -234,17 +248,17 @@ export function IntegrationsHubPanel({
               ))}
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-              <select className="rounded-md border bg-background px-3 py-2 text-sm" value={syncSchedule} onChange={(event) => setSyncSchedule(event.target.value)}>
+              <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={syncSchedule} onChange={(event) => setSyncSchedule(event.target.value)}>
                 <option value="manual">Manual</option>
                 <option value="hourly">Hourly</option>
                 <option value="daily">Daily</option>
                 <option value="realtime">Real-time webhooks</option>
-              </select>
-              <select className="rounded-md border bg-background px-3 py-2 text-sm" value={conflictResolution} onChange={(event) => setConflictResolution(event.target.value)}>
+              </Select>
+              <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={conflictResolution} onChange={(event) => setConflictResolution(event.target.value)}>
                 <option value="provider_wins">Provider wins</option>
                 <option value="ordella_wins">Ordella wins</option>
                 <option value="manual_review">Manual review</option>
-              </select>
+              </Select>
             </div>
             <Button type="submit">Install connector</Button>
           </form>
@@ -257,7 +271,7 @@ export function IntegrationsHubPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Connector</TableHead>
                 <TableHead>Type</TableHead>
@@ -267,7 +281,7 @@ export function IntegrationsHubPanel({
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {apps.map((app) => (
                 <TableRow key={app.id}>
                   <TableCell>
@@ -275,14 +289,14 @@ export function IntegrationsHubPanel({
                     <p className="text-xs text-muted-foreground">{app.providerName}</p>
                   </TableCell>
                   <TableCell>{CATEGORY_LABELS[app.integrationType] ?? app.integrationType}</TableCell>
-                  <TableCell><Badge variant={app.status === 'active' ? 'outline' : 'destructive'}>{app.status}</Badge></TableCell>
+                  <TableCell><Tag variant={app.status === 'active' ? 'outline' : 'error'}><TagLabel>{app.status}</TagLabel></Tag></TableCell>
                   <TableCell>{formatDate(app.lastSyncAt ?? undefined)}</TableCell>
                   <TableCell>{app.retryCount}</TableCell>
                   <TableCell className="space-x-2 text-right">
                     <Button type="button" size="sm" variant="outline" onClick={() => void test(app)}>Test</Button>
                     <Button type="button" size="sm" variant="outline" onClick={() => void sync(app)} disabled={app.status !== 'active'}>Sync</Button>
                     <Button type="button" size="sm" variant="outline" onClick={() => void reconnect(app)} disabled={app.status === 'active'}>Reconnect</Button>
-                    <Button type="button" size="sm" variant="destructive" onClick={() => void disconnect(app.id)} disabled={app.status === 'disconnected'}>Uninstall</Button>
+                    <Button type="button" size="sm" variant="error" onClick={() => setDisconnectTarget(app)} disabled={app.status === 'disconnected'}>Uninstall</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -302,7 +316,7 @@ export function IntegrationsHubPanel({
               <div key={log.id} className="rounded-md border p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{log.action}</span>
-                  <Badge variant={log.level === 'error' ? 'destructive' : 'outline'}>{log.level}</Badge>
+                  <Tag variant={log.level === 'error' ? 'error' : 'outline'}><TagLabel>{log.level}</TagLabel></Tag>
                 </div>
                 <p className="mt-1 text-muted-foreground">{log.message ?? 'No message'}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{formatDate(log.createdAt)} {log.durationMs ? `- ${log.durationMs}ms` : ''}</p>
@@ -315,7 +329,7 @@ export function IntegrationsHubPanel({
               <div key={event.id} className="rounded-md border p-3 text-sm">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{event.eventType}</span>
-                  <Badge variant={event.status === 'failed' ? 'destructive' : 'outline'}>{event.status}</Badge>
+                  <Tag variant={event.status === 'failed' ? 'error' : 'outline'}><TagLabel>{event.status}</TagLabel></Tag>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">{formatDate(event.createdAt)}</p>
               </div>
@@ -323,23 +337,10 @@ export function IntegrationsHubPanel({
           </div>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function MetricCard({ title, value, detail }: { title: string; value: string; detail: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-        <p className="text-sm text-muted-foreground">{detail}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function schemaList(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];

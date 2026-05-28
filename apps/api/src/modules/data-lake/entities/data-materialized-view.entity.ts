@@ -12,13 +12,13 @@ export class DataMaterializedViewEntity {
   @Column({ name: 'view_key', type: 'varchar', length: 64 })
   viewKey!: string;
 
-  @Column({ type: 'varchar', length: 180 })
+  @Column({ name: 'display_name', type: 'varchar', length: 180 })
   displayName!: string;
 
   @Column({ name: 'kpi_category', type: 'varchar', length: 64 })
   kpiCategory!: string;
 
-  @Column({ type: 'text' })
+  @Column({ name: 'definition_sql', type: 'text' })
   definitionSql!: string;
 
   @Column({ name: 'refresh_cron', type: 'varchar', length: 64, nullable: true })

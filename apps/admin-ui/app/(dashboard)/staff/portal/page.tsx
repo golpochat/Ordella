@@ -19,13 +19,13 @@ export default async function EmployeePortalPage({ searchParams }: EmployeePorta
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Employee Portal"
         description="View assigned shifts, clock in or out, request time off, and ask for shift swaps."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       {portal ? <EmployeePortalPanel initialPortal={portal} /> : null}
-    </div>
+    </>
   );
 }

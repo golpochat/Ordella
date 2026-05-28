@@ -13,6 +13,7 @@ import { getErrorMessage } from '@/lib/utils';
 import { StockTable } from './stock-table';
 import { AdjustmentModal } from './adjustment-modal';
 import { InventoryEditorModal } from './inventory-editor-modal';
+import { TablePanelSkeleton } from '@/components/ui/admin-loader';
 
 export function InventoryDashboard() {
   const searchParams = useSearchParams();
@@ -60,7 +61,7 @@ export function InventoryDashboard() {
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading stock…</p>
+        <TablePanelSkeleton rows={6} columns={5} />
       ) : items.length === 0 && !error ? (
         <EmptyState
           title="No stock records"

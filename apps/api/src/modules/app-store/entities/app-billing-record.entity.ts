@@ -29,7 +29,7 @@ export class AppBillingRecordEntity {
   @Column({ name: 'partner_id', type: 'uuid', nullable: true })
   partnerId!: string | null;
 
-  @Column({ type: 'varchar', length: 48 })
+  @Column({ name: 'record_type', type: 'varchar', length: 48 })
   recordType!: 'subscription' | 'one_time' | 'usage' | 'revenue_share' | 'payout' | 'invoice' | 'receipt';
 
   @Column({ name: 'amount_cents', type: 'int', default: 0 })

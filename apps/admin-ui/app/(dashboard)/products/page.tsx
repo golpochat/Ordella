@@ -2,7 +2,6 @@ import { createServerApiClient } from '@/lib/api/server';
 import { listProducts } from '@/lib/api/admin/products';
 import { PageHeader } from '@/components/ui/page-header';
 import { SubNav } from '@/components/ui/sub-nav';
-import { EmptyState } from '@/components/ui/empty-state';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { ProductsTable } from '@/components/products/products-table';
 import { PRODUCTS_SUBNAV } from '@/lib/navigation';
@@ -24,14 +23,10 @@ export default async function ProductsPage() {
         title="Products"
         description="Manage catalog items and pricing"
         action={{ label: 'New product', href: '/products/new' }}
+        tabs={<SubNav variant="embedded" items={PRODUCTS_SUBNAV} />}
       />
-      <SubNav items={PRODUCTS_SUBNAV} />
       {error ? <ApiErrorBanner message={error} /> : null}
-      {products.length === 0 && !error ? (
-        <EmptyState title="No products" description="Create your first product to get started." />
-      ) : (
-        <ProductsTable products={products} />
-      )}
+      {!error ? <ProductsTable products={products} /> : null}
     </>
   );
 }

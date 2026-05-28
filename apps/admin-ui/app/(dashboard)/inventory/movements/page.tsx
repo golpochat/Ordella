@@ -30,11 +30,12 @@ export default async function MovementsPage({ searchParams }: MovementsPageProps
 
   return (
     <>
-      <PageHeader title="Stock movements" description="Ledger of inventory changes" />
-      <div className="mb-4 flex justify-end">
-        <AdjustmentModal />
-      </div>
-      <SubNav items={INVENTORY_SUBNAV} />
+      <PageHeader
+        title="Stock movements"
+        description="Ledger of inventory changes"
+        actions={<AdjustmentModal />}
+        tabs={<SubNav variant="embedded" items={INVENTORY_SUBNAV} />}
+      />
       <Suspense fallback={null}>
         <InventoryFilters />
       </Suspense>

@@ -1,8 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import Link from 'next/link';
 import { useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   cancelSubscription,
@@ -13,6 +15,8 @@ import {
   type SubscriptionPlan,
 } from '@/lib/api/admin/subscriptions';
 import { formatDate, formatMoney } from '@/lib/utils';
+import { IrreversibleConfirmDialog } from '@/components/ui/admin-dialog';
+import { Card as PlanCard, CardBody, Metric, MetricGrid } from '@/components/ui/admin-card';
 
 export function SubscriptionsPanel({
   initialSubscriptions,
@@ -25,6 +29,8 @@ export function SubscriptionsPanel({
 }) {
   const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
   const [plans, setPlans] = useState(initialPlans);
+  const [cancelTarget, setCancelTarget] = useState<AdminSubscription | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
   const [planForm, setPlanForm] = useState({
     name: '',
     price: '19.00',
@@ -41,9 +47,16 @@ export function SubscriptionsPanel({
     setSubscriptions((current) => current.map((row) => (row.id === id ? updated : row)));
   }
 
-  async function cancel(id: string) {
-    const updated = await cancelSubscription(createBrowserApiClient(), id);
-    setSubscriptions((current) => current.map((row) => (row.id === id ? updated : row)));
+  async function confirmCancel() {
+    if (!cancelTarget) return;
+    setCancelLoading(true);
+    try {
+      const updated = await cancelSubscription(createBrowserApiClient(), cancelTarget.id);
+      setSubscriptions((current) => current.map((row) => (row.id === cancelTarget.id ? updated : row)));
+      setCancelTarget(null);
+    } finally {
+      setCancelLoading(false);
+    }
   }
 
   async function savePlan() {
@@ -70,15 +83,26 @@ export function SubscriptionsPanel({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <IrreversibleConfirmDialog
+        open={!!cancelTarget}
+        onOpenChange={(open) => {
+          if (!open) setCancelTarget(null);
+        }}
+        title={cancelTarget ? `Cancel subscription for ${cancelTarget.customer?.name ?? 'this customer'}?` : 'Cancel subscription?'}
+        description="Renewals will stop and the customer will lose subscriber perks at the end of the current period."
+        confirmLabel="Cancel subscription"
+        loading={cancelLoading}
+        onConfirm={confirmCancel}
+      />
+      <MetricGrid columns={4}>
         <Metric title="Active subscriptions" value={analytics.activeSubscriptions} />
         <Metric title="Subscription revenue" value={formatMoney(analytics.subscriptionRevenue)} />
         <Metric title="Membership MRR" value={formatMoney(analytics.mrr)} />
         <Metric title="Active members" value={analytics.activeMembers} />
         <Metric title="Subscriber LTV" value={formatMoney(analytics.subscriberLtv)} />
         <Metric title="Churn rate" value={`${analytics.churnRate}%`} />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -88,10 +112,10 @@ export function SubscriptionsPanel({
           <div className="grid gap-3 md:grid-cols-4">
             <Input placeholder="Plan name" value={planForm.name} onChange={(event) => setPlanForm((current) => ({ ...current, name: event.target.value }))} />
             <Input type="number" min="0" step="0.01" placeholder="Price" value={planForm.price} onChange={(event) => setPlanForm((current) => ({ ...current, price: event.target.value }))} />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={planForm.billingCycle} onChange={(event) => setPlanForm((current) => ({ ...current, billingCycle: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={planForm.billingCycle} onChange={(event) => setPlanForm((current) => ({ ...current, billingCycle: event.target.value }))}>
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
-            </select>
+            </Select>
             <Input type="number" min="0" placeholder="Trial days" value={planForm.trialPeriod} onChange={(event) => setPlanForm((current) => ({ ...current, trialPeriod: event.target.value }))} />
             <label className="flex items-center gap-2 rounded-md border border-input px-3 text-sm">
               <input type="checkbox" checked={planForm.freeDelivery} onChange={(event) => setPlanForm((current) => ({ ...current, freeDelivery: event.target.checked }))} />
@@ -104,20 +128,20 @@ export function SubscriptionsPanel({
           <Button type="button" onClick={() => void savePlan()} disabled={!planForm.name.trim()}>
             Create plan
           </Button>
-          <div className="grid gap-3 md:grid-cols-3">
+          <MetricGrid columns={3}>
             {plans.map((plan) => (
-              <div key={plan.id} className="rounded-lg border p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium">{plan.name}</p>
-                  <Badge variant={plan.status === 'active' ? 'default' : 'secondary'}>{plan.status}</Badge>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">{formatMoney(plan.price)} / {plan.billingCycle}</p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {perksLabel(plan.perks)}
-                </p>
-              </div>
+              <PlanCard key={plan.id} className="border-border shadow-sm">
+                <CardBody className="p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-foreground">{plan.name}</p>
+                    <Tag variant={plan.status === 'active' ? 'brand' : 'neutral'}><TagLabel>{plan.status}</TagLabel></Tag>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{formatMoney(plan.price)} / {plan.billingCycle}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{perksLabel(plan.perks)}</p>
+                </CardBody>
+              </PlanCard>
             ))}
-          </div>
+          </MetricGrid>
         </CardContent>
       </Card>
 
@@ -127,7 +151,7 @@ export function SubscriptionsPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Plan</TableHead>
                 <TableHead>Active</TableHead>
@@ -136,7 +160,7 @@ export function SubscriptionsPanel({
                 <TableHead>Churn</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {analytics.planPerformance.map((plan) => (
                 <TableRow key={plan.planId}>
                   <TableCell>{plan.name}</TableCell>
@@ -157,7 +181,7 @@ export function SubscriptionsPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Customer</TableHead>
                 <TableHead>Plan / Items</TableHead>
@@ -168,7 +192,7 @@ export function SubscriptionsPanel({
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {subscriptions.map((subscription) => (
                 <TableRow key={subscription.id}>
                   <TableCell>
@@ -180,11 +204,11 @@ export function SubscriptionsPanel({
                   <TableCell>{subscription.plan?.name ?? subscription.items.map((item) => `${item.quantity}x ${item.itemId.slice(0, 8)}`).join(', ')}</TableCell>
                   <TableCell>{subscription.billingCycle ?? subscription.schedule}</TableCell>
                   <TableCell>{formatDate(subscription.renewalDate ?? subscription.nextRunAt)}</TableCell>
-                  <TableCell><Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>{subscription.status}</Badge></TableCell>
+                  <TableCell><Tag variant={subscription.status === 'active' ? 'brand' : 'neutral'}><TagLabel>{subscription.status}</TagLabel></Tag></TableCell>
                   <TableCell>{subscription.paymentMethodId ? 'Saved' : 'Needs method'}</TableCell>
                   <TableCell className="space-x-2 text-right">
                     <Button size="sm" variant="outline" onClick={() => void pause(subscription.id)}>Pause</Button>
-                    <Button size="sm" variant="destructive" onClick={() => void cancel(subscription.id)}>Cancel</Button>
+                    <Button size="sm" variant="error" onClick={() => setCancelTarget(subscription)}>Cancel</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -192,7 +216,7 @@ export function SubscriptionsPanel({
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
@@ -205,13 +229,3 @@ function perksLabel(perks: Record<string, unknown>) {
   return labels.length ? labels.join(' · ') : 'No perks configured';
 }
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{title}</p>
-        <p className="mt-1 text-xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}

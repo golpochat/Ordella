@@ -39,7 +39,7 @@ export default async function GlobalizationPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Globalization"
         description="Multi-currency, tax, localization, country catalog and delivery rules, promotions, reporting, and compliance — tenant-scoped."
@@ -54,6 +54,6 @@ export default async function GlobalizationPage() {
         compliance={compliance}
         reporting={reporting}
       />
-    </div>
+    </>
   );
 }

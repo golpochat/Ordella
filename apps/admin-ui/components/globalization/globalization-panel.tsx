@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   convertCurrency,
@@ -16,6 +19,9 @@ import {
 } from '@/lib/api/admin/globalization';
 import type { getGlobalizationSettings } from '@/lib/api/admin/globalization';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 type GlobalizationPanelProps = {
   dashboard: GlobalizationDashboard | null;
@@ -36,6 +42,7 @@ export function GlobalizationPanel({
   compliance: initialCompliance,
   reporting: initialReporting,
 }: GlobalizationPanelProps) {
+  const { success: toastSuccess, error: toastError } = useAdminToast();
   const api = useMemo(() => createBrowserApiClient(), []);
   const settings = settingsBundle?.settings ?? dashboard?.settings ?? null;
   const [fxRates, setFxRates] = useState(initialFx);
@@ -51,12 +58,7 @@ export function GlobalizationPanel({
   const [fromCurrency, setFromCurrency] = useState('EUR');
   const [toCurrency, setToCurrency] = useState('GBP');
   const [convertResult, setConvertResult] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function saveSettings() {
-    setMessage(null);
-    setError(null);
+    async function saveSettings() {
     try {
       await updateGlobalizationSettings(api, {
         baseCurrency,
@@ -64,24 +66,22 @@ export function GlobalizationPanel({
         supportedCountries: countries.split(',').map((c) => c.trim()).filter(Boolean),
         supportedCurrencies: currencies.split(',').map((c) => c.trim()).filter(Boolean),
       });
-      setMessage('Global settings saved.');
+      toastSuccess('Global settings saved.');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function runFxRefresh() {
-    setError(null);
     try {
       setFxRates(await refreshFxRates(api));
-      setMessage('FX rates refreshed (fallback provider).');
+      toastSuccess('FX rates refreshed (fallback provider).');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function runConvert() {
-    setError(null);
     try {
       const result = await convertCurrency(api, {
         amount: Number(convertAmount),
@@ -91,30 +91,26 @@ export function GlobalizationPanel({
       });
       setConvertResult(JSON.stringify(result, null, 2));
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function reloadReporting() {
-    setError(null);
     try {
       setReporting(await getReportingDashboard(api));
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <Metric title="FX pairs" value={dashboard?.fxRatePairs ?? fxRates.length} />
         <Metric title="Country prices" value={dashboard?.countryPriceOverrides ?? prices.length} />
         <Metric title="Tax exemptions" value={dashboard?.taxExemptions ?? exemptions.length} />
         <Metric title="Compliance profiles" value={dashboard?.complianceProfiles ?? compliance.length} />
-      </div>
-
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
@@ -128,7 +124,7 @@ export function GlobalizationPanel({
             <Field label="Supported currencies" value={currencies} onChange={setCurrencies} />
             <div className="flex flex-wrap gap-2">
               {(settings?.supportedCurrencies ?? []).map((c) => (
-                <Badge key={c} variant="secondary">{c}</Badge>
+                <Tag key={c} variant="neutral"><TagLabel>{c}</TagLabel></Tag>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -154,14 +150,14 @@ export function GlobalizationPanel({
             </div>
             {convertResult ? <pre className="overflow-auto rounded-md border p-3 text-xs">{convertResult}</pre> : null}
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Pair</TableHead>
                   <TableHead>Rate</TableHead>
                   <TableHead>Source</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {fxRates.slice(0, 8).map((rate) => (
                   <TableRow key={rate.id}>
                     <TableCell>{rate.fromCurrency} → {rate.toCurrency}</TableCell>
@@ -182,13 +178,13 @@ export function GlobalizationPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Location</TableHead>
                   <TableHead>Timezone</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {(settingsBundle?.locationTimezones ?? []).map((loc) => (
                   <TableRow key={loc.id}>
                     <TableCell>{loc.name}</TableCell>
@@ -209,7 +205,7 @@ export function GlobalizationPanel({
             {reporting ? (
               <pre className="overflow-auto rounded-md border p-3 text-xs">{JSON.stringify(reporting, null, 2)}</pre>
             ) : (
-              <p className="text-sm text-muted-foreground">No reporting snapshot loaded.</p>
+              <PanelEmpty title="No reporting snapshot loaded" description="Content will appear here when available." />
             )}
           </CardContent>
         </Card>
@@ -221,14 +217,14 @@ export function GlobalizationPanel({
         </CardHeader>
         <CardContent className="grid gap-6 lg:grid-cols-2">
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Country</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Customer</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {exemptions.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.countryCode}</TableCell>
@@ -239,14 +235,14 @@ export function GlobalizationPanel({
             </TableBody>
           </Table>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Country</TableHead>
                 <TableHead>Invoice</TableHead>
                 <TableHead>Privacy</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {compliance.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.countryCode}</TableCell>
@@ -265,7 +261,7 @@ export function GlobalizationPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Country</TableHead>
                 <TableHead>Product</TableHead>
@@ -273,7 +269,7 @@ export function GlobalizationPanel({
                 <TableHead>Updated</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {prices.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.countryCode} ({row.currency})</TableCell>
@@ -286,20 +282,10 @@ export function GlobalizationPanel({
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ title, value }: { title: string; value: number }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-sm text-muted-foreground">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (

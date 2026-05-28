@@ -1,13 +1,16 @@
 'use client';
 
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { createDeliveryAssignment, getDeliverySettings, updateDeliverySettings } from '@/lib/api/admin/settings';
 import { fetchLocations, updateLocation, type LocationListItem } from '@/lib/api/locations';
 import { getErrorMessage } from '@/lib/utils';
 
 export function DeliverySettingsPanel() {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = createBrowserApiClient();
   const [locations, setLocations] = useState<LocationListItem[]>([]);
   const [locationId, setLocationId] = useState('');
@@ -24,11 +27,10 @@ export function DeliverySettingsPanel() {
   const [overrideDriverId, setOverrideDriverId] = useState('');
   const [autoAssignDrivers, setAutoAssignDrivers] = useState(false);
   const [maxActiveDeliveriesPerDriver, setMaxActiveDeliveriesPerDriver] = useState('3');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+
     void Promise.all([fetchLocations(), getDeliverySettings(api)])
       .then(([locationRows, settings]) => {
         setLocations(locationRows);
@@ -45,7 +47,7 @@ export function DeliverySettingsPanel() {
         }
         if (locationRows[0]) setLocationId(locationRows[0].id);
       })
-      .catch((err) => setError(getErrorMessage(err)));
+      .catch((err) => toastError(getErrorMessage(err)));
   }, []);
 
   const selectedLocation = useMemo(
@@ -59,12 +61,10 @@ export function DeliverySettingsPanel() {
       const parsed = JSON.parse(zonesJson) as unknown;
       deliveryZones = Array.isArray(parsed) ? parsed as Record<string, unknown>[] : [];
     } catch {
-      setError('Delivery zones must be valid JSON');
+      toastError('Delivery zones must be valid JSON');
       return;
     }
     setLoading(true);
-    setMessage(null);
-    setError(null);
     try {
       await updateDeliverySettings(api, {
         locationId: locationId || undefined,
@@ -80,9 +80,9 @@ export function DeliverySettingsPanel() {
       if (locationId) {
         await updateLocation(locationId, { deliveryZones });
       }
-      setMessage('Saved');
+      toastSuccess('Saved');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -94,13 +94,13 @@ export function DeliverySettingsPanel() {
       const parsed = JSON.parse(zonesJson) as unknown;
       current = Array.isArray(parsed) ? parsed as Record<string, unknown>[] : [];
     } catch {
-      setError('Delivery zones must be valid JSON before adding a radius zone');
+      toastError('Delivery zones must be valid JSON before adding a radius zone');
       return;
     }
     const lat = Number(centerLat);
     const lng = Number(centerLng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      setError('Center latitude and longitude are required for a radius zone');
+      toastError('Center latitude and longitude are required for a radius zone');
       return;
     }
     const next = [
@@ -113,26 +113,23 @@ export function DeliverySettingsPanel() {
       },
     ];
     setZonesJson(JSON.stringify(next, null, 2));
-    setError(null);
-  }
+    }
 
   async function assignDriver() {
     if (!overrideTaskId || !overrideDriverId) {
-      setError('Delivery task ID and driver ID are required');
+      toastError('Delivery task ID and driver ID are required');
       return;
     }
     setLoading(true);
-    setMessage(null);
-    setError(null);
     try {
       await createDeliveryAssignment(api, {
         deliveryTaskId: overrideTaskId,
         driverProfileId: overrideDriverId,
         assignmentType: 'manual',
       });
-      setMessage('Driver assigned');
+      toastSuccess('Driver assigned');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -156,7 +153,7 @@ export function DeliverySettingsPanel() {
           <label htmlFor="delivery-location" className="text-sm font-medium">
             Location for zone management
           </label>
-          <select
+          <Select
             id="delivery-location"
             className="h-10 w-full rounded-md border bg-background px-3 text-sm"
             value={locationId}
@@ -168,7 +165,7 @@ export function DeliverySettingsPanel() {
                 {location.name}
               </option>
             ))}
-          </select>
+          </Select>
           {selectedLocation ? (
             <p className="text-xs text-muted-foreground">
               Zones saved here also update {selectedLocation.name} for location-aware routing.
@@ -270,7 +267,7 @@ export function DeliverySettingsPanel() {
           <label htmlFor="delivery-zones-json" className="text-sm font-medium">
             Delivery zones JSON
           </label>
-          <textarea
+          <Textarea
             id="delivery-zones-json"
             className="min-h-40 w-full rounded-md border bg-background p-3 font-mono text-sm"
             value={zonesJson}
@@ -303,9 +300,7 @@ export function DeliverySettingsPanel() {
             Assign driver
           </Button>
         </div>
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        <Button onClick={save} disabled={loading}>
+        <Button onClick={save} isLoading={loading} loadingLabel="Saving…">
           Save delivery settings
         </Button>
       </CardContent>

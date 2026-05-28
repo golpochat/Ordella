@@ -20,6 +20,8 @@ import { AnalyticsBarChart } from '@/components/analytics/analytics-bar-chart';
 import { AnalyticsFilters } from '@/components/analytics/analytics-filters';
 import { AnalyticsKpiGrid } from '@/components/analytics/analytics-kpi-grid';
 import { formatDate, formatMoney, getErrorMessage } from '@/lib/utils';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
+import { Stack } from '@shared-ui';
 
 type AnalyticsDashboardPanelProps = {
   searchParams: { from?: string; to?: string; locationId?: string };
@@ -61,7 +63,7 @@ export async function AnalyticsDashboardPanel({ searchParams }: AnalyticsDashboa
     ]);
 
     return (
-      <div className="space-y-6">
+    <Stack gap="lg" className="min-w-0">
         <Suspense fallback={null}>
           <AnalyticsFilters locations={locations} />
         </Suspense>
@@ -132,7 +134,7 @@ export async function AnalyticsDashboardPanel({ searchParams }: AnalyticsDashboa
           <div>
             <h3 className="mb-3 text-sm font-semibold">Recent orders</h3>
             {recentOrders.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No orders yet.</p>
+              <PanelEmpty title="No orders yet" description="Content will appear here when available." />
             ) : (
               <ReportTable
                 columns={['order', 'channel', 'status', 'total', 'when']}
@@ -168,7 +170,7 @@ export async function AnalyticsDashboardPanel({ searchParams }: AnalyticsDashboa
             )}
           </div>
         </div>
-      </div>
+      </Stack>
     );
   } catch (err) {
     return <ApiErrorBanner message={getErrorMessage(err)} />;

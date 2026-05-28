@@ -1,5 +1,6 @@
 'use client';
 
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button, Card, CardContent } from '@shared-ui';
@@ -7,9 +8,10 @@ import { createBrowserApiClient } from '@/lib/api/browser';
 import { exportAuditLogsCsv, fetchComplianceStatus, listAuditAlerts } from '@/lib/api/admin/audit-logs';
 
 export function AuditLogsActions() {
-  const searchParams = useSearchParams();
-  const [message, setMessage] = useState<string | null>(null);
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
 
+  const searchParams = useSearchParams();
+  
   async function exportCsv() {
     const csv = await exportAuditLogsCsv(createBrowserApiClient(), Object.fromEntries(searchParams.entries()));
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -29,7 +31,7 @@ export function AuditLogsActions() {
     const statusText = typeof status === 'object' && status && 'tamperEvidenceVerified' in status
       ? `Tamper evidence verified: ${String((status as { tamperEvidenceVerified?: unknown }).tamperEvidenceVerified)}`
       : 'Compliance status loaded';
-    setMessage(`${statusText}. Active alerts: ${alerts.length}.`);
+    toastSuccess(`${statusText}. Active alerts: ${alerts.length}.`);
   }
 
   return (
@@ -41,8 +43,7 @@ export function AuditLogsActions() {
         <Button type="button" variant="outline" onClick={() => void checkCompliance()}>
           Check compliance & alerts
         </Button>
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      </CardContent>
+        </CardContent>
     </Card>
   );
 }

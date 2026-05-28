@@ -19,8 +19,8 @@ export default async function FranchiseHqInventoryPage() {
 
   return (
     <>
-      <PageHeader title="Franchise HQ Inventory" description="Low-stock and out-of-stock issues across franchisee locations." />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
+      <PageHeader title="Franchise HQ Inventory" description="Low-stock and out-of-stock issues across franchisee locations."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
       {items.length ? (
         <FranchiseInventoryTable items={items} />

@@ -12,7 +12,7 @@ export class AutonomousSafetyConstraintEntity {
   @Column({ name: 'constraint_key', type: 'varchar', length: 64 })
   constraintKey!: string;
 
-  @Column({ type: 'varchar', length: 180 })
+  @Column({ name: 'display_name', type: 'varchar', length: 180 })
   displayName!: string;
 
   @Column({ type: 'jsonb', default: () => "'{}'" })

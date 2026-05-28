@@ -23,7 +23,7 @@ export class IntegrationEventsService {
       .createQueryBuilder('event')
       .innerJoin('event.integration', 'integration')
       .where('integration.tenant_id = :tenantId', { tenantId: tenant.tenantId })
-      .orderBy('event.created_at', 'DESC')
+      .orderBy('event.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
     if (query.integrationId) builder.andWhere('event.integration_id = :integrationId', { integrationId: query.integrationId });

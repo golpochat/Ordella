@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import '@ordella/shared-ui/styles.css';
 import { ThemeRoot } from '@/components/theme-root';
 import { StorefrontFooter } from '@/components/storefront-footer';
 import { StorefrontHeader } from '@/components/storefront-header';

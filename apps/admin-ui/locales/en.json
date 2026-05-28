@@ -1,0 +1,222 @@
+{
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "disable": "Disable",
+    "continue": "Continue",
+    "save": "Save",
+    "close": "Close",
+    "loading": "Loading…",
+    "working": "Working…",
+    "search": "Search",
+    "refresh": "Refresh",
+    "add": "Add",
+    "edit": "Edit",
+    "back": "Back",
+    "none": "None",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "shell": {
+    "adminTitle": "Admin",
+    "adminSubtitle": "Retail operating system",
+    "localeLabel": "Language",
+    "openNavigation": "Open navigation",
+    "closeNavigation": "Close navigation",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "navigatedTo": "Navigated to {{label}}",
+    "sectionNav": "Section"
+  },
+  "nav": {
+    "dashboard": "Analytics",
+    "ai-assistant": "AI Assistant",
+    "analytics-insights": "Analytics & Insights",
+    "enterprise": "Enterprise Admin",
+    "franchise-hq": "Franchise HQ",
+    "locations": "Locations",
+    "catalog": "Catalog",
+    "bundles": "Bundles & Combos",
+    "products": "Products (legacy)",
+    "inventory": "Inventory",
+    "multi-store-inventory": "Multi-Store Inventory",
+    "replenishment": "Replenishment",
+    "offline-sync": "Offline & Sync",
+    "event-bus": "Event Bus",
+    "globalization": "Globalization",
+    "data-lake": "Data Lake & ETL",
+    "orchestration": "Orchestration",
+    "digital-twins": "Digital Twins",
+    "autonomous-retail": "Autonomous Retail",
+    "warehouse": "Warehouse Management",
+    "devices": "Hardware & IoT",
+    "picking-mode": "Picking Mode",
+    "stock-transfers": "Stock Transfers",
+    "suppliers": "Suppliers",
+    "supplier-portal": "Supplier Portal",
+    "purchase-orders": "Purchase Orders",
+    "staff": "Staff",
+    "staff-scheduling": "Staff Scheduling",
+    "crm": "CRM",
+    "notifications": "Notifications",
+    "loyalty": "Loyalty & Rewards",
+    "giftcards": "Gift Cards & Store Credit",
+    "orders": "Orders",
+    "subscriptions": "Subscriptions",
+    "support": "Support Inbox",
+    "promotions": "Promotions & Discounts",
+    "recommendations": "AI Recommendations",
+    "marketing": "Marketing",
+    "audit-logs": "Audit Logs",
+    "app-store": "App Store",
+    "partner-network": "Partner Network",
+    "compliance-suite": "Compliance Suite",
+    "cloud-platform": "Cloud Platform",
+    "retail-genome": "Retail Genome",
+    "integrations-hub": "Integrations Hub",
+    "developer": "Developer",
+    "reports": "Reports",
+    "forecasting": "Forecasting",
+    "settings": "Settings"
+  },
+  "navGroups": {
+    "overview": "Overview",
+    "commerce": "Commerce",
+    "operations": "Operations",
+    "platform": "Platform",
+    "more": "More"
+  },
+  "subnav": {
+    "products": {
+      "all": "All products",
+      "categories": "Categories",
+      "modifiers": "Modifiers"
+    },
+    "catalog": {
+      "builder": "Catalog builder",
+      "bundles": "Bundles & Combos"
+    },
+    "inventory": {
+      "stock": "Stock levels",
+      "multiStore": "Multi-store inventory",
+      "lowStock": "Low stock",
+      "movements": "Movements",
+      "replenishment": "Replenishment"
+    },
+    "reports": {
+      "dashboards": "Dashboards",
+      "analyticsHome": "Analytics home",
+      "dailySales": "Daily sales",
+      "inventory": "Inventory",
+      "delivery": "Delivery",
+      "suppliers": "Suppliers",
+      "promotions": "Promotions"
+    },
+    "marketing": {
+      "campaigns": "Campaigns",
+      "segments": "Customer segments",
+      "journeys": "Journeys"
+    },
+    "crm": {
+      "dashboard": "CRM dashboard",
+      "segments": "Customer segments",
+      "campaigns": "Marketing campaigns"
+    },
+    "franchiseHq": {
+      "overview": "Overview",
+      "locations": "Locations",
+      "orders": "Orders",
+      "inventory": "Inventory",
+      "reports": "Reports",
+      "forecasting": "Forecasting",
+      "replenishment": "Replenishment",
+      "supplierPerformance": "Supplier Performance",
+      "brandCatalog": "Brand Catalog",
+      "routing": "Order Routing",
+      "staff": "Staff"
+    }
+  },
+  "settings": {
+    "tabs": {
+      "localization": "Localization",
+      "billing": "Billing",
+      "branding": "Branding",
+      "storefrontTheme": "Storefront Theme",
+      "business": "Business",
+      "hours": "Opening hours",
+      "delivery": "Delivery zones",
+      "orderRouting": "Order Routing",
+      "enterpriseSso": "Enterprise SSO",
+      "payment": "Payment",
+      "pos": "POS",
+      "posTheme": "POS Theme",
+      "taxCompliance": "Tax & Compliance",
+      "fulfillment": "Fulfillment display"
+    }
+  },
+  "dialog": {
+    "deleteTitle": "Delete this item?",
+    "deleteTitleNamed": "Delete \"{{name}}\"?",
+    "deleteDescription": "This action cannot be undone.",
+    "disableTitle": "Disable this item?",
+    "disableTitleNamed": "Disable \"{{name}}\"?",
+    "disableDescription": "You can re-enable this later from settings.",
+    "irreversibleDescription": "This action cannot be reversed."
+  },
+  "validation": {
+    "unableToSave": "Unable to save",
+    "unableToLoad": "Unable to load",
+    "required": "This field is required"
+  },
+  "error": {
+    "generic": "Something went wrong",
+    "loadLocations": "Unable to load locations"
+  },
+  "empty": {
+    "noData": "No data yet",
+    "noResults": "No results found",
+    "allStocked": "All stocked",
+    "allStockedDescription": "No low or out-of-stock items for this location.",
+    "noLocations": "No locations yet",
+    "noLocationsDescription": "Add your first site to manage inventory, staff, and fulfillment across channels."
+  },
+  "locations": {
+    "title": "Locations",
+    "description": "Manage sites for your business — shops, kitchens, warehouses, and pickup points.",
+    "addLocation": "Add location",
+    "allLocations": "All locations",
+    "disableTitle": "Disable location?",
+    "disableTitleNamed": "Disable \"{{name}}\"?",
+    "disableDescription": "Staff and orders for this location will be affected until it is re-enabled."
+  },
+  "crm": {
+    "title": "CRM",
+    "description": "Customer insights, segments, tags, and order history for every retail sector."
+  },
+  "table": {
+    "name": "Name",
+    "address": "Address",
+    "status": "Status",
+    "staff": "Staff",
+    "inventory": "Inventory",
+    "actions": "Actions",
+    "customer": "Customer",
+    "value": "Value",
+    "orders": "Orders",
+    "lastOrder": "Last order",
+    "tags": "Tags",
+    "segments": "Segments",
+    "locationsAria": "Locations",
+    "lowStock": "Low stock ({{count}})",
+    "noStock": "No stock",
+    "stockOk": "OK"
+  },
+  "items": {
+    "count": {
+      "one": "{{count}} item",
+      "other": "{{count}} items"
+    }
+  }
+}

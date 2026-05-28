@@ -101,6 +101,8 @@ export class ComplianceSuiteService {
     private readonly jwtService: JwtService,
   ) {}
 
+  private readonly ensureDefaultsLocks = new Map<string, Promise<void>>();
+
   async dashboard(tenant: TenantContext) {
     await this.ensureDefaults(tenant);
     const [
@@ -513,7 +515,21 @@ export class ComplianceSuiteService {
     };
   }
 
-  private async ensureDefaults(tenant: TenantContext) {
+  private ensureDefaults(tenant: TenantContext): Promise<void> {
+    const tenantId = tenant.tenantId;
+    const inFlight = this.ensureDefaultsLocks.get(tenantId);
+    if (inFlight) return inFlight;
+
+    const run = this.seedDefaults(tenant).finally(() => {
+      if (this.ensureDefaultsLocks.get(tenantId) === run) {
+        this.ensureDefaultsLocks.delete(tenantId);
+      }
+    });
+    this.ensureDefaultsLocks.set(tenantId, run);
+    return run;
+  }
+
+  private async seedDefaults(tenant: TenantContext) {
     for (const seed of SEED_FRAMEWORKS) {
       const existing = await this.frameworks.findOne({
         where: { tenantId: tenant.tenantId, frameworkKey: seed.frameworkKey },

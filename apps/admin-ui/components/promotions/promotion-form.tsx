@@ -1,9 +1,11 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Promotion } from '@shared-utils';
-import { Button, Input } from '@shared-ui';
+import { Select, Button, Input } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { createPromotion, previewPromotion, updatePromotion, type PromotionPreview } from '@/lib/api/admin/promotions';
 import { getErrorMessage } from '@/lib/utils';
@@ -173,9 +175,8 @@ export function PromotionForm({ promotion }: PromotionFormProps) {
         <label className="text-sm font-medium" htmlFor="promo-type">
           Type
         </label>
-        <select
+        <Select
           id="promo-type"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
           value={type}
           onChange={(e) => setType(e.target.value as typeof type)}
         >
@@ -191,7 +192,7 @@ export function PromotionForm({ promotion }: PromotionFormProps) {
           <option value="customer-segment">Customer segment</option>
           <option value="dynamic-pricing">Dynamic pricing</option>
           <option value="coupon">Coupon</option>
-        </select>
+        </Select>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium" htmlFor="promo-description">
@@ -236,16 +237,15 @@ export function PromotionForm({ promotion }: PromotionFormProps) {
           <label className="text-sm font-medium" htmlFor="channel">
             Channel
           </label>
-          <select
+          <Select
             id="channel"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={channel}
             onChange={(e) => setChannel(e.target.value as typeof channel)}
           >
             <option value="both">POS and online</option>
             <option value="pos">POS only</option>
             <option value="online">Online only</option>
-          </select>
+          </Select>
         </div>
         <label className="flex items-center gap-2 pt-7 text-sm">
           <input type="checkbox" checked={autoApply} onChange={(e) => setAutoApply(e.target.checked)} />
@@ -263,16 +263,15 @@ export function PromotionForm({ promotion }: PromotionFormProps) {
           <label className="text-sm font-medium" htmlFor="conflict">
             Conflict strategy
           </label>
-          <select
+          <Select
             id="conflict"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={conflictStrategy}
             onChange={(e) => setConflictStrategy(e.target.value as typeof conflictStrategy)}
           >
             <option value="best_price">Best price</option>
             <option value="priority">Priority wins</option>
             <option value="exclusive">Exclusive</option>
-          </select>
+          </Select>
         </div>
         <label className="flex items-center gap-2 pt-7 text-sm">
           <input type="checkbox" checked={stackable} onChange={(e) => setStackable(e.target.checked)} />
@@ -323,15 +322,14 @@ export function PromotionForm({ promotion }: PromotionFormProps) {
           <label className="text-sm font-medium" htmlFor="discount-mode">
             Combo discount mode
           </label>
-          <select
+          <Select
             id="discount-mode"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={discountMode}
             onChange={(e) => setDiscountMode(e.target.value as typeof discountMode)}
           >
             <option value="fixed">Fixed amount</option>
             <option value="percentage">Percentage</option>
-          </select>
+          </Select>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="preview-subtotal">
@@ -392,7 +390,7 @@ export function PromotionForm({ promotion }: PromotionFormProps) {
           <p>Estimated margin impact: {preview.estimatedMarginImpact}</p>
         </div>
       ) : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <FormErrorAlert message={error} /> : null}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" onClick={onPreview}>
           Preview impact

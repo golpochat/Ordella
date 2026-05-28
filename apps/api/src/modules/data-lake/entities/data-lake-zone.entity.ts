@@ -14,7 +14,7 @@ export class DataLakeZoneEntity {
   @Column({ name: 'zone_key', type: 'varchar', length: 32 })
   zoneKey!: DataLakeZoneKey;
 
-  @Column({ type: 'varchar', length: 180 })
+  @Column({ name: 'display_name', type: 'varchar', length: 180 })
   displayName!: string;
 
   @Column({ type: 'text', nullable: true })

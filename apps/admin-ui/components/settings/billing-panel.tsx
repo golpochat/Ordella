@@ -1,15 +1,9 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-} from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input , Stack } from '@shared-ui';
 import {
   attachBillingPaymentMethod,
   cancelBillingSubscription,
@@ -23,7 +17,10 @@ import {
   type BillingSummary,
 } from '@/lib/api/billing';
 import { getErrorMessage } from '@/lib/utils';
+import { PanelCardsSkeleton } from '@/components/ui/admin-loader';
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 function formatLimit(value: number | null, formatNumber: (value: number) => string): string {
   if (value === null) return 'Unlimited';
@@ -75,12 +72,10 @@ export function BillingPanel() {
   }
 
   if (!summary) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-sm text-muted-foreground">
-          {error ?? 'Loading billing…'}
-        </CardContent>
-      </Card>
+    return error ? (
+      <FormErrorAlert message={error} title="Unable to load billing" />
+    ) : (
+      <PanelCardsSkeleton count={2} />
     );
   }
 
@@ -90,12 +85,8 @@ export function BillingPanel() {
   const onTrial = summary.subscriptionStatus === 'trialing' && summary.trialEndsAt;
 
   return (
-    <div className="space-y-6">
-      {error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
+    <Stack gap="lg" className="min-w-0">
+      <FormErrorAlert message={error} title="Billing action failed" />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -107,12 +98,12 @@ export function BillingPanel() {
           </div>
           <div className="flex flex-wrap gap-2">
             {onTrial ? (
-              <Badge variant="secondary">
+              <Tag variant="neutral"><TagLabel>
                 Trial ends {formatDate(summary.trialEndsAt!)}
-              </Badge>
+              </TagLabel></Tag>
             ) : null}
-            {usage.softLimitWarned ? <Badge variant="secondary">Approaching limits</Badge> : null}
-            {usage.hardLimitExceeded ? <Badge variant="destructive">Limit exceeded</Badge> : null}
+            {usage.softLimitWarned ? <Tag variant="neutral"><TagLabel>Approaching limits</TagLabel></Tag> : null}
+            {usage.hardLimitExceeded ? <Tag variant="error"><TagLabel>Limit exceeded</TagLabel></Tag> : null}
           </div>
         </CardHeader>
         <CardContent className="space-y-4 text-sm">
@@ -182,7 +173,7 @@ export function BillingPanel() {
             <Button
               key={plan.id}
               size="sm"
-              variant={summary.plan === plan.id ? 'default' : 'outline'}
+              variant={summary.plan === plan.id ? 'brand' : 'outline'}
               disabled={loading || summary.plan === plan.id || plan.custom}
               onClick={() =>
                 void runAction(async () => {
@@ -218,7 +209,7 @@ export function BillingPanel() {
               {String(summary.paymentMethod.last4)}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">No payment method on file.</p>
+            <PanelEmpty title="No payment method on file" description="Content will appear here when available." />
           )}
           <Input
             placeholder="Stripe payment method ID (pm_…)"
@@ -248,7 +239,7 @@ export function BillingPanel() {
         </CardHeader>
         <CardContent>
           {invoices.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No invoices yet.</p>
+            <PanelEmpty title="No invoices yet" description="Content will appear here when available." />
           ) : (
             <ul className="divide-y text-sm">
               {invoices.map((inv) => (
@@ -273,6 +264,6 @@ export function BillingPanel() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }

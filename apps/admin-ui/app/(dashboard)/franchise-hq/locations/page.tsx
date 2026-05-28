@@ -19,8 +19,8 @@ export default async function FranchiseHqLocationsPage() {
 
   return (
     <>
-      <PageHeader title="Franchise HQ Locations" description="Read-only leaderboard and location performance across the franchise group." />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
+      <PageHeader title="Franchise HQ Locations" description="Read-only leaderboard and location performance across the franchise group."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
       {locations.length ? (
         <FranchiseLocationsTable locations={locations} />

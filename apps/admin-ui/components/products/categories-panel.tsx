@@ -1,9 +1,11 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Category } from '@shared-utils';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { createCategory } from '@/lib/api/admin/products';
 import { listTaxCategories, type TaxCategory } from '@/lib/api/admin/tax';
@@ -37,7 +39,7 @@ export function CategoriesPanel({ categories }: { categories: Category[] }) {
   }
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg" className="min-w-0">
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Add category</CardTitle>
@@ -51,7 +53,7 @@ export function CategoriesPanel({ categories }: { categories: Category[] }) {
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <select
+            <Select
               className="h-10 rounded-md border border-input bg-background px-3 text-sm"
               value={taxCategoryId}
               onChange={(e) => setTaxCategoryId(e.target.value)}
@@ -62,21 +64,21 @@ export function CategoriesPanel({ categories }: { categories: Category[] }) {
                   {category.name}
                 </option>
               ))}
-            </select>
+            </Select>
             <Button type="submit">Create</Button>
           </form>
-          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+          {error ? <FormErrorAlert message={error} /> : null}
         </CardContent>
       </Card>
       <Table>
-        <TableHeader>
+        <TableHeader sticky>
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Sort order</TableHead>
             <TableHead>Tax category</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody zebra>
           {categories.map((c) => (
             <TableRow key={c.id}>
               <TableCell>{c.name}</TableCell>
@@ -88,6 +90,6 @@ export function CategoriesPanel({ categories }: { categories: Category[] }) {
           ))}
         </TableBody>
       </Table>
-    </div>
+    </Stack>
   );
 }

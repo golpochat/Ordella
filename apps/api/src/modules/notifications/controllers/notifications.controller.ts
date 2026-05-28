@@ -24,14 +24,17 @@ import {
   UpdateTenantNotificationSettingsDto,
   UpdateNotificationPreferenceDto,
 } from '../dto';
-import { NotificationResponseDto } from '../dto';
-import { NotificationsService } from '../services';
+import { FilterNotificationLogDto, NotificationLogResponseDto, NotificationResponseDto } from '../dto';
+import { NotificationLogsService, NotificationsService } from '../services';
 
 /** API Spec §10.1 */
 @Controller('notifications')
 @UseGuards(TenantGuard, JwtAuthGuard, RbacGuard)
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(
+    private readonly notificationsService: NotificationsService,
+    private readonly notificationLogsService: NotificationLogsService,
+  ) {}
 
   @Get()
   @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_READ)
@@ -68,6 +71,16 @@ export class NotificationsController {
   @RequirePermissions(NotificationsPermissionKeys.NOTIFICATIONS_READ)
   async settings(@CurrentTenant() tenant: TenantContext): Promise<ApiSuccessResponse<unknown>> {
     const data = await this.notificationsService.getTenantNotificationSettings(tenant);
+    return { success: true, data };
+  }
+
+  @Get('logs')
+  @RequirePermissions(NotificationsPermissionKeys.NOTIFICATION_LOGS_READ)
+  async logs(
+    @CurrentTenant() tenant: TenantContext,
+    @Query() query: FilterNotificationLogDto,
+  ): Promise<ApiSuccessResponse<NotificationLogResponseDto[]>> {
+    const data = await this.notificationLogsService.findAll(tenant, query);
     return { success: true, data };
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { InventoryListItem } from '@shared-utils';
 import { getStoredLocationId, resolveActiveLocationId } from '@shared-utils';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -12,34 +12,30 @@ import { getErrorMessage } from '@/lib/utils';
 import { StockTable } from './stock-table';
 import { AdjustmentModal } from './adjustment-modal';
 import { InventoryEditorModal } from './inventory-editor-modal';
+import { TablePanelSkeleton } from '@/components/ui/admin-loader';
+import { useAdminQuery } from '@/components/ui/admin-performance';
+import { timedAdminFetcher } from '@/lib/admin-timing';
 
 export function LowStockPanel() {
-  const [items, setItems] = useState<InventoryListItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [adjustItem, setAdjustItem] = useState<InventoryListItem | null>(null);
   const [editItem, setEditItem] = useState<InventoryListItem | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const locations = await fetchLocations();
-      const options = locations.map((l) => ({ id: l.id, name: l.name, slug: l.slug }));
-      const locationId = resolveActiveLocationId(options, getStoredLocationId()) ?? undefined;
-      const rows = await listLowStock(createBrowserApiClient(), { locationId });
-      setItems(rows);
-    } catch (err) {
-      setError(getErrorMessage(err));
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
+  const fetchLowStock = useCallback(async () => {
+    const locations = await fetchLocations();
+    const options = locations.map((l) => ({ id: l.id, name: l.name, slug: l.slug }));
+    const locationId = resolveActiveLocationId(options, getStoredLocationId()) ?? undefined;
+    return listLowStock(createBrowserApiClient(), { locationId });
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const swrKey = useMemo(() => ['inventory', 'low-stock'] as const, []);
+
+  const { data: items = [], error, isLoading, mutate } = useAdminQuery(
+    swrKey,
+    timedAdminFetcher('inventory.low-stock', fetchLowStock),
+  );
+
+  const load = useCallback(() => mutate(), [mutate]);
+  const errorMessage = error ? getErrorMessage(error) : null;
 
   return (
     <>
@@ -55,10 +51,10 @@ export function LowStockPanel() {
           if (!open) setEditItem(null);
         }}
       />
-      {error ? <ApiErrorBanner message={error} /> : null}
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Loading low stock…</p>
-      ) : items.length === 0 && !error ? (
+      {errorMessage ? <ApiErrorBanner message={errorMessage} /> : null}
+      {isLoading ? (
+        <TablePanelSkeleton rows={5} columns={4} />
+      ) : items.length === 0 && !errorMessage ? (
         <EmptyState title="All stocked" description="No low or out-of-stock items for this location." />
       ) : (
         <StockTable

@@ -19,8 +19,8 @@ export default async function CategoriesPage() {
 
   return (
     <>
-      <PageHeader title="Categories" description="Organize your catalog" />
-      <SubNav items={PRODUCTS_SUBNAV} />
+      <PageHeader title="Categories" description="Organize your catalog"
+        tabs={<SubNav variant="embedded" items={PRODUCTS_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
       <CategoriesPanel categories={categories} />
     </>

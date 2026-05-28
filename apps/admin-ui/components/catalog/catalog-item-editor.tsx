@@ -1,7 +1,9 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
 import { useEffect, useState } from 'react';
-import { Button, Input } from '@shared-ui';
+import { Select, Button, Input } from '@shared-ui';
 import type { CatalogCategory, CatalogItem } from '@/lib/api/catalog';
 import {
   addCatalogModifier,
@@ -13,6 +15,7 @@ import {
 import type { ApiClient } from '@shared-utils';
 import { listTaxCategories, type TaxCategory } from '@/lib/api/admin/tax';
 import { getErrorMessage } from '@/lib/utils';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 type CatalogItemEditorProps = {
   api: ApiClient;
@@ -164,9 +167,8 @@ export function CatalogItemEditor({
           <label className="text-sm font-medium" htmlFor="itemTaxCategory">
             Tax category
           </label>
-          <select
+          <Select
             id="itemTaxCategory"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={taxCategoryId}
             onChange={(e) => setTaxCategoryId(e.target.value)}
           >
@@ -176,7 +178,7 @@ export function CatalogItemEditor({
                 {category.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="itemPrice">
@@ -188,9 +190,8 @@ export function CatalogItemEditor({
           <label className="text-sm font-medium" htmlFor="itemCategory">
             Category
           </label>
-          <select
+          <Select
             id="itemCategory"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
           >
@@ -200,7 +201,7 @@ export function CatalogItemEditor({
                 {c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="itemSku">
@@ -272,7 +273,7 @@ export function CatalogItemEditor({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">No variants yet.</p>
+              <PanelEmpty title="No variants yet" description="Content will appear here when available." />
             )}
             <div className="flex flex-wrap gap-2">
               <Input
@@ -309,7 +310,7 @@ export function CatalogItemEditor({
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">No modifier groups yet.</p>
+              <PanelEmpty title="No modifier groups yet" description="Content will appear here when available." />
             )}
             <div className="flex flex-wrap gap-2">
               <Input
@@ -335,10 +336,10 @@ export function CatalogItemEditor({
         </>
       ) : null}
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <FormErrorAlert message={error} /> : null}
       <div className="flex gap-2">
-        <Button type="button" disabled={loading} onClick={saveItem}>
-          {loading ? 'Saving…' : item ? 'Save item' : 'Create item'}
+        <Button type="button" isLoading={loading} loadingLabel="Saving…" onClick={saveItem}>
+          {item ? 'Save item' : 'Create item'}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel

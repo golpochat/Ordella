@@ -1,7 +1,8 @@
 'use client';
 
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { fetchLocations, type LocationListItem } from '@/lib/api/locations';
 import { getLocationSettings, updatePosSettings } from '@/lib/api/admin/settings';
@@ -44,44 +45,40 @@ function getPosSettings(value: unknown): Record<string, unknown> {
 }
 
 export function OfflineModePanel() {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = useMemo(() => createBrowserApiClient(), []);
   const [locations, setLocations] = useState<LocationListItem[]>([]);
   const [locationId, setLocationId] = useState('');
   const [settings, setSettings] = useState<OfflineModeSettings>(DEFAULT_SETTINGS);
   const [posSettings, setPosSettings] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    useEffect(() => {
 
-  useEffect(() => {
     void fetchLocations()
       .then((rows) => {
         setLocations(rows);
         setLocationId((current) => current || rows[0]?.id || '');
       })
-      .catch((err) => setError(getErrorMessage(err)));
+      .catch((err) => toastError(getErrorMessage(err)));
   }, []);
 
   useEffect(() => {
     if (!locationId) return;
     setLoading(true);
-    setMessage(null);
-    setError(null);
     void getLocationSettings(api, locationId)
       .then((row) => {
         const nextPosSettings = getPosSettings(row);
         setPosSettings(nextPosSettings);
         setSettings(normalizeSettings(nextPosSettings.offlineMode ?? nextPosSettings));
       })
-      .catch((err) => setError(getErrorMessage(err)))
+      .catch((err) => toastError(getErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [api, locationId]);
 
   async function save() {
     if (!locationId) return;
     setLoading(true);
-    setMessage(null);
-    setError(null);
     try {
       await updatePosSettings(api, {
         locationId,
@@ -90,9 +87,9 @@ export function OfflineModePanel() {
           offlineMode: settings,
         },
       });
-      setMessage('Offline mode settings saved');
+      toastSuccess('Offline mode settings saved');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -108,7 +105,7 @@ export function OfflineModePanel() {
           <label className="text-sm font-medium" htmlFor="offline-location">
             Location
           </label>
-          <select
+          <Select
             id="offline-location"
             className="h-10 w-full rounded-md border bg-background px-3 text-sm"
             value={locationId}
@@ -119,7 +116,7 @@ export function OfflineModePanel() {
                 {location.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <label className="flex items-center gap-2 text-sm">
@@ -198,9 +195,7 @@ export function OfflineModePanel() {
           </div>
         </div>
 
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        <Button onClick={save} disabled={loading || !locationId}>
+        <Button onClick={save} disabled={!locationId} isLoading={loading} loadingLabel="Saving…">
           Save offline settings
         </Button>
       </CardContent>

@@ -28,8 +28,8 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
     return (
       <>
-        <PageHeader title="Edit product" description={product.name} />
-        <SubNav items={PRODUCTS_SUBNAV} />
+        <PageHeader title="Edit product" description={product.name}
+        tabs={<SubNav variant="embedded" items={PRODUCTS_SUBNAV} />} />
         <ProductForm categories={categories} product={product} />
       </>
     );
@@ -39,8 +39,8 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
   return (
     <>
-      <PageHeader title="Edit product" />
-      <SubNav items={PRODUCTS_SUBNAV} />
+      <PageHeader title="Edit product"
+        tabs={<SubNav variant="embedded" items={PRODUCTS_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
     </>
   );

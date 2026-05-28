@@ -9,8 +9,8 @@ export default function FranchiseHqRoutingPage() {
       <PageHeader
         title="Order Routing"
         description="Review routing performance, zone coverage, and location priorities across the operation."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />}
       />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
       <OrderRoutingPanel />
     </>
   );

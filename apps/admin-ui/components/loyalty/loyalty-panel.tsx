@@ -1,22 +1,11 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared-ui';
+import { Select, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import {
   adjustLoyaltyPoints,
   createLoyaltyReferral,
@@ -41,7 +30,17 @@ import {
 } from '@/lib/api/loyalty';
 import { getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
+import { PanelCardsSkeleton } from '@/components/ui/admin-loader';
+import {
+  FilterBar,
+  FilterGroup,
+  FilterItem,
+  FilterSelect,
+} from '@/components/ui/admin-filter';
+import { SearchInput } from '@/components/ui/admin-search';
 export function LoyaltyPanel() {
   const { formatCurrency, formatDate } = useTenantSettings();
   const [settings, setSettings] = useState<LoyaltySettings | null>(null);
@@ -226,18 +225,18 @@ export function LoyaltyPanel() {
     }
   }
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading loyalty settings...</p>;
+  if (loading) return <PanelCardsSkeleton count={2} />;
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <MetricGrid columns={4}>
         <Metric title="Points issued" value={analytics?.totalPointsIssued ?? 0} />
         <Metric title="Points redeemed" value={analytics?.totalPointsRedeemed ?? 0} />
         <Metric title="Unused points" value={analytics?.breakage ?? 0} />
         <Metric title="Customer lifetime value" value={formatCurrency(analytics?.customerLifetimeValue)} />
-      </div>
+      </MetricGrid>
 
       {settings ? (
         <Card>
@@ -296,11 +295,11 @@ export function LoyaltyPanel() {
           </CardHeader>
           <CardContent className="space-y-3">
             <Input placeholder="Reward name" value={rewardDraft.name} onChange={(event) => setRewardDraft({ ...rewardDraft, name: event.target.value })} />
-            <select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={rewardDraft.type} onChange={(event) => setRewardDraft({ ...rewardDraft, type: event.target.value as LoyaltyReward['type'] })}>
+            <Select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={rewardDraft.type} onChange={(event) => setRewardDraft({ ...rewardDraft, type: event.target.value as LoyaltyReward['type'] })}>
               <option value="voucher">Voucher</option>
               <option value="discount">Discount</option>
               <option value="free_item">Free item</option>
-            </select>
+            </Select>
             <div className="grid gap-2 md:grid-cols-2">
               <Input placeholder="Points cost" value={rewardDraft.pointsCost} onChange={(event) => setRewardDraft({ ...rewardDraft, pointsCost: event.target.value })} />
               <Input placeholder="Discount amount" value={rewardDraft.discountAmount} onChange={(event) => setRewardDraft({ ...rewardDraft, discountAmount: event.target.value })} />
@@ -348,7 +347,14 @@ export function LoyaltyPanel() {
             <CardDescription>Search customer profiles and adjust points manually.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Input placeholder="Search by name, email, or phone" value={customerFilter} onChange={(event) => setCustomerFilter(event.target.value)} />
+            <SearchInput
+              placeholder="Search by name, email, or phone"
+              value={customerFilter}
+              onChange={(event) => setCustomerFilter(event.target.value)}
+              onClear={() => setCustomerFilter('')}
+              active={Boolean(customerFilter.trim())}
+              aria-label="Search loyalty customers"
+            />
             <div className="space-y-2">
               {customers
                 .filter((customer) => {
@@ -375,11 +381,11 @@ export function LoyaltyPanel() {
           <CardContent className="space-y-4">
             {selectedCustomer ? (
               <>
-                <div className="grid gap-3 md:grid-cols-3">
+                <MetricGrid columns={3}>
                   <Metric title="Points balance" value={selectedCustomer.pointsBalance} />
                   <Metric title="Lifetime value" value={formatCurrency(selectedCustomer.lifetimeValue)} />
                   <Metric title="Last order" value={selectedCustomer.lastOrderAt ? formatDate(selectedCustomer.lastOrderAt) : 'No orders'} />
-                </div>
+                </MetricGrid>
                 <div className="flex gap-2">
                   <Input placeholder="Add or remove points, e.g. 50 or -20" value={adjustment} onChange={(event) => setAdjustment(event.target.value)} />
                   <Button type="button" disabled={saving} onClick={() => void submitAdjustment()}>Adjust</Button>
@@ -399,38 +405,51 @@ export function LoyaltyPanel() {
           <CardDescription>Review earned points, redemptions, and adjustments.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex flex-col gap-2 md:flex-row">
-            <Input placeholder="Filter by customer" value={customerFilter} onChange={(event) => setCustomerFilter(event.target.value)} />
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-              <option value="">All types</option>
-              <option value="earn">Earn</option>
-              <option value="redeem">Redeem</option>
-              <option value="adjustment">Adjustment</option>
-          <option value="referral">Referral</option>
-          <option value="promotion">Promotion</option>
-            </select>
-          </div>
+          <FilterBar as="div">
+            <FilterGroup columns={2}>
+              <FilterItem label="Customer" htmlFor="loyalty-history-customer" active={Boolean(customerFilter)}>
+                <SearchInput
+                  id="loyalty-history-customer"
+                  placeholder="Filter by customer"
+                  value={customerFilter}
+                  onChange={(event) => setCustomerFilter(event.target.value)}
+                  onClear={() => setCustomerFilter('')}
+                  active={Boolean(customerFilter.trim())}
+                  aria-label="Filter loyalty history by customer"
+                />
+              </FilterItem>
+              <FilterItem label="Transaction type" htmlFor="loyalty-history-type" active={Boolean(typeFilter)}>
+                <FilterSelect
+                  id="loyalty-history-type"
+                  value={typeFilter}
+                  onChange={(event) => setTypeFilter(event.target.value)}
+                >
+                  <option value="">All types</option>
+                  <option value="earn">Earn</option>
+                  <option value="redeem">Redeem</option>
+                  <option value="adjustment">Adjustment</option>
+                  <option value="referral">Referral</option>
+                  <option value="promotion">Promotion</option>
+                </FilterSelect>
+              </FilterItem>
+            </FilterGroup>
+          </FilterBar>
           <TransactionTable transactions={filteredTransactions} />
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <div className="rounded-lg border p-3">
-      <p className="text-xs text-muted-foreground">{title}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
-    </div>
+    </Stack>
   );
 }
 
 function Toggle({ label, enabled, onClick }: { label: string; enabled: boolean; onClick: () => void }) {
   return (
-    <button type="button" className="rounded-lg border p-3 text-left hover:bg-muted" onClick={onClick}>
-      <span className="block text-sm font-medium">{label}</span>
-      <Badge variant={enabled ? 'default' : 'secondary'} className="mt-2">{enabled ? 'On' : 'Off'}</Badge>
+    <button type="button" className="w-full text-left" onClick={onClick}>
+      <Card className="border-border shadow-sm transition-colors hover:border-primary/40 hover:bg-accent/30">
+        <CardContent className="p-3">
+          <span className="block text-sm font-medium">{label}</span>
+          <Tag variant={enabled ? 'brand' : 'neutral'} className="mt-2"><TagLabel>{enabled ? 'On' : 'Off'}</TagLabel></Tag>
+        </CardContent>
+      </Card>
     </button>
   );
 }
@@ -448,7 +467,7 @@ function TransactionTable({ transactions }: { transactions: LoyaltyTransaction[]
   const { formatDateTime } = useTenantSettings();
   return (
     <Table>
-      <TableHeader>
+      <TableHeader sticky>
         <TableRow>
           <TableHead>Customer</TableHead>
           <TableHead>Type</TableHead>
@@ -458,11 +477,11 @@ function TransactionTable({ transactions }: { transactions: LoyaltyTransaction[]
           <TableHead>Date</TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody>
+      <TableBody zebra>
         {transactions.length ? transactions.map((transaction) => (
           <TableRow key={transaction.id}>
             <TableCell>{transaction.customer?.name ?? transaction.customerId}</TableCell>
-            <TableCell><Badge variant="outline">{transaction.type}</Badge></TableCell>
+            <TableCell><Tag variant="outline"><TagLabel>{transaction.type}</TagLabel></Tag></TableCell>
             <TableCell>{transaction.source ?? 'order'}</TableCell>
             <TableCell>{transaction.points}</TableCell>
             <TableCell>{transaction.balanceAfter ?? 'N/A'}</TableCell>
@@ -470,7 +489,7 @@ function TransactionTable({ transactions }: { transactions: LoyaltyTransaction[]
           </TableRow>
         )) : (
           <TableRow>
-            <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">No loyalty transactions yet.</TableCell>
+            <TableCell colSpan={6} className="p-0"><PanelEmpty title="No loyalty transactions yet" description="Transactions and activity will appear here." size="compact" className="max-w-none border-0 shadow-none" /></TableCell>
           </TableRow>
         )}
       </TableBody>

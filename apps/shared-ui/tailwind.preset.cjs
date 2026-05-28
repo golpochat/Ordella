@@ -35,7 +35,31 @@ module.exports = {
         },
         surface: {
           DEFAULT: 'hsl(var(--surface))',
+          muted: 'hsl(var(--surface-muted))',
         },
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+          muted: 'hsl(var(--success-muted))',
+          'muted-foreground': 'hsl(var(--success-muted-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+          muted: 'hsl(var(--warning-muted))',
+          'muted-foreground': 'hsl(var(--warning-muted-foreground))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
+          muted: 'hsl(var(--info-muted))',
+          'muted-foreground': 'hsl(var(--info-muted-foreground))',
+        },
+      },
+      boxShadow: {
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
       },
       fontSize: {
         sm: 'var(--font-size-sm)',
@@ -46,6 +70,22 @@ module.exports = {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      transitionDuration: {
+        fast: 'var(--motion-duration-fast)',
+        normal: 'var(--motion-duration-normal)',
+        slow: 'var(--motion-duration-slow)',
+      },
+      transitionTimingFunction: {
+        default: 'var(--motion-ease-default)',
+        'in': 'var(--motion-ease-in)',
+        out: 'var(--motion-ease-out)',
+        'in-out': 'var(--motion-ease-in-out)',
+        spring: 'var(--motion-ease-spring)',
+      },
+      transitionDelay: {
+        short: 'var(--motion-delay-short)',
+        stagger: 'var(--motion-delay-stagger)',
       },
     },
   },

@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   approveSuggestedPurchaseOrder,
@@ -18,10 +21,14 @@ import {
 } from '@/lib/api/admin/replenishment';
 import type { PurchaseOrder } from '@/lib/api/admin/procurement';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 const ruleTypes = ['min_max', 'forecast_based', 'safety_stock'] as const;
 
 export function ReplenishmentDashboardPanel() {
+  const { success: toastSuccess, error: toastError } = useAdminToast();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [rules, setRules] = useState<ReplenishmentRule[]>([]);
   const [actions, setActions] = useState<ReplenishmentAction[]>([]);
@@ -39,11 +46,10 @@ export function ReplenishmentDashboardPanel() {
   const [supplierId, setSupplierId] = useState('');
   const [sourceLocationId, setSourceLocationId] = useState('');
   const [draftQuantities, setDraftQuantities] = useState<Record<string, Record<string, string>>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const load = useCallback(async () => {
+
     try {
       const dashboardParams = {
         locationId: locationId || undefined,
@@ -65,9 +71,8 @@ export function ReplenishmentDashboardPanel() {
         ])),
         ...current,
       }));
-      setError(null);
-    } catch (err) {
-      setError(getErrorMessage(err));
+      } catch (err) {
+      toastError(getErrorMessage(err));
     }
   }, [api, horizonDays, locationId, riskWindowDays]);
 
@@ -77,13 +82,11 @@ export function ReplenishmentDashboardPanel() {
 
   async function run(action: () => Promise<void>) {
     setLoading(true);
-    setError(null);
-    setMessage(null);
     try {
       await action();
       await load();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -103,7 +106,7 @@ export function ReplenishmentDashboardPanel() {
         sourceLocationId: sourceLocationId || undefined,
         isActive: true,
       });
-      setMessage('Replenishment rule saved');
+      toastSuccess('Replenishment rule saved');
     });
   }
 
@@ -115,7 +118,7 @@ export function ReplenishmentDashboardPanel() {
         dryRun,
       });
       setLastRun(result);
-      setMessage(dryRun ? 'Dry run complete' : 'Replenishment run complete');
+      toastSuccess(dryRun ? 'Dry run complete' : 'Replenishment run complete');
     });
   }
 
@@ -127,7 +130,7 @@ export function ReplenishmentDashboardPanel() {
         riskWindowDays: Number(riskWindowDays || 7),
         dryRun,
       });
-      setMessage(dryRun
+      toastSuccess(dryRun
         ? `${result.suggestions.length} purchase order suggestions ready for review`
         : `${result.purchaseOrders.length} draft purchase orders generated`);
     });
@@ -153,7 +156,7 @@ export function ReplenishmentDashboardPanel() {
           costPrice: Number(item.costPrice),
         })),
       });
-      setMessage(`Purchase order ${order.id.slice(0, 8)} sent to supplier`);
+      toastSuccess(`Purchase order ${order.id.slice(0, 8)} sent to supplier`);
     });
   }
 
@@ -167,14 +170,14 @@ export function ReplenishmentDashboardPanel() {
   const draftPurchaseOrders = dashboard?.draftPurchaseOrders ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-5">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={5}>
         <Metric label="Low stock" value={String(dashboard?.metrics.lowStockItems ?? 0)} />
         <Metric label="Stock-out risk" value={String(dashboard?.metrics.stockoutRiskItems ?? 0)} />
         <Metric label="Overstock alerts" value={String(dashboard?.metrics.overstockedItems ?? 0)} />
         <Metric label="Suggested POs" value={String(dashboard?.metrics.suggestedPurchaseOrders ?? 0)} />
         <Metric label="Suggested value" value={`$${dashboard?.metrics.suggestedValue ?? '0.00'}`} />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -188,9 +191,7 @@ export function ReplenishmentDashboardPanel() {
           <Button type="button" variant="outline" disabled={loading} onClick={() => void load()}>
             Refresh dashboard
           </Button>
-          {message ? <p className="text-sm text-muted-foreground md:col-span-5">{message}</p> : null}
-          {error ? <p className="text-sm text-destructive md:col-span-5">{error}</p> : null}
-        </CardContent>
+          </CardContent>
       </Card>
 
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
@@ -200,7 +201,7 @@ export function ReplenishmentDashboardPanel() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Item</TableHead>
                   <TableHead>Available</TableHead>
@@ -211,7 +212,7 @@ export function ReplenishmentDashboardPanel() {
                   <TableHead>Supplier</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {lowStockItems.slice(0, 20).map((item) => (
                   <TableRow key={`${item.locationId}-${item.productId}`}>
                     <TableCell>
@@ -219,7 +220,7 @@ export function ReplenishmentDashboardPanel() {
                       <div className="text-xs text-muted-foreground">{item.productId.slice(0, 8)} at {item.locationId.slice(0, 8)}</div>
                     </TableCell>
                     <TableCell>{item.available.toFixed(2)}</TableCell>
-                    <TableCell><Badge variant={item.riskScore >= 70 ? 'destructive' : 'secondary'}>{item.riskScore}%</Badge></TableCell>
+                    <TableCell><Tag variant={item.riskScore >= 70 ? 'error' : 'neutral'}><TagLabel>{item.riskScore}%</TagLabel></Tag></TableCell>
                     <TableCell>{item.forecastedDepletionDate ?? 'No forecast'}</TableCell>
                     <TableCell>{item.recommendedReorderQty}</TableCell>
                     <TableCell>{item.recommendedReorderDate ?? 'Now'}</TableCell>
@@ -228,7 +229,14 @@ export function ReplenishmentDashboardPanel() {
                 ))}
                 {!lowStockItems.length ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-muted-foreground">No low-stock or stock-out alerts for the selected window.</TableCell>
+                    <TableCell colSpan={7} className="p-0">
+                      <PanelEmpty
+                        title="No stock alerts"
+                        description="Low-stock and stock-out alerts for the selected window will appear here."
+                        size="compact"
+                        className="max-w-none border-0 shadow-none"
+                      />
+                    </TableCell>
                   </TableRow>
                 ) : null}
               </TableBody>
@@ -280,7 +288,7 @@ export function ReplenishmentDashboardPanel() {
                     <p className="font-medium">{suggestion.supplierName ?? 'Supplier'}</p>
                     <p className="text-xs text-muted-foreground">Location {suggestion.locationId.slice(0, 8)} · {suggestion.items.length} items</p>
                   </div>
-                  <Badge>${suggestion.estimatedTotal}</Badge>
+                  <Tag><TagLabel>${suggestion.estimatedTotal}</TagLabel></Tag>
                 </div>
                 <div className="mt-3 space-y-2 text-sm">
                   {suggestion.items.map((item) => (
@@ -298,7 +306,7 @@ export function ReplenishmentDashboardPanel() {
               </div>
             ))}
           </div>
-          {!suggestedPurchaseOrders.length ? <p className="text-sm text-muted-foreground">No supplier-backed PO suggestions for this forecast window.</p> : null}
+          {!suggestedPurchaseOrders.length ? <PanelEmpty title="No supplier-backed PO suggestions for this forecast window" description="Content will appear here when available." /> : null}
         </CardContent>
       </Card>
 
@@ -335,7 +343,7 @@ export function ReplenishmentDashboardPanel() {
               </div>
             </div>
           ))}
-          {!draftPurchaseOrders.length ? <p className="text-sm text-muted-foreground">No draft purchase orders generated by replenishment yet.</p> : null}
+          {!draftPurchaseOrders.length ? <PanelEmpty title="No draft purchase orders generated by replenishment yet" description="Content will appear here when available." /> : null}
         </CardContent>
       </Card>
 
@@ -345,7 +353,7 @@ export function ReplenishmentDashboardPanel() {
             <CardTitle className="text-lg">Rule editor</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <select
+            <Select
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={ruleType}
               onChange={(event) => setRuleType(event.target.value as typeof ruleTypes[number])}
@@ -353,7 +361,7 @@ export function ReplenishmentDashboardPanel() {
               {ruleTypes.map((type) => (
                 <option key={type} value={type}>{type.replace('_', ' ')}</option>
               ))}
-            </select>
+            </Select>
             <div className="grid gap-3 md:grid-cols-2">
               <Input type="number" placeholder="Min level" value={minLevel} onChange={(event) => setMinLevel(event.target.value)} />
               <Input type="number" placeholder="Max level" value={maxLevel} onChange={(event) => setMaxLevel(event.target.value)} />
@@ -390,7 +398,7 @@ export function ReplenishmentDashboardPanel() {
               </div>
             ) : null}
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Status</TableHead>
                   <TableHead>Action</TableHead>
@@ -398,10 +406,10 @@ export function ReplenishmentDashboardPanel() {
                   <TableHead>Reason</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {actions.slice(0, 10).map((action) => (
                   <TableRow key={action.id}>
-                    <TableCell><Badge>{action.status}</Badge></TableCell>
+                    <TableCell><Tag><TagLabel>{action.status}</TagLabel></Tag></TableCell>
                     <TableCell>{action.actionType}</TableCell>
                     <TableCell>{action.quantity}</TableCell>
                     <TableCell>{action.reason ?? action.error ?? '-'}</TableCell>
@@ -419,7 +427,7 @@ export function ReplenishmentDashboardPanel() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Rule type</TableHead>
                 <TableHead>Location</TableHead>
@@ -429,7 +437,7 @@ export function ReplenishmentDashboardPanel() {
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {rules.slice(0, 25).map((rule) => (
                 <TableRow key={rule.id}>
                   <TableCell>{rule.ruleType}</TableCell>
@@ -437,7 +445,7 @@ export function ReplenishmentDashboardPanel() {
                   <TableCell>{rule.itemId.slice(0, 8)}</TableCell>
                   <TableCell>{rule.minLevel ?? '-'} / {rule.maxLevel ?? '-'}</TableCell>
                   <TableCell>{rule.safetyStock ?? '-'}</TableCell>
-                  <TableCell><Badge>{rule.isActive ? 'active' : 'inactive'}</Badge></TableCell>
+                  <TableCell><Tag><TagLabel>{rule.isActive ? 'active' : 'inactive'}</TagLabel></Tag></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -445,22 +453,10 @@ export function ReplenishmentDashboardPanel() {
           {completed.length ? <p className="mt-3 text-sm text-muted-foreground">{completed.length} completed replenishment actions in the log.</p> : null}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function AlertList({ title, empty, items }: { title: string; empty: string; items: string[] }) {
   return (

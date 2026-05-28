@@ -12,9 +12,11 @@ import {
 import { NotificationsController } from '../../controllers';
 import { NotificationsService } from '../../services';
 import { NotificationRepository } from '../../repositories/notification.repository';
+import { NotificationLogsModule } from '../notification-logs/notification-logs.module';
 
 @Module({
   imports: [
+    NotificationLogsModule,
     TypeOrmModule.forFeature([
       NotificationEntity,
       NotificationLogEntity,

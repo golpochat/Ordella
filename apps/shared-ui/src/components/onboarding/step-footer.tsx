@@ -40,8 +40,14 @@ export function StepFooter({
       <div className="flex flex-wrap items-center gap-2">
         {trailing}
         {onNext ? (
-          <Button type="button" onClick={onNext} disabled={nextDisabled || loading}>
-            {loading ? 'Saving…' : nextLabel}
+          <Button
+            type="button"
+            onClick={onNext}
+            disabled={nextDisabled}
+            isLoading={loading}
+            loadingLabel="Saving…"
+          >
+            {nextLabel}
           </Button>
         ) : null}
       </div>

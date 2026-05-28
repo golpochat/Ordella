@@ -1,7 +1,8 @@
 'use client';
 
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, ThemeProvider } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, ThemeProvider } from '@shared-ui';
 import { DEFAULT_THEME, type PosTheme, type TenantTheme } from '@shared-utils';
 import { fetchCurrentTheme, updateStorefrontTheme } from '@/lib/api/themes';
 import { getErrorMessage } from '@/lib/utils';
@@ -99,19 +100,20 @@ function PosPreview({ theme, posTheme }: { theme: TenantTheme; posTheme: PosThem
 }
 
 export function PosThemePanel() {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const [theme, setTheme] = useState<TenantTheme>(DEFAULT_THEME);
   const [posTheme, setPosTheme] = useState<PosTheme>(DEFAULT_POS_THEME);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+
     fetchCurrentTheme()
       .then((current) => {
         setTheme(current);
         setPosTheme(mergePosTheme(current.posTheme));
       })
-      .catch((err) => setError(getErrorMessage(err)));
+      .catch((err) => toastError(getErrorMessage(err)));
   }, []);
 
   function patchPosTheme(patch: Partial<PosTheme>) {
@@ -120,8 +122,6 @@ export function PosThemePanel() {
 
   async function save() {
     setLoading(true);
-    setMessage(null);
-    setError(null);
     try {
       const updated = await updateStorefrontTheme({
         colors: {
@@ -142,9 +142,9 @@ export function PosThemePanel() {
       });
       setTheme(updated);
       setPosTheme(mergePosTheme(updated.posTheme));
-      setMessage('POS theme saved');
+      toastSuccess('POS theme saved');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -163,14 +163,14 @@ export function PosThemePanel() {
           <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-1">
               <label className="text-sm font-medium">Mode</label>
-              <select
+              <Select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={posTheme.mode}
                 onChange={(event) => patchPosTheme({ mode: event.target.value as PosTheme['mode'] })}
               >
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Logo URL</label>
@@ -201,7 +201,7 @@ export function PosThemePanel() {
           <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-1">
               <label className="text-sm font-medium">Layout density</label>
-              <select
+              <Select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={posTheme.density}
                 onChange={(event) => patchPosTheme({ density: event.target.value as PosTheme['density'] })}
@@ -209,11 +209,11 @@ export function PosThemePanel() {
                 <option value="compact">Compact</option>
                 <option value="comfortable">Comfortable</option>
                 <option value="spacious">Spacious</option>
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Button size</label>
-              <select
+              <Select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={posTheme.buttonSize}
                 onChange={(event) => patchPosTheme({ buttonSize: event.target.value as PosTheme['buttonSize'] })}
@@ -221,11 +221,11 @@ export function PosThemePanel() {
                 <option value="sm">Small</option>
                 <option value="md">Medium</option>
                 <option value="lg">Large</option>
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Corner radius</label>
-              <select
+              <Select
                 className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={posTheme.cornerRadius}
                 onChange={(event) => patchPosTheme({ cornerRadius: event.target.value as PosTheme['cornerRadius'] })}
@@ -235,13 +235,11 @@ export function PosThemePanel() {
                 <option value="md">Medium</option>
                 <option value="lg">Large</option>
                 <option value="xl">Extra large</option>
-              </select>
+              </Select>
             </div>
           </div>
 
-          {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          <Button type="button" onClick={save} disabled={loading}>
+          <Button type="button" onClick={save} isLoading={loading} loadingLabel="Saving…">
             Save POS theme
           </Button>
         </CardContent>

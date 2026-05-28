@@ -7,6 +7,7 @@ import { WebhookLogsTable } from '@/components/developer/webhook-logs-table';
 import { WebhooksPanel } from '@/components/developer/webhooks-panel';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { PageHeader } from '@/components/ui/page-header';
+import { Stack } from '@shared-ui';
 import { getErrorMessage } from '@/lib/utils';
 
 export default async function DeveloperPage() {
@@ -37,13 +38,13 @@ export default async function DeveloperPage() {
         description="Manage API keys, webhooks, documentation, and integration logs"
       />
       {error ? <ApiErrorBanner message={error} /> : null}
-      <div className="space-y-6">
+      <Stack gap="lg" className="min-w-0">
         <ApiKeysPanel initialKeys={apiKeys} />
         <WebhooksPanel initialWebhooks={webhooks} />
         <AppStorePanel initialProviders={providers} initialApps={apps} />
         <WebhookLogsTable logs={webhookLogs} />
         <DeveloperDocsPanel />
-      </div>
+      </Stack>
     </>
   );
 }

@@ -1,7 +1,18 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle , Stack } from '@shared-ui';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   compareScenarios,
@@ -15,6 +26,8 @@ import {
   type TwinDetail,
 } from '@/lib/api/admin/digital-twins';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+import { ChartHeader, ColumnChart } from '@/components/ui/admin-chart';
 
 const DEFAULT_PARAMS: ScenarioParameters = {
   priceIndex: 1,
@@ -33,6 +46,7 @@ type DigitalTwinsPanelProps = {
 };
 
 export function DigitalTwinsPanel({ dashboard, twins, initialDetail }: DigitalTwinsPanelProps) {
+  const { success: toastSuccess, error: toastError } = useAdminToast();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [selectedTwinId, setSelectedTwinId] = useState(initialDetail?.twin.id ?? twins[0]?.id ?? '');
   const [detail, setDetail] = useState<TwinDetail | null>(initialDetail);
@@ -40,11 +54,7 @@ export function DigitalTwinsPanel({ dashboard, twins, initialDetail }: DigitalTw
   const [scenarioName, setScenarioName] = useState('Custom scenario');
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [compareRows, setCompareRows] = useState<Array<{ scenarioId: string; baselineDeltas: Record<string, number> }>>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function loadTwin(id: string) {
-    setError(null);
+    async function loadTwin(id: string) {
     try {
       const next = await getDigitalTwin(api, id);
       setDetail(next);
@@ -54,69 +64,63 @@ export function DigitalTwinsPanel({ dashboard, twins, initialDetail }: DigitalTw
         setParams({ ...DEFAULT_PARAMS, ...(baseline.parameters as ScenarioParameters) });
       }
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleSimulate() {
     if (!selectedTwinId) return;
-    setError(null);
     try {
       const res = await runSimulation(api, selectedTwinId, { parameters: params, simulationDomain: 'full' });
       setResult(res.result);
-      setMessage(res.fromCache ? 'Loaded cached simulation result.' : 'Simulation completed (sandbox).');
+      toastSuccess(res.fromCache ? 'Loaded cached simulation result.' : 'Simulation completed (sandbox).');
       await loadTwin(selectedTwinId);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleSaveScenario() {
     if (!selectedTwinId) return;
-    setError(null);
     try {
       await saveScenario(api, selectedTwinId, {
         name: scenarioName,
         parameters: params,
         extremeConditions: { weatherImpact: params.weatherImpact, supplyChainDelayDays: params.supplyChainDelayDays },
       });
-      setMessage(`Scenario "${scenarioName}" saved.`);
+      toastSuccess(`Scenario "${scenarioName}" saved.`);
       await loadTwin(selectedTwinId);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleCompare() {
     if (!selectedTwinId || !detail) return;
-    setError(null);
     try {
       const ids = detail.scenarios.slice(0, 3).map((s) => s.id);
       const comparison = await compareScenarios(api, selectedTwinId, ids);
       const rows = (comparison.comparisons as Array<{ scenarioId: string; baselineDeltas: Record<string, number> }>) ?? [];
       setCompareRows(rows);
-      setMessage(`Compared ${rows.length} scenarios side-by-side.`);
+      toastSuccess(`Compared ${rows.length} scenarios side-by-side.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <Metric title="Digital twins" value={dashboard?.twinCount ?? twins.length} />
         <Metric title="Scenarios" value={dashboard?.scenarioCount ?? detail?.scenarios.length ?? 0} />
         <Metric title="Simulation runs" value={dashboard?.runCount ?? 0} />
         <Metric title="Cached results" value={dashboard?.cachedResults ?? 0} />
-      </div>
-
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <CardTitle>Scenario builder</CardTitle>
-          <select
+          <Select
             className="rounded-md border bg-background px-3 py-2 text-sm"
             value={selectedTwinId}
             onChange={(e) => void loadTwin(e.target.value)}
@@ -124,7 +128,7 @@ export function DigitalTwinsPanel({ dashboard, twins, initialDetail }: DigitalTw
             {twins.map((t) => (
               <option key={t.id} value={t.id}>{t.name} ({t.twinType})</option>
             ))}
-          </select>
+          </Select>
         </CardHeader>
         <CardContent className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-4">
@@ -159,7 +163,7 @@ export function DigitalTwinsPanel({ dashboard, twins, initialDetail }: DigitalTw
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Risk analysis</p>
                   {result.riskAnalysis.map((risk, i) => (
-                    <Badge key={i} variant="secondary">{String(risk.level)} · {String(risk.message)}</Badge>
+                    <Tag key={i} variant="neutral"><TagLabel>{String(risk.level)} · {String(risk.message)}</TagLabel></Tag>
                   ))}
                 </div>
               </>
@@ -175,46 +179,36 @@ export function DigitalTwinsPanel({ dashboard, twins, initialDetail }: DigitalTw
           <CardHeader>
             <CardTitle>Scenario comparison</CardTitle>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="py-2 pr-4">Scenario</th>
-                  <th className="py-2 pr-4">Revenue Δ</th>
-                  <th className="py-2 pr-4">Margin Δ</th>
-                  <th className="py-2 pr-4">Stockouts Δ</th>
-                  <th className="py-2">Labor Δ</th>
-                </tr>
-              </thead>
-              <tbody>
+          <CardContent>
+            <Table>
+              <TableHeader sticky>
+                <TableRow>
+                  <TableHead>Scenario</TableHead>
+                  <TableHead>Revenue Δ</TableHead>
+                  <TableHead>Margin Δ</TableHead>
+                  <TableHead>Stockouts Δ</TableHead>
+                  <TableHead>Labor Δ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody zebra>
                 {compareRows.map((row) => (
-                  <tr key={row.scenarioId} className="border-b">
-                    <td className="py-2 pr-4 font-mono text-xs">{row.scenarioId.slice(0, 8)}…</td>
-                    <td className="py-2 pr-4">{formatDelta(row.baselineDeltas.revenue)}</td>
-                    <td className="py-2 pr-4">{formatDelta(row.baselineDeltas.margin)}</td>
-                    <td className="py-2 pr-4">{formatDelta(row.baselineDeltas.stockoutRate)}</td>
-                    <td className="py-2">{formatDelta(row.baselineDeltas.laborCost)}</td>
-                  </tr>
+                  <TableRow key={row.scenarioId}>
+                    <TableCell className="font-mono text-xs">{row.scenarioId.slice(0, 8)}…</TableCell>
+                    <TableCell>{formatDelta(row.baselineDeltas.revenue)}</TableCell>
+                    <TableCell>{formatDelta(row.baselineDeltas.margin)}</TableCell>
+                    <TableCell>{formatDelta(row.baselineDeltas.stockoutRate)}</TableCell>
+                    <TableCell>{formatDelta(row.baselineDeltas.laborCost)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       ) : null}
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ title, value }: { title: string; value: number }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-sm text-muted-foreground">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function Slider({ label, min, max, step, value, onChange }: { label: string; min: number; max: number; step: number; value: number; onChange: (v: number) => void }) {
   return (
@@ -245,20 +239,16 @@ function KpiGrid({ kpis, deltas }: { kpis: Record<string, number>; deltas: Recor
 
 function ChartBlock({ title, chart }: { title: string; chart?: { label: string; series: Array<{ x: string; y: number }> } }) {
   if (!chart?.series.length) return null;
-  const max = Math.max(...chart.series.map((p) => p.y), 1);
   return (
     <div>
-      <p className="mb-1 text-sm font-medium">{title}</p>
-      <div className="flex h-24 items-end gap-1">
-        {chart.series.map((point) => (
-          <div
-            key={point.x}
-            className="flex-1 rounded-t bg-primary/70"
-            style={{ height: `${Math.max(4, (point.y / max) * 100)}%` }}
-            title={`${point.x}: ${point.y}`}
-          />
-        ))}
-      </div>
+      <ChartHeader title={title} className="mb-2" />
+      <ColumnChart
+        embedded
+        minHeight="sm"
+        points={chart.series.map((point) => ({ label: point.x, value: point.y }))}
+        formatLabel={(label) => label}
+        maxPoints={24}
+      />
     </div>
   );
 }

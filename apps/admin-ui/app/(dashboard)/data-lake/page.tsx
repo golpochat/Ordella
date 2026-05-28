@@ -30,13 +30,13 @@ export default async function DataLakePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Data Lake & ETL"
         description="Enterprise data zones, ingestion pipelines, star-schema warehouse, feature store, governance, and BI exports — tenant-isolated."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       <DataLakePanel dashboard={dashboard} schemas={schemas} pipelineRuns={pipelineRuns} exports={exports} />
-    </div>
+    </>
   );
 }

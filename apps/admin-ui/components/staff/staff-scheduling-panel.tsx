@@ -1,12 +1,16 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { getLaborForecast, getStaffRoster, upsertStaffShift, type LaborForecast, type StaffRoster, type StaffShift } from '@/lib/api/admin/staff-scheduling';
 import type { StaffMember } from '@/lib/api/staff';
 import type { LocationListItem } from '@/lib/api/locations';
 import { formatMoney, getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 type StaffSchedulingPanelProps = {
   initialRoster: StaffRoster;
@@ -18,6 +22,8 @@ type StaffSchedulingPanelProps = {
 const roles: StaffShift['role'][] = ['cashier', 'picker', 'driver', 'manager'];
 
 export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, locations }: StaffSchedulingPanelProps) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = createBrowserApiClient();
   const [roster, setRoster] = useState(initialRoster);
   const [forecast, setForecast] = useState(initialForecast);
@@ -30,10 +36,8 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
     date: new Date().toISOString().slice(0, 10),
     hourlyRate: '15',
   });
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    const days = useMemo(() => {
 
-  const days = useMemo(() => {
     const from = new Date(roster.from);
     const count = view === 'month' ? 31 : 7;
     return Array.from({ length: count }, (_, index) => {
@@ -56,8 +60,6 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
   async function createShift(date: string) {
     const template = roster.templates.find((item) => item.name === selectedTemplate) ?? roster.templates[0];
     if (!form.employeeId || !form.locationId || !template) return;
-    setError(null);
-    setMessage(null);
     try {
       await upsertStaffShift(api, {
         employeeId: form.employeeId,
@@ -69,10 +71,10 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
         hourlyRate: Number(form.hourlyRate || 0),
         templateName: template.name,
       });
-      setMessage(`Created ${template.label} shift.`);
+      toastSuccess(`Created ${template.label} shift.`);
       await reload();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
@@ -84,16 +86,13 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
   const locationName = new Map(locations.map((location) => [location.id, location.name]));
 
   return (
-    <div className="space-y-6">
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-      <div className="grid gap-4 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <Metric label="Labor cost" value={formatMoney(roster.laborCost.total)} />
         <Metric label="Overtime hours" value={roster.laborCost.overtimeHours} />
         <Metric label="Conflicts" value={roster.conflicts.length} />
         <Metric label="Scheduled shifts" value={roster.shifts.length} />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -101,19 +100,19 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-5">
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.employeeId} onChange={(event) => setForm({ ...form, employeeId: event.target.value })}>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.employeeId} onChange={(event) => setForm({ ...form, employeeId: event.target.value })}>
               {staff.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
-            </select>
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.locationId} onChange={(event) => setForm({ ...form, locationId: event.target.value })}>
+            </Select>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.locationId} onChange={(event) => setForm({ ...form, locationId: event.target.value })}>
               {locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}
-            </select>
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as StaffShift['role'] })}>
+            </Select>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as StaffShift['role'] })}>
               {roles.map((role) => <option key={role} value={role}>{role}</option>)}
-            </select>
+            </Select>
             <Input type="number" min={0} value={form.hourlyRate} onChange={(event) => setForm({ ...form, hourlyRate: event.target.value })} />
             <div className="flex gap-2">
-              <Button type="button" variant={view === 'week' ? 'default' : 'outline'} onClick={() => void applyView('week')}>Week</Button>
-              <Button type="button" variant={view === 'month' ? 'default' : 'outline'} onClick={() => void applyView('month')}>Month</Button>
+              <Button type="button" variant={view === 'week' ? 'brand' : 'outline'} onClick={() => void applyView('week')}>Week</Button>
+              <Button type="button" variant={view === 'month' ? 'brand' : 'outline'} onClick={() => void applyView('month')}>Month</Button>
             </div>
           </div>
 
@@ -122,7 +121,7 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
               <Button
                 key={template.name}
                 type="button"
-                variant={selectedTemplate === template.name ? 'default' : 'outline'}
+                variant={selectedTemplate === template.name ? 'brand' : 'outline'}
                 draggable
                 onDragStart={(event) => event.dataTransfer.setData('text/plain', template.name)}
                 onClick={() => setSelectedTemplate(template.name)}
@@ -160,7 +159,7 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
                     <div key={shift.id} className="rounded-md bg-muted p-2 text-xs">
                       <div className="flex justify-between gap-2">
                         <span className="font-medium">{shift.employeeName}</span>
-                        <Badge variant={shift.conflicts?.length ? 'destructive' : 'secondary'}>{shift.role}</Badge>
+                        <Tag variant={shift.conflicts?.length ? 'error' : 'neutral'}><TagLabel>{shift.role}</TagLabel></Tag>
                       </div>
                       <p>{timeLabel(shift.shiftStart)}-{timeLabel(shift.shiftEnd)}</p>
                       <p className="text-muted-foreground">{locationName.get(shift.locationId) ?? shift.locationId}</p>
@@ -180,7 +179,7 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Hour</TableHead>
                   <TableHead>Orders</TableHead>
@@ -189,7 +188,7 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {forecast.hourly.filter((row) => row.requiredStaff > 0 || row.scheduledStaff > 0).map((row) => (
                   <TableRow key={row.hour}>
                     <TableCell>{row.hour}:00</TableCell>
@@ -197,7 +196,7 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
                     <TableCell>{row.requiredStaff}</TableCell>
                     <TableCell>{row.scheduledStaff}</TableCell>
                     <TableCell>
-                      <Badge variant={row.status === 'balanced' ? 'secondary' : 'destructive'}>{row.status}</Badge>
+                      <Tag variant={row.status === 'balanced' ? 'neutral' : 'error'}><TagLabel>{row.status}</TagLabel></Tag>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -212,13 +211,13 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Cost</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {roster.laborCost.byDay.map((row) => (
                   <TableRow key={row.date}>
                     <TableCell>{row.date}</TableCell>
@@ -230,20 +229,10 @@ export function StaffSchedulingPanel({ initialRoster, initialForecast, staff, lo
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ label, value }: { label: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-2 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function timeLabel(value: string) {
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

@@ -19,8 +19,8 @@ export default async function ModifiersPage() {
 
   return (
     <>
-      <PageHeader title="Modifiers" description="Modifier groups and options" />
-      <SubNav items={PRODUCTS_SUBNAV} />
+      <PageHeader title="Modifiers" description="Modifier groups and options"
+        tabs={<SubNav variant="embedded" items={PRODUCTS_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
       <ModifiersPanel modifiers={modifiers} />
     </>

@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input } from '@shared-ui';
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+import { FormField, FormLayout } from '@/components/ui/admin-form';
 import { browserTokenStorage } from '@/lib/api/browser';
 
 export function SignupForm() {
@@ -44,49 +46,42 @@ export function SignupForm() {
   }
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="name">
-          Business name
-        </label>
-        <Input
-          id="name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Your business"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="email">
-          Email
-        </label>
-        <Input
-          id="email"
-          type="email"
-          required
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="password">
-          Password
-        </label>
-        <Input
-          id="password"
-          type="password"
-          required
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Creating account…' : 'Create account'}
-      </Button>
+    <form onSubmit={onSubmit}>
+      <FormLayout constrained={false}>
+        <FormErrorAlert message={error} title="Unable to create account" />
+        <FormField label="Business name" htmlFor="name" required>
+          <Input
+            id="name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your business"
+          />
+        </FormField>
+        <FormField label="Email" htmlFor="email" required>
+          <Input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </FormField>
+        <FormField label="Password" htmlFor="password" required>
+          <Input
+            id="password"
+            type="password"
+            required
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </FormField>
+        <Button type="submit" className="w-full" isLoading={loading} loadingLabel="Creating account…">
+          Create account
+        </Button>
+      </FormLayout>
     </form>
   );
 }

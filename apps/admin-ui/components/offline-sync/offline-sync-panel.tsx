@@ -1,7 +1,11 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { fetchLocations, type LocationListItem } from '@/lib/api/locations';
 import {
@@ -16,6 +20,9 @@ import {
   type OfflineSyncLog,
 } from '@/lib/api/admin/offline-sync';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 type OfflineSyncPanelProps = {
   dashboard: OfflineSyncDashboard | null;
@@ -32,20 +39,18 @@ export function OfflineSyncPanel({
   conflicts: initialConflicts,
   locations: initialLocations,
 }: OfflineSyncPanelProps) {
+  const { success: toastSuccess, error: toastError } = useAdminToast();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [locations, setLocations] = useState(initialLocations);
   const [settings, setSettings] = useState(initialSettings);
   const [logs, setLogs] = useState(initialLogs);
   const [conflicts, setConflicts] = useState(initialConflicts);
   const [locationId, setLocationId] = useState(initialLocations[0]?.id ?? initialSettings[0]?.locationId ?? '');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
   const selectedSetting = settings.find((setting) => setting.locationId === locationId) ?? settings[0] ?? null;
 
   async function refreshLocationData(nextLocationId = locationId) {
-    setError(null);
     try {
       const [nextLogs, nextConflicts] = await Promise.all([
         listOfflineLogs(api, nextLocationId || undefined),
@@ -54,14 +59,12 @@ export function OfflineSyncPanel({
       setLogs(nextLogs);
       setConflicts(nextConflicts);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function saveSetting(setting: OfflineLocationSetting, patch: Partial<OfflineLocationSetting>) {
     setLoading(true);
-    setMessage(null);
-    setError(null);
     try {
       const updated = await updateOfflineSetting(api, {
         locationId: setting.locationId,
@@ -76,9 +79,9 @@ export function OfflineSyncPanel({
         policy: setting.policy,
       });
       setSettings((current) => current.map((item) => (item.id === updated.id ? updated : item)));
-      setMessage('Offline sync controls saved.');
+      toastSuccess('Offline sync controls saved.');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -87,27 +90,24 @@ export function OfflineSyncPanel({
   async function runForceSync() {
     if (!locationId) return;
     setLoading(true);
-    setError(null);
-    setMessage(null);
     try {
       const result = await forceOfflineSync(api, locationId);
-      setMessage(`Force sync processed ${result.processed} operation(s).`);
+      toastSuccess(`Force sync processed ${result.processed} operation(s).`);
       await refreshLocationData();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   }
 
   async function resolveConflict(conflict: OfflineSyncConflict, outcome: 'server_wins' | 'client_wins' | 'dismissed') {
-    setError(null);
     try {
       const updated = await resolveOfflineConflict(api, conflict.id, outcome);
       setConflicts((current) => current.filter((item) => item.id !== updated.id));
-      setMessage(`Conflict resolved with ${outcome.replaceAll('_', ' ')}.`);
+      toastSuccess(`Conflict resolved with ${outcome.replaceAll('_', ' ')}.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
@@ -118,21 +118,18 @@ export function OfflineSyncPanel({
       setLocations(rows);
       setLocationId((current) => current || rows[0]?.id || '');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
     <div className="space-y-6" onFocus={() => void loadLocationsIfNeeded()}>
-      <div className="grid gap-3 md:grid-cols-4">
+      <MetricGrid columns={4}>
         <Metric title="Pending actions" value={dashboard?.pendingActions ?? 0} />
         <Metric title="Open conflicts" value={dashboard?.openConflicts ?? conflicts.length} />
         <Metric title="Failed attempts" value={dashboard?.failedAttempts ?? 0} />
         <Metric title="Edge devices" value={dashboard?.devices.length ?? 0} />
-      </div>
-
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -140,10 +137,11 @@ export function OfflineSyncPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <select
+            <Select
               className="h-10 rounded-md border border-input bg-background px-3 text-sm"
               value={locationId}
               onChange={(event) => {
+
                 setLocationId(event.target.value);
                 void refreshLocationData(event.target.value);
               }}
@@ -152,8 +150,8 @@ export function OfflineSyncPanel({
                 <option key={location.id} value={location.id}>{location.name}</option>
               ))}
               {!locations.length && selectedSetting ? <option value={selectedSetting.locationId}>{selectedSetting.locationId}</option> : null}
-            </select>
-            <Button type="button" onClick={() => void runForceSync()} disabled={loading || !locationId}>
+            </Select>
+            <Button type="button" onClick={() => void runForceSync()} disabled={!locationId} isLoading={loading} loadingLabel="Syncing…">
               Force sync
             </Button>
           </div>
@@ -170,7 +168,10 @@ export function OfflineSyncPanel({
               <NumberSetting label="Delta retention days" value={selectedSetting.deltaRetentionDays} onSave={(value) => void saveSetting(selectedSetting, { deltaRetentionDays: value })} />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No offline settings are available yet.</p>
+            <PanelEmpty
+              title="No offline settings"
+              description="Configure a location to manage offline mode and edge sync policies."
+            />
           )}
         </CardContent>
       </Card>
@@ -182,21 +183,21 @@ export function OfflineSyncPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Conflict</TableHead>
                   <TableHead>Strategy</TableHead>
                   <TableHead>Resolve</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {conflicts.map((conflict) => (
                   <TableRow key={conflict.id}>
                     <TableCell>
                       <p className="font-medium">{label(conflict.conflictType)}</p>
                       <p className="text-xs text-muted-foreground">{conflict.entityType} · {formatDate(conflict.createdAt)}</p>
                     </TableCell>
-                    <TableCell><Badge variant="secondary">{label(conflict.resolutionStrategy)}</Badge></TableCell>
+                    <TableCell><Tag variant="neutral"><TagLabel>{label(conflict.resolutionStrategy)}</TagLabel></Tag></TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" size="sm" onClick={() => void resolveConflict(conflict, 'server_wins')}>Server</Button>
@@ -208,7 +209,9 @@ export function OfflineSyncPanel({
                 ))}
               </TableBody>
             </Table>
-            {!conflicts.length ? <p className="mt-3 text-sm text-muted-foreground">No open conflicts for this location.</p> : null}
+            {!conflicts.length ? (
+              <PanelEmpty title="No open conflicts" description="Sync conflicts for this location will appear here." />
+            ) : null}
           </CardContent>
         </Card>
 
@@ -218,7 +221,7 @@ export function OfflineSyncPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Device</TableHead>
                   <TableHead>Type</TableHead>
@@ -226,18 +229,20 @@ export function OfflineSyncPanel({
                   <TableHead>Last seen</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {(dashboard?.devices ?? []).map((device) => (
                   <TableRow key={device.id}>
                     <TableCell>{device.displayName}</TableCell>
                     <TableCell>{device.deviceType}</TableCell>
-                    <TableCell><Badge variant={device.status === 'active' ? 'secondary' : 'destructive'}>{device.status}</Badge></TableCell>
+                    <TableCell><Tag variant={device.status === 'active' ? 'neutral' : 'error'}><TagLabel>{device.status}</TagLabel></Tag></TableCell>
                     <TableCell>{device.lastSeenAt ? formatDate(device.lastSeenAt) : 'Never'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            {!(dashboard?.devices.length) ? <p className="mt-3 text-sm text-muted-foreground">No edge devices have been bound yet.</p> : null}
+            {!(dashboard?.devices.length) ? (
+              <PanelEmpty title="No edge devices" description="Bound POS, kiosk, and warehouse devices will appear here." />
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -248,7 +253,7 @@ export function OfflineSyncPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Event</TableHead>
                 <TableHead>Level</TableHead>
@@ -256,36 +261,26 @@ export function OfflineSyncPanel({
                 <TableHead>Time</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {logs.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell>{label(log.eventType)}</TableCell>
-                  <TableCell><Badge variant={log.level === 'error' ? 'destructive' : 'outline'}>{log.level}</Badge></TableCell>
+                  <TableCell><Tag variant={log.level === 'error' ? 'error' : 'outline'}><TagLabel>{log.level}</TagLabel></Tag></TableCell>
                   <TableCell>{log.message}</TableCell>
                   <TableCell>{formatDate(log.createdAt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          {!logs.length ? <p className="mt-3 text-sm text-muted-foreground">No offline sync logs yet.</p> : null}
+          {!logs.length ? (
+            <PanelEmpty title="No offline sync logs" description="Sync activity and errors will be recorded here." />
+          ) : null}
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function Toggle({ label: text, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
   return (

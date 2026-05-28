@@ -1,7 +1,22 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import { Pencil, Ban } from 'lucide-react';
+import { Select, Button, Card, CardContent, IconButton, Input , Stack } from '@shared-ui';
+import {
+  AdminTableShell,
+  Table,
+  TableActions,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { listCatalogItems, type CatalogItem } from '@/lib/api/catalog';
 import {
@@ -153,8 +168,8 @@ export function SuppliersPanel() {
   };
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -196,7 +211,7 @@ export function SuppliersPanel() {
             </div>
             {form.items.map((row, index) => (
               <div key={`${row.itemId}-${index}`} className="grid gap-2 rounded-lg border p-3 md:grid-cols-8">
-                <select
+                <Select
                   className="h-10 rounded-md border bg-background px-3 text-sm md:col-span-2"
                   value={row.itemId}
                   onChange={(e) => setForm((current) => ({
@@ -207,7 +222,7 @@ export function SuppliersPanel() {
                   {catalogItems.map((item) => (
                     <option key={item.id} value={item.id}>{item.name}</option>
                   ))}
-                </select>
+                </Select>
                 <Input placeholder="Cost" type="number" value={row.costPrice} onChange={(e) => setForm((current) => ({
                   ...current,
                   items: current.items.map((item, i) => (i === index ? { ...item, costPrice: e.target.value } : item)),
@@ -241,51 +256,68 @@ export function SuppliersPanel() {
         </CardContent>
       </Card>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left">
-            <tr>
-              <th className="p-3 font-medium">Name</th>
-              <th className="p-3 font-medium">Contact</th>
-              <th className="p-3 font-medium">Items supplied</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Portal</th>
-              <th className="p-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <AdminTableShell
+        isEmpty={suppliers.length === 0}
+        emptyTitle="No suppliers"
+        emptyDescription="Add a supplier to manage procurement and purchase orders."
+      >
+        <Table>
+          <TableHeader sticky>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Contact</TableHead>
+              <TableHead>Items supplied</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Portal</TableHead>
+              <TableHead className="w-[1%] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody zebra>
             {suppliers.map((supplier) => (
-              <tr key={supplier.id} className="border-t">
-                <td className="p-3 font-medium">{supplier.name}</td>
-                <td className="p-3 text-muted-foreground">
+              <TableRow key={supplier.id}>
+                <TableCell className="font-medium">{supplier.name}</TableCell>
+                <TableCell className="text-muted-foreground">
                   {supplier.contactName || supplier.email || supplier.phone || 'No contact'}
-                </td>
-                <td className="p-3">
+                </TableCell>
+                <TableCell>
                   {supplier.items.map((item) => item.item?.name ?? itemById[item.itemId]?.name ?? item.itemId).join(', ') || 'No mapped items'}
-                </td>
-                <td className="p-3">
-                  <Badge variant={supplier.isActive ? 'default' : 'secondary'}>{supplier.isActive ? 'Active' : 'Disabled'}</Badge>
-                </td>
-                <td className="p-3">
-                  <Badge variant={supplier.portalUserEmail ? 'default' : 'secondary'}>
+                </TableCell>
+                <TableCell>
+                  <Tag variant={supplier.isActive ? 'brand' : 'neutral'}><TagLabel>
+                    {supplier.isActive ? 'Active' : 'Disabled'}
+                  </TagLabel></Tag>
+                </TableCell>
+                <TableCell>
+                  <Tag variant={supplier.portalUserEmail ? 'brand' : 'neutral'}><TagLabel>
                     {supplier.portalUserEmail ? 'Enabled' : 'Off'}
-                  </Badge>
-                </td>
-                <td className="p-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => editSupplier(supplier)}>
-                      Edit
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => void disableSupplier(api, supplier.id).then(load)}>
-                      Disable
-                    </Button>
-                  </div>
-                </td>
-              </tr>
+                  </TagLabel></Tag>
+                </TableCell>
+                <TableCell className="text-right">
+                  <TableActions>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      aria-label={`Edit ${supplier.name}`}
+                      onClick={() => editSupplier(supplier)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-label={`Disable ${supplier.name}`}
+                      onClick={() => void disableSupplier(api, supplier.id).then(load)}
+                    >
+                      <Ban className="h-4 w-4" />
+                    </IconButton>
+                  </TableActions>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </AdminTableShell>
+    </Stack>
   );
 }

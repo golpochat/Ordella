@@ -7,6 +7,7 @@ import { AnalyticsDashboardPanel } from '@/components/analytics/analytics-dashbo
 import { AdvancedSearchPanel } from '@/components/search/advanced-search-panel';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { getErrorMessage } from '@/lib/utils';
+import { SuspenseDashboardFallback } from '@/components/ui/admin-loader';
 
 type DashboardPageProps = {
   searchParams: { from?: string; to?: string; locationId?: string };
@@ -39,7 +40,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <div className="mb-6">
         <AdvancedSearchPanel />
       </div>
-      <Suspense fallback={<p className="text-sm text-muted-foreground">Loading analytics…</p>}>
+      <Suspense fallback={<SuspenseDashboardFallback />}>
         <AnalyticsDashboardPanel searchParams={searchParams} />
       </Suspense>
     </>

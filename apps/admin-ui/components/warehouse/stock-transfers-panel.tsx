@@ -1,7 +1,22 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import { Ban, PackageCheck, Truck } from 'lucide-react';
+import { Select, Button, Card, CardContent, IconButton, Input , Stack } from '@shared-ui';
+import {
+  AdminTableShell,
+  Table,
+  TableActions,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { listInventory } from '@/lib/api/admin/inventory';
 import type { InventoryListItem } from '@shared-utils';
@@ -149,8 +164,8 @@ export function StockTransfersPanel() {
   };
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -159,20 +174,20 @@ export function StockTransfersPanel() {
             <p className="text-sm text-muted-foreground">Move warehouse stock between stores, warehouses, dark stores, and distribution centers.</p>
           </div>
           <div className="grid gap-3 md:grid-cols-4">
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.fromLocationId} onChange={(e) => setForm({ ...form, fromLocationId: e.target.value, lines: [] })}>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.fromLocationId} onChange={(e) => setForm({ ...form, fromLocationId: e.target.value, lines: [] })}>
               {locations.map((location) => (
                 <option key={location.id} value={location.id}>{location.name}</option>
               ))}
-            </select>
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.toLocationId} onChange={(e) => setForm({ ...form, toLocationId: e.target.value })}>
+            </Select>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.toLocationId} onChange={(e) => setForm({ ...form, toLocationId: e.target.value })}>
               {locations.filter((location) => location.id !== form.fromLocationId).map((location) => (
                 <option key={location.id} value={location.id}>{location.name}</option>
               ))}
-            </select>
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TransferForm['status'] })}>
+            </Select>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TransferForm['status'] })}>
               <option value="draft">Save as draft</option>
               <option value="in_transit">Mark in transit</option>
-            </select>
+            </Select>
             <Input placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
 
@@ -185,14 +200,14 @@ export function StockTransfersPanel() {
             </div>
             {form.lines.map((line, index) => (
               <div key={`${line.stockItemId}-${index}`} className="grid gap-2 rounded-lg border p-3 md:grid-cols-4">
-                <select className="h-10 rounded-md border bg-background px-3 text-sm md:col-span-2" value={line.stockItemId} onChange={(e) => setForm((current) => ({
+                <Select className="h-10 rounded-md border bg-background px-3 text-sm md:col-span-2" value={line.stockItemId} onChange={(e) => setForm((current) => ({
                   ...current,
                   lines: current.lines.map((item, i) => (i === index ? { ...item, stockItemId: e.target.value } : item)),
                 }))}>
                   {stockItems.map((item) => (
                     <option key={item.id} value={item.id}>{item.name} · available {item.quantityAvailable}</option>
                   ))}
-                </select>
+                </Select>
                 <Input type="number" min={1} value={line.quantity} onChange={(e) => setForm((current) => ({
                   ...current,
                   lines: current.lines.map((item, i) => (i === index ? { ...item, quantity: Number(e.target.value) } : item)),
@@ -209,44 +224,73 @@ export function StockTransfersPanel() {
         </CardContent>
       </Card>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left">
-            <tr>
-              <th className="p-3 font-medium">From → To</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Items</th>
-              <th className="p-3 font-medium">Created</th>
-              <th className="p-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <AdminTableShell
+        isEmpty={transfers.length === 0}
+        emptyTitle="No stock transfers"
+        emptyDescription="Create a transfer to move stock between locations."
+      >
+        <Table>
+          <TableHeader sticky>
+            <TableRow>
+              <TableHead>From → To</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Items</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="w-[1%] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody zebra>
             {transfers.map((transfer) => (
-              <tr key={transfer.id} className="border-t">
-                <td className="p-3 font-medium">{transfer.fromLocationName ?? transfer.fromLocationId} → {transfer.toLocationName ?? transfer.toLocationId}</td>
-                <td className="p-3"><TransferStatusBadge status={transfer.status} /></td>
-                <td className="p-3">
+              <TableRow key={transfer.id}>
+                <TableCell className="font-medium">
+                  {transfer.fromLocationName ?? transfer.fromLocationId} → {transfer.toLocationName ?? transfer.toLocationId}
+                </TableCell>
+                <TableCell>
+                  <TransferStatusBadge status={transfer.status} />
+                </TableCell>
+                <TableCell>
                   {transfer.lines.map((line) => `${line.itemName ?? stockById[line.stockItemId]?.name ?? line.stockItemId}: ${line.quantityRequested}`).join(', ')}
-                </td>
-                <td className="p-3">{new Date(transfer.createdAt).toLocaleDateString()}</td>
-                <td className="p-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" size="sm" variant="outline" onClick={() => void markInTransit(transfer)} disabled={!['draft', 'pending'].includes(transfer.status)}>
-                      Ship
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => setReceiveTransfer(transfer)} disabled={transfer.status !== 'in_transit'}>
-                      Receive
-                    </Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => void cancel(transfer)} disabled={['received', 'completed', 'cancelled'].includes(transfer.status)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell>{new Date(transfer.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right">
+                  <TableActions>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-label="Mark transfer in transit"
+                      onClick={() => void markInTransit(transfer)}
+                      disabled={!['draft', 'pending'].includes(transfer.status)}
+                    >
+                      <Truck className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-label="Receive transfer"
+                      onClick={() => setReceiveTransfer(transfer)}
+                      disabled={transfer.status !== 'in_transit'}
+                    >
+                      <PackageCheck className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Cancel transfer"
+                      onClick={() => void cancel(transfer)}
+                      disabled={['received', 'completed', 'cancelled'].includes(transfer.status)}
+                    >
+                      <Ban className="h-4 w-4" />
+                    </IconButton>
+                  </TableActions>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </AdminTableShell>
 
       {receiveTransfer ? (
         <Card>
@@ -274,12 +318,22 @@ export function StockTransfersPanel() {
           </CardContent>
         </Card>
       ) : null}
-    </div>
+    </Stack>
   );
 }
 
 function TransferStatusBadge({ status }: { status: StockTransfer['status'] }) {
-  const variant: 'default' | 'secondary' | 'destructive' | 'outline' =
-    status === 'received' || status === 'completed' ? 'default' : status === 'cancelled' ? 'destructive' : status === 'in_transit' ? 'outline' : 'secondary';
-  return <Badge variant={variant}>{status}</Badge>;
+  const variant: import('@/components/ui/admin-tag').TagVariant =
+    status === 'received' || status === 'completed'
+      ? 'success'
+      : status === 'cancelled'
+        ? 'error'
+        : status === 'in_transit'
+          ? 'info'
+          : 'neutral';
+  return (
+    <Tag variant={variant}>
+      <TagLabel>{status}</TagLabel>
+    </Tag>
+  );
 }

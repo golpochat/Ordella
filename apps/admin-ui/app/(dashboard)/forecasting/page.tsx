@@ -4,8 +4,8 @@ import { getForecastSummary, type ForecastParams } from '@/lib/api/admin/forecas
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { ForecastingControls } from '@/components/forecasting/forecasting-controls';
 import { ForecastingDashboardPanel } from '@/components/forecasting/forecasting-dashboard-panel';
-import { PageHeader } from '@/components/ui/page-header';
 import { getErrorMessage } from '@/lib/utils';
+import { PageHeader, PageSection, Stack } from '@shared-ui';
 
 type ForecastingPageProps = {
   searchParams: ForecastParams;
@@ -21,16 +21,20 @@ export default async function ForecastingPage({ searchParams }: ForecastingPageP
   }
 
   return (
-    <>
+    <Stack gap="lg">
       <PageHeader
         title="AI Forecasting"
         description="Predict demand, stockouts, staffing, delivery capacity, and warehouse replenishment needs."
       />
-      <Suspense fallback={null}>
-        <ForecastingControls />
-      </Suspense>
+      <PageSection title="Forecast filters">
+        <Suspense fallback={null}>
+          <ForecastingControls />
+        </Suspense>
+      </PageSection>
       {error ? <ApiErrorBanner message={error} /> : null}
-      <ForecastingDashboardPanel forecast={forecast} />
-    </>
+      <PageSection title="Forecast results">
+        <ForecastingDashboardPanel forecast={forecast} />
+      </PageSection>
+    </Stack>
   );
 }

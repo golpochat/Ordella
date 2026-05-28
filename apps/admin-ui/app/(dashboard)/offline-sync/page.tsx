@@ -33,7 +33,7 @@ export default async function OfflineSyncPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Offline & Edge Sync"
         description="Control offline mode per location, monitor edge devices, inspect sync logs, resolve conflicts, and force sync pending work."
@@ -46,6 +46,6 @@ export default async function OfflineSyncPage() {
         conflicts={conflicts}
         locations={locations}
       />
-    </div>
+    </>
   );
 }

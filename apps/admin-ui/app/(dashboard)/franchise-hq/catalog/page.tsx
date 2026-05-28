@@ -33,8 +33,8 @@ export default async function FranchiseHqCatalogPage() {
       <PageHeader
         title="Brand Catalog"
         description="Manage global catalog templates, inherited items, and tenant-level overrides across brand tenants."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />}
       />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
       {error ? <ApiErrorBanner message={error} /> : null}
       <BrandCatalogPanel
         initialGlobalItems={globalItems}

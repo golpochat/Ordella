@@ -1,13 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input } from '@shared-ui';
 import type { Category, Product } from '@shared-utils';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { createProduct, updateProduct } from '@/lib/api/admin/products';
 import { listTaxCategories, type TaxCategory } from '@/lib/api/admin/tax';
 import { getErrorMessage } from '@/lib/utils';
+import {
+  Button,
+  FormActions,
+  FormField,
+  FormLayout,
+  Grid,
+  Input,
+  Select,
+  Textarea,
+  FormErrorAlert,
+} from '@/components/ui/admin-form';
 
 type ProductFormProps = {
   categories: Category[];
@@ -15,6 +25,7 @@ type ProductFormProps = {
 };
 
 export function ProductForm({ categories, product }: ProductFormProps) {
+  const baseId = useId();
   const router = useRouter();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [name, setName] = useState(product?.name ?? '');
@@ -64,89 +75,89 @@ export function ProductForm({ categories, product }: ProductFormProps) {
   }
 
   return (
-    <form className="max-w-lg space-y-4" onSubmit={onSubmit}>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="name">
-          Name
-        </label>
-        <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="taxCategory">
-          Tax category
-        </label>
-        <select
-          id="taxCategory"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          value={taxCategoryId}
-          onChange={(e) => setTaxCategoryId(e.target.value)}
-        >
-          <option value="">Inherit from product category</option>
-          {taxCategories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="description">
-          Description
-        </label>
-        <Input
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="price">
-          Price
-        </label>
-        <Input id="price" required value={price} onChange={(e) => setPrice(e.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="category">
-          Category
-        </label>
-        <select
-          id="category"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-        >
-          <option value="">None</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="status">
-          Status
-        </label>
-        <select
-          id="status"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as Product['status'])}
-        >
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-          <option value="draft">Draft</option>
-        </select>
-      </div>
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>
-          {product ? 'Save changes' : 'Create product'}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
-        </Button>
-      </div>
+    <form onSubmit={onSubmit}>
+      <FormLayout>
+        <FormErrorAlert message={error} title="Unable to save product" />
+        <Grid cols={1} gap="md" className="min-[769px]:grid-cols-2">
+          <FormField label="Name" htmlFor={`${baseId}-name`} required className="min-[769px]:col-span-2">
+            <Input id={`${baseId}-name`} required value={name} onChange={(e) => setName(e.target.value)} />
+          </FormField>
+
+          <FormField
+            label="Tax category"
+            htmlFor={`${baseId}-tax`}
+            helper="Leave empty to inherit from product category."
+          >
+            <Select
+              id={`${baseId}-tax`}
+              value={taxCategoryId}
+              onChange={(e) => setTaxCategoryId(e.target.value)}
+            >
+              <option value="">Inherit from product category</option>
+              {taxCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+
+          <FormField label="Category" htmlFor={`${baseId}-category`}>
+            <Select
+              id={`${baseId}-category`}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            >
+              <option value="">None</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+
+          <FormField label="Status" htmlFor={`${baseId}-status`}>
+            <Select
+              id={`${baseId}-status`}
+              value={status}
+              onChange={(e) => setStatus(e.target.value as Product['status'])}
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="draft">Draft</option>
+            </Select>
+          </FormField>
+
+          <FormField label="Price" htmlFor={`${baseId}-price`} required>
+            <Input
+              id={`${baseId}-price`}
+              required
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="tabular-nums"
+            />
+          </FormField>
+        </Grid>
+
+        <FormField label="Description" htmlFor={`${baseId}-description`} className="min-w-0">
+          <Textarea
+            id={`${baseId}-description`}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="min-h-24"
+          />
+        </FormField>
+
+        <FormActions>
+          <Button type="submit" isLoading={loading} loadingLabel="Saving…">
+            {product ? 'Save changes' : 'Create product'}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            Cancel
+          </Button>
+        </FormActions>
+      </FormLayout>
     </form>
   );
 }

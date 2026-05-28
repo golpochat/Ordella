@@ -1,0 +1,15 @@
+{
+  "nav": {
+    "dashboard": "Analytique",
+    "settings": "Paramètres",
+    "orders": "Commandes",
+    "inventory": "Inventaire"
+  },
+  "common": {
+    "confirm": "Confirmer",
+    "cancel": "Annuler"
+  },
+  "shell": {
+    "localeLabel": "Langue"
+  }
+}

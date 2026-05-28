@@ -118,6 +118,9 @@ export class DataLakeService {
     private readonly auditLogs: AuditLogService,
   ) {}
 
+  /** Prevents concurrent ensureDefaults calls from racing on the same tenant inserts. */
+  private readonly ensureDefaultsLocks = new Map<string, Promise<void>>();
+
   async dashboard(tenant: TenantContext) {
     await this.ensureDefaults(tenant.tenantId);
     const [zoneRows, pipelineRows, recentRuns, failedRuns, schemas, tables, views, featuresCount] = await Promise.all([
@@ -568,7 +571,20 @@ export class DataLakeService {
     }
   }
 
-  private async ensureDefaults(tenantId: string) {
+  private ensureDefaults(tenantId: string): Promise<void> {
+    const inFlight = this.ensureDefaultsLocks.get(tenantId);
+    if (inFlight) return inFlight;
+
+    const run = this.seedDefaults(tenantId).finally(() => {
+      if (this.ensureDefaultsLocks.get(tenantId) === run) {
+        this.ensureDefaultsLocks.delete(tenantId);
+      }
+    });
+    this.ensureDefaultsLocks.set(tenantId, run);
+    return run;
+  }
+
+  private async seedDefaults(tenantId: string) {
     await this.ensureSettings(tenantId);
     for (const zone of DEFAULT_ZONES) {
       const existing = await this.zones.findOne({ where: { tenantId, zoneKey: zone.zoneKey } });

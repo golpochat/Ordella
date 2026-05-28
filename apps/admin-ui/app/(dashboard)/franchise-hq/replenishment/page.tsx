@@ -9,8 +9,8 @@ export default function FranchiseHqReplenishmentPage() {
       <PageHeader
         title="HQ Replenishment"
         description="Review consolidated replenishment rules, auto-generated actions, and transfer or purchase recommendations."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />}
       />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
       <ReplenishmentDashboardPanel />
     </>
   );

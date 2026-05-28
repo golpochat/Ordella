@@ -1,9 +1,15 @@
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
-import { ApiErrorBanner } from '@/components/ui/api-error-banner';
-import { PageHeader } from '@/components/ui/page-header';
 import { createServerApiClient } from '@/lib/api/server';
 import { getAuditLog, type AuditLog } from '@/lib/api/admin/audit-logs';
+import { ApiErrorBanner } from '@/components/ui/api-error-banner';
+import {
+  DetailField,
+  DetailPage,
+  DetailPageHeader,
+  DetailSectionCard,
+  DetailStatusBadge,
+  Grid,
+  Stack,
+} from '@/components/ui/admin-detail';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
 export default async function AuditLogDetailPage({ params }: { params: { id: string } }) {
@@ -17,45 +23,51 @@ export default async function AuditLogDetailPage({ params }: { params: { id: str
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Audit Log Detail" description="Tamper-evident compliance record with request metadata." />
-      <Link className="text-sm text-primary underline-offset-4 hover:underline" href="/audit-logs">Back to audit logs</Link>
+    <DetailPage>
+      <DetailPageHeader
+        breadcrumb={[
+          { label: 'Audit logs', href: '/audit-logs' },
+          { label: 'Detail' },
+        ]}
+        title="Audit log detail"
+        description="Tamper-evident compliance record with request metadata."
+      />
       {error ? <ApiErrorBanner message={error} /> : null}
       {log ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{log.action}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="grid gap-3 md:grid-cols-3">
-              <Field label="Timestamp" value={formatDate(log.createdAt)} />
-              <Field label="Actor" value={`${log.actorType} · ${log.userId ?? 'system'}`} />
-              <Field label="Entity" value={`${log.entityType} · ${log.entityId ?? 'none'}`} />
-              <Field label="Status" value={log.status} />
-              <Field label="Risk" value={log.riskLevel} />
-              <Field label="Source" value={log.source} />
-              <Field label="IP address" value={log.ipAddress ?? 'Unknown'} />
-              <Field label="Location" value={log.locationId ?? 'All'} />
-              <Field label="Retention" value={log.retentionUntil ? formatDate(log.retentionUntil) : 'Default policy'} />
-            </div>
-            <div>
-              <p className="font-medium">Tamper evidence</p>
-              <p className="break-all text-muted-foreground">Hash: {log.hash ?? 'Pending'}</p>
-              <p className="break-all text-muted-foreground">Previous hash: {log.previousHash ?? 'None'}</p>
-            </div>
-            <pre className="max-h-[32rem] overflow-auto rounded-md border bg-muted/40 p-3 text-xs">{JSON.stringify(log.metadata, null, 2)}</pre>
-          </CardContent>
-        </Card>
-      ) : null}
-    </div>
-  );
-}
+        <>
+          <DetailSectionCard title={log.action} description={`Recorded ${formatDate(log.createdAt)}`}>
+            <Grid cols={1} gap="md" className="min-[481px]:grid-cols-2 min-[769px]:grid-cols-3">
+              <DetailField label="Timestamp" value={formatDate(log.createdAt)} />
+              <DetailField label="Actor" value={`${log.actorType} · ${log.userId ?? 'system'}`} />
+              <DetailField label="Entity" value={`${log.entityType} · ${log.entityId ?? 'none'}`} />
+              <DetailField label="Status" value={<DetailStatusBadge status={log.status} />} />
+              <DetailField label="Risk" value={<DetailStatusBadge status={log.riskLevel} />} />
+              <DetailField label="Source" value={log.source} />
+              <DetailField label="IP address" value={log.ipAddress ?? 'Unknown'} />
+              <DetailField label="Location" value={log.locationId ?? 'All'} />
+              <DetailField
+                label="Retention"
+                value={log.retentionUntil ? formatDate(log.retentionUntil) : 'Default policy'}
+              />
+            </Grid>
+          </DetailSectionCard>
 
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 break-all font-medium">{value}</p>
-    </div>
+          <DetailSectionCard title="Tamper evidence">
+            <Stack gap="sm">
+              <p className="text-xs text-muted-foreground">Hash</p>
+              <p className="break-all font-mono text-sm text-foreground">{log.hash ?? 'Pending'}</p>
+              <p className="text-xs text-muted-foreground">Previous hash</p>
+              <p className="break-all font-mono text-sm text-foreground">{log.previousHash ?? 'None'}</p>
+            </Stack>
+          </DetailSectionCard>
+
+          <DetailSectionCard title="Metadata">
+            <pre className="max-h-[32rem] overflow-auto rounded-md border border-border bg-muted/40 p-4 font-mono text-xs text-foreground">
+              {JSON.stringify(log.metadata, null, 2)}
+            </pre>
+          </DetailSectionCard>
+        </>
+      ) : null}
+    </DetailPage>
   );
 }

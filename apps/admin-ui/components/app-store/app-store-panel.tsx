@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   approveMarketplaceApp,
@@ -16,6 +19,11 @@ import {
   type PartnerDashboard,
 } from '@/lib/api/admin/app-store';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+import { IrreversibleConfirmDialog } from '@/components/ui/admin-dialog';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
+import { SearchBar, SearchInput } from '@/components/ui/admin-search';
 
 const CATEGORIES = ['all', 'accounting', 'erp', 'delivery', 'marketing', 'hardware'];
 const DEFAULT_SCOPES = ['orders.read', 'products.read', 'inventory.read', 'customers.read'];
@@ -29,6 +37,8 @@ export function AppStorePanel({
   initialAnalytics: AppStoreAnalytics;
   initialPartnerDashboard: PartnerDashboard;
 }) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const [apps, setApps] = useState(initialApps);
   const [analytics] = useState(initialAnalytics);
   const [partnerDashboard, setPartnerDashboard] = useState(initialPartnerDashboard);
@@ -51,11 +61,11 @@ export function AppStorePanel({
     requestedScopes: DEFAULT_SCOPES,
   });
   const [revealedApiKey, setRevealedApiKey] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const selectedApp = apps.find((app) => app.id === selectedAppId) ?? apps[0];
+  const [uninstallOpen, setUninstallOpen] = useState(false);
+  const [uninstallLoading, setUninstallLoading] = useState(false);
+    const selectedApp = apps.find((app) => app.id === selectedAppId) ?? apps[0];
   const visibleApps = useMemo(() => apps.filter((app) => {
+
     const categoryMatches = category === 'all' || app.category === category;
     const searchMatches = !search || `${app.name} ${app.provider} ${app.description}`.toLowerCase().includes(search.toLowerCase());
     return categoryMatches && searchMatches;
@@ -69,8 +79,6 @@ export function AppStorePanel({
 
   async function installSelected() {
     if (!selectedApp) return;
-    setError(null);
-    setMessage(null);
     try {
       const result = await installMarketplaceApp(createBrowserApiClient(), selectedApp.id, {
         grantedScopes,
@@ -79,53 +87,53 @@ export function AppStorePanel({
       });
       setRevealedApiKey(result.apiKey ?? null);
       setApps((current) => current.map((app) => (app.id === selectedApp.id ? { ...app, installation: result.installation } : app)));
-      setMessage(`${selectedApp.name} installed with approved permissions`);
+      toastSuccess(`${selectedApp.name} installed with approved permissions`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
-  async function uninstallSelected() {
+  async function confirmUninstall() {
     if (!selectedApp?.installation) return;
-    setError(null);
+    setUninstallLoading(true);
     try {
       await uninstallMarketplaceApp(createBrowserApiClient(), selectedApp.installation.id);
       setApps((current) => current.map((app) => (app.id === selectedApp.id ? { ...app, installation: { ...selectedApp.installation!, status: 'uninstalled' } } : app)));
-      setMessage(`${selectedApp.name} uninstalled`);
+      setUninstallOpen(false);
+      toastSuccess(`${selectedApp.name} uninstalled`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
+    } finally {
+      setUninstallLoading(false);
     }
   }
 
   async function submitReview(event: React.FormEvent) {
     event.preventDefault();
     if (!selectedApp) return;
-    setError(null);
     try {
       await createAppReview(createBrowserApiClient(), selectedApp.id, { rating, comment: reviewComment });
       setApps((current) => current.map((app) => (app.id === selectedApp.id ? { ...app, reviewCount: app.reviewCount + 1 } : app)));
       setReviewComment('');
-      setMessage('Review submitted');
+      toastSuccess('Review submitted');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function registerPartner(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const partner = await registerAppPartner(createBrowserApiClient(), partnerForm);
       setPartnerDashboard((current) => ({ ...current, partner }));
-      setMessage('Partner sandbox enabled');
+      toastSuccess('Partner sandbox enabled');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function submitApp(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const app = await submitMarketplaceApp(createBrowserApiClient(), {
         partnerId: partnerDashboard.partner?.id,
@@ -133,31 +141,29 @@ export function AppStorePanel({
         requestedScopes: submissionForm.requestedScopes,
       });
       setApps((current) => [app, ...current]);
-      setMessage(app.clientSecret ? `App submitted. Client secret: ${app.clientSecret}` : 'App submitted');
+      toastSuccess(app.clientSecret ? `App submitted. Client secret: ${app.clientSecret}` : 'App submitted');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function approve(app: MarketplaceApp) {
-    setError(null);
     try {
       const updated = await approveMarketplaceApp(createBrowserApiClient(), app.id, 'approved');
       setApps((current) => current.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
-      setMessage('App approved');
+      toastSuccess('App approved');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function meterUsage() {
     if (!selectedApp?.installation) return;
-    setError(null);
     try {
       await meterAppUsage(createBrowserApiClient(), selectedApp.installation.id, { metric: 'api_calls', quantity: 100 });
-      setMessage('Usage metered for billing');
+      toastSuccess('Usage metered for billing');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
@@ -170,9 +176,16 @@ export function AppStorePanel({
   }
 
   return (
-    <div className="space-y-6">
-      {message ? <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm">{message}</p> : null}
-      {error ? <p className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      <IrreversibleConfirmDialog
+        open={uninstallOpen}
+        onOpenChange={setUninstallOpen}
+        title={selectedApp ? `Uninstall ${selectedApp.name}?` : 'Uninstall app?'}
+        description="Granted scopes and webhooks for this app will be revoked."
+        confirmLabel="Uninstall"
+        loading={uninstallLoading}
+        onConfirm={confirmUninstall}
+      />
       {revealedApiKey ? (
         <div className="rounded-md border bg-muted/40 p-3">
           <p className="text-sm font-medium">App API key shown once</p>
@@ -180,12 +193,12 @@ export function AppStorePanel({
         </div>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <MetricGrid columns={4}>
         <MetricCard title="Top apps" value={String(analytics.topApps.length)} detail="Ranked by installs" />
         <MetricCard title="Install events" value={String(analytics.installTrends.length)} detail="Tenant install history" />
         <MetricCard title="Revenue" value={money(analytics.partnerEarningsCents)} detail="Marketplace billing records" />
         <MetricCard title="Reviews" value={String(analytics.reviewCount)} detail="Published ratings" />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -193,10 +206,19 @@ export function AppStorePanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-            <Input placeholder="Search apps, providers, or descriptions" value={search} onChange={(event) => setSearch(event.target.value)} />
+            <SearchBar className="min-[481px]:max-w-none">
+              <SearchInput
+                placeholder="Search apps, providers, or descriptions"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                onClear={() => setSearch('')}
+                active={Boolean(search.trim())}
+                aria-label="Search marketplace apps"
+              />
+            </SearchBar>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((item) => (
-                <Button key={item} type="button" size="sm" variant={category === item ? 'default' : 'outline'} onClick={() => setCategory(item)}>
+                <Button key={item} type="button" size="sm" variant={category === item ? 'brand' : 'outline'} onClick={() => setCategory(item)}>
                   {item === 'all' ? 'All' : item}
                 </Button>
               ))}
@@ -207,7 +229,7 @@ export function AppStorePanel({
               <button key={app.id} type="button" className="rounded-md border bg-background p-4 text-left" onClick={() => selectApp(app)}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-medium">{app.name}</p>
-                  <Badge variant={app.installation?.status === 'installed' ? 'outline' : 'secondary'}>{app.installation?.status ?? app.pricingModel}</Badge>
+                  <Tag variant={app.installation?.status === 'installed' ? 'outline' : 'neutral'}><TagLabel>{app.installation?.status ?? app.pricingModel}</TagLabel></Tag>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{app.provider} - {app.category}</p>
                 <p className="mt-2 line-clamp-2 text-sm">{app.description}</p>
@@ -250,13 +272,13 @@ export function AppStorePanel({
                       <input type="checkbox" checked={webhookEvents.includes(event)} onChange={() => toggleWebhook(event)} />
                       {event}
                     </label>
-                  )) : <p className="text-sm text-muted-foreground">No webhook events requested.</p>}
+                  )) : <PanelEmpty title="No webhook events requested" description="Content will appear here when available." />}
                 </div>
               </div>
               <Input placeholder="Optional webhook URL" value={webhookUrl} onChange={(event) => setWebhookUrl(event.target.value)} />
               <div className="flex flex-wrap gap-2">
                 <Button type="button" onClick={() => void installSelected()} disabled={selectedApp.installation?.status === 'installed'}>Install app</Button>
-                <Button type="button" variant="destructive" onClick={() => void uninstallSelected()} disabled={selectedApp.installation?.status !== 'installed'}>Uninstall</Button>
+                <Button type="button" variant="error" onClick={() => setUninstallOpen(true)} disabled={selectedApp.installation?.status !== 'installed'}>Uninstall</Button>
                 <Button type="button" variant="outline" onClick={() => void meterUsage()} disabled={!selectedApp.installation}>Meter 100 API calls</Button>
               </div>
             </CardContent>
@@ -268,9 +290,9 @@ export function AppStorePanel({
             </CardHeader>
             <CardContent className="space-y-4">
               <form className="space-y-3" onSubmit={submitReview}>
-                <select className="rounded-md border bg-background px-3 py-2 text-sm" value={rating} onChange={(event) => setRating(Number(event.target.value))}>
+                <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={rating} onChange={(event) => setRating(Number(event.target.value))}>
                   {[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} stars</option>)}
-                </select>
+                </Select>
                 <Input placeholder="Leave a review" value={reviewComment} onChange={(event) => setReviewComment(event.target.value)} />
                 <Button type="submit" size="sm">Submit review</Button>
               </form>
@@ -306,19 +328,19 @@ export function AppStorePanel({
             <div className="grid gap-3 md:grid-cols-3">
               <Input placeholder="App name" value={submissionForm.name} onChange={(event) => setSubmissionForm((current) => ({ ...current, name: event.target.value }))} required />
               <Input placeholder="Provider" value={submissionForm.provider} onChange={(event) => setSubmissionForm((current) => ({ ...current, provider: event.target.value }))} required />
-              <select className="rounded-md border bg-background px-3 py-2 text-sm" value={submissionForm.pricingModel} onChange={(event) => setSubmissionForm((current) => ({ ...current, pricingModel: event.target.value }))}>
+              <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={submissionForm.pricingModel} onChange={(event) => setSubmissionForm((current) => ({ ...current, pricingModel: event.target.value }))}>
                 <option value="free">Free</option>
                 <option value="one_time">One-time</option>
                 <option value="monthly_subscription">Monthly</option>
                 <option value="usage_based">Usage-based</option>
                 <option value="revenue_share">Revenue share</option>
-              </select>
+              </Select>
             </div>
             <Input placeholder="Description" value={submissionForm.description} onChange={(event) => setSubmissionForm((current) => ({ ...current, description: event.target.value }))} required />
             <Button type="submit">Submit app for approval</Button>
           </form>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Submitted app</TableHead>
                 <TableHead>Status</TableHead>
@@ -326,11 +348,11 @@ export function AppStorePanel({
                 <TableHead className="text-right">Approval</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {apps.filter((app) => app.status !== 'approved').map((app) => (
                 <TableRow key={app.id}>
                   <TableCell>{app.name}</TableCell>
-                  <TableCell><Badge variant="secondary">{app.status}</Badge></TableCell>
+                  <TableCell><Tag variant="neutral"><TagLabel>{app.status}</TagLabel></Tag></TableCell>
                   <TableCell>{pricingText(app)}</TableCell>
                   <TableCell className="text-right">
                     <Button type="button" size="sm" variant="outline" onClick={() => void approve(app)}>Approve</Button>
@@ -341,23 +363,10 @@ export function AppStorePanel({
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function MetricCard({ title, value, detail }: { title: string; value: string; detail: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-        <p className="text-sm text-muted-foreground">{detail}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function Info({ label, value }: { label: string; value: string }) {
   return (

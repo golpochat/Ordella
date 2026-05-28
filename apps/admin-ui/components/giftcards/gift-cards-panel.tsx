@@ -1,22 +1,11 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared-ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import {
   addStoreCredit,
   adjustGiftCard,
@@ -33,6 +22,11 @@ import {
 import { searchLoyaltyCustomers, type LoyaltyCustomer } from '@/lib/api/loyalty';
 import { getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+import { SearchInput } from '@/components/ui/admin-search';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
+import { TablePanelSkeleton } from '@/components/ui/admin-loader';
 
 export function GiftCardsPanel() {
   const { formatCurrency, formatDate } = useTenantSettings();
@@ -161,19 +155,19 @@ export function GiftCardsPanel() {
     }
   }
 
-  if (loading) return <p className="text-sm text-muted-foreground">Loading gift cards...</p>;
+  if (loading) return <TablePanelSkeleton rows={5} columns={6} />;
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
 
-      <div className="grid gap-4 md:grid-cols-5">
+      <MetricGrid columns={5}>
         <Metric title="Gift card sales" value={formatCurrency(analytics?.giftCardSales)} />
         <Metric title="Gift card redemptions" value={formatCurrency(analytics?.giftCardRedemptions)} />
         <Metric title="Outstanding liability" value={formatCurrency(analytics?.outstandingLiability)} />
         <Metric title="Store credit issued" value={formatCurrency(analytics?.storeCreditIssued)} />
         <Metric title="Store credit used" value={formatCurrency(analytics?.storeCreditRedeemed)} />
-      </div>
+      </MetricGrid>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
@@ -184,7 +178,14 @@ export function GiftCardsPanel() {
           <CardContent className="space-y-3">
             <Input placeholder="Initial value" value={initialValue} onChange={(event) => setInitialValue(event.target.value)} />
             <Input type="date" value={expiry} onChange={(event) => setExpiry(event.target.value)} />
-            <Input placeholder="Search customer (optional)" value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} />
+            <SearchInput
+              placeholder="Search customer (optional)"
+              value={customerSearch}
+              onChange={(event) => setCustomerSearch(event.target.value)}
+              onClear={() => setCustomerSearch('')}
+              active={Boolean(customerSearch.trim())}
+              aria-label="Search customers for gift card"
+            />
             <div className="space-y-2">
               {filteredCustomers.map((customer) => (
                 <button key={customer.id} type="button" className="w-full rounded-md border p-2 text-left text-sm hover:bg-muted" onClick={() => void openCustomer(customer)}>
@@ -205,7 +206,7 @@ export function GiftCardsPanel() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Code</TableHead>
                   <TableHead>Balance</TableHead>
@@ -214,12 +215,12 @@ export function GiftCardsPanel() {
                   <TableHead>Created</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {giftCards.map((card) => (
                   <TableRow key={card.id} className="cursor-pointer" onClick={() => setSelectedCard(card)}>
                     <TableCell>{card.code}</TableCell>
                     <TableCell>{formatCurrency(card.balance)}</TableCell>
-                    <TableCell><Badge variant={card.isActive ? 'default' : 'secondary'}>{card.isActive ? 'Active' : 'Disabled'}</Badge></TableCell>
+                    <TableCell><Tag variant={card.isActive ? 'brand' : 'neutral'}><TagLabel>{card.isActive ? 'Active' : 'Disabled'}</TagLabel></Tag></TableCell>
                     <TableCell>{card.customer?.name ?? 'Unassigned'}</TableCell>
                     <TableCell>{formatDate(card.createdAt)}</TableCell>
                   </TableRow>
@@ -237,11 +238,11 @@ export function GiftCardsPanel() {
             <CardDescription>Adjust the balance or disable this gift card.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3">
+            <MetricGrid columns={3}>
               <Metric title="Balance" value={formatCurrency(selectedCard.balance)} />
               <Metric title="Initial value" value={formatCurrency(selectedCard.initialValue)} />
               <Metric title="Status" value={selectedCard.isActive ? 'Active' : 'Disabled'} />
-            </div>
+            </MetricGrid>
             <div className="flex flex-col gap-2 md:flex-row">
               <Input placeholder="Adjustment amount, e.g. 10 or -5" value={giftAdjustment} onChange={(event) => setGiftAdjustment(event.target.value)} />
               <Button type="button" disabled={saving} onClick={() => void adjustSelectedCard()}>Adjust</Button>
@@ -260,11 +261,11 @@ export function GiftCardsPanel() {
         <CardContent className="space-y-4">
           {selectedCustomer ? (
             <>
-              <div className="grid gap-3 md:grid-cols-3">
+              <MetricGrid columns={3}>
                 <Metric title="Customer" value={selectedCustomer.name} />
                 <Metric title="Store credit balance" value={formatCurrency(selectedCustomer.storeCreditBalance)} />
                 <Metric title="Contact" value={selectedCustomer.email ?? selectedCustomer.phone ?? 'No contact'} />
-              </div>
+              </MetricGrid>
               <div className="flex flex-col gap-2 md:flex-row">
                 <Input placeholder="Credit amount" value={creditAmount} onChange={(event) => setCreditAmount(event.target.value)} />
                 <Button type="button" disabled={saving} onClick={() => void mutateStoreCredit('add')}>Add credit</Button>
@@ -277,18 +278,10 @@ export function GiftCardsPanel() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <div className="rounded-lg border p-3">
-      <p className="text-xs text-muted-foreground">{title}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
-    </div>
-  );
-}
 
 function TransactionList({ transactions }: { transactions: Array<{ id: string; amount: string; type: string; createdAt: string }> }) {
   const { formatCurrency, formatDateTime } = useTenantSettings();
@@ -299,7 +292,7 @@ function TransactionList({ transactions }: { transactions: Array<{ id: string; a
           <span>{transaction.type}</span>
           <span>{formatCurrency(transaction.amount)} - {formatDateTime(transaction.createdAt)}</span>
         </div>
-      )) : <p className="text-sm text-muted-foreground">No transactions yet.</p>}
+      )) : <PanelEmpty title="No transactions yet" description="Content will appear here when available." />}
     </div>
   );
 }

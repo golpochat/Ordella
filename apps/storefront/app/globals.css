@@ -2,8 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@import '../../shared-ui/src/styles/design-tokens-vars.css';
+
 @layer base {
+  * {
+    @apply border-border;
+  }
+
   body {
+    @apply bg-background text-foreground;
     font-family: var(--font-body, Inter, system-ui, sans-serif);
   }
 

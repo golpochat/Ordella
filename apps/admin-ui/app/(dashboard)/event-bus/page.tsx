@@ -32,13 +32,13 @@ export default async function EventBusPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Event Bus"
         description="Monitor real-time topics, inspect append-only event streams, replay events, and track consumer lag and throughput."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       <EventBusPanel dashboard={dashboard} topics={topics} initialStream={initialStream} deadLetters={deadLetters} />
-    </div>
+    </>
   );
 }

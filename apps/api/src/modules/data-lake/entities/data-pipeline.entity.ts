@@ -15,7 +15,7 @@ export class DataPipelineEntity {
   @Column({ name: 'pipeline_key', type: 'varchar', length: 64 })
   pipelineKey!: string;
 
-  @Column({ type: 'varchar', length: 180 })
+  @Column({ name: 'display_name', type: 'varchar', length: 180 })
   displayName!: string;
 
   @Column({ name: 'pipeline_type', type: 'varchar', length: 32 })

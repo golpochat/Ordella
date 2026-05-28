@@ -1,9 +1,6 @@
-import { Card, CardContent } from '@shared-ui';
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
 
-export function ApiErrorBanner({ message }: { message: string }) {
-  return (
-    <Card className="mb-4 border-destructive">
-      <CardContent className="pt-6 text-sm text-destructive">{message}</CardContent>
-    </Card>
-  );
+/** Page- or section-level API error — ODS Alert error variant. */
+export function ApiErrorBanner({ message, title }: { message: string; title?: string }) {
+  return <FormErrorAlert message={message} title={title ?? 'Something went wrong'} className="mb-4" />;
 }

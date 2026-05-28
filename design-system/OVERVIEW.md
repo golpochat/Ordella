@@ -50,6 +50,18 @@ Until tokens fully converge, each app maps local CSS variables to ODS names in P
 
 ---
 
+## Refactor execution (`/design-system/refactor`)
+
+| File | Contents |
+|------|----------|
+| [refactor/OVERVIEW.md](./refactor/OVERVIEW.md) | Phases, refactor-complete definition, module plan index |
+| [STRATEGY.md](./refactor/STRATEGY.md) · [CODING_GUIDELINES.md](./refactor/CODING_GUIDELINES.md) · [PR_CHECKLIST.md](./refactor/PR_CHECKLIST.md) | Branching, code rules, PR gate |
+| `*_REFACTOR_PLAN.md` | Per-module screen order, files, done criteria |
+
+Use with [migration](./migration/OVERVIEW.md) and [visual QA](./visual-qa/OVERVIEW.md) when implementing refactors.
+
+---
+
 ## Visual QA (`/design-system/visual-qa`)
 
 | File | Contents |
@@ -124,6 +136,7 @@ STEP_1 summarizes foundations; token files are the **authoritative name + value*
 | 4 | [STEP_4_MODULE_LAYOUT_TEMPLATES.md](./STEP_4_MODULE_LAYOUT_TEMPLATES.md) | Per-app shells and page patterns |
 | 5 | [STEP_5_VISUAL_QA_RULES.md](./STEP_5_VISUAL_QA_RULES.md) | Checklists and design-complete definition |
 | — | [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md) | Migration order and compliance checklist |
+| — | [refactor/OVERVIEW.md](./refactor/OVERVIEW.md) | Refactor execution plans per module |
 
 ---
 

@@ -1,21 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import type { InventoryListItem } from '@shared-utils';
-import {
-  Button,
-  Input,
-  Modal,
-  ModalContent,
-  ModalDescription,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
-  ModalTrigger,
-} from '@shared-ui';
+import { Button } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { adjustInventory } from '@/lib/api/admin/inventory';
 import { getErrorMessage } from '@/lib/utils';
+import { Flex, FormErrorAlert, FormField, Input, Select, Textarea } from '@/components/ui/admin-form';
+import { FormDialog, DialogFooterActions } from '@/components/ui/admin-dialog';
 
 type AdjustmentModalProps = {
   presetItem?: InventoryListItem | null;
@@ -24,12 +16,14 @@ type AdjustmentModalProps = {
 };
 
 export function AdjustmentModal({ presetItem, onPresetClear, onSuccess }: AdjustmentModalProps) {
+  const baseId = useId();
   const [open, setOpen] = useState(false);
   const [direction, setDirection] = useState<'increase' | 'decrease'>('increase');
   const [quantity, setQuantity] = useState('1');
   const [reason, setReason] = useState<'manual' | 'waste' | 'correction' | 'refund'>('manual');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [quantityError, setQuantityError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -53,9 +47,11 @@ export function AdjustmentModal({ presetItem, onPresetClear, onSuccess }: Adjust
     if (!presetItem) return;
     const qty = Number.parseInt(quantity, 10);
     if (!Number.isFinite(qty) || qty < 1) {
-      setError('Enter a valid quantity');
+      setQuantityError('Enter a valid quantity');
+      setError(null);
       return;
     }
+    setQuantityError(undefined);
     const change = direction === 'increase' ? qty : -qty;
     setLoading(true);
     setError(null);
@@ -76,89 +72,94 @@ export function AdjustmentModal({ presetItem, onPresetClear, onSuccess }: Adjust
     }
   }
 
-  const trigger = presetItem ? null : (
-    <ModalTrigger asChild>
-      <Button>Stock adjustment</Button>
-    </ModalTrigger>
-  );
-
   return (
-    <Modal open={open} onOpenChange={handleOpenChange}>
-      {trigger}
-      <ModalContent>
-        <form onSubmit={onSubmit}>
-          <ModalHeader>
-            <ModalTitle>Stock adjustment</ModalTitle>
-            <ModalDescription>
-              {presetItem
-                ? `${presetItem.name} — current stock ${presetItem.stockLevel}`
-                : 'Select a row and use Adjust, or open from the toolbar.'}
-            </ModalDescription>
-          </ModalHeader>
-          <div className="space-y-3 py-4">
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={direction === 'increase' ? 'default' : 'outline'}
-                onClick={() => setDirection('increase')}
-              >
-                Increase
-              </Button>
-              <Button
-                type="button"
-                variant={direction === 'decrease' ? 'default' : 'outline'}
-                onClick={() => setDirection('decrease')}
-              >
-                Decrease
-              </Button>
-            </div>
-            <div>
-              <label htmlFor="qty" className="mb-1 block text-sm font-medium">
-                Quantity
-              </label>
-              <Input
-                id="qty"
-                type="number"
-                min={1}
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="reason" className="mb-1 block text-sm font-medium">
-                Reason
-              </label>
-              <select
-                id="reason"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={reason}
-                onChange={(e) => setReason(e.target.value as typeof reason)}
-              >
-                <option value="manual">Manual</option>
-                <option value="waste">Waste</option>
-                <option value="correction">Correction</option>
-                <option value="refund">Refund</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="notes" className="mb-1 block text-sm font-medium">
-                Notes (optional)
-              </label>
-              <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </div>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          </div>
-          <ModalFooter>
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              Cancel
+    <FormDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="Stock adjustment"
+      description={
+        presetItem
+          ? `${presetItem.name} — current stock ${presetItem.stockLevel}`
+          : 'Select a row and use Adjust, or open from the toolbar.'
+      }
+      size="md"
+      trigger={presetItem ? undefined : <Button type="button">Stock adjustment</Button>}
+      footer={
+        <DialogFooterActions>
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="stock-adjustment-form"
+            disabled={!presetItem}
+            isLoading={loading}
+            loadingLabel="Saving…"
+          >
+            Save adjustment
+          </Button>
+        </DialogFooterActions>
+      }
+    >
+      <form id="stock-adjustment-form" data-ods-save-form="" onSubmit={onSubmit}>
+        <FormErrorAlert message={error} title="Adjustment failed" className="mb-4" />
+        <Flex gap="sm" wrap>
+            <Button
+              type="button"
+              variant={direction === 'increase' ? 'default' : 'outline'}
+              onClick={() => setDirection('increase')}
+            >
+              Increase
             </Button>
-            <Button type="submit" disabled={loading || !presetItem}>
-              Save adjustment
+            <Button
+              type="button"
+              variant={direction === 'decrease' ? 'default' : 'outline'}
+              onClick={() => setDirection('decrease')}
+            >
+              Decrease
             </Button>
-          </ModalFooter>
-        </form>
-      </ModalContent>
-    </Modal>
+          </Flex>
+          <FormField label="Quantity" htmlFor={`${baseId}-qty`} required error={quantityError}>
+            <Input
+              id={`${baseId}-qty`}
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={(e) => {
+                setQuantity(e.target.value);
+                if (quantityError) setQuantityError(undefined);
+              }}
+              onBlur={() => {
+                const qty = Number.parseInt(quantity, 10);
+                if (!Number.isFinite(qty) || qty < 1) {
+                  setQuantityError('Enter a valid quantity');
+                }
+              }}
+              required
+              className="tabular-nums"
+            />
+          </FormField>
+          <FormField label="Reason" htmlFor={`${baseId}-reason`}>
+            <Select
+              id={`${baseId}-reason`}
+              value={reason}
+              onChange={(e) => setReason(e.target.value as typeof reason)}
+            >
+              <option value="manual">Manual</option>
+              <option value="waste">Waste</option>
+              <option value="correction">Correction</option>
+              <option value="refund">Refund</option>
+            </Select>
+          </FormField>
+          <FormField label="Notes" htmlFor={`${baseId}-notes`} helper="Optional context for this adjustment.">
+            <Textarea
+              id={`${baseId}-notes`}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="min-h-20"
+            />
+          </FormField>
+      </form>
+    </FormDialog>
   );
 }

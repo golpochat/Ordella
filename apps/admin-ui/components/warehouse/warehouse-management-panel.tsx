@@ -1,7 +1,22 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import { Check } from 'lucide-react';
+import { Select, Button, Card, CardContent, IconButton, Input , Stack } from '@shared-ui';
+import {
+  AdminTableShell,
+  Table,
+  TableActions,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { fetchLocations, type LocationListItem } from '@/lib/api/locations';
 import {
@@ -20,6 +35,7 @@ import {
 } from '@/lib/api/admin/warehouse';
 import { listCatalogItems, type CatalogItem } from '@/lib/api/catalog';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 type ZoneForm = {
   id?: string;
@@ -136,17 +152,17 @@ export function WarehouseManagementPanel() {
   };
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
 
       {dashboard ? (
-        <div className="grid gap-3 md:grid-cols-5">
+        <MetricGrid columns={5}>
           <MetricCard label="Warehouses" value={dashboard.warehouseCount} />
           <MetricCard label="Stock items" value={dashboard.totalStockItems} />
           <MetricCard label="Inbound" value={dashboard.inboundShipments} />
           <MetricCard label="Outbound" value={dashboard.outboundTransfers} />
           <MetricCard label="Open picks" value={dashboard.openPickTasks} />
-        </div>
+        </MetricGrid>
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -157,17 +173,17 @@ export function WarehouseManagementPanel() {
               <p className="text-sm text-muted-foreground">Create picking, storage, and receiving zones for warehouse stock.</p>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <select className="h-10 rounded-md border bg-background px-3 text-sm" value={zoneForm.warehouseId} onChange={(e) => setZoneForm({ ...zoneForm, warehouseId: e.target.value })}>
+              <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={zoneForm.warehouseId} onChange={(e) => setZoneForm({ ...zoneForm, warehouseId: e.target.value })}>
                 {warehouseOptions.map((location) => (
                   <option key={location.id} value={location.id}>{location.name}</option>
                 ))}
-              </select>
+              </Select>
               <Input placeholder="Zone name" value={zoneForm.name} onChange={(e) => setZoneForm({ ...zoneForm, name: e.target.value })} />
-              <select className="h-10 rounded-md border bg-background px-3 text-sm" value={zoneForm.type} onChange={(e) => setZoneForm({ ...zoneForm, type: e.target.value as ZoneForm['type'] })}>
+              <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={zoneForm.type} onChange={(e) => setZoneForm({ ...zoneForm, type: e.target.value as ZoneForm['type'] })}>
                 {zoneTypes.map((type) => (
                   <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <Button type="button" onClick={saveZone} disabled={!zoneForm.warehouseId || !zoneForm.name.trim()}>
               Save zone
@@ -179,7 +195,7 @@ export function WarehouseManagementPanel() {
                     <p className="font-medium">{zone.name}</p>
                     <p className="text-muted-foreground">{zone.warehouse?.name ?? zone.warehouseId} · {zone.type}</p>
                   </div>
-                  <Badge variant="secondary">{zone.bins.length} bins</Badge>
+                  <Tag variant="neutral"><TagLabel>{zone.bins.length} bins</TagLabel></Tag>
                 </div>
               ))}
             </div>
@@ -193,11 +209,11 @@ export function WarehouseManagementPanel() {
               <p className="text-sm text-muted-foreground">Assign bins to zones and review current bin contents.</p>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <select className="h-10 rounded-md border bg-background px-3 text-sm" value={binForm.zoneId} onChange={(e) => setBinForm({ ...binForm, zoneId: e.target.value })}>
+              <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={binForm.zoneId} onChange={(e) => setBinForm({ ...binForm, zoneId: e.target.value })}>
                 {zones.map((zone) => (
                   <option key={zone.id} value={zone.id}>{zone.name}</option>
                 ))}
-              </select>
+              </Select>
               <Input placeholder="Bin code" value={binForm.code} onChange={(e) => setBinForm({ ...binForm, code: e.target.value })} />
               <Input placeholder="Capacity" type="number" value={binForm.capacity} onChange={(e) => setBinForm({ ...binForm, capacity: e.target.value })} />
             </div>
@@ -207,16 +223,16 @@ export function WarehouseManagementPanel() {
             <div className="rounded-lg border p-3">
               <p className="text-sm font-medium">Assign product to bin</p>
               <div className="mt-3 grid gap-3 md:grid-cols-3">
-                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={binItemForm.binId} onChange={(e) => setBinItemForm({ ...binItemForm, binId: e.target.value })}>
+                <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={binItemForm.binId} onChange={(e) => setBinItemForm({ ...binItemForm, binId: e.target.value })}>
                   {bins.map((bin) => (
                     <option key={bin.id} value={bin.id}>{bin.code}</option>
                   ))}
-                </select>
-                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={binItemForm.itemId} onChange={(e) => setBinItemForm({ ...binItemForm, itemId: e.target.value })}>
+                </Select>
+                <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={binItemForm.itemId} onChange={(e) => setBinItemForm({ ...binItemForm, itemId: e.target.value })}>
                   {products.map((product) => (
                     <option key={product.id} value={product.id}>{product.name}</option>
                   ))}
-                </select>
+                </Select>
                 <Input placeholder="Quantity" type="number" min="0" value={binItemForm.quantity} onChange={(e) => setBinItemForm({ ...binItemForm, quantity: e.target.value })} />
               </div>
               <Button type="button" className="mt-3" variant="outline" onClick={saveBinItem} disabled={!binItemForm.binId || !binItemForm.itemId}>
@@ -228,7 +244,7 @@ export function WarehouseManagementPanel() {
                 <div key={bin.id} className="rounded-lg border p-3 text-sm">
                   <div className="flex items-center justify-between">
                     <p className="font-medium">{bin.code}</p>
-                    <Badge variant="outline">{bin.zone?.name ?? 'Zone'}</Badge>
+                    <Tag variant="outline"><TagLabel>{bin.zone?.name ?? 'Zone'}</TagLabel></Tag>
                   </div>
                   <p className="mt-1 text-muted-foreground">
                     {bin.contents.map((item) => `${item.item?.name ?? item.itemId}: ${item.quantity}`).join(', ') || 'No assigned contents'}
@@ -246,47 +262,54 @@ export function WarehouseManagementPanel() {
             <h2 className="text-lg font-semibold">Pick tasks</h2>
             <p className="text-sm text-muted-foreground">Pending and assigned warehouse picking work generated from stock transfers.</p>
           </div>
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left">
-                <tr>
-                  <th className="p-3 font-medium">Warehouse</th>
-                  <th className="p-3 font-medium">Reference</th>
-                  <th className="p-3 font-medium">Status</th>
-                  <th className="p-3 font-medium">Created</th>
-                  <th className="p-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+          <AdminTableShell
+            isEmpty={picks.length === 0}
+            emptyTitle="No pick tasks"
+            emptyDescription="Warehouse picking work will appear here."
+          >
+            <Table>
+              <TableHeader sticky>
+                <TableRow>
+                  <TableHead>Warehouse</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="w-[1%] text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody zebra>
                 {picks.map((pick) => (
-                  <tr key={pick.id} className="border-t">
-                    <td className="p-3">{pick.warehouse?.name ?? pick.warehouseId}</td>
-                    <td className="p-3">{pick.transferId ? `Transfer ${pick.transferId.slice(0, 8)}` : pick.orderId ? `Order ${pick.orderId.slice(0, 8)}` : 'Manual'}</td>
-                    <td className="p-3"><Badge variant={pick.status === 'completed' || pick.status === 'picked' ? 'default' : 'secondary'}>{pick.status}</Badge></td>
-                    <td className="p-3">{new Date(pick.createdAt).toLocaleDateString()}</td>
-                    <td className="p-3">
-                      <Button type="button" size="sm" variant="outline" onClick={() => void completePick(pick.id)} disabled={pick.status === 'completed' || pick.status === 'picked'}>
-                        Mark picked
-                      </Button>
-                    </td>
-                  </tr>
+                  <TableRow key={pick.id}>
+                    <TableCell>{pick.warehouse?.name ?? pick.warehouseId}</TableCell>
+                    <TableCell>
+                      {pick.transferId ? `Transfer ${pick.transferId.slice(0, 8)}` : pick.orderId ? `Order ${pick.orderId.slice(0, 8)}` : 'Manual'}
+                    </TableCell>
+                    <TableCell>
+                      <Tag variant={pick.status === 'completed' || pick.status === 'picked' ? 'brand' : 'neutral'}><TagLabel>{pick.status}</TagLabel></Tag>
+                    </TableCell>
+                    <TableCell>{new Date(pick.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <TableActions>
+                        <IconButton
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          aria-label="Mark pick task as picked"
+                          onClick={() => void completePick(pick.id)}
+                          disabled={pick.status === 'completed' || pick.status === 'picked'}
+                        >
+                          <Check className="h-4 w-4" />
+                        </IconButton>
+                      </TableActions>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </AdminTableShell>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}

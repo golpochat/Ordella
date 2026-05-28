@@ -1,5 +1,7 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -100,7 +102,7 @@ export function OnboardingWizard() {
       <ProgressIndicator steps={[...WIZARD_STEPS]} currentStepId={step} />
       <Card>
         <CardContent className="pt-6">
-          {error ? <p className="mb-4 text-sm text-destructive">{error}</p> : null}
+          {error ? <FormErrorAlert message={error} className="mb-4" /> : null}
 
           {step === 'business' ? (
             <>
@@ -129,9 +131,8 @@ export function OnboardingWizard() {
                     <label className="text-sm font-medium" htmlFor="currency">
                       Currency
                     </label>
-                    <select
+                    <Select
                       id="currency"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value as (typeof CURRENCIES)[number])}
                     >
@@ -140,15 +141,14 @@ export function OnboardingWizard() {
                           {c}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium" htmlFor="timezone">
                       Timezone
                     </label>
-                    <select
+                    <Select
                       id="timezone"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value as (typeof TIMEZONES)[number])}
                     >
@@ -157,7 +157,7 @@ export function OnboardingWizard() {
                           {tz}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 </div>
               </div>

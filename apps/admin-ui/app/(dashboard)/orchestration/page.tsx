@@ -1,4 +1,4 @@
-import { OrchestrationPanel } from '@/components/orchestration/orchestration-panel';
+import { OrchestrationPanelLazy as OrchestrationPanel } from '@/lib/lazy-panels';
 import {
   getOrchestrationDashboard,
   getWorkflow,
@@ -38,7 +38,7 @@ export default async function OrchestrationPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Orchestration"
         description="Design workflows with drag-and-drop, run event-driven and scheduled pipelines, manage approvals, and monitor step-level execution."
@@ -52,6 +52,6 @@ export default async function OrchestrationPage() {
         deadLetters={deadLetters}
         initialWorkflowDetail={initialWorkflowDetail}
       />
-    </div>
+    </>
   );
 }

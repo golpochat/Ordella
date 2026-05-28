@@ -1,10 +1,26 @@
 import * as React from 'react';
 import { cn } from '../lib/utils';
+import { odsTableRow } from '../lib/motion';
 
-const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
-  ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto">
-      <table ref={ref} className={cn('w-full caption-bottom text-sm', className)} {...props} />
+export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
+  zebra?: boolean;
+  stickyHeader?: boolean;
+  /** Accessible name when the table is a landmark region. */
+  'aria-label'?: string;
+}
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, zebra, stickyHeader, 'aria-label': ariaLabel, ...props }, ref) => (
+    <div
+      role={ariaLabel ? 'region' : undefined}
+      aria-label={ariaLabel}
+      className="relative w-full min-w-0 overflow-x-auto rounded-lg border border-border bg-card shadow-sm"
+    >
+      <table
+        ref={ref}
+        className={cn('w-full min-w-[36rem] caption-bottom text-sm', className)}
+        {...props}
+      />
     </div>
   ),
 );
@@ -12,18 +28,38 @@ Table.displayName = 'Table';
 
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('[&_tr]:border-b', className)} {...props} />
+  React.HTMLAttributes<HTMLTableSectionElement> & { sticky?: boolean }
+>(({ className, sticky, ...props }, ref) => (
+  <thead
+    ref={ref}
+    className={cn(
+      '[&_tr]:border-b [&_tr]:border-border',
+      sticky && 'sticky top-0 z-10 bg-card',
+      className,
+    )}
+    {...props}
+  />
 ));
 TableHeader.displayName = 'TableHeader';
 
-const TableBody = React.forwardRef<
-  HTMLTableSectionElement,
-  React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn('[&_tr:last-child]:border-0', className)} {...props} />
-));
+export interface TableBodyProps extends React.HTMLAttributes<HTMLTableSectionElement> {
+  zebra?: boolean;
+}
+
+const TableBody = React.forwardRef<HTMLTableSectionElement, TableBodyProps>(
+  ({ className, zebra, ...props }, ref) => (
+    <tbody
+      ref={ref}
+      data-zebra={zebra ? '' : undefined}
+      className={cn(
+        '[&_tr:last-child]:border-0',
+        zebra && '[&_tr:nth-child(even)]:bg-muted/30',
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
 TableBody.displayName = 'TableBody';
 
 const TableFooter = React.forwardRef<
@@ -32,7 +68,7 @@ const TableFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tfoot
     ref={ref}
-    className={cn('border-t bg-muted/50 font-medium [&>tr]:last:border-b-0', className)}
+    className={cn('border-t border-border bg-muted/50 font-medium [&>tr]:last:border-b-0', className)}
     {...props}
   />
 ));
@@ -42,7 +78,10 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn('border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted', className)}
+      className={cn(
+        `h-10 border-b border-border data-[state=selected]:bg-primary/5 ${odsTableRow}`,
+        className,
+      )}
       {...props}
     />
   ),
@@ -50,11 +89,12 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
 TableRow.displayName = 'TableRow';
 
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => (
+  ({ className, scope, ...props }, ref) => (
     <th
       ref={ref}
+      scope={scope ?? 'col'}
       className={cn(
-        'h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+        'h-10 px-4 text-left align-middle text-sm font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
         className,
       )}
       {...props}
@@ -67,7 +107,10 @@ const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<
   ({ className, ...props }, ref) => (
     <td
       ref={ref}
-      className={cn('p-4 align-middle [&:has([role=checkbox])]:pr-0', className)}
+      className={cn(
+        'px-4 py-2.5 align-middle text-sm text-foreground [&:has([role=checkbox])]:pr-0',
+        className,
+      )}
       {...props}
     />
   ),
@@ -82,4 +125,29 @@ const TableCaption = React.forwardRef<
 ));
 TableCaption.displayName = 'TableCaption';
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+/** Optional outer shell when Table is not used (e.g. custom markup). */
+function TableContainer({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        'relative w-full min-w-0 overflow-x-auto rounded-lg border border-border bg-card shadow-sm',
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+  TableContainer,
+};

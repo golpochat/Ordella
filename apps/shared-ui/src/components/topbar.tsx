@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '../lib/utils';
+import { Flex } from './layout/flex';
 
 export interface TopbarProps extends React.HTMLAttributes<HTMLElement> {
   title?: string;
@@ -8,23 +9,35 @@ export interface TopbarProps extends React.HTMLAttributes<HTMLElement> {
   trailing?: React.ReactNode;
 }
 
-export function Topbar({ title, subtitle, leading, trailing, className, ...props }: TopbarProps) {
+export function Topbar({
+  title,
+  subtitle,
+  leading,
+  trailing,
+  className,
+  ...props
+}: TopbarProps) {
   return (
     <header
       className={cn(
-        'flex h-14 items-center justify-between gap-4 border-b bg-background px-4 md:px-6',
+        'sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-border bg-background px-4 min-[769px]:px-6',
         className,
       )}
       {...props}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        {leading}
-        <div className="min-w-0">
-          {title ? <h1 className="truncate text-lg font-semibold">{title}</h1> : null}
-          {subtitle ? <p className="truncate text-sm text-muted-foreground">{subtitle}</p> : null}
-        </div>
-      </div>
-      {trailing ? <div className="flex shrink-0 items-center gap-2">{trailing}</div> : null}
+      <Flex gap="md" align="center" justify="between" className="min-w-0 flex-1">
+        <Flex gap="sm" align="center" className="min-w-0 flex-1">
+          {leading}
+          <div className="min-w-0">
+            {title ? <p className="truncate text-sm font-semibold text-foreground">{title}</p> : null}
+            {subtitle ? (
+              <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+            ) : null}
+          </div>
+        </Flex>
+
+        {trailing ? <div className="min-w-0 shrink-0">{trailing}</div> : null}
+      </Flex>
     </header>
   );
 }

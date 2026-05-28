@@ -33,7 +33,7 @@ export default async function AiAssistantPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="AI Assistant"
         description="Ask operational questions, explain forecasts, review AI insights, and approve automation before critical actions execute."
@@ -46,6 +46,6 @@ export default async function AiAssistantPage() {
         settings={settings}
         analytics={analytics}
       />
-    </div>
+    </>
   );
 }

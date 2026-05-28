@@ -1,7 +1,10 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
 import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input , Stack } from '@shared-ui';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   updateRecommendationSettings,
@@ -64,7 +67,7 @@ export function AiRecommendationsPanel({ analytics, settings: initialSettings, s
   ];
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg" className="min-w-0">
       <div className="grid gap-4 md:grid-cols-4">
         {cards.map((card) => (
           <Card key={card.label}>
@@ -106,7 +109,7 @@ export function AiRecommendationsPanel({ analytics, settings: initialSettings, s
                   ))}
                 </div>
               ) : (
-                <p className="mt-2 text-muted-foreground">No recommendation events yet.</p>
+                <PanelEmpty title="No recommendation events" description="AI recommendation activity will appear here." />
               )}
             </div>
           </CardContent>
@@ -141,7 +144,7 @@ export function AiRecommendationsPanel({ analytics, settings: initialSettings, s
                   ))}
                 </div>
               ) : (
-                <p className="mt-2 text-muted-foreground">No search queries recorded yet.</p>
+                <PanelEmpty title="No search queries" description="Recorded search queries will appear here." />
               )}
             </div>
           </CardContent>
@@ -232,13 +235,13 @@ export function AiRecommendationsPanel({ analytics, settings: initialSettings, s
               <p className="text-sm text-muted-foreground">Settings are not available yet.</p>
             )}
             {saving ? <p className="text-sm text-muted-foreground">Saving…</p> : null}
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {error ? <FormErrorAlert message={error} /> : null}
             <Button type="button" variant="outline" onClick={() => window.location.reload()}>
               Refresh metrics
             </Button>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Stack>
   );
 }

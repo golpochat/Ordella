@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   createDataLakeExport,
@@ -16,6 +19,7 @@ import {
   type DataLakeWarehouseTable,
 } from '@/lib/api/admin/data-lake';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 type DataLakePanelProps = {
   dashboard: DataLakeDashboard | null;
@@ -25,62 +29,52 @@ type DataLakePanelProps = {
 };
 
 export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, exports: initialExports }: DataLakePanelProps) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = useMemo(() => createBrowserApiClient(), []);
   const pipelines = dashboard?.pipelines ?? [];
   const zones = dashboard?.zones ?? [];
   const [runs, setRuns] = useState(initialRuns);
   const [exportRows, setExportRows] = useState(initialExports);
   const [selectedPipeline, setSelectedPipeline] = useState(pipelines[0]?.pipelineKey ?? 'stream-event-bus');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleRunPipeline() {
-    setMessage(null);
-    setError(null);
+    async function handleRunPipeline() {
     try {
       await runDataPipeline(api, { pipelineKey: selectedPipeline, runMode: 'incremental' });
       setRuns(await listPipelineRuns(api));
-      setMessage(`Pipeline ${selectedPipeline} completed.`);
+      toastSuccess(`Pipeline ${selectedPipeline} completed.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleStreamIngest() {
-    setMessage(null);
-    setError(null);
     try {
       const result = await streamIngest(api, { limit: 200 });
-      setMessage(`Stream ingest: ${String(result.recordsOut)} records written (${String(result.recordsDeduped)} deduped).`);
+      toastInfo(`Stream ingest: ${String(result.recordsOut)} records written (${String(result.recordsDeduped)} deduped).`);
       setRuns(await listPipelineRuns(api));
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleExport(target: string) {
-    setMessage(null);
-    setError(null);
     try {
       const row = await createDataLakeExport(api, { target, entityType: 'orders', zoneKey: 'analytics', piiMasked: true });
       setExportRows((current) => [row, ...current]);
-      setMessage(`Export to ${target} succeeded.`);
+      toastSuccess(`Export to ${target} succeeded.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <Metric title="Zones" value={zones.length} />
         <Metric title="Pipelines" value={pipelines.length} />
         <Metric title="Failed runs" value={dashboard?.failedRunCount ?? 0} />
         <Metric title="Features" value={dashboard?.featureCount ?? 0} />
-      </div>
-
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
@@ -89,20 +83,20 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Zone</TableHead>
                   <TableHead>Last ingest</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {(dashboard?.freshness ?? []).map((row) => (
                   <TableRow key={row.zoneKey}>
                     <TableCell>{row.zoneKey}</TableCell>
                     <TableCell>{row.lastIngestedAt ? formatDate(row.lastIngestedAt) : '—'}</TableCell>
                     <TableCell>
-                      <Badge variant={row.stale ? 'destructive' : 'secondary'}>{row.stale ? 'stale' : 'fresh'}</Badge>
+                      <Tag variant={row.stale ? 'error' : 'neutral'}><TagLabel>{row.stale ? 'stale' : 'fresh'}</TagLabel></Tag>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -116,7 +110,7 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
             <CardTitle>Pipeline orchestration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <select
+            <Select
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={selectedPipeline}
               onChange={(e) => setSelectedPipeline(e.target.value)}
@@ -124,7 +118,7 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
               {pipelines.map((p: DataLakePipeline) => (
                 <option key={p.id} value={p.pipelineKey}>{p.displayName}</option>
               ))}
-            </select>
+            </Select>
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={() => void handleRunPipeline()}>Run pipeline</Button>
               <Button type="button" variant="outline" onClick={() => void handleStreamIngest()}>Stream from Event Bus</Button>
@@ -140,13 +134,13 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Entity</TableHead>
                   <TableHead>Version</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {schemas.map((schema) => (
                   <TableRow key={schema.id}>
                     <TableCell>{schema.entityType}</TableCell>
@@ -164,14 +158,14 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Table</TableHead>
                   <TableHead>Kind</TableHead>
                   <TableHead>Rows</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {(dashboard?.warehouseTables ?? []).map((table: DataLakeWarehouseTable) => (
                   <TableRow key={table.id}>
                     <TableCell>{table.tableKey}</TableCell>
@@ -191,7 +185,7 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Status</TableHead>
                 <TableHead>Mode</TableHead>
@@ -200,11 +194,11 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
                 <TableHead>Started</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {runs.map((run) => (
                 <TableRow key={run.id}>
                   <TableCell>
-                    <Badge variant={run.status === 'failed' ? 'destructive' : 'secondary'}>{run.status}</Badge>
+                    <Tag variant={run.status === 'failed' ? 'error' : 'neutral'}><TagLabel>{run.status}</TagLabel></Tag>
                   </TableCell>
                   <TableCell>{run.runMode}</TableCell>
                   <TableCell>{run.recordsIn} / {run.recordsOut}</TableCell>
@@ -230,7 +224,7 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
             ))}
           </div>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Target</TableHead>
                 <TableHead>Entity</TableHead>
@@ -238,7 +232,7 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
                 <TableHead>Rows</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {exportRows.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.target}</TableCell>
@@ -251,17 +245,7 @@ export function DataLakePanel({ dashboard, schemas, pipelineRuns: initialRuns, e
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ title, value }: { title: string; value: number }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-sm text-muted-foreground">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}

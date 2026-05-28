@@ -32,11 +32,11 @@ export default async function SupportPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader title="Support Inbox" description="Manage customer tickets, SLA risk, assignments, and support conversations." />
       {error ? <ApiErrorBanner message={error} /> : null}
       {!error && !tickets.length ? <EmptyState title="No support tickets" description="Customer support requests will appear here." /> : null}
       <SupportInboxPanel initialTickets={tickets} analytics={analytics} cannedResponses={cannedResponses} />
-    </div>
+    </>
   );
 }

@@ -2,12 +2,26 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { useId, useState } from 'react';
+import { PageHeader } from '@shared-ui';
 import { createLocation } from '@/lib/api/locations';
 import { getErrorMessage } from '@/lib/utils';
+import {
+  Button,
+  Card,
+  CardContent,
+  FormErrorAlert,
+  FormActions,
+  FormField,
+  FormLayout,
+  Grid,
+  Input,
+  PageSection,
+  Stack,
+} from '@/components/ui/admin-form';
 
 export default function NewLocationPage() {
+  const baseId = useId();
   const router = useRouter();
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
@@ -39,35 +53,69 @@ export default function NewLocationPage() {
   };
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Add location</h1>
-        <p className="text-sm text-muted-foreground">Create a new site for your business.</p>
-      </div>
+    <Stack gap="lg" className="min-w-0">
+      <PageHeader title="Add location" description="Create a new site for your business." />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-3" onSubmit={onSubmit}>
-            <Input placeholder="Name *" required value={name} onChange={(e) => setName(e.target.value)} />
-            <Input placeholder="Address" value={address} onChange={(e) => setAddress(e.target.value)} />
-            <Input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <Input placeholder="Timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
-            <Input placeholder="Currency" value={currency} onChange={(e) => setCurrency(e.target.value)} />
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <div className="flex gap-2 pt-2">
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Creating…' : 'Create location'}
-              </Button>
-              <Button asChild type="button" variant="outline">
-                <Link href="/locations">Cancel</Link>
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+      <PageSection title="Details">
+        <Card className="border-border shadow-sm">
+          <CardContent className="p-6">
+            <form onSubmit={onSubmit}>
+              <FormLayout>
+                <Grid cols={1} gap="md" className="min-[769px]:grid-cols-2">
+                  <FormField label="Name" htmlFor={`${baseId}-name`} required className="min-[769px]:col-span-2">
+                    <Input
+                      id={`${baseId}-name`}
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </FormField>
+                  <FormField label="Address" htmlFor={`${baseId}-address`} className="min-[769px]:col-span-2">
+                    <Input
+                      id={`${baseId}-address`}
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                    />
+                  </FormField>
+                  <FormField label="Phone" htmlFor={`${baseId}-phone`}>
+                    <Input
+                      id={`${baseId}-phone`}
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </FormField>
+                  <FormField label="Timezone" htmlFor={`${baseId}-timezone`} helper="IANA timezone, e.g. Europe/Dublin.">
+                    <Input
+                      id={`${baseId}-timezone`}
+                      value={timezone}
+                      onChange={(e) => setTimezone(e.target.value)}
+                    />
+                  </FormField>
+                  <FormField label="Currency" htmlFor={`${baseId}-currency`} helper="ISO 4217 code, e.g. EUR.">
+                    <Input
+                      id={`${baseId}-currency`}
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                    />
+                  </FormField>
+                </Grid>
+
+                <FormErrorAlert message={error} title="Unable to create location" />
+
+                <FormActions>
+                  <Button type="submit" isLoading={loading} loadingLabel="Creating…">
+                    Create location
+                  </Button>
+                  <Button type="button" variant="outline" asChild>
+                    <Link href="/locations">Cancel</Link>
+                  </Button>
+                </FormActions>
+              </FormLayout>
+            </form>
+          </CardContent>
+        </Card>
+      </PageSection>
+    </Stack>
   );
 }

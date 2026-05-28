@@ -1,3 +1,5 @@
+import { HorizontalBarChartLazy as HorizontalBarChart } from '@/lib/lazy-charts';
+
 type BarChartItem = {
   label: string;
   value: number;
@@ -7,41 +9,25 @@ type BarChartItem = {
 type AnalyticsBarChartProps = {
   title: string;
   items: BarChartItem[];
+  emptyTitle?: string;
+  emptyDescription?: string;
+  /** @deprecated Use emptyTitle */
   emptyMessage?: string;
 };
 
 export function AnalyticsBarChart({
   title,
   items,
-  emptyMessage = 'No data for this period.',
+  emptyTitle,
+  emptyDescription = 'Metrics will appear for the selected date range.',
+  emptyMessage,
 }: AnalyticsBarChartProps) {
-  const max = Math.max(...items.map((i) => i.value), 1);
-
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <h3 className="mb-4 text-sm font-semibold">{title}</h3>
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
-      ) : (
-        <ul className="space-y-3">
-          {items.map((item) => (
-            <li key={item.label}>
-              <div className="mb-1 flex justify-between text-xs">
-                <span className="font-medium">{item.label}</span>
-                <span className="text-muted-foreground">
-                  {item.displayValue ?? item.value.toLocaleString()}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${Math.max(4, (item.value / max) * 100)}%` }}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <HorizontalBarChart
+      title={title}
+      items={items}
+      emptyTitle={emptyTitle ?? emptyMessage ?? 'No chart data'}
+      emptyDescription={emptyDescription}
+    />
   );
 }

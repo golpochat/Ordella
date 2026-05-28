@@ -1,4 +1,4 @@
-import { IntegrationsHubPanel } from '@/components/integrations/integrations-hub-panel';
+import { IntegrationsHubPanelLazy as IntegrationsHubPanel } from '@/lib/lazy-panels';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
 import { PageHeader } from '@/components/ui/page-header';
 import { createServerApiClient } from '@/lib/api/server';

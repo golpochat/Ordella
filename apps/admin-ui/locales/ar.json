@@ -1,0 +1,14 @@
+{
+  "nav": {
+    "dashboard": "التحليلات",
+    "settings": "الإعدادات",
+    "orders": "الطلبات"
+  },
+  "common": {
+    "confirm": "تأكيد",
+    "cancel": "إلغاء"
+  },
+  "shell": {
+    "localeLabel": "اللغة"
+  }
+}

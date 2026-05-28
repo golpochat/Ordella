@@ -1,20 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@shared-ui';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
 import {
   assignLocationStaff,
   fetchLocation,
@@ -25,13 +13,17 @@ import {
   type LocationDetail,
   type LocationStaffMember,
 } from '@/lib/api/locations';
+import { DetailPage, DetailPageHeader, DetailSectionCard, Grid, Stack } from '@/components/ui/admin-detail';
+import { Checkbox, FormActions, FormErrorAlert, FormField, FormLayout, Input } from '@/components/ui/admin-form';
 import { getErrorMessage } from '@/lib/utils';
+import { PageLoader } from '@/components/ui/admin-loader';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function LocationEditorPage() {
   const params = useParams();
   const id = String(params.id ?? '');
+  const formBaseId = useId();
   const [location, setLocation] = useState<LocationDetail | null>(null);
   const [staff, setStaff] = useState<LocationStaffMember[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -41,10 +33,7 @@ export default function LocationEditorPage() {
     if (!id) return;
     setError(null);
     try {
-      const [loc, staffList] = await Promise.all([
-        fetchLocation(id),
-        fetchLocationStaff(id),
-      ]);
+      const [loc, staffList] = await Promise.all([fetchLocation(id), fetchLocationStaff(id)]);
       setLocation(loc);
       setStaff(staffList);
     } catch (e) {
@@ -116,9 +105,20 @@ export default function LocationEditorPage() {
 
   if (!location) {
     return (
-      <div className="p-6 text-sm text-muted-foreground">
-        {error ?? 'Loading location…'}
-      </div>
+      <DetailPage>
+        <DetailPageHeader
+          breadcrumb={[
+            { label: 'Locations', href: '/locations' },
+            { label: 'Location' },
+          ]}
+          title="Location"
+        />
+        {error ? (
+          <FormErrorAlert message={error} title="Unable to load location" />
+        ) : (
+          <PageLoader label="Loading location…" />
+        )}
+      </DetailPage>
     );
   }
 
@@ -129,21 +129,19 @@ export default function LocationEditorPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{location.name}</h1>
-          <p className="text-sm text-muted-foreground">Edit location settings and staff.</p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/locations">Back to list</Link>
-        </Button>
-      </div>
-
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    <DetailPage>
+      <DetailPageHeader
+        breadcrumb={[
+          { label: 'Locations', href: '/locations' },
+          { label: location.name },
+        ]}
+        title={location.name}
+        description="Edit location settings, hours, fulfillment, and staff assignments."
+      />
+      <FormErrorAlert message={error} title="Unable to save changes" />
 
       <Tabs defaultValue="details">
-        <TabsList>
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/40 p-1">
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="hours">Opening hours</TabsTrigger>
           <TabsTrigger value="fulfillment">Fulfillment & delivery</TabsTrigger>
@@ -151,45 +149,67 @@ export default function LocationEditorPage() {
         </TabsList>
 
         <TabsContent value="details" className="mt-4">
-          <Card>
-            <CardContent className="space-y-3 pt-6">
-              <Input
-                value={location.name}
-                onChange={(e) => setLocation({ ...location, name: e.target.value })}
-              />
-              <Input
-                placeholder="Address"
-                value={location.address ?? ''}
-                onChange={(e) => setLocation({ ...location, address: e.target.value })}
-              />
-              <Input
-                placeholder="Phone"
-                value={location.phone}
-                onChange={(e) => setLocation({ ...location, phone: e.target.value })}
-              />
-              <Input
-                placeholder="Timezone"
-                value={location.timezone}
-                onChange={(e) => setLocation({ ...location, timezone: e.target.value })}
-              />
-              <Input
-                placeholder="Currency"
-                value={location.currency}
-                onChange={(e) => setLocation({ ...location, currency: e.target.value })}
-              />
-              <Button disabled={loading} onClick={() => void saveDetails()}>
-                Save details
-              </Button>
-            </CardContent>
-          </Card>
+          <DetailSectionCard title="Location details" description="Name, address, and regional settings.">
+            <FormLayout constrained={false}>
+              <FormField label="Name" htmlFor={`${formBaseId}-name`}>
+                <Input
+                  id={`${formBaseId}-name`}
+                  value={location.name}
+                  onChange={(e) => setLocation({ ...location, name: e.target.value })}
+                />
+              </FormField>
+              <FormField label="Address" htmlFor={`${formBaseId}-address`}>
+                <Input
+                  id={`${formBaseId}-address`}
+                  value={location.address ?? ''}
+                  onChange={(e) => setLocation({ ...location, address: e.target.value })}
+                />
+              </FormField>
+              <Grid cols={1} gap="md" className="min-[481px]:grid-cols-2">
+                <FormField label="Phone" htmlFor={`${formBaseId}-phone`}>
+                  <Input
+                    id={`${formBaseId}-phone`}
+                    value={location.phone}
+                    onChange={(e) => setLocation({ ...location, phone: e.target.value })}
+                  />
+                </FormField>
+                <FormField label="Timezone" htmlFor={`${formBaseId}-timezone`}>
+                  <Input
+                    id={`${formBaseId}-timezone`}
+                    value={location.timezone}
+                    onChange={(e) => setLocation({ ...location, timezone: e.target.value })}
+                  />
+                </FormField>
+              </Grid>
+              <FormField label="Currency" htmlFor={`${formBaseId}-currency`}>
+                <Input
+                  id={`${formBaseId}-currency`}
+                  value={location.currency}
+                  onChange={(e) => setLocation({ ...location, currency: e.target.value })}
+                />
+              </FormField>
+              <FormActions>
+                <Button type="button" isLoading={loading} loadingLabel="Saving…" onClick={() => void saveDetails()}>
+                  Save details
+                </Button>
+              </FormActions>
+            </FormLayout>
+          </DetailSectionCard>
         </TabsContent>
 
         <TabsContent value="hours" className="mt-4">
-          <Card>
-            <CardContent className="space-y-3 pt-6">
+          <DetailSectionCard title="Opening hours" description="Set open/close times or mark days closed.">
+            <Stack gap="md">
               {location.openingHours.map((row, index) => (
-                <div key={row.dayOfWeek} className="grid grid-cols-4 items-center gap-2 text-sm">
-                  <span>{DAY_LABELS[row.dayOfWeek] ?? row.dayOfWeek}</span>
+                <Grid
+                  key={row.dayOfWeek}
+                  cols={1}
+                  gap="sm"
+                  className="items-center min-[481px]:grid-cols-[4rem_1fr_1fr_auto]"
+                >
+                  <span className="text-sm font-medium text-foreground">
+                    {DAY_LABELS[row.dayOfWeek] ?? row.dayOfWeek}
+                  </span>
                   <Input
                     placeholder="Open"
                     value={row.openTime ?? ''}
@@ -208,90 +228,85 @@ export default function LocationEditorPage() {
                       setLocation({ ...location, openingHours: hours });
                     }}
                   />
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={row.isClosed}
-                      onChange={(e) => {
-                        const hours = [...location.openingHours];
-                        hours[index] = { ...row, isClosed: e.target.checked };
-                        setLocation({ ...location, openingHours: hours });
-                      }}
-                    />
-                    Closed
-                  </label>
-                </div>
+                  <Checkbox
+                    label="Closed"
+                    checked={row.isClosed}
+                    onChange={(e) => {
+                      const hours = [...location.openingHours];
+                      hours[index] = { ...row, isClosed: e.target.checked };
+                      setLocation({ ...location, openingHours: hours });
+                    }}
+                  />
+                </Grid>
               ))}
-              <Button disabled={loading} onClick={() => void saveHours()}>
-                Save hours
-              </Button>
-            </CardContent>
-          </Card>
+              <FormActions>
+                <Button type="button" isLoading={loading} loadingLabel="Saving…" onClick={() => void saveHours()}>
+                  Save hours
+                </Button>
+              </FormActions>
+            </Stack>
+          </DetailSectionCard>
         </TabsContent>
 
         <TabsContent value="fulfillment" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Delivery settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Input
-                type="number"
-                placeholder="Radius (km)"
-                value={delivery.radiusKm ?? 5}
-                onChange={(e) =>
-                  setLocation({
-                    ...location,
-                    deliverySettings: {
-                      ...delivery,
-                      radiusKm: Number(e.target.value),
-                    },
-                  })
-                }
-              />
-              <Input
-                type="number"
-                placeholder="Delivery fee"
-                value={delivery.deliveryFee ?? 0}
-                onChange={(e) =>
-                  setLocation({
-                    ...location,
-                    deliverySettings: {
-                      ...delivery,
-                      deliveryFee: Number(e.target.value),
-                    },
-                  })
-                }
-              />
-              <Button disabled={loading} onClick={() => void saveFulfillment()}>
-                Save fulfillment & delivery
-              </Button>
-            </CardContent>
-          </Card>
+          <DetailSectionCard title="Delivery settings" description="Radius, fees, and fulfillment options.">
+            <FormLayout constrained={false}>
+              <FormField label="Radius (km)" htmlFor={`${formBaseId}-radius`}>
+                <Input
+                  id={`${formBaseId}-radius`}
+                  type="number"
+                  value={delivery.radiusKm ?? 5}
+                  onChange={(e) =>
+                    setLocation({
+                      ...location,
+                      deliverySettings: { ...delivery, radiusKm: Number(e.target.value) },
+                    })
+                  }
+                />
+              </FormField>
+              <FormField label="Delivery fee" htmlFor={`${formBaseId}-fee`}>
+                <Input
+                  id={`${formBaseId}-fee`}
+                  type="number"
+                  value={delivery.deliveryFee ?? 0}
+                  onChange={(e) =>
+                    setLocation({
+                      ...location,
+                      deliverySettings: { ...delivery, deliveryFee: Number(e.target.value) },
+                    })
+                  }
+                />
+              </FormField>
+              <FormActions>
+                <Button type="button" isLoading={loading} loadingLabel="Saving…" onClick={() => void saveFulfillment()}>
+                  Save fulfillment & delivery
+                </Button>
+              </FormActions>
+            </FormLayout>
+          </DetailSectionCard>
         </TabsContent>
 
         <TabsContent value="staff" className="mt-4">
-          <Card>
-            <CardContent className="space-y-2 pt-6">
+          <DetailSectionCard title="Staff assignments" description="Toggle which staff members are assigned to this location.">
+            <Stack gap="sm">
               {staff.map((member) => (
                 <label
                   key={member.userId}
-                  className="flex cursor-pointer items-center justify-between rounded-md border px-3 py-2 text-sm"
+                  className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 text-sm shadow-sm"
                 >
-                  <span>
+                  <span className="font-medium text-foreground">
                     {member.name} · {member.roleName ?? 'staff'}
                   </span>
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={member.assigned}
                     onChange={() => void toggleStaff(member.userId, member.assigned)}
                   />
                 </label>
               ))}
-            </CardContent>
-          </Card>
+            </Stack>
+          </DetailSectionCard>
         </TabsContent>
       </Tabs>
-    </div>
+    </DetailPage>
   );
 }

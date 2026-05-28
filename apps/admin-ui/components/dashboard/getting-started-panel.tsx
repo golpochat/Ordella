@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared-ui';
+import { CardDescription, CardHeader, CardTitle, Grid } from '@shared-ui';
+import { Card, CardBody, InteractiveCard } from '@/components/ui/admin-card';
 
 const LINKS = [
   { href: '/catalog', label: 'Add your first item', description: 'Build your catalog with categories and items' },
@@ -18,21 +18,18 @@ export function GettingStartedPanel() {
           Your account is ready. Complete these steps to start selling across channels.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ul className="grid gap-3 sm:grid-cols-2">
+      <CardBody>
+        <Grid cols={1} gap="sm" className="min-[481px]:grid-cols-2">
           {LINKS.map((item) => (
-            <li key={item.label}>
-              <Link
-                href={item.href}
-                className="block rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/40 hover:bg-accent/50"
-              >
+            <InteractiveCard key={item.label} href={item.href}>
+              <CardBody className="p-4">
                 <span className="font-medium text-foreground">{item.label}</span>
                 <span className="mt-1 block text-sm text-muted-foreground">{item.description}</span>
-              </Link>
-            </li>
+              </CardBody>
+            </InteractiveCard>
           ))}
-        </ul>
-      </CardContent>
+        </Grid>
+      </CardBody>
     </Card>
   );
 }

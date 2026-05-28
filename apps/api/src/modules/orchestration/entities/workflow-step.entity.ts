@@ -35,7 +35,7 @@ export class WorkflowStepEntity {
   @Column({ type: 'varchar', length: 180 })
   label!: string;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'step_order', type: 'int' })
   stepOrder!: number;
 
   @Column({ type: 'jsonb', default: () => "'{}'" })

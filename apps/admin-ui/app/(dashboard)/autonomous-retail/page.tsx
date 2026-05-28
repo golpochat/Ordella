@@ -30,13 +30,13 @@ export default async function AutonomousRetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Autonomous Retail"
         description="AI-driven pricing, replenishment, staffing, promotions, and delivery — with safety constraints, explainability, and human override."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       <AutonomousRetailPanel dashboard={dashboard} policies={policies} pendingDecisions={pendingDecisions} actions={actions} />
-    </div>
+    </>
   );
 }

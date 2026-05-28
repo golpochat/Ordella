@@ -1,7 +1,11 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   generateAiInsights,
@@ -18,6 +22,8 @@ import {
 } from '@/lib/api/admin/ai-assistant';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 const DEFAULT_PROMPTS = [
   'Summarize today’s retail operations risks.',
@@ -138,16 +144,16 @@ export function AiAssistantPanel({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <Metric title="AI usage" value={analytics?.usageCount ?? 0} />
         <Metric title="Actions proposed" value={analytics?.automationImpact.actionsProposed ?? pendingActions.length} />
         <Metric title="Open insights" value={analytics?.automationImpact.openInsights ?? insights.length} />
         <Metric title="Estimated savings" value={formatCurrency(((analytics?.costSavingsCents ?? 0) / 100).toFixed(2))} />
-      </div>
+      </MetricGrid>
 
       {status ? <p className="text-sm text-muted-foreground">{status}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <FormErrorAlert message={error} /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         <Card>
@@ -251,13 +257,13 @@ export function AiAssistantPanel({
               <div key={insight.id} className="rounded-md border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-medium">{insight.title}</p>
-                  <Badge variant={severityVariant(insight.severity)}>{insight.severity}</Badge>
+                  <Tag variant={severityVariant(insight.severity)}><TagLabel>{insight.severity}</TagLabel></Tag>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">{insight.summary}</p>
                 {insight.recommendedAction ? <p className="mt-2 text-sm">Recommended: {insight.recommendedAction}</p> : null}
               </div>
             ))}
-            {!insights.length ? <p className="text-sm text-muted-foreground">No open insights yet.</p> : null}
+            {!insights.length ? <PanelEmpty title="No open insights yet" description="Content will appear here when available." /> : null}
           </CardContent>
         </Card>
 
@@ -267,7 +273,7 @@ export function AiAssistantPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Action</TableHead>
                   <TableHead>Risk</TableHead>
@@ -275,14 +281,14 @@ export function AiAssistantPanel({
                   <TableHead>Review</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {actions.slice(0, 10).map((action) => (
                   <TableRow key={action.id}>
                     <TableCell>
                       <p className="font-medium">{label(action.actionType)}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(action.createdAt)}</p>
                     </TableCell>
-                    <TableCell><Badge variant={severityVariant(action.riskLevel)}>{action.riskLevel}</Badge></TableCell>
+                    <TableCell><Tag variant={severityVariant(action.riskLevel)}><TagLabel>{action.riskLevel}</TagLabel></Tag></TableCell>
                     <TableCell>{action.status}</TableCell>
                     <TableCell>
                       {action.status === 'pending_approval' ? (
@@ -309,7 +315,7 @@ export function AiAssistantPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Automation</TableHead>
                 <TableHead>Enabled</TableHead>
@@ -317,7 +323,7 @@ export function AiAssistantPanel({
                 <TableHead>Last updated</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {settings.map((setting) => (
                 <TableRow key={setting.id}>
                   <TableCell className="font-medium">{label(setting.automationType)}</TableCell>
@@ -340,7 +346,7 @@ export function AiAssistantPanel({
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
@@ -356,18 +362,6 @@ function PromptButtons({ prompts, onSelect }: { prompts: string[]; onSelect: (pr
   );
 }
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function mergeById<T extends { id: string }>(incoming: T[], current: T[]) {
   const seen = new Set(incoming.map((item) => item.id));

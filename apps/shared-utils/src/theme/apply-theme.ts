@@ -84,7 +84,16 @@ function posDensity(value: string | undefined): { gap: string; padding: string; 
   return { gap: '0.75rem', padding: '1rem', gridMin: '12rem' };
 }
 
-export function applyThemeToElement(element: HTMLElement, theme: TenantTheme): void {
+export type ApplyThemeOptions = {
+  /** When set, controls `.dark` instead of `theme.preset`. */
+  colorScheme?: 'light' | 'dark';
+};
+
+export function applyThemeToElement(
+  element: HTMLElement,
+  theme: TenantTheme,
+  options?: ApplyThemeOptions,
+): void {
   const pos = theme.posTheme;
   const primary = toCssColor(theme.colors.primary);
   const secondary = toCssColor(theme.colors.secondary);
@@ -137,5 +146,7 @@ export function applyThemeToElement(element: HTMLElement, theme: TenantTheme): v
   element.style.setProperty('--pos-brand-foreground', contrastingForeground(posPrimary));
   element.style.setProperty('--pos-accent', posAccent);
 
-  element.classList.toggle('dark', theme.preset === 'dark');
+  const scheme = options?.colorScheme ?? (theme.preset === 'dark' ? 'dark' : 'light');
+  element.classList.toggle('dark', scheme === 'dark');
+  element.dataset.odsColorScheme = scheme;
 }

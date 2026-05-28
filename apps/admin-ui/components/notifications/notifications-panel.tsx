@@ -1,22 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Input,
-} from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Input, Stack, Textarea } from '@shared-ui';
 import {
   getTenantNotificationSettings,
   getNotificationPreferences,
@@ -36,6 +24,8 @@ import {
 } from '@/lib/api/notifications';
 import { getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
+import { PanelCardsSkeleton } from '@/components/ui/admin-loader';
 
 const CATEGORIES = [
   { key: 'orders', label: 'Orders' },
@@ -96,6 +86,7 @@ type TemplateForm = {
 };
 
 export function NotificationsPanel() {
+  const { success: toastSuccess, error: toastError } = useAdminToast();
   const { formatDateTime } = useTenantSettings();
   const [history, setHistory] = useState<NotificationHistoryItem[]>([]);
   const [logs, setLogs] = useState<NotificationLog[]>([]);
@@ -112,9 +103,7 @@ export function NotificationsPanel() {
     recipient: '',
   });
   const [preview, setPreview] = useState<{ subject: string; text: string; html: string } | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const templateByKey = useMemo(
@@ -124,7 +113,6 @@ export function NotificationsPanel() {
 
   async function load() {
     setLoading(true);
-    setError(null);
     try {
       const [preferenceData, historyData] = await Promise.all([
         getNotificationPreferences(),
@@ -141,19 +129,19 @@ export function NotificationsPanel() {
       setTemplates(templateData);
       setLogs(logData);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
+
     void load();
   }, []);
 
   async function save(next: NotificationPreference) {
     setSaving(true);
-    setError(null);
     try {
       const updated = await updateNotificationPreferences({
         emailEnabled: next.emailEnabled,
@@ -163,7 +151,7 @@ export function NotificationsPanel() {
       });
       setPreferences(updated);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -171,13 +159,12 @@ export function NotificationsPanel() {
 
   async function saveSettings(next: TenantNotificationSettings) {
     setSaving(true);
-    setError(null);
     try {
       const updated = await updateTenantNotificationSettings(next);
       setSettings(updated);
-      setMessage('Notification settings saved');
+      toastSuccess('Notification settings saved');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -200,8 +187,6 @@ export function NotificationsPanel() {
 
   async function saveTemplate() {
     setSaving(true);
-    setError(null);
-    setMessage(null);
     try {
       const saved = await saveNotificationTemplate({
         id: form.id,
@@ -216,9 +201,9 @@ export function NotificationsPanel() {
         ...current.filter((template) => template.id !== saved.id && `${template.name}:${template.channel}` !== `${saved.name}:${saved.channel}`),
       ]);
       setForm((current) => ({ ...current, id: saved.id }));
-      setMessage('Template saved');
+      toastSuccess('Template saved');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -234,15 +219,14 @@ export function NotificationsPanel() {
         variables: SAMPLE_VARIABLES,
       });
       setPreview(rendered);
-      setError(null);
-    } catch (err) {
-      setError(getErrorMessage(err));
+      } catch (err) {
+      toastError(getErrorMessage(err));
     }
   }
 
   async function testSend() {
     if (!form.recipient.trim()) {
-      setError('Enter a test recipient first');
+      toastError('Enter a test recipient first');
       return;
     }
     setSaving(true);
@@ -255,12 +239,12 @@ export function NotificationsPanel() {
         variables: SAMPLE_VARIABLES,
         recipient: form.recipient.trim(),
       });
-      setMessage('Test notification sent');
+      toastSuccess('Test notification sent');
       const [historyData, logData] = await Promise.all([listNotificationHistory(), listNotificationLogs()]);
       setHistory(historyData);
       setLogs(logData);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -280,14 +264,11 @@ export function NotificationsPanel() {
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading notifications…</p>;
+    return <PanelCardsSkeleton count={3} />;
   }
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p> : null}
-      {message ? <p className="rounded-md border p-3 text-sm text-muted-foreground">{message}</p> : null}
-
+    <Stack gap="lg" className="min-w-0">
       <Card>
         <CardHeader>
           <CardTitle>Tenant notification settings</CardTitle>
@@ -334,7 +315,7 @@ export function NotificationsPanel() {
                     <Button
                       key={category.key}
                       type="button"
-                      variant={preferences.categories.includes(category.key) ? 'default' : 'outline'}
+                      variant={preferences.categories.includes(category.key) ? 'brand' : 'outline'}
                       size="sm"
                       onClick={() => toggleCategory(category.key)}
                       disabled={saving}
@@ -356,20 +337,20 @@ export function NotificationsPanel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.name} onChange={(event) => loadTemplate(event.target.value, form.channel)}>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.name} onChange={(event) => loadTemplate(event.target.value, form.channel)}>
               {TEMPLATE_TYPES.map((type) => <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>)}
-            </select>
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.channel} onChange={(event) => loadTemplate(form.name, event.target.value as NotificationTemplate['channel'])}>
+            </Select>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.channel} onChange={(event) => loadTemplate(form.name, event.target.value as NotificationTemplate['channel'])}>
               {CHANNELS.map((channel) => <option key={channel} value={channel}>{channel}</option>)}
-            </select>
+            </Select>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} />
               Active
             </label>
           </div>
           <Input value={form.subject} placeholder="Subject" onChange={(event) => setForm({ ...form, subject: event.target.value })} />
-          <textarea className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.text} placeholder="Plain text body" onChange={(event) => setForm({ ...form, text: event.target.value })} />
-          <textarea className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.html} placeholder="HTML body" onChange={(event) => setForm({ ...form, html: event.target.value })} />
+          <Textarea className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.text} placeholder="Plain text body" onChange={(event) => setForm({ ...form, text: event.target.value })} />
+          <Textarea className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.html} placeholder="HTML body" onChange={(event) => setForm({ ...form, html: event.target.value })} />
           <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
             <Input value={form.recipient} placeholder="Test recipient email, phone, or push token" onChange={(event) => setForm({ ...form, recipient: event.target.value })} />
             <Button type="button" variant="outline" onClick={() => void previewTemplate()}>Preview</Button>
@@ -393,7 +374,7 @@ export function NotificationsPanel() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Channel</TableHead>
@@ -402,19 +383,19 @@ export function NotificationsPanel() {
                 <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {templates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell className="font-medium">{template.name}</TableCell>
                   <TableCell>{template.channel}</TableCell>
                   <TableCell>{template.version}</TableCell>
-                  <TableCell><Badge variant={template.isActive ? 'default' : 'secondary'}>{template.isActive ? 'active' : 'inactive'}</Badge></TableCell>
+                  <TableCell><Tag variant={template.isActive ? 'brand' : 'neutral'}><TagLabel>{template.isActive ? 'active' : 'inactive'}</TagLabel></Tag></TableCell>
                   <TableCell><Button type="button" size="sm" variant="outline" onClick={() => loadTemplate(template.name, template.channel)}>Edit</Button></TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          {!templates.length ? <p className="py-6 text-center text-sm text-muted-foreground">No custom templates yet. Defaults will be used until you save one.</p> : null}
+          {!templates.length ? <PanelEmpty title="No custom templates yet. Defaults will be used until you save one" description="Content will appear here when available." /> : null}
         </CardContent>
       </Card>
 
@@ -425,7 +406,7 @@ export function NotificationsPanel() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Status</TableHead>
                 <TableHead>Notification</TableHead>
@@ -434,10 +415,10 @@ export function NotificationsPanel() {
                 <TableHead>Timestamp</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {logs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell><Badge variant={log.status === 'failed' ? 'destructive' : 'secondary'}>{log.status}</Badge></TableCell>
+                  <TableCell><Tag variant={log.status === 'failed' ? 'error' : 'neutral'}><TagLabel>{log.status}</TagLabel></Tag></TableCell>
                   <TableCell>{log.notificationId.slice(0, 8)}</TableCell>
                   <TableCell>{String(log.providerResponse.provider ?? log.providerResponse.status ?? '-')}</TableCell>
                   <TableCell>{log.errorMessage ?? '-'}</TableCell>
@@ -446,7 +427,7 @@ export function NotificationsPanel() {
               ))}
             </TableBody>
           </Table>
-          {!logs.length ? <p className="py-6 text-center text-sm text-muted-foreground">No delivery logs yet.</p> : null}
+          {!logs.length ? <PanelEmpty title="No delivery logs yet" description="Content will appear here when available." /> : null}
         </CardContent>
       </Card>
 
@@ -457,7 +438,7 @@ export function NotificationsPanel() {
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Type</TableHead>
                 <TableHead>Channel</TableHead>
@@ -466,15 +447,15 @@ export function NotificationsPanel() {
                 <TableHead>Timestamp</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {history.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.type}</TableCell>
                   <TableCell>{item.channel}</TableCell>
                   <TableCell>
-                    <Badge variant={item.status === 'failed' ? 'destructive' : 'secondary'}>
+                    <Tag variant={item.status === 'failed' ? 'error' : 'neutral'}><TagLabel>
                       {item.status}
-                    </Badge>
+                    </TagLabel></Tag>
                   </TableCell>
                   <TableCell>{item.recipient ?? 'Dashboard'}</TableCell>
                   <TableCell>{formatDateTime(item.sentAt ?? item.createdAt)}</TableCell>
@@ -483,11 +464,11 @@ export function NotificationsPanel() {
             </TableBody>
           </Table>
           {history.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">No notifications yet.</p>
+            <PanelEmpty title="No notifications yet" description="Content will appear here when available." />
           ) : null}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
@@ -517,7 +498,7 @@ function ChannelToggle({
   onClick: () => void;
 }) {
   return (
-    <Button type="button" variant={enabled ? 'default' : 'outline'} onClick={onClick}>
+    <Button type="button" variant={enabled ? 'brand' : 'outline'} onClick={onClick}>
       {label}: {enabled ? 'On' : 'Off'}
     </Button>
   );

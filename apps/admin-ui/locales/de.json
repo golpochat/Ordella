@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "dashboard": "Analysen",
+    "settings": "Einstellungen"
+  },
+  "common": {
+    "confirm": "Bestätigen",
+    "cancel": "Abbrechen"
+  }
+}

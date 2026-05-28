@@ -1,7 +1,20 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import { Select, Button, Card, CardContent, Input , Stack } from '@shared-ui';
+import {
+  AdminTableShell,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { updateSupplier } from '@/lib/api/admin/procurement';
 import {
@@ -10,6 +23,7 @@ import {
   type SupplierPortalOverview,
 } from '@/lib/api/admin/supplier-portal';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 export function SupplierPortalPanel() {
   const api = useMemo(() => createBrowserApiClient(), []);
@@ -91,14 +105,14 @@ export function SupplierPortalPanel() {
   const messages = overview?.messages ?? [];
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className="grid gap-4 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
+      <MetricGrid columns={4}>
         <MetricCard label="Portal suppliers" value={overview?.suppliers.filter((supplier) => supplier.portalEnabled).length ?? 0} />
         <MetricCard label="Confirmations" value={overview?.confirmations.length ?? 0} />
         <MetricCard label="Messages" value={messages.length} />
         <MetricCard label="On-time rate" value={`${average(performance.map((row) => row.onTimeDeliveryRate))}%`} />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -109,11 +123,11 @@ export function SupplierPortalPanel() {
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={selectedSupplierId} onChange={(event) => selectSupplier(event.target.value)}>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={selectedSupplierId} onChange={(event) => selectSupplier(event.target.value)}>
               {(overview?.suppliers ?? []).map((supplier) => (
                 <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
               ))}
-            </select>
+            </Select>
             <Input placeholder="Portal login email" value={portalEmail} onChange={(event) => setPortalEmail(event.target.value)} />
             <Input placeholder="Reset password" type="password" value={portalPassword} onChange={(event) => setPortalPassword(event.target.value)} />
           </div>
@@ -127,32 +141,40 @@ export function SupplierPortalPanel() {
         <Card>
           <CardContent className="space-y-4 p-4">
             <h2 className="text-lg font-semibold">Supplier performance</h2>
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left">
-                  <tr>
-                    <th className="p-3 font-medium">Supplier</th>
-                    <th className="p-3 font-medium">Portal</th>
-                    <th className="p-3 font-medium">On-time</th>
-                    <th className="p-3 font-medium">Avg lead</th>
-                    <th className="p-3 font-medium">Rejections</th>
-                    <th className="p-3 font-medium">Shipped</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <AdminTableShell
+              isEmpty={performance.length === 0}
+              emptyTitle="No performance data"
+              emptyDescription="Supplier performance metrics will appear here."
+            >
+              <Table>
+                <TableHeader sticky>
+                  <TableRow>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>Portal</TableHead>
+                    <TableHead>On-time</TableHead>
+                    <TableHead>Avg lead</TableHead>
+                    <TableHead>Rejections</TableHead>
+                    <TableHead>Shipped</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody zebra>
                   {performance.map((row) => (
-                    <tr key={row.supplierId} className="border-t">
-                      <td className="p-3 font-medium">{row.name}</td>
-                      <td className="p-3"><Badge variant={row.portalEnabled ? 'default' : 'secondary'}>{row.portalEnabled ? 'Enabled' : 'Off'}</Badge></td>
-                      <td className="p-3">{row.onTimeDeliveryRate}%</td>
-                      <td className="p-3">{row.averageLeadTimeDays ?? 0}d</td>
-                      <td className="p-3">{row.rejectionRate ?? 0}%</td>
-                      <td className="p-3">{row.shippedOrders ?? 0}</td>
-                    </tr>
+                    <TableRow key={row.supplierId}>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                      <TableCell>
+                        <Tag variant={row.portalEnabled ? 'brand' : 'neutral'}><TagLabel>
+                          {row.portalEnabled ? 'Enabled' : 'Off'}
+                        </TagLabel></Tag>
+                      </TableCell>
+                      <TableCell>{row.onTimeDeliveryRate}%</TableCell>
+                      <TableCell>{row.averageLeadTimeDays ?? 0}d</TableCell>
+                      <TableCell>{row.rejectionRate ?? 0}%</TableCell>
+                      <TableCell>{row.shippedOrders ?? 0}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </AdminTableShell>
           </CardContent>
         </Card>
 
@@ -168,7 +190,7 @@ export function SupplierPortalPanel() {
                 <div key={row.id} className="rounded-lg border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-medium">{row.supplier?.name ?? row.supplierId}</span>
-                    <Badge variant={row.senderType === 'merchant' ? 'secondary' : 'default'}>{row.senderType}</Badge>
+                    <Tag variant={row.senderType === 'merchant' ? 'neutral' : 'brand'}><TagLabel>{row.senderType}</TagLabel></Tag>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{row.message}</p>
                 </div>
@@ -177,20 +199,10 @@ export function SupplierPortalPanel() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Stack>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-2 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function average(values: number[]) {
   if (!values.length) return 0;

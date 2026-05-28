@@ -1,21 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   getGenomeEntityGraph,
@@ -30,6 +19,8 @@ import {
   type GenomeRelationship,
 } from '@/lib/api/admin/retail-genome';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+import { SearchInput } from '@/components/ui/admin-search';
 
 type RetailGenomePanelProps = {
   dashboard: GenomeDashboard | null;
@@ -39,16 +30,6 @@ type RetailGenomePanelProps = {
   reasoning: GenomeReasoning[];
 };
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <p className="text-xs text-muted-foreground">{title}</p>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 export function RetailGenomePanel({
   dashboard,
@@ -57,6 +38,8 @@ export function RetailGenomePanel({
   embeddings,
   reasoning: initialReasoning,
 }: RetailGenomePanelProps) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = useMemo(() => createBrowserApiClient(), []);
   const [entities, setEntities] = useState(initialEntities);
   const [relationships] = useState(initialRelationships);
@@ -65,75 +48,61 @@ export function RetailGenomePanel({
   const [graphView, setGraphView] = useState<Record<string, unknown> | null>(null);
   const [semanticQuery, setSemanticQuery] = useState('organic coffee substitutes');
   const [semanticResult, setSemanticResult] = useState<Record<string, unknown> | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const products = entities.filter((e) => e.entityType === 'product');
+    const products = entities.filter((e) => e.entityType === 'product');
 
   async function handleSelectEntity(entityId: string) {
     setSelectedEntityId(entityId);
-    setMessage(null);
-    setError(null);
     try {
       const graph = await getGenomeEntityGraph(api, entityId);
       setGraphView(graph as Record<string, unknown>);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleIngest(source: 'event_bus' | 'data_lake') {
-    setMessage(null);
-    setError(null);
     try {
       await runGenomeIngestion(api, source, 100);
       setEntities(await listGenomeEntities(api));
-      setMessage(`Ingestion from ${source} completed.`);
+      toastSuccess(`Ingestion from ${source} completed.`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleSemanticSearch() {
-    setMessage(null);
-    setError(null);
     try {
       const result = await runGenomeSemanticSearch(api, semanticQuery, 'product');
       setSemanticResult(result as Record<string, unknown>);
-      setMessage('Semantic search completed.');
+      toastSuccess('Semantic search completed.');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function handleReasoning() {
     if (!selectedEntityId) return;
-    setMessage(null);
-    setError(null);
     try {
       const artifact = await runGenomeReasoning(api, 'product_similarity', selectedEntityId);
       setReasoning((current) => [artifact, ...current]);
-      setMessage('Reasoning artifact created.');
+      toastSuccess('Reasoning artifact created.');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   const outgoing = (graphView?.outgoing as Array<{ relationshipType: string; target: { displayName: string } | null }>) ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-6">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={6}>
         <Metric title="Entities" value={dashboard?.entityCount ?? entities.length} />
         <Metric title="Relationships" value={dashboard?.relationshipCount ?? relationships.length} />
         <Metric title="Embeddings" value={dashboard?.embeddingCount ?? embeddings.length} />
         <Metric title="Inferred" value={dashboard?.inferredRelationships ?? 0} />
         <Metric title="Graph health" value={dashboard?.graphHealth ?? '—'} />
         <Metric title="Cache hits" value={dashboard?.cacheHits ?? 0} />
-      </div>
-
-      {message ? <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm">{message}</p> : null}
-      {error ? <p className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <div className="flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={() => void handleIngest('event_bus')}>
@@ -153,7 +122,7 @@ export function RetailGenomePanel({
             <CardTitle>Knowledge graph explorer</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <select
+            <Select
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={selectedEntityId}
               onChange={(e) => void handleSelectEntity(e.target.value)}
@@ -163,7 +132,7 @@ export function RetailGenomePanel({
                   [{e.entityType}] {e.displayName}
                 </option>
               ))}
-            </select>
+            </Select>
             {graphView ? (
               <div className="space-y-2 text-sm">
                 <p className="font-medium">{(graphView.entity as GenomeEntity)?.displayName}</p>
@@ -186,9 +155,17 @@ export function RetailGenomePanel({
             <CardTitle>Semantic search</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Input value={semanticQuery} onChange={(e) => setSemanticQuery(e.target.value)} />
-            <Button type="button" size="sm" onClick={() => void handleSemanticSearch()}>
-              Search
+            <SearchInput
+              value={semanticQuery}
+              onChange={(e) => setSemanticQuery(e.target.value)}
+              onClear={() => setSemanticQuery('')}
+              onSearch={() => void handleSemanticSearch()}
+              placeholder="Describe products, categories, or relationships…"
+              active={Boolean(semanticQuery.trim())}
+              aria-label="Semantic genome search"
+            />
+            <Button type="button" size="sm" variant="outline" onClick={() => void handleSemanticSearch()}>
+              Run search
             </Button>
             {semanticResult ? (
               <pre className="max-h-40 overflow-auto rounded border bg-muted/30 p-2 text-xs">
@@ -206,7 +183,7 @@ export function RetailGenomePanel({
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {products.map((p) => (
-              <Button key={p.id} type="button" size="sm" variant={p.id === selectedEntityId ? 'default' : 'outline'} onClick={() => void handleSelectEntity(p.id)}>
+              <Button key={p.id} type="button" size="sm" variant={p.id === selectedEntityId ? 'brand' : 'outline'} onClick={() => void handleSelectEntity(p.id)}>
                 {p.displayName}
               </Button>
             ))}
@@ -221,20 +198,20 @@ export function RetailGenomePanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Type</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead>Inferred</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {relationships.slice(0, 12).map((r) => (
                   <TableRow key={r.id}>
                     <TableCell>{r.relationshipType}</TableCell>
                     <TableCell>{String(r.score)}</TableCell>
                     <TableCell>
-                      <Badge variant={r.inferred ? 'secondary' : 'outline'}>{r.inferred ? 'yes' : 'no'}</Badge>
+                      <Tag variant={r.inferred ? 'neutral' : 'outline'}><TagLabel>{r.inferred ? 'yes' : 'no'}</TagLabel></Tag>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -249,7 +226,7 @@ export function RetailGenomePanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Entity</TableHead>
                   <TableHead>Model</TableHead>
@@ -257,7 +234,7 @@ export function RetailGenomePanel({
                   <TableHead>Vector preview</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {embeddings.map((e) => (
                   <TableRow key={e.entityId}>
                     <TableCell className="font-mono text-xs">{e.entityId.slice(0, 8)}…</TableCell>
@@ -278,14 +255,14 @@ export function RetailGenomePanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Type</TableHead>
                 <TableHead>Confidence</TableHead>
                 <TableHead>Summary</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {reasoning.slice(0, 8).map((r) => (
                 <TableRow key={r.id}>
                   <TableCell>{r.reasoningType}</TableCell>
@@ -297,6 +274,6 @@ export function RetailGenomePanel({
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }

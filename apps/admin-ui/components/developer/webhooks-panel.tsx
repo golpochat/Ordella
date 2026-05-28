@@ -1,10 +1,14 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { createWebhook, disableWebhook, rotateWebhookSecret, testWebhook, type DeveloperWebhook } from '@/lib/api/admin/developer';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { DisableConfirmDialog } from '@/components/ui/admin-dialog';
 
 const EVENTS = [
   'order.created',
@@ -28,29 +32,39 @@ const EVENTS = [
 ];
 
 export function WebhooksPanel({ initialWebhooks }: { initialWebhooks: DeveloperWebhook[] }) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const [webhooks, setWebhooks] = useState(initialWebhooks);
   const [url, setUrl] = useState('');
   const [events, setEvents] = useState<string[]>(['order.created']);
   const [secret, setSecret] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function create(event: React.FormEvent) {
+  const [disableTarget, setDisableTarget] = useState<DeveloperWebhook | null>(null);
+  const [disableLoading, setDisableLoading] = useState(false);
+    async function create(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const webhook = await createWebhook(createBrowserApiClient(), { url, events });
       setWebhooks((current) => [webhook, ...current]);
       setSecret(webhook.secret ?? null);
       setUrl('');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
-  async function disable(id: string) {
-    const updated = await disableWebhook(createBrowserApiClient(), id);
-    setWebhooks((current) => current.map((webhook) => (webhook.id === id ? updated : webhook)));
+  async function confirmDisable() {
+    if (!disableTarget) return;
+    setDisableLoading(true);
+    try {
+      const updated = await disableWebhook(createBrowserApiClient(), disableTarget.id);
+      setWebhooks((current) => current.map((webhook) => (webhook.id === disableTarget.id ? updated : webhook)));
+      setDisableTarget(null);
+      toastSuccess('Webhook disabled');
+    } catch (err) {
+      toastError(getErrorMessage(err));
+    } finally {
+      setDisableLoading(false);
+    }
   }
 
   async function rotate(id: string) {
@@ -61,10 +75,22 @@ export function WebhooksPanel({ initialWebhooks }: { initialWebhooks: DeveloperW
 
   async function test(id: string) {
     await testWebhook(createBrowserApiClient(), id);
-    setMessage('Test webhook queued');
+    toastSuccess('Test webhook queued');
   }
 
   return (
+  <>
+    <DisableConfirmDialog
+      open={!!disableTarget}
+      onOpenChange={(open) => {
+        if (!open) setDisableTarget(null);
+      }}
+      title="Disable webhook?"
+      description="Event deliveries to this URL will stop until you create a new webhook."
+      confirmLabel="Disable"
+      loading={disableLoading}
+      onConfirm={confirmDisable}
+    />
     <Card>
       <CardHeader>
         <CardTitle>Webhooks</CardTitle>
@@ -96,10 +122,8 @@ export function WebhooksPanel({ initialWebhooks }: { initialWebhooks: DeveloperW
             <code className="mt-2 block break-all text-sm">{secret}</code>
           </div>
         ) : null}
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
         <Table>
-          <TableHeader>
+          <TableHeader sticky>
             <TableRow>
               <TableHead>URL</TableHead>
               <TableHead>Events</TableHead>
@@ -108,13 +132,13 @@ export function WebhooksPanel({ initialWebhooks }: { initialWebhooks: DeveloperW
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody zebra>
             {webhooks.map((webhook) => (
               <TableRow key={webhook.id}>
                 <TableCell className="max-w-sm break-all">{webhook.url}</TableCell>
                 <TableCell>{webhook.events.join(', ')}</TableCell>
                 <TableCell>
-                  <Badge variant={webhook.isActive ? 'outline' : 'destructive'}>{webhook.isActive ? 'Active' : 'Disabled'}</Badge>
+                  <Tag variant={webhook.isActive ? 'outline' : 'error'}><TagLabel>{webhook.isActive ? 'Active' : 'Disabled'}</TagLabel></Tag>
                 </TableCell>
                 <TableCell>{formatDate(webhook.lastDeliveryAt ?? undefined)}</TableCell>
                 <TableCell className="space-x-2 text-right">
@@ -124,7 +148,7 @@ export function WebhooksPanel({ initialWebhooks }: { initialWebhooks: DeveloperW
                   <Button type="button" size="sm" variant="outline" onClick={() => void rotate(webhook.id)}>
                     Rotate secret
                   </Button>
-                  <Button type="button" size="sm" variant="destructive" onClick={() => void disable(webhook.id)} disabled={!webhook.isActive}>
+                  <Button type="button" size="sm" variant="error" onClick={() => setDisableTarget(webhook)} disabled={!webhook.isActive}>
                     Disable
                   </Button>
                 </TableCell>
@@ -134,5 +158,6 @@ export function WebhooksPanel({ initialWebhooks }: { initialWebhooks: DeveloperW
         </Table>
       </CardContent>
     </Card>
+  </>
   );
 }

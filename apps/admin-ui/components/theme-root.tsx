@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@shared-ui';
+import { ToastProvider } from '@/components/ui/admin-toast';
+import { AdminTooltipProvider } from '@/components/ui/admin-tooltip';
+import { AdminShortcutProvider } from '@/components/ui/admin-shortcuts';
+import { AdminAccessibilityShell } from '@/components/ui/admin-a11y';
+import { AdminI18nProvider } from '@/components/ui/admin-i18n';
+import { AdminPerformanceProvider } from '@/components/ui/admin-performance';
 import { DEFAULT_THEME, type TenantTheme } from '@shared-utils';
 import { cacheTheme, getThemeFromCache } from '@shared-utils';
 import { browserTokenStorage } from '@/lib/api/browser';
@@ -29,5 +35,19 @@ export function ThemeRoot({ children }: ThemeRootProps) {
       .catch(() => undefined);
   }, []);
 
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider theme={theme}>
+      <AdminI18nProvider>
+      <AdminPerformanceProvider>
+        <AdminAccessibilityShell>
+          <AdminTooltipProvider>
+            <AdminShortcutProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </AdminShortcutProvider>
+          </AdminTooltipProvider>
+        </AdminAccessibilityShell>
+      </AdminPerformanceProvider>
+      </AdminI18nProvider>
+    </ThemeProvider>
+  );
 }

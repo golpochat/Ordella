@@ -19,8 +19,8 @@ export default async function NewProductPage() {
 
   return (
     <>
-      <PageHeader title="New product" description="Add a catalog item" />
-      <SubNav items={PRODUCTS_SUBNAV} />
+      <PageHeader title="New product" description="Add a catalog item"
+        tabs={<SubNav variant="embedded" items={PRODUCTS_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
       <ProductForm categories={categories} />
     </>

@@ -1,20 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Input,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  ThemeProvider,
-} from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ThemeProvider } from '@shared-ui';
 import { DEFAULT_THEME, type BaseTheme, type HomepageSection, type TenantTheme } from '@shared-utils';
 import {
   fetchBaseThemes,
@@ -26,6 +16,7 @@ import {
   type ThemeAssetType,
 } from '@/lib/api/themes';
 import { getErrorMessage } from '@/lib/utils';
+import { InlineLoader } from '@/components/ui/admin-loader';
 
 const COLOR_KEYS = ['primary', 'secondary', 'accent', 'background', 'surface', 'text'] as const;
 const FONT_SIZE_KEYS = ['sm', 'md', 'lg'] as const;
@@ -46,7 +37,7 @@ function ThemePreview({ theme }: { theme: TenantTheme }) {
               <CardTitle className="text-lg">{theme.name ?? 'Storefront Theme'}</CardTitle>
               <p className="text-sm text-muted-foreground">{theme.baseTheme ?? 'default'} base theme</p>
             </div>
-            <Badge>{theme.layout?.cardStyle ?? 'rounded'} cards</Badge>
+            <Tag><TagLabel>{theme.layout?.cardStyle ?? 'rounded'} cards</TagLabel></Tag>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -59,7 +50,7 @@ function ThemePreview({ theme }: { theme: TenantTheme }) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm">Primary action</Button>
-            <Button size="sm" variant="secondary">
+            <Button size="sm" variant="neutral">
               Secondary
             </Button>
           </div>
@@ -70,11 +61,11 @@ function ThemePreview({ theme }: { theme: TenantTheme }) {
 }
 
 export function StorefrontThemePanel() {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const [theme, setTheme] = useState<TenantTheme>(DEFAULT_THEME);
   const [baseThemes, setBaseThemes] = useState<BaseThemeOption[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
   const sections = useMemo(() => theme.homepageSections ?? DEFAULT_THEME.homepageSections ?? [], [theme.homepageSections]);
   const hero = sections.find((section) => section.type === 'hero');
@@ -83,18 +74,17 @@ export function StorefrontThemePanel() {
   const banner = sections.find((section) => section.type === 'banner');
 
   useEffect(() => {
+
     void Promise.all([fetchCurrentTheme(), fetchBaseThemes()])
       .then(([current, options]) => {
         setTheme(current);
         setBaseThemes(options);
       })
-      .catch((e) => setError(getErrorMessage(e)));
+      .catch((e) => toastError(getErrorMessage(e)));
   }, []);
 
   async function save(patch: Partial<TenantTheme>) {
     setLoading(true);
-    setError(null);
-    setMessage(null);
     try {
       const updated = await updateStorefrontTheme({
         name: patch.name ?? theme.name,
@@ -108,9 +98,9 @@ export function StorefrontThemePanel() {
         seo: { ...(theme.seo ?? {}), ...(patch.seo ?? {}) },
       });
       setTheme(updated);
-      setMessage('Theme saved');
+      toastSuccess('Theme saved');
     } catch (e) {
-      setError(getErrorMessage(e));
+      toastError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -126,14 +116,12 @@ export function StorefrontThemePanel() {
 
   async function saveAsset(type: ThemeAssetType, url: string) {
     setLoading(true);
-    setError(null);
-    setMessage(null);
     try {
       const updated = await uploadThemeAsset(type, url);
       setTheme(updated);
-      setMessage('Asset updated');
+      toastSuccess('Asset updated');
     } catch (e) {
-      setError(getErrorMessage(e));
+      toastError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -141,13 +129,11 @@ export function StorefrontThemePanel() {
 
   async function resetTheme() {
     setLoading(true);
-    setError(null);
-    setMessage(null);
     try {
       setTheme(await resetStorefrontTheme());
-      setMessage('Theme reset');
+      toastSuccess('Theme reset');
     } catch (e) {
-      setError(getErrorMessage(e));
+      toastError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -191,7 +177,7 @@ export function StorefrontThemePanel() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Base theme</label>
-                  <select
+                  <Select
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                     value={theme.baseTheme ?? 'default'}
                     onChange={(e) => void save({ baseTheme: e.target.value as BaseTheme })}
@@ -201,11 +187,11 @@ export function StorefrontThemePanel() {
                         {option.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Mode</label>
-                  <select
+                  <Select
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                     value={theme.preset}
                     onChange={(e) => void save({ preset: e.target.value as TenantTheme['preset'] })}
@@ -213,7 +199,7 @@ export function StorefrontThemePanel() {
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                     <option value="custom">Custom</option>
-                  </select>
+                  </Select>
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -274,7 +260,7 @@ export function StorefrontThemePanel() {
               ].map(([key, label, options]) => (
                 <div key={key as string} className="space-y-1">
                   <label className="text-sm font-medium">{label as string}</label>
-                  <select
+                  <Select
                     className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                     value={(theme.layout?.[key as keyof NonNullable<TenantTheme['layout']>] as string | undefined) ?? ''}
                     onChange={(e) => void save({ layout: { ...(theme.layout ?? {}), [key as string]: e.target.value } })}
@@ -284,7 +270,7 @@ export function StorefrontThemePanel() {
                         {option}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               ))}
             </TabsContent>
@@ -302,7 +288,7 @@ export function StorefrontThemePanel() {
                   onChange={(e) => updateSection('hero', { ctaLabel: e.target.value })}
                 />
               </div>
-              <textarea
+              <Textarea
                 className="min-h-24 w-full rounded-md border border-input bg-background p-3 text-sm"
                 placeholder="Hero subtitle"
                 value={hero?.subtitle ?? ''}
@@ -325,7 +311,7 @@ export function StorefrontThemePanel() {
                   onChange={(e) => updateSection('banner', { title: e.target.value, enabled: Boolean(e.target.value) })}
                 />
               </div>
-              <Button type="button" onClick={() => void save({ homepageSections: sections })} disabled={loading}>
+              <Button type="button" onClick={() => void save({ homepageSections: sections })} isLoading={loading} loadingLabel="Saving…">
                 Save homepage
               </Button>
             </TabsContent>
@@ -360,7 +346,7 @@ export function StorefrontThemePanel() {
                   onBlur={() => void save({ seo: theme.seo })}
                 />
               </div>
-              <textarea
+              <Textarea
                 className="min-h-20 w-full rounded-md border border-input bg-background p-3 text-sm"
                 placeholder="Meta description"
                 value={theme.seo?.metaDescription ?? ''}
@@ -369,9 +355,7 @@ export function StorefrontThemePanel() {
               />
             </TabsContent>
           </Tabs>
-          {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {loading ? <p className="text-sm text-muted-foreground">Saving…</p> : null}
+          {loading ? <InlineLoader label="Saving…" size="sm" /> : null}
         </CardContent>
       </Card>
 
@@ -388,7 +372,7 @@ export function StorefrontThemePanel() {
               variant="outline"
               onClick={() => {
                 window.sessionStorage.setItem('ordella.theme.preview', JSON.stringify(theme));
-                setMessage('Preview theme stored for this browser session');
+                toastSuccess('Preview theme stored for this browser session');
               }}
             >
               Prepare preview

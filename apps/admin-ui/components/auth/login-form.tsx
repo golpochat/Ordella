@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input } from '@shared-ui';
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+import { FormField, FormLayout } from '@/components/ui/admin-form';
 import { browserTokenStorage } from '@/lib/api/browser';
 
 type LoginFormProps = {
@@ -79,52 +81,45 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
   }
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit}>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="tenantId">
-          Tenant ID
-        </label>
-        <Input
-          id="tenantId"
-          required
-          value={tenantId}
-          onChange={(e) => setTenantId(e.target.value)}
-          placeholder="Tenant UUID"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="email">
-          Email
-        </label>
-        <Input
-          id="email"
-          type="email"
-          required
-          autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="password">
-          Password
-        </label>
-        <Input
-          id="password"
-          type="password"
-          required
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </div>
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? 'Signing in…' : 'Sign in'}
-      </Button>
-      <Button type="button" variant="outline" className="w-full" disabled={loading || !tenantId} onClick={onSsoLogin}>
-        Login with SSO
-      </Button>
+    <form onSubmit={onSubmit}>
+      <FormLayout constrained={false}>
+        <FormErrorAlert message={error} title="Sign in failed" />
+        <FormField label="Tenant ID" htmlFor="tenantId" required>
+          <Input
+            id="tenantId"
+            required
+            value={tenantId}
+            onChange={(e) => setTenantId(e.target.value)}
+            placeholder="Tenant UUID"
+          />
+        </FormField>
+        <FormField label="Email" htmlFor="email" required>
+          <Input
+            id="email"
+            type="email"
+            required
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </FormField>
+        <FormField label="Password" htmlFor="password" required>
+          <Input
+            id="password"
+            type="password"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </FormField>
+        <Button type="submit" className="w-full" isLoading={loading} loadingLabel="Signing in…">
+          Sign in
+        </Button>
+        <Button type="button" variant="outline" className="w-full" disabled={loading || !tenantId} onClick={onSsoLogin}>
+          Login with SSO
+        </Button>
+      </FormLayout>
     </form>
   );
 }

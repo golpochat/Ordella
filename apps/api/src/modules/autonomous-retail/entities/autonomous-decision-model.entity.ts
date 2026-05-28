@@ -17,7 +17,7 @@ export class AutonomousDecisionModelEntity {
   @Column({ type: 'int', default: 1 })
   version!: number;
 
-  @Column({ type: 'varchar', length: 180 })
+  @Column({ name: 'display_name', type: 'varchar', length: 180 })
   displayName!: string;
 
   @Column({ type: 'jsonb', default: () => "'{}'" })

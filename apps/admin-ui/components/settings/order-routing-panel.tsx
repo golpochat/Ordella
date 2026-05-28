@@ -1,7 +1,8 @@
 'use client';
 
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea } from '@shared-ui';
 import { fetchLocations, updateLocation, type LocationListItem } from '@/lib/api/locations';
 import {
   fetchRoutingDecisions,
@@ -12,10 +13,15 @@ import {
 } from '@/lib/api/admin/routing';
 import { getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 const ruleTypes: RoutingRule['ruleType'][] = ['distance', 'stock', 'capacity', 'priority', 'delivery_zone'];
 
 export function OrderRoutingPanel() {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const { formatDateTime, formatNumber } = useTenantSettings();
   const [rules, setRules] = useState<RoutingRule[]>([]);
   const [decisions, setDecisions] = useState<RoutingDecision[]>([]);
@@ -28,11 +34,10 @@ export function OrderRoutingPanel() {
   const [zonesJson, setZonesJson] = useState('[]');
   const [supportsDelivery, setSupportsDelivery] = useState(true);
   const [supportsPickup, setSupportsPickup] = useState(true);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+
     void load();
   }, []);
 
@@ -40,7 +45,6 @@ export function OrderRoutingPanel() {
 
   async function load() {
     setLoading(true);
-    setError(null);
     try {
       const [nextRules, nextDecisions, nextLocations] = await Promise.all([
         fetchRoutingRules(),
@@ -51,35 +55,31 @@ export function OrderRoutingPanel() {
       setDecisions(nextDecisions);
       setLocations(nextLocations);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
   }
 
   async function saveRule() {
-    setMessage(null);
-    setError(null);
     try {
       await saveRoutingRule({
         ruleType,
         value: JSON.parse(ruleJson) as Record<string, unknown>,
         isActive: true,
       });
-      setMessage('Routing rule saved');
+      toastSuccess('Routing rule saved');
       await load();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function saveLocationRouting() {
     if (!locationId.trim()) {
-      setError('Location ID is required');
+      toastError('Location ID is required');
       return;
     }
-    setMessage(null);
-    setError(null);
     try {
       await updateLocation(locationId.trim(), {
         routingPriority: Number(priority),
@@ -88,26 +88,21 @@ export function OrderRoutingPanel() {
         supportsDelivery,
         supportsPickup,
       });
-      setMessage('Location routing settings saved');
+      toastSuccess('Location routing settings saved');
       await load();
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Order routing dashboard</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-4">
-          <Metric label="Active rules" value={formatNumber(activeRules.length)} />
-          <Metric label="Decisions logged" value={formatNumber(decisions.length)} />
-          <Metric label="Delivery locations" value={formatNumber(locations.filter((location) => location.supportsDelivery).length)} />
-          <Metric label="Zone-enabled locations" value={formatNumber(locations.filter((location) => (location.deliveryZones?.length ?? 0) > 0).length)} />
-        </CardContent>
-      </Card>
+      <MetricGrid columns={4}>
+        <Metric label="Active rules" value={formatNumber(activeRules.length)} />
+        <Metric label="Decisions logged" value={formatNumber(decisions.length)} />
+        <Metric label="Delivery locations" value={formatNumber(locations.filter((location) => location.supportsDelivery).length)} />
+        <Metric label="Zone-enabled locations" value={formatNumber(locations.filter((location) => (location.deliveryZones?.length ?? 0) > 0).length)} />
+      </MetricGrid>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
@@ -117,7 +112,7 @@ export function OrderRoutingPanel() {
           <CardContent className="space-y-4">
             <label className="space-y-2 text-sm font-medium">
               Rule type
-              <select
+              <Select
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 value={ruleType}
                 onChange={(event) => setRuleType(event.target.value as RoutingRule['ruleType'])}
@@ -127,11 +122,11 @@ export function OrderRoutingPanel() {
                     {type.replace('_', ' ')}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label className="space-y-2 text-sm font-medium">
               Rule JSON
-              <textarea
+              <Textarea
                 className="min-h-28 w-full rounded-md border border-input bg-background p-3 font-mono text-sm"
                 value={ruleJson}
                 onChange={(event) => setRuleJson(event.target.value)}
@@ -149,7 +144,7 @@ export function OrderRoutingPanel() {
             <Input placeholder="Location UUID" value={locationId} onChange={(event) => setLocationId(event.target.value)} />
             <Input type="number" min={0} value={priority} onChange={(event) => setPriority(event.target.value)} placeholder="Routing priority" />
             <Input type="number" min={1} value={capacity} onChange={(event) => setCapacity(event.target.value)} placeholder="Fulfillment capacity per hour" />
-            <textarea
+            <Textarea
               className="min-h-24 w-full rounded-md border border-input bg-background p-3 font-mono text-sm"
               value={zonesJson}
               onChange={(event) => setZonesJson(event.target.value)}
@@ -182,9 +177,7 @@ export function OrderRoutingPanel() {
               </div>
             </div>
           ))}
-          {!decisions.length ? <p className="text-sm text-muted-foreground">No routing decisions yet.</p> : null}
-          {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {!decisions.length ? <PanelEmpty title="No routing decisions yet" description="Content will appear here when available." /> : null}
           <Button variant="outline" onClick={load} disabled={loading}>
             Refresh
           </Button>
@@ -194,11 +187,3 @@ export function OrderRoutingPanel() {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border p-4">
-      <div className="text-2xl font-semibold">{value}</div>
-      <div className="text-sm text-muted-foreground">{label}</div>
-    </div>
-  );
-}

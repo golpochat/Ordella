@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { LoginForm } from '@/components/auth/login-form';
 import { MarketingAttributionCapture } from '@/components/auth/marketing-attribution-capture';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Logo } from '@shared-ui';
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
 
 type LoginPageProps = {
   searchParams: {
@@ -42,7 +43,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {errorMessage ? (
-            <p className="mb-4 text-sm text-destructive">{errorMessage}</p>
+            <FormErrorAlert message={errorMessage} title="Sign in unavailable" className="mb-4" />
           ) : null}
           <LoginForm redirectTo={searchParams.from ?? '/dashboard'} />
           <p className="text-center text-sm text-muted-foreground">

@@ -1,7 +1,11 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   getEventById,
@@ -14,6 +18,7 @@ import {
   type EventTopic,
 } from '@/lib/api/admin/event-bus';
 import { formatDate, getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 type EventBusPanelProps = {
   dashboard: EventBusDashboard | null;
@@ -23,6 +28,7 @@ type EventBusPanelProps = {
 };
 
 export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: initialDeadLetters }: EventBusPanelProps) {
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useAdminToast();
   const api = useMemo(() => createBrowserApiClient(), []);
   const [selectedTopic, setSelectedTopic] = useState(topics[0]?.topicKey ?? 'orders');
   const [stream, setStream] = useState(initialStream);
@@ -30,57 +36,48 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
   const [selectedEvent, setSelectedEvent] = useState<EventRecord | null>(initialStream[0] ?? null);
   const [fromSequence, setFromSequence] = useState('');
   const [toSequence, setToSequence] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   async function loadStream(topicKey = selectedTopic) {
-    setError(null);
     try {
       const result = await getEventStream(api, topicKey);
       setStream(result.events);
       setSelectedEvent(result.events[0] ?? null);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function inspectEvent(eventId: string) {
-    setError(null);
     try {
       const event = await getEventById(api, eventId);
       setSelectedEvent(event);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function runReplay() {
-    setMessage(null);
-    setError(null);
     try {
       const result = await replayEvents(api, {
         topicKey: selectedTopic,
         fromSequence: fromSequence || undefined,
         toSequence: toSequence || undefined,
       });
-      setMessage(`Replayed ${result.replayed} consumer deliveries across ${result.eventCount} events.`);
+      toastInfo(`Replayed ${result.replayed} consumer deliveries across ${result.eventCount} events.`);
       setDeadLetters(await listEventDeadLetters(api, selectedTopic));
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <Metric title="Topics" value={dashboard?.topicCount ?? topics.length} />
         <Metric title="Events (1h)" value={dashboard?.eventsLastHour ?? 0} />
         <Metric title="Throughput / min" value={dashboard?.throughputPerMinute ?? 0} />
         <Metric title="Open DLQ" value={dashboard?.openDeadLetters ?? deadLetters.length} />
-      </div>
-
-      {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      </MetricGrid>
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <Card>
@@ -100,7 +97,7 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium">{topic.displayName}</span>
-                  <Badge variant={topic.isActive ? 'secondary' : 'outline'}>{topic.isActive ? 'Active' : 'Disabled'}</Badge>
+                  <Tag variant={topic.isActive ? 'neutral' : 'outline'}><TagLabel>{topic.isActive ? 'Active' : 'Disabled'}</TagLabel></Tag>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">{topic.description}</p>
                 <p className="mt-2 text-xs text-muted-foreground">{topic.partitionCount} partitions · {topic.retentionDays} day retention</p>
@@ -115,7 +112,7 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Sequence</TableHead>
                   <TableHead>Type</TableHead>
@@ -123,7 +120,7 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
                   <TableHead>Time</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {stream.map((event) => (
                   <TableRow key={event.id} className="cursor-pointer" onClick={() => void inspectEvent(event.eventId)}>
                     <TableCell>{event.sequenceNumber}</TableCell>
@@ -134,7 +131,9 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
                 ))}
               </TableBody>
             </Table>
-            {!stream.length ? <p className="mt-3 text-sm text-muted-foreground">No events in this stream yet.</p> : null}
+            {!stream.length ? (
+              <PanelEmpty title="No events in this stream" description="Published events will appear in the live stream." />
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -169,21 +168,21 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
             </div>
             <Button type="button" onClick={() => void runReplay()}>Replay events</Button>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Consumer</TableHead>
                   <TableHead>Lag</TableHead>
                   <TableHead>Processed</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {(dashboard?.consumerLag ?? []).filter((row) => row.topicKey === selectedTopic).map((row) => (
                   <TableRow key={row.subscriptionId}>
                     <TableCell>
                       <p className="font-medium">{row.consumerGroup}</p>
                       <p className="text-xs text-muted-foreground">{row.consumerType}</p>
                     </TableCell>
-                    <TableCell><Badge variant={row.lag > 100 ? 'destructive' : 'secondary'}>{row.lag}</Badge></TableCell>
+                    <TableCell><Tag variant={row.lag > 100 ? 'error' : 'neutral'}><TagLabel>{row.lag}</TagLabel></Tag></TableCell>
                     <TableCell>{row.processedCount}</TableCell>
                   </TableRow>
                 ))}
@@ -199,7 +198,7 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Event</TableHead>
                 <TableHead>Attempts</TableHead>
@@ -207,7 +206,7 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
                 <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {deadLetters.map((letter) => (
                 <TableRow key={letter.id}>
                   <TableCell>{letter.eventId}</TableCell>
@@ -218,22 +217,12 @@ export function EventBusPanel({ dashboard, topics, initialStream, deadLetters: i
               ))}
             </TableBody>
           </Table>
-          {!deadLetters.length ? <p className="mt-3 text-sm text-muted-foreground">No dead-letter events.</p> : null}
+          {!deadLetters.length ? (
+            <PanelEmpty title="No dead-letter events" description="Failed deliveries awaiting replay will appear here." />
+          ) : null}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ title, value }: { title: string; value: string | number }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}

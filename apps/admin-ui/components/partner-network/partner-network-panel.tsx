@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { approvePartnerApplication, type PartnerApplication, type PartnerMarketplaceCategory, type PartnerMarketplaceItem } from '@/lib/api/admin/partner-network';
 import { getErrorMessage } from '@/lib/utils';
@@ -15,36 +18,32 @@ export function PartnerNetworkPanel({
   initialCategories: PartnerMarketplaceCategory[];
   initialItems: PartnerMarketplaceItem[];
 }) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const api = useMemo(() => createBrowserApiClient(), []);
   const [applications, setApplications] = useState(initialApplications);
   const [categories] = useState(initialCategories);
   const [items] = useState(initialItems);
 
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('submitted');
 
   const visibleApplications = useMemo(() => {
+
     return statusFilter ? applications.filter((a) => a.status === statusFilter) : applications;
   }, [applications, statusFilter]);
 
   async function decideApplication(application: PartnerApplication, status: 'approved' | 'rejected') {
-    setError(null);
-    setMessage(null);
     try {
       const updated = await approvePartnerApplication(api, application.id, { status });
       setApplications((current) => current.map((a) => (a.id === updated.id ? updated : a)));
-      setMessage(`Application ${status}`);
+      toastSuccess(`Application ${status}`);
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   return (
-    <div className="space-y-6">
-      {message ? <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm">{message}</p> : null}
-      {error ? <p className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{error}</p> : null}
-
+    <Stack gap="lg" className="min-w-0">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
@@ -56,7 +55,7 @@ export function PartnerNetworkPanel({
         </CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>ID</TableHead>
                 <TableHead>Partner</TableHead>
@@ -65,16 +64,16 @@ export function PartnerNetworkPanel({
                 <TableHead className="w-[260px]">Action</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {visibleApplications.length ? (
                 visibleApplications.map((app) => (
                   <TableRow key={app.id}>
                     <TableCell className="font-mono text-xs">{app.id}</TableCell>
                     <TableCell className="font-mono text-xs">{app.appPartnerId}</TableCell>
                     <TableCell>
-                      <Badge variant={app.status === 'approved' ? 'outline' : app.status === 'rejected' ? 'destructive' : 'secondary'}>
+                      <Tag variant={app.status === 'approved' ? 'outline' : app.status === 'rejected' ? 'error' : 'neutral'}><TagLabel>
                         {app.status}
-                      </Badge>
+                      </TagLabel></Tag>
                     </TableCell>
                     <TableCell className="text-sm">{new Date(app.submittedAt).toLocaleString()}</TableCell>
                     <TableCell className="flex gap-2">
@@ -106,13 +105,13 @@ export function PartnerNetworkPanel({
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {categories.map((c) => (
-              <Badge key={c.id} variant="secondary">
+              <Tag key={c.id} variant="neutral"><TagLabel>
                 {c.displayName}
-              </Badge>
+              </TagLabel></Tag>
             ))}
           </div>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Type</TableHead>
@@ -120,7 +119,7 @@ export function PartnerNetworkPanel({
                 <TableHead>Partner</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {items.slice(0, 20).map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
@@ -134,7 +133,7 @@ export function PartnerNetworkPanel({
           {items.length > 20 ? <p className="text-xs text-muted-foreground">Showing first 20 items.</p> : null}
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 

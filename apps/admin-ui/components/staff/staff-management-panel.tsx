@@ -1,23 +1,12 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared-ui';
+import { Select, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { fetchLocations, type LocationListItem } from '@/lib/api/locations';
 import {
   createRole,
@@ -35,6 +24,8 @@ import {
   type StaffMember,
 } from '@/lib/api/staff';
 import { getErrorMessage } from '@/lib/utils';
+import { TablePanelSkeleton } from '@/components/ui/admin-loader';
+import { DeleteConfirmDialog, DisableConfirmDialog } from '@/components/ui/admin-dialog';
 
 const EMPTY_STAFF = {
   id: '',
@@ -65,6 +56,10 @@ export function StaffManagementPanel() {
   const [loading, setLoading] = useState(true);
   const [savingStaff, setSavingStaff] = useState(false);
   const [savingRole, setSavingRole] = useState(false);
+  const [disableStaffTarget, setDisableStaffTarget] = useState<StaffMember | null>(null);
+  const [disableStaffLoading, setDisableStaffLoading] = useState(false);
+  const [deleteRoleTarget, setDeleteRoleTarget] = useState<Role | null>(null);
+  const [deleteRoleLoading, setDeleteRoleLoading] = useState(false);
 
   const locationNameById = useMemo(
     () => new Map(locations.map((location) => [location.id, location.name])),
@@ -188,6 +183,36 @@ export function StaffManagementPanel() {
     }));
   }
 
+  async function confirmDisableStaff() {
+    if (!disableStaffTarget) return;
+    setDisableStaffLoading(true);
+    setError(null);
+    try {
+      await disableStaff(disableStaffTarget.id);
+      setDisableStaffTarget(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setDisableStaffLoading(false);
+    }
+  }
+
+  async function confirmDeleteRole() {
+    if (!deleteRoleTarget) return;
+    setDeleteRoleLoading(true);
+    setError(null);
+    try {
+      await deleteRole(deleteRoleTarget.id);
+      setDeleteRoleTarget(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setDeleteRoleLoading(false);
+    }
+  }
+
   function toggleRolePermission(permission: string) {
     setRoleForm((current) => ({
       ...current,
@@ -198,12 +223,35 @@ export function StaffManagementPanel() {
   }
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading staff…</p>;
+    return <TablePanelSkeleton rows={6} columns={5} />;
   }
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      <DisableConfirmDialog
+        open={!!disableStaffTarget}
+        onOpenChange={(open) => {
+          if (!open) setDisableStaffTarget(null);
+        }}
+        itemName={disableStaffTarget?.name}
+        title={disableStaffTarget ? `Disable "${disableStaffTarget.name}"?` : 'Disable staff member?'}
+        description="They will lose access to POS and admin until re-enabled."
+        confirmLabel="Disable"
+        loading={disableStaffLoading}
+        onConfirm={confirmDisableStaff}
+      />
+      <DeleteConfirmDialog
+        open={!!deleteRoleTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteRoleTarget(null);
+        }}
+        itemName={deleteRoleTarget?.name}
+        title={deleteRoleTarget ? `Delete role "${deleteRoleTarget.name}"?` : 'Delete role?'}
+        description="Staff assigned to this role will need a new role assignment."
+        loading={deleteRoleLoading}
+        onConfirm={confirmDeleteRole}
+      />
+      {error ? <FormErrorAlert message={error} /> : null}
 
       <Card>
         <CardHeader>
@@ -212,7 +260,7 @@ export function StaffManagementPanel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Role</TableHead>
@@ -222,7 +270,7 @@ export function StaffManagementPanel() {
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {staff.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell>
@@ -238,14 +286,14 @@ export function StaffManagementPanel() {
                           .join(', ')}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={member.externalId ? 'default' : 'secondary'}>
+                    <Tag variant={member.externalId ? 'brand' : 'neutral'}><TagLabel>
                       {member.externalId ? 'SSO provisioned' : 'Password'}
-                    </Badge>
+                    </TagLabel></Tag>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={member.isActive ? 'secondary' : 'destructive'}>
+                    <Tag variant={member.isActive ? 'neutral' : 'error'}><TagLabel>
                       {member.isActive ? 'Active' : 'Disabled'}
-                    </Badge>
+                    </TagLabel></Tag>
                   </TableCell>
                   <TableCell className="space-x-2 text-right">
                     <Button type="button" variant="outline" size="sm" onClick={() => editStaff(member)}>
@@ -253,9 +301,9 @@ export function StaffManagementPanel() {
                     </Button>
                     <Button
                       type="button"
-                      variant="destructive"
+                      variant="error"
                       size="sm"
-                      onClick={() => void disableStaff(member.id).then(load).catch((err) => setError(getErrorMessage(err)))}
+                      onClick={() => setDisableStaffTarget(member)}
                       disabled={!member.isActive}
                     >
                       Disable
@@ -294,8 +342,7 @@ export function StaffManagementPanel() {
                 />
               </Field>
               <Field label="Role">
-                <select
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                <Select
                   value={staffForm.roleId}
                   onChange={(e) => setStaffForm({ ...staffForm, roleId: e.target.value })}
                   required
@@ -305,7 +352,7 @@ export function StaffManagementPanel() {
                       {role.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </Field>
               <label className="flex items-center gap-2 pt-7 text-sm">
                 <input
@@ -351,16 +398,16 @@ export function StaffManagementPanel() {
                     <p className="font-medium">{role.name}</p>
                     <p className="text-xs text-muted-foreground">{role.permissions.length} permissions</p>
                   </div>
-                  {role.isSystemRole ? <Badge variant="outline">Default</Badge> : null}
+                  {role.isSystemRole ? <Tag variant="outline"><TagLabel>Default</TagLabel></Tag> : null}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={() => setRoleForm({ id: role.id, name: role.name, description: role.description ?? '', permissions: role.permissions })}>
                     Edit
                   </Button>
-                  <Button type="button" variant="secondary" size="sm" onClick={() => void duplicateRole(role.id).then(load).catch((err) => setError(getErrorMessage(err)))}>
+                  <Button type="button" variant="neutral" size="sm" onClick={() => void duplicateRole(role.id).then(load).catch((err) => setError(getErrorMessage(err)))}>
                     Duplicate
                   </Button>
-                  <Button type="button" variant="destructive" size="sm" disabled={role.name === 'owner'} onClick={() => void deleteRole(role.id).then(load).catch((err) => setError(getErrorMessage(err)))}>
+                  <Button type="button" variant="error" size="sm" disabled={role.name === 'owner'} onClick={() => setDeleteRoleTarget(role)}>
                     Delete
                   </Button>
                 </div>
@@ -394,7 +441,7 @@ export function StaffManagementPanel() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 

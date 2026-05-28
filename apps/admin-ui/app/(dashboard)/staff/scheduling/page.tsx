@@ -31,13 +31,13 @@ export default async function StaffSchedulingPage({ searchParams }: StaffSchedul
   }
 
   return (
-    <div className="space-y-6">
+    <>
       <PageHeader
         title="Staff Scheduling"
         description="Build weekly and monthly rosters, detect conflicts, use shift templates, and track labor cost."
       />
       {error ? <ApiErrorBanner message={error} /> : null}
       {data && forecast ? <StaffSchedulingPanel initialRoster={data} initialForecast={forecast} staff={staff} locations={locations} /> : null}
-    </div>
+    </>
   );
 }

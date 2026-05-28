@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input } from '@shared-ui';
+import { Select, Input } from '@shared-ui';
 import { getCachedTenantList, getActiveTenantId } from '@shared-utils';
 import { browserTokenStorage } from '@/lib/api/browser';
 import { loadTenantsForSwitcher, switchActiveTenant, type TenantOption } from '@/lib/api/onboarding';
@@ -58,7 +58,7 @@ export function TenantSwitcher() {
     return (
       <label className="flex items-center gap-2 text-sm">
         <span className="text-muted-foreground">Tenant</span>
-        <select
+        <Select
           className="h-9 rounded-md border border-input bg-background px-2 text-sm"
           value={current}
           disabled={loading}
@@ -70,7 +70,7 @@ export function TenantSwitcher() {
               {t.tenantName}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
     );
   }

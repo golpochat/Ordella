@@ -21,10 +21,10 @@ export class ComplianceProfileEntity {
   @Column({ name: 'tax_report_template', type: 'varchar', length: 64, default: 'vat_return' })
   taxReportTemplate!: string;
 
-  @Column({ type: 'jsonb', default: () => "'{}'" })
+  @Column({ name: 'invoice_fields', type: 'jsonb', default: () => "'{}'" })
   invoiceFields!: Record<string, unknown>;
 
-  @Column({ type: 'jsonb', default: () => "'{}'" })
+  @Column({ name: 'export_config', type: 'jsonb', default: () => "'{}'" })
   exportConfig!: Record<string, unknown>;
 
   @Column({ name: 'updated_at', type: 'timestamptz', default: () => 'NOW()' })

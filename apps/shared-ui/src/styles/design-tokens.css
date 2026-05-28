@@ -1,0 +1,90 @@
+@import './design-tokens-vars.css';
+@import './design-tokens-motion.css';
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* ODS global focus — keyboard only; components may add ring utilities */
+  :focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  [data-ods-keyboard-nav='true'] :focus-visible {
+    outline-width: 3px;
+  }
+
+  /* Reduced motion */
+  [data-ods-reduced-motion='true'] *,
+  [data-ods-reduced-motion='true'] *::before,
+  [data-ods-reduced-motion='true'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* High contrast — strengthen text, borders, and focus */
+  [data-ods-high-contrast='true'] {
+    --muted-foreground: 222 47% 18%;
+    --border: 222 30% 35%;
+    --border-strong: 222 47% 11%;
+    --ring: 174 77% 22%;
+    --destructive: 0 75% 42%;
+    --success-muted-foreground: 160 90% 15%;
+    --warning-muted-foreground: 32 95% 22%;
+  }
+
+  [data-ods-high-contrast='true'].dark {
+    --muted-foreground: 210 30% 92%;
+    --border: 210 25% 72%;
+    --border-strong: 210 40% 88%;
+    --ring: 174 80% 65%;
+    --background: 222 47% 4%;
+    --card: 222 47% 6%;
+  }
+
+  @media (prefers-contrast: more) {
+    :root {
+      --muted-foreground: 222 47% 18%;
+      --border: 222 30% 35%;
+    }
+    .dark {
+      --muted-foreground: 210 30% 92%;
+      --border: 210 25% 72%;
+    }
+  }
+
+  /* Softer shadows in dark mode */
+  .dark [data-ods-elevation='sm'] {
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Disabled controls remain readable */
+  :disabled,
+  [aria-disabled='true'] {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}

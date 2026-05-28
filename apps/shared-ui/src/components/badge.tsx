@@ -1,30 +1,37 @@
-import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../lib/utils';
+import { Tag, TagLabel, type TagProps, type TagVariant } from './tag';
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-        secondary: 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive: 'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
+/** @deprecated Prefer `Tag` + `TagLabel` with semantic variants (`success`, `error`, etc.). */
+const badgeVariantMap = {
+  default: 'brand',
+  secondary: 'neutral',
+  destructive: 'error',
+  outline: 'outline',
+} as const satisfies Record<string, TagVariant>;
+
+export type BadgeVariant = keyof typeof badgeVariantMap;
+
+const badgeVariants = {
+  variants: {
+    variant: {
+      default: '',
+      secondary: '',
+      destructive: '',
+      outline: '',
     },
   },
-);
+};
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+export interface BadgeProps extends Omit<TagProps, 'variant'> {
+  variant?: BadgeVariant;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+function Badge({ className, variant = 'default', children, ...props }: BadgeProps) {
+  const mapped = badgeVariantMap[variant ?? 'default'];
+  return (
+    <Tag variant={mapped} className={className} {...props}>
+      <TagLabel>{children}</TagLabel>
+    </Tag>
+  );
 }
 
 export { Badge, badgeVariants };

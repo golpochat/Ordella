@@ -30,8 +30,8 @@ export default async function FranchiseHqDashboardPage() {
       <PageHeader
         title="Franchise HQ"
         description="Enterprise overview across franchisee tenants, locations, orders, inventory, staff, and alerts."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />}
       />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
       {error ? <ApiErrorBanner message={error} /> : null}
       {data ? (
         <FranchiseHqDashboardPanel overview={data} categories={categories} customers={customers} />

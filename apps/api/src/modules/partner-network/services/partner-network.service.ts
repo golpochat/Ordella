@@ -109,6 +109,8 @@ export class PartnerNetworkService {
     private readonly appStore: AppStoreService,
   ) {}
 
+  private readonly ensureDefaultsLocks = new Map<string, Promise<void>>();
+
   async partnerLogin(tenant: TenantContext, dto: PartnerPortalLoginDto) {
     await this.ensureDefaults(tenant);
     const user = await this.users.findOne({
@@ -732,7 +734,21 @@ export class PartnerNetworkService {
     return safe;
   }
 
-  private async ensureDefaults(tenant: TenantContext) {
+  private ensureDefaults(tenant: TenantContext): Promise<void> {
+    const tenantId = tenant.tenantId;
+    const inFlight = this.ensureDefaultsLocks.get(tenantId);
+    if (inFlight) return inFlight;
+
+    const run = this.seedDefaults(tenant).finally(() => {
+      if (this.ensureDefaultsLocks.get(tenantId) === run) {
+        this.ensureDefaultsLocks.delete(tenantId);
+      }
+    });
+    this.ensureDefaultsLocks.set(tenantId, run);
+    return run;
+  }
+
+  private async seedDefaults(tenant: TenantContext) {
     // Tiers
     for (const tier of DEFAULT_TIERS) {
       const existing = await this.tiers.findOne({ where: { tenantId: tenant.tenantId, tierKey: tier.tierKey } });

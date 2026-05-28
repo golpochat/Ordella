@@ -1,7 +1,22 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import { Ban, Eye, PackageCheck } from 'lucide-react';
+import { Select, Button, Card, CardContent, IconButton, Input , Stack } from '@shared-ui';
+import {
+  AdminTableShell,
+  Table,
+  TableActions,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/admin-table';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { listCatalogItems, type CatalogItem } from '@/lib/api/catalog';
 import { fetchLocations, type LocationListItem } from '@/lib/api/locations';
@@ -18,6 +33,7 @@ import {
 } from '@/lib/api/admin/procurement';
 import { getErrorMessage } from '@/lib/utils';
 import { useTenantSettings } from '@/hooks/use-tenant-settings';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
 type PoLineForm = {
   itemId: string;
@@ -184,16 +200,16 @@ export function PurchaseOrdersPanel() {
   };
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
 
       {analytics ? (
-        <div className="grid gap-3 md:grid-cols-4">
+        <MetricGrid columns={4}>
           <MetricCard label="Active suppliers" value={analytics.activeSuppliers} />
           <MetricCard label="Open POs" value={analytics.openPurchaseOrders} />
           <MetricCard label="Delayed orders" value={analytics.delayedOrders} />
           <MetricCard label="On-time delivery" value={`${analytics.onTimeDeliveryRate}%`} />
-        </div>
+        </MetricGrid>
       ) : null}
 
       <Card>
@@ -213,21 +229,21 @@ export function PurchaseOrdersPanel() {
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value, items: [] })}>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value, items: [] })}>
               {suppliers.filter((supplier) => supplier.isActive).map((supplier) => (
                 <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
               ))}
-            </select>
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })}>
+            </Select>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.locationId} onChange={(e) => setForm({ ...form, locationId: e.target.value })}>
               {locations.map((location) => (
                 <option key={location.id} value={location.id}>{location.name}</option>
               ))}
-            </select>
+            </Select>
             <Input type="date" value={form.expectedDeliveryDate} onChange={(e) => setForm({ ...form, expectedDeliveryDate: e.target.value })} />
-            <select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as PoForm['status'] })}>
+            <Select className="h-10 rounded-md border bg-background px-3 text-sm" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as PoForm['status'] })}>
               <option value="draft">Save as draft</option>
               <option value="sent">Send PO</option>
-            </select>
+            </Select>
           </div>
 
           <div className="space-y-3">
@@ -271,7 +287,7 @@ export function PurchaseOrdersPanel() {
             </div>
             {form.items.map((line, index) => (
               <div key={`${line.itemId}-${index}`} className="grid gap-2 rounded-lg border p-3 md:grid-cols-5">
-                <select
+                <Select
                   className="h-10 rounded-md border bg-background px-3 text-sm md:col-span-2"
                   value={line.itemId}
                   onChange={(e) => {
@@ -285,7 +301,7 @@ export function PurchaseOrdersPanel() {
                   {purchasableItems.map((item) => (
                     <option key={item.id} value={item.id}>{item.name}</option>
                   ))}
-                </select>
+                </Select>
                 <Input type="number" min={1} value={line.quantityOrdered} onChange={(e) => setForm((current) => ({
                   ...current,
                   items: current.items.map((item, i) => (i === index ? { ...item, quantityOrdered: Number(e.target.value) } : item)),
@@ -310,59 +326,86 @@ export function PurchaseOrdersPanel() {
         </CardContent>
       </Card>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left">
-            <tr>
-              <th className="p-3 font-medium">Supplier</th>
-              <th className="p-3 font-medium">Location</th>
-              <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Net cost</th>
-              <th className="p-3 font-medium">Tax</th>
-              <th className="p-3 font-medium">Gross cost</th>
-              <th className="p-3 font-medium">Expected delivery</th>
-              <th className="p-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <AdminTableShell
+        isEmpty={orders.length === 0}
+        emptyTitle="No purchase orders"
+        emptyDescription="Create a purchase order to track procurement."
+      >
+        <Table>
+          <TableHeader sticky>
+            <TableRow>
+              <TableHead>Supplier</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Net cost</TableHead>
+              <TableHead>Tax</TableHead>
+              <TableHead>Gross cost</TableHead>
+              <TableHead>Expected delivery</TableHead>
+              <TableHead className="w-[1%] text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody zebra>
             {orders.map((order) => (
-              <tr key={order.id} className="border-t">
-                <td className="p-3 font-medium">{order.supplier?.name ?? supplierById[order.supplierId]?.name ?? 'Supplier'}</td>
-                <td className="p-3">{order.location?.name ?? order.locationId}</td>
-                <td className="p-3"><StatusBadge status={order.status} /></td>
-                <td className="p-3">{formatCurrency(order.subtotalCost ?? order.totalCost)}</td>
-                <td className="p-3">{formatCurrency(order.taxTotal ?? '0.00')}</td>
-                <td className="p-3">{formatCurrency(order.totalCost)}</td>
-                <td className="p-3">{order.expectedDeliveryDate ?? 'Not set'}</td>
-                <td className="p-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={() => editOrder(order)} disabled={['received', 'cancelled'].includes(order.status)}>
-                      View
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setReceiveOrder(order)} disabled={['received', 'cancelled'].includes(order.status)}>
-                      Receive
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => void updatePurchaseOrder(api, {
-                      id: order.id,
-                      supplierId: order.supplierId,
-                      locationId: order.locationId,
-                      status: 'cancelled',
-                      expectedDeliveryDate: order.expectedDeliveryDate ?? undefined,
-                      items: order.items.map((item) => ({
-                        itemId: item.itemId,
-                        quantityOrdered: item.quantityOrdered,
-                        costPrice: Number(item.costPrice),
-                      })),
-                    }).then(load)} disabled={['received', 'cancelled'].includes(order.status)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </td>
-              </tr>
+              <TableRow key={order.id}>
+                <TableCell className="font-medium">{order.supplier?.name ?? supplierById[order.supplierId]?.name ?? 'Supplier'}</TableCell>
+                <TableCell>{order.location?.name ?? order.locationId}</TableCell>
+                <TableCell>
+                  <StatusBadge status={order.status} />
+                </TableCell>
+                <TableCell>{formatCurrency(order.subtotalCost ?? order.totalCost)}</TableCell>
+                <TableCell>{formatCurrency(order.taxTotal ?? '0.00')}</TableCell>
+                <TableCell>{formatCurrency(order.totalCost)}</TableCell>
+                <TableCell>{order.expectedDeliveryDate ?? 'Not set'}</TableCell>
+                <TableCell className="text-right">
+                  <TableActions>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-label="View purchase order"
+                      onClick={() => editOrder(order)}
+                      disabled={['received', 'cancelled'].includes(order.status)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      aria-label="Receive purchase order"
+                      onClick={() => setReceiveOrder(order)}
+                      disabled={['received', 'cancelled'].includes(order.status)}
+                    >
+                      <PackageCheck className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Cancel purchase order"
+                      onClick={() => void updatePurchaseOrder(api, {
+                        id: order.id,
+                        supplierId: order.supplierId,
+                        locationId: order.locationId,
+                        status: 'cancelled',
+                        expectedDeliveryDate: order.expectedDeliveryDate ?? undefined,
+                        items: order.items.map((item) => ({
+                          itemId: item.itemId,
+                          quantityOrdered: item.quantityOrdered,
+                          costPrice: Number(item.costPrice),
+                        })),
+                      }).then(load)}
+                      disabled={['received', 'cancelled'].includes(order.status)}
+                    >
+                      <Ban className="h-4 w-4" />
+                    </IconButton>
+                  </TableActions>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </AdminTableShell>
 
       {receiveOrder ? (
         <Card>
@@ -396,23 +439,17 @@ export function PurchaseOrdersPanel() {
           </CardContent>
         </Card>
       ) : null}
-    </div>
+    </Stack>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function StatusBadge({ status }: { status: PurchaseOrder['status'] }) {
-  const variant: 'default' | 'secondary' | 'destructive' | 'outline' =
-    status === 'received' ? 'default' : status === 'cancelled' ? 'destructive' : status === 'partial' ? 'outline' : 'secondary';
-  return <Badge variant={variant}>{status}</Badge>;
+  const variant: import('@/components/ui/admin-tag').TagVariant =
+    status === 'received' ? 'success' : status === 'cancelled' ? 'error' : status === 'partial' ? 'warning' : 'neutral';
+  return (
+    <Tag variant={variant}>
+      <TagLabel>{status}</TagLabel>
+    </Tag>
+  );
 }

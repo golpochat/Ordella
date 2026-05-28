@@ -1,9 +1,10 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Button,
+import { Select, Button,
   Card,
   CardContent,
   CardHeader,
@@ -15,6 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Stack,
 } from '@shared-ui';
 import type { AdminModifier } from '@/lib/api/admin/products';
 import { createBrowserApiClient } from '@/lib/api/browser';
@@ -53,7 +55,7 @@ export function ModifiersPanel({ modifiers }: { modifiers: AdminModifier[] }) {
   }
 
   return (
-    <div className="space-y-6">
+    <Stack gap="lg" className="min-w-0">
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">New modifier group</CardTitle>
@@ -77,7 +79,7 @@ export function ModifiersPanel({ modifiers }: { modifiers: AdminModifier[] }) {
         </CardHeader>
         <CardContent>
           <form className="flex flex-wrap gap-2" onSubmit={onAddOption}>
-            <select
+            <Select
               className="h-10 rounded-md border border-input bg-background px-3 text-sm"
               value={optionModifierId}
               onChange={(e) => setOptionModifierId(e.target.value)}
@@ -89,7 +91,7 @@ export function ModifiersPanel({ modifiers }: { modifiers: AdminModifier[] }) {
                   {m.name}
                 </option>
               ))}
-            </select>
+            </Select>
             <Input
               className="max-w-xs"
               placeholder="Option name"
@@ -99,17 +101,17 @@ export function ModifiersPanel({ modifiers }: { modifiers: AdminModifier[] }) {
             />
             <Button type="submit">Add option</Button>
           </form>
-          {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+          {error ? <FormErrorAlert message={error} /> : null}
         </CardContent>
       </Card>
       <Table>
-        <TableHeader>
+        <TableHeader sticky>
           <TableRow>
             <TableHead>Modifier</TableHead>
             <TableHead>Options</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody zebra>
           {modifiers.map((m) => (
             <TableRow key={m.id}>
               <TableCell className="font-medium">{m.name}</TableCell>
@@ -120,6 +122,6 @@ export function ModifiersPanel({ modifiers }: { modifiers: AdminModifier[] }) {
           ))}
         </TableBody>
       </Table>
-    </div>
+    </Stack>
   );
 }

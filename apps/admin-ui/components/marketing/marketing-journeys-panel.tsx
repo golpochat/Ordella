@@ -1,7 +1,11 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { upsertJourney, type MarketingJourney, type MarketingSegment } from '@/lib/api/admin/marketing';
 import { getErrorMessage } from '@/lib/utils';
@@ -72,22 +76,22 @@ export function MarketingJourneysPanel({
         <CardContent className="space-y-4">
           <form className="grid gap-3 md:grid-cols-3" onSubmit={save}>
             <Input placeholder="Journey name" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.trigger} onChange={(event) => setForm((current) => ({ ...current, trigger: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.trigger} onChange={(event) => setForm((current) => ({ ...current, trigger: event.target.value }))}>
               {TRIGGERS.map((trigger) => <option key={trigger} value={trigger}>{trigger.replace(/_/g, ' ')}</option>)}
-            </select>
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.targetSegmentId} onChange={(event) => setForm((current) => ({ ...current, targetSegmentId: event.target.value }))}>
+            </Select>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.targetSegmentId} onChange={(event) => setForm((current) => ({ ...current, targetSegmentId: event.target.value }))}>
               <option value="">All eligible customers</option>
               {segments.map((segment) => <option key={segment.id} value={segment.id}>{segment.name}</option>)}
-            </select>
+            </Select>
             <Input placeholder="Wait value" type="number" value={form.delayValue} onChange={(event) => setForm((current) => ({ ...current, delayValue: event.target.value }))} />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.delayUnit} onChange={(event) => setForm((current) => ({ ...current, delayUnit: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.delayUnit} onChange={(event) => setForm((current) => ({ ...current, delayUnit: event.target.value }))}>
               <option value="hours">Hours</option>
               <option value="days">Days</option>
-            </select>
+            </Select>
             <Input placeholder="Condition" value={form.condition} onChange={(event) => setForm((current) => ({ ...current, condition: event.target.value }))} />
-            <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.action} onChange={(event) => setForm((current) => ({ ...current, action: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.action} onChange={(event) => setForm((current) => ({ ...current, action: event.target.value }))}>
               {ACTIONS.map((action) => <option key={action} value={action}>{action.replace(/_/g, ' ')}</option>)}
-            </select>
+            </Select>
             <Input placeholder="Promotion ID for apply promotion" value={form.promotionId} onChange={(event) => setForm((current) => ({ ...current, promotionId: event.target.value }))} />
             <Input placeholder="Points for add points" type="number" value={form.points} onChange={(event) => setForm((current) => ({ ...current, points: event.target.value }))} />
             <Button type="submit">Save journey</Button>
@@ -100,7 +104,7 @@ export function MarketingJourneysPanel({
               </div>
             ))}
           </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <FormErrorAlert message={error} /> : null}
         </CardContent>
       </Card>
 
@@ -108,16 +112,16 @@ export function MarketingJourneysPanel({
         <CardHeader><CardTitle>Journeys</CardTitle></CardHeader>
         <CardContent>
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow><TableHead>Name</TableHead><TableHead>Trigger</TableHead><TableHead>Channels</TableHead><TableHead>Status</TableHead><TableHead>Steps</TableHead></TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {journeys.map((journey) => (
                 <TableRow key={journey.id}>
                   <TableCell className="font-medium">{journey.name}</TableCell>
                   <TableCell>{journey.trigger.replace(/_/g, ' ')}</TableCell>
                   <TableCell>{journey.channels.join(', ')}</TableCell>
-                  <TableCell><Badge variant="secondary">{journey.status}</Badge></TableCell>
+                  <TableCell><Tag variant="neutral"><TagLabel>{journey.status}</TagLabel></Tag></TableCell>
                   <TableCell>{journey.steps.length}</TableCell>
                 </TableRow>
               ))}

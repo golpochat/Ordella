@@ -1,4 +1,5 @@
-import { Badge, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+import { Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack } from '@shared-ui';
 import { formatMoney } from '@/lib/utils';
 import type { HqCategory, HqCustomer, HqOverview } from '@/lib/api/admin/franchise-hq';
 
@@ -28,7 +29,7 @@ export function FranchiseHqDashboardPanel({
   customers,
 }: FranchiseHqDashboardPanelProps) {
   return (
-    <div className="space-y-6">
+    <Stack gap="lg" className="min-w-0">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard title="Total revenue" value={formatMoney(overview.totalRevenue)} />
         <KpiCard title="Total orders" value={overview.totalOrders.toLocaleString()} />
@@ -75,7 +76,7 @@ export function FranchiseHqDashboardPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Location</TableHead>
                   <TableHead>Category</TableHead>
@@ -83,7 +84,7 @@ export function FranchiseHqDashboardPanel({
                   <TableHead className="text-right">Revenue</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {categories.slice(0, 8).map((row) => (
                   <TableRow key={`${row.locationId}-${row.categoryId ?? 'none'}`}>
                     <TableCell>{row.locationName}</TableCell>
@@ -103,14 +104,14 @@ export function FranchiseHqDashboardPanel({
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader sticky>
                 <TableRow>
                   <TableHead>Franchisee</TableHead>
                   <TableHead>Customers</TableHead>
                   <TableHead className="text-right">Lifetime value</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody zebra>
                 {customers.slice(0, 8).map((row) => (
                   <TableRow key={row.tenantId}>
                     <TableCell>{row.tenantName}</TableCell>
@@ -123,7 +124,7 @@ export function FranchiseHqDashboardPanel({
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Stack>
   );
 }
 
@@ -135,7 +136,7 @@ function LocationTable({ title, locations }: { title: string; locations: HqOverv
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader>
+          <TableHeader sticky>
             <TableRow>
               <TableHead>Location</TableHead>
               <TableHead>Status</TableHead>
@@ -143,7 +144,7 @@ function LocationTable({ title, locations }: { title: string; locations: HqOverv
               <TableHead className="text-right">Revenue</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody zebra>
             {locations.map((location) => (
               <TableRow key={location.locationId}>
                 <TableCell>
@@ -153,7 +154,7 @@ function LocationTable({ title, locations }: { title: string; locations: HqOverv
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">{location.status}</Badge>
+                  <Tag variant="neutral"><TagLabel>{location.status}</TagLabel></Tag>
                 </TableCell>
                 <TableCell>{location.orders}</TableCell>
                 <TableCell className="text-right">{formatMoney(location.revenue)}</TableCell>

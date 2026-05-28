@@ -19,8 +19,8 @@ export default async function FranchiseHqStaffPage() {
 
   return (
     <>
-      <PageHeader title="Franchise HQ Staff" description="Read-only staff visibility across franchisee tenants." />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
+      <PageHeader title="Franchise HQ Staff" description="Read-only staff visibility across franchisee tenants."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
       {result?.rows.length ? (
         <FranchiseStaffTable staff={result.rows} />

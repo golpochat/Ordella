@@ -1,7 +1,11 @@
 'use client';
 
+import { FormErrorAlert } from '@/components/ui/admin-form-validation';
+
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent } from '@shared-ui';
+import { Select, Button, Card, CardContent , Stack } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import { fetchLocations, type LocationListItem } from '@/lib/api/locations';
 import {
@@ -16,6 +20,8 @@ import {
   type PickTask,
 } from '@/lib/api/admin/warehouse';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 export function PickingModePanel() {
   const api = useMemo(() => createBrowserApiClient(), []);
@@ -101,15 +107,15 @@ export function PickingModePanel() {
   });
 
   return (
-    <div className="space-y-6">
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    <Stack gap="lg" className="min-w-0">
+      {error ? <FormErrorAlert message={error} /> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">Picking Mode</h2>
           <p className="text-sm text-muted-foreground">Batch, wave, and zone picking for dark stores and micro-fulfillment locations.</p>
         </div>
-        <select
+        <Select
           className="h-10 rounded-md border bg-background px-3 text-sm"
           value={selectedLocationId}
           onChange={(event) => setSelectedLocationId(event.target.value)}
@@ -117,15 +123,15 @@ export function PickingModePanel() {
           {locations.map((location) => (
             <option key={location.id} value={location.id}>{location.name}</option>
           ))}
-        </select>
+        </Select>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-4">
+      <MetricGrid columns={4}>
         <Metric label="Pending orders" value={pendingOrders.length} />
         <Metric label="Active pick tasks" value={activeTasks.length} />
         <Metric label="Open waves" value={new Set(openTasks.map((task) => task.waveId).filter(Boolean)).size} />
         <Metric label="Zones" value={zones.size} />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardContent className="space-y-4 p-4">
@@ -180,7 +186,7 @@ export function PickingModePanel() {
                     <p className="font-medium">Order {order.orderNumber ?? order.id.slice(0, 8)}</p>
                     <p className="text-sm text-muted-foreground">{order.itemCount} items · {order.total}</p>
                   </div>
-                  <Badge variant="secondary">{order.status}</Badge>
+                  <Tag variant="neutral"><TagLabel>{order.status}</TagLabel></Tag>
                 </div>
                 <Button
                   type="button"
@@ -197,7 +203,7 @@ export function PickingModePanel() {
                 </Button>
               </div>
             ))}
-            {pendingOrders.length === 0 ? <p className="text-sm text-muted-foreground">No pending dark-store orders.</p> : null}
+            {pendingOrders.length === 0 ? <PanelEmpty title="No pending dark-store orders" description="Content will appear here when available." /> : null}
           </div>
         </CardContent>
       </Card>
@@ -216,8 +222,8 @@ export function PickingModePanel() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Badge>{task.status}</Badge>
-                    {task.batchId ? <Badge variant="outline">Batch {task.batchId.slice(0, 8)}</Badge> : null}
+                    <Tag><TagLabel>{task.status}</TagLabel></Tag>
+                    {task.batchId ? <Tag variant="outline"><TagLabel>Batch {task.batchId.slice(0, 8)}</TagLabel></Tag> : null}
                   </div>
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -243,7 +249,7 @@ export function PickingModePanel() {
                       </div>
                     </div>
                   ))}
-                  {(task.lines ?? []).length === 0 ? <p className="text-sm text-muted-foreground">No item details available.</p> : null}
+                  {(task.lines ?? []).length === 0 ? <PanelEmpty title="No item details available" description="Content will appear here when available." /> : null}
                 </div>
                 <div className="mt-3 flex gap-2">
                   <Button type="button" disabled={loading} onClick={() => run(() => completeDarkStorePickTask(api, task.id, confirmationLines(task)).then(() => undefined))}>
@@ -255,7 +261,7 @@ export function PickingModePanel() {
                 </div>
               </div>
             ))}
-            {openTasks.length === 0 ? <p className="text-sm text-muted-foreground">No active pick tasks.</p> : null}
+            {openTasks.length === 0 ? <PanelEmpty title="No active pick tasks" description="Content will appear here when available." /> : null}
           </div>
         </CardContent>
       </Card>
@@ -273,17 +279,7 @@ export function PickingModePanel() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-1 text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}

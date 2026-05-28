@@ -1,0 +1,10 @@
+{
+  "nav": {
+    "dashboard": "Analítica",
+    "settings": "Configuración"
+  },
+  "common": {
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  }
+}

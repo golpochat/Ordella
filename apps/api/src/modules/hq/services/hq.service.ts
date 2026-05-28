@@ -141,7 +141,7 @@ export class HqService {
       .where('customer.tenant_id IN (:...tenantIds)', { tenantIds: scope.tenantIds })
       .groupBy('customer.tenant_id')
       .addGroupBy('tenant.name')
-      .orderBy('lifetimeValue', 'DESC')
+      .orderBy('COALESCE(SUM(customer.lifetime_value), 0)', 'DESC')
       .getRawMany<{ tenantId: string; tenantName: string; customers: string; lifetimeValue: string; avgOrderValue: string }>();
     return rows.map((row) => ({
       tenantId: row.tenantId,

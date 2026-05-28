@@ -1,7 +1,10 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
+import { useAdminToast } from '@/components/ui/admin-toast';
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardHeader, CardTitle, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Stack, Textarea } from '@shared-ui';
 import { createBrowserApiClient } from '@/lib/api/browser';
 import {
   assignEnterpriseAccess,
@@ -14,6 +17,9 @@ import {
 } from '@/lib/api/admin/enterprise';
 import { createRole, type Permission, type Role, type StaffMember } from '@/lib/api/staff';
 import { getErrorMessage } from '@/lib/utils';
+import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
+
+import { PanelEmpty } from '@/components/ui/admin-empty-state';
 
 const money = new Intl.NumberFormat('en', { style: 'currency', currency: 'USD' });
 
@@ -30,6 +36,8 @@ export function EnterpriseAdminPanel({
   roles: Role[];
   permissions: Permission[];
 }) {
+  const { success: toastSuccess, error: toastError, warning: toastWarning, info: toastInfo } = useAdminToast();
+
   const [hierarchy, setHierarchy] = useState(initialHierarchy);
   const [dashboard] = useState(initialDashboard);
   const [roleRows, setRoleRows] = useState(roles);
@@ -46,14 +54,10 @@ export function EnterpriseAdminPanel({
   const [settingsJson, setSettingsJson] = useState(JSON.stringify(initialHierarchy.organization.globalSettings, null, 2));
   const [ssoJson, setSsoJson] = useState(JSON.stringify(initialHierarchy.organization.ssoPolicy, null, 2));
   const [roleForm, setRoleForm] = useState({ name: '', description: '', permissions: [] as string[] });
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const regionNameById = useMemo(() => new Map(hierarchy.regions.map((region) => [region.id, region.name])), [hierarchy.regions]);
+    const regionNameById = useMemo(() => new Map(hierarchy.regions.map((region) => [region.id, region.name])), [hierarchy.regions]);
 
   async function submitRegion(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const region = await createEnterpriseRegion(createBrowserApiClient(), {
         organizationId: hierarchy.organization.id,
@@ -63,28 +67,26 @@ export function EnterpriseAdminPanel({
       setHierarchy((current) => ({ ...current, regions: [...current.regions, region] }));
       setRegionName('');
       setSelectedRegionId(region.id);
-      setMessage('Region created');
+      toastSuccess('Region created');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function submitRegionLocations(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const updated = await assignRegionLocations(createBrowserApiClient(), selectedRegionId, selectedLocationIds);
       setHierarchy(updated);
       setSelectedLocationIds([]);
-      setMessage('Locations assigned to region');
+      toastSuccess('Locations assigned to region');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function submitAccess(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const payload = {
         ...accessForm,
@@ -94,47 +96,44 @@ export function EnterpriseAdminPanel({
       };
       const assignment = await assignEnterpriseAccess(createBrowserApiClient(), payload);
       setHierarchy((current) => ({ ...current, assignments: [assignment, ...current.assignments] }));
-      setMessage('Access scope assigned');
+      toastSuccess('Access scope assigned');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function submitSettings(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const organization = await updateEnterpriseSettings(createBrowserApiClient(), hierarchy.organization.id, {
         globalSettings: JSON.parse(settingsJson) as Record<string, unknown>,
       });
       setHierarchy((current) => ({ ...current, organization }));
-      setMessage('Enterprise settings updated');
+      toastSuccess('Enterprise settings updated');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function submitSso(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       await updateEnterpriseSsoPolicy(createBrowserApiClient(), hierarchy.organization.id, JSON.parse(ssoJson) as Record<string, unknown>);
-      setMessage('SSO policy updated');
+      toastSuccess('SSO policy updated');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
   async function submitRole(event: React.FormEvent) {
     event.preventDefault();
-    setError(null);
     try {
       const role = await createRole(roleForm);
       setRoleRows((current) => [...current, role]);
       setRoleForm({ name: '', description: '', permissions: [] });
-      setMessage('Custom role created');
+      toastSuccess('Custom role created');
     } catch (err) {
-      setError(getErrorMessage(err));
+      toastError(getErrorMessage(err));
     }
   }
 
@@ -152,16 +151,13 @@ export function EnterpriseAdminPanel({
   }
 
   return (
-    <div className="space-y-6">
-      {message ? <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm">{message}</p> : null}
-      {error ? <p className="rounded-md border border-destructive px-3 py-2 text-sm text-destructive">{error}</p> : null}
-
-      <div className="grid gap-4 md:grid-cols-4">
+    <Stack gap="lg" className="min-w-0">
+      <MetricGrid columns={4}>
         <MetricCard title="Roll-up sales" value={money.format(dashboard.sales.revenue)} detail={`${dashboard.sales.orders} orders`} />
         <MetricCard title="Inventory health" value={`${dashboard.inventory.lowStock} low`} detail={`${dashboard.inventory.totalItems} stock items`} />
         <MetricCard title="Delivery performance" value={`${Math.round(dashboard.delivery.completionRate * 100)}%`} detail={`${dashboard.delivery.delivered}/${dashboard.delivery.totalDeliveries} delivered`} />
         <MetricCard title="Staff coverage" value={String(dashboard.staff.staffCount)} detail={`${dashboard.scope.locationIds.length} visible locations`} />
-      </div>
+      </MetricGrid>
 
       <Card>
         <CardHeader>
@@ -186,16 +182,16 @@ export function EnterpriseAdminPanel({
 
           <form className="grid gap-3 md:grid-cols-[1fr_180px_auto]" onSubmit={submitRegion}>
             <Input placeholder="New region name" value={regionName} onChange={(event) => setRegionName(event.target.value)} required />
-            <select className="rounded-md border bg-background px-3 py-2 text-sm" value={regionType} onChange={(event) => setRegionType(event.target.value)}>
+            <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={regionType} onChange={(event) => setRegionType(event.target.value)}>
               <option value="custom">Custom</option>
               <option value="country">Country</option>
               <option value="state">State</option>
-            </select>
+            </Select>
             <Button type="submit">Create region</Button>
           </form>
 
           <Table>
-            <TableHeader>
+            <TableHeader sticky>
               <TableRow>
                 <TableHead>Location</TableHead>
                 <TableHead>Type</TableHead>
@@ -203,7 +199,7 @@ export function EnterpriseAdminPanel({
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody zebra>
               {hierarchy.locations.map((location) => (
                 <TableRow key={location.id}>
                   <TableCell>
@@ -214,16 +210,16 @@ export function EnterpriseAdminPanel({
                   </TableCell>
                   <TableCell>{location.locationType}</TableCell>
                   <TableCell>{location.regionId ? regionNameById.get(location.regionId) ?? 'Unknown' : 'Unassigned'}</TableCell>
-                  <TableCell><Badge variant="outline">{location.status}</Badge></TableCell>
+                  <TableCell><Tag variant="outline"><TagLabel>{location.status}</TagLabel></Tag></TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
 
           <form className="flex flex-wrap gap-3" onSubmit={submitRegionLocations}>
-            <select className="rounded-md border bg-background px-3 py-2 text-sm" value={selectedRegionId} onChange={(event) => setSelectedRegionId(event.target.value)} required>
+            <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={selectedRegionId} onChange={(event) => setSelectedRegionId(event.target.value)} required>
               {hierarchy.regions.map((region) => <option key={region.id} value={region.id}>{region.name}</option>)}
-            </select>
+            </Select>
             <Button type="submit" disabled={!selectedRegionId || selectedLocationIds.length === 0}>Assign selected locations</Button>
           </form>
         </CardContent>
@@ -235,17 +231,17 @@ export function EnterpriseAdminPanel({
         </CardHeader>
         <CardContent className="space-y-4">
           <form className="grid gap-3 lg:grid-cols-5" onSubmit={submitAccess}>
-            <select className="rounded-md border bg-background px-3 py-2 text-sm" value={accessForm.userId} onChange={(event) => setAccessForm((current) => ({ ...current, userId: event.target.value }))}>
+            <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={accessForm.userId} onChange={(event) => setAccessForm((current) => ({ ...current, userId: event.target.value }))}>
               {staff.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
-            </select>
-            <select className="rounded-md border bg-background px-3 py-2 text-sm" value={accessForm.roleId} onChange={(event) => setAccessForm((current) => ({ ...current, roleId: event.target.value }))}>
+            </Select>
+            <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={accessForm.roleId} onChange={(event) => setAccessForm((current) => ({ ...current, roleId: event.target.value }))}>
               {roleRows.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
-            </select>
-            <select className="rounded-md border bg-background px-3 py-2 text-sm" value={accessForm.scopeType} onChange={(event) => setAccessForm((current) => ({ ...current, scopeType: event.target.value }))}>
+            </Select>
+            <Select className="rounded-md border bg-background px-3 py-2 text-sm" value={accessForm.scopeType} onChange={(event) => setAccessForm((current) => ({ ...current, scopeType: event.target.value }))}>
               <option value="organization">Enterprise</option>
               <option value="region">Region</option>
               <option value="location">Location</option>
-            </select>
+            </Select>
             <Input value={accessForm.staffRole} onChange={(event) => setAccessForm((current) => ({ ...current, staffRole: event.target.value }))} />
             <Button type="submit">Assign access</Button>
           </form>
@@ -316,33 +312,20 @@ export function EnterpriseAdminPanel({
         <CardContent className="grid gap-4 lg:grid-cols-2">
           <form className="space-y-3" onSubmit={submitSettings}>
             <p className="text-sm text-muted-foreground">Global tax, promotion, catalog, region override, and location override policies live in inherited enterprise settings.</p>
-            <textarea className="min-h-40 w-full rounded-md border bg-background p-3 font-mono text-xs" value={settingsJson} onChange={(event) => setSettingsJson(event.target.value)} />
+            <Textarea className="min-h-40 w-full rounded-md border bg-background p-3 font-mono text-xs" value={settingsJson} onChange={(event) => setSettingsJson(event.target.value)} />
             <Button type="submit">Save enterprise settings</Button>
           </form>
           <form className="space-y-3" onSubmit={submitSso}>
             <p className="text-sm text-muted-foreground">Phase 1 SSO policy supports SAML/OAuth enforcement hints and delegates provider details to existing Enterprise SSO settings.</p>
-            <textarea className="min-h-40 w-full rounded-md border bg-background p-3 font-mono text-xs" value={ssoJson} onChange={(event) => setSsoJson(event.target.value)} />
+            <Textarea className="min-h-40 w-full rounded-md border bg-background p-3 font-mono text-xs" value={ssoJson} onChange={(event) => setSsoJson(event.target.value)} />
             <Button type="submit">Save SSO policy</Button>
           </form>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 
-function MetricCard({ title, value, detail }: { title: string; value: string; detail: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-        <p className="text-sm text-muted-foreground">{detail}</p>
-      </CardContent>
-    </Card>
-  );
-}
 
 function PerformanceTable({ title, rows, nameKey }: { title: string; rows: Array<Record<string, unknown>>; nameKey: string }) {
   return (
@@ -354,7 +337,12 @@ function PerformanceTable({ title, rows, nameKey }: { title: string; rows: Array
             <span>{String(row[nameKey] ?? 'Unknown')}</span>
             <span className="font-medium">{money.format(Number(row.revenue ?? 0))}</span>
           </div>
-        )) : <p className="text-sm text-muted-foreground">No data yet</p>}
+        )) : (
+          <PanelEmpty
+            title="No hierarchy data"
+            description="Organization hierarchy will appear once regions and locations are configured."
+          />
+        )}
       </div>
     </div>
   );

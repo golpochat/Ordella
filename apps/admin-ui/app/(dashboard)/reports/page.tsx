@@ -10,12 +10,12 @@ import {
   type EnterpriseReportParams,
 } from '@/lib/api/admin/reports';
 import { ApiErrorBanner } from '@/components/ui/api-error-banner';
-import { PageHeader } from '@/components/ui/page-header';
 import { SubNav } from '@/components/ui/sub-nav';
 import { EnterpriseReportsPanel } from '@/components/reports/enterprise-reports-panel';
 import { ReportExplorerControls } from '@/components/reports/report-explorer-controls';
 import { REPORTS_SUBNAV } from '@/lib/navigation';
 import { getErrorMessage } from '@/lib/utils';
+import { PageHeader, PageSection, Stack } from '@shared-ui';
 
 type ReportsIndexPageProps = {
   searchParams: EnterpriseReportParams & { reportType?: string };
@@ -39,17 +39,21 @@ export default async function ReportsIndexPage({ searchParams }: ReportsIndexPag
   }
 
   return (
-    <>
+    <Stack gap="lg">
       <PageHeader
         title="Reporting Dashboards"
         description="Unified sales, inventory, delivery, supplier, and promotion reporting with drill-downs and exports."
+        tabs={<SubNav variant="embedded" items={REPORTS_SUBNAV} />}
       />
-      <SubNav items={REPORTS_SUBNAV} />
-      <Suspense fallback={null}>
-        <ReportExplorerControls />
-      </Suspense>
+      <PageSection title="Report filters">
+        <Suspense fallback={null}>
+          <ReportExplorerControls />
+        </Suspense>
+      </PageSection>
       {error ? <ApiErrorBanner message={error} /> : null}
-      <EnterpriseReportsPanel report={report} />
-    </>
+      <PageSection title="Report overview">
+        <EnterpriseReportsPanel report={report} />
+      </PageSection>
+    </Stack>
   );
 }

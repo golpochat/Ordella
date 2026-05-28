@@ -19,8 +19,8 @@ export default async function FranchiseHqOrdersPage() {
 
   return (
     <>
-      <PageHeader title="Franchise HQ Orders" description="Read-only order visibility across all franchisee locations." />
-      <SubNav items={FRANCHISE_HQ_SUBNAV} />
+      <PageHeader title="Franchise HQ Orders" description="Read-only order visibility across all franchisee locations."
+        tabs={<SubNav variant="embedded" items={FRANCHISE_HQ_SUBNAV} />} />
       {error ? <ApiErrorBanner message={error} /> : null}
       {result?.rows.length ? (
         <FranchiseOrdersTable orders={result.rows} />

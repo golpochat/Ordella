@@ -1,7 +1,9 @@
 'use client';
 
+import { Tag, TagLabel } from '@/components/ui/admin-tag';
+
 import { useCallback, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
 import type { WorkflowDetail } from '@/lib/api/admin/orchestration';
 
 const STEP_PALETTE = [
@@ -159,8 +161,8 @@ export function WorkflowBuilder({ detail, onSave }: WorkflowBuilderProps) {
             <Button type="button" size="sm" variant="outline" onClick={() => setConnectFrom(selectedId)}>
               {connectFrom ? `Connect from ${connectFrom}` : 'Connect'}
             </Button>
-            <Button type="button" size="sm" onClick={() => void handleSave()} disabled={saving}>
-              {saving ? 'Saving…' : 'Save workflow'}
+            <Button type="button" size="sm" onClick={() => void handleSave()} isLoading={saving} loadingLabel="Saving…">
+              Save workflow
             </Button>
           </div>
         </CardHeader>
@@ -186,7 +188,9 @@ export function WorkflowBuilder({ detail, onSave }: WorkflowBuilderProps) {
                 className={`absolute w-36 cursor-pointer rounded-md border bg-background p-2 shadow-sm ${selectedId === node.id ? 'border-primary ring-2 ring-primary/30' : ''}`}
                 style={{ left: node.position.x, top: node.position.y }}
               >
-                <Badge variant="secondary" className="mb-1 text-[10px]">{node.type}</Badge>
+                <Tag variant="neutral" className="mb-1">
+                  <TagLabel>{node.type}</TagLabel>
+                </Tag>
                 <p className="text-xs font-medium">{node.label}</p>
                 {node.parallelGroup ? <p className="text-[10px] text-muted-foreground">∥ {node.parallelGroup}</p> : null}
               </div>
