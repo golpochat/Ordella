@@ -354,7 +354,7 @@ export function ReplenishmentDashboardPanel() {
           </CardHeader>
           <CardContent className="space-y-3">
             <Select
-              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+              className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
               value={ruleType}
               onChange={(event) => setRuleType(event.target.value as typeof ruleTypes[number])}
             >

@@ -3,13 +3,22 @@
 import { useEffect, useState } from 'react';
 import {
   Button,
+  Checkbox,
+  FormField,
   Input,
-  Modal,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
-  ModalTrigger,
+  Select,
+  Stack,
+} from '@shared-ui';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogFooterActions,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@shared-ui';
 import { saveFdsSettings, type FdsLocalSettings } from '@/lib/fds-settings';
 import {
@@ -56,108 +65,103 @@ export function FdsSettingsModal({ settings, onChange }: FdsSettingsModalProps) 
   };
 
   return (
-    <Modal open={open} onOpenChange={setOpen}>
-      <ModalTrigger asChild>
-        <Button type="button" variant="outline" className="h-10">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline" className="h-10 text-foreground">
           Settings
         </Button>
-      </ModalTrigger>
-      <ModalContent>
-        <ModalHeader>
-          <ModalTitle>Fulfillment display settings</ModalTitle>
-        </ModalHeader>
-        <div className="space-y-3 py-2 text-sm">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+      </DialogTrigger>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Fulfillment display settings</DialogTitle>
+          <DialogDescription>Configure alerts, display options, and KDS authentication.</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <Stack gap="md">
+            <Checkbox
+              label="Sound alerts for new orders"
               checked={draft.soundAlerts}
               onChange={(e) => setDraft((s) => ({ ...s, soundAlerts: e.target.checked }))}
             />
-            Sound alerts for new orders
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
+              label="Dark mode"
               checked={draft.darkMode}
               onChange={(e) => setDraft((s) => ({ ...s, darkMode: e.target.checked }))}
             />
-            Dark mode
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
+              label="Show completed column"
               checked={draft.showCompleted}
               onChange={(e) => setDraft((s) => ({ ...s, showCompleted: e.target.checked }))}
             />
-            Show completed column
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
+            <Checkbox
+              label="Show customer info on cards"
               checked={draft.showCustomerInfo}
               onChange={(e) => setDraft((s) => ({ ...s, showCustomerInfo: e.target.checked }))}
             />
-            Show customer info on cards
-          </label>
-          <div>
-            <p className="mb-1 font-medium">Fulfillment mode filter</p>
-            <select
-              className="h-10 w-full rounded-md border bg-background px-2"
-              value={draft.fulfillmentModeFilter}
-              onChange={(e) =>
-                setDraft((s) => ({
-                  ...s,
-                  fulfillmentModeFilter: e.target.value as FdsLocalSettings['fulfillmentModeFilter'],
-                }))
-              }
+            <FormField label="Fulfillment mode filter" htmlFor="fds-fulfillment-filter">
+              <Select
+                id="fds-fulfillment-filter"
+                value={draft.fulfillmentModeFilter}
+                onChange={(e) =>
+                  setDraft((s) => ({
+                    ...s,
+                    fulfillmentModeFilter: e.target.value as FdsLocalSettings['fulfillmentModeFilter'],
+                  }))
+                }
+              >
+                <option value="all">All</option>
+                <option value="pickup">Pickup</option>
+                <option value="delivery">Delivery</option>
+                <option value="in_store">In-store</option>
+              </Select>
+            </FormField>
+            <FormField
+              label="KDS access token"
+              htmlFor="fds-access-token"
+              helper="Required for protected fulfillment feed and status updates."
             >
-              <option value="all">All</option>
-              <option value="pickup">Pickup</option>
-              <option value="delivery">Delivery</option>
-              <option value="in_store">In-store</option>
-            </select>
-          </div>
-          <div>
-            <p className="mb-1 font-medium">KDS access token</p>
-            <Input
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-              placeholder="Paste a fresh staff/admin JWT"
-              type="password"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Required for protected fulfillment feed and status updates.
-            </p>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div>
-              <p className="mb-1 font-medium">Staff email</p>
               <Input
+                id="fds-access-token"
+                value={accessToken}
+                onChange={(e) => setAccessToken(e.target.value)}
+                placeholder="Paste a fresh staff/admin JWT"
+                type="password"
+                autoComplete="off"
+              />
+            </FormField>
+            <FormField label="Staff email" htmlFor="fds-staff-email">
+              <Input
+                id="fds-staff-email"
                 value={kdsEmail}
                 onChange={(e) => setKdsEmail(e.target.value)}
-                placeholder="staff@bella-kitchen.test"
+                placeholder="staff@example.com"
+                type="email"
+                autoComplete="username"
               />
-            </div>
-            <div>
-              <p className="mb-1 font-medium">Staff password</p>
+            </FormField>
+            <FormField label="Staff password" htmlFor="fds-staff-password">
               <Input
+                id="fds-staff-password"
                 value={kdsPassword}
                 onChange={(e) => setKdsPassword(e.target.value)}
                 placeholder="Password"
                 type="password"
+                autoComplete="current-password"
               />
-            </div>
-          </div>
-        </div>
-        <ModalFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={onSave}>
-            Save
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+            </FormField>
+          </Stack>
+        </DialogBody>
+        <DialogFooter>
+          <DialogFooterActions>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={onSave}>
+              Save
+            </Button>
+          </DialogFooterActions>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

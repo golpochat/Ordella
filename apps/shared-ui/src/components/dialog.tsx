@@ -14,6 +14,8 @@ export {
   ModalFooter as DialogFooter,
   ModalTitle as DialogTitle,
   ModalDescription as DialogDescription,
+  DialogFooterActions,
   modalContentVariants as dialogContentVariants,
   type ModalContentProps as DialogContentProps,
+  type DialogFooterActionsProps,
 } from './modal';

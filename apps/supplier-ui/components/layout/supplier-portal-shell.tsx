@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Logo } from '@shared-ui';
+import { Button, NavItem, Logo } from '@shared-ui';
 import { SUPPLIER_NAV } from '@/lib/navigation';
 
 export function SupplierPortalShell({ children, onSignOut }: { children: React.ReactNode; onSignOut: () => void }) {
@@ -20,25 +20,29 @@ export function SupplierPortalShell({ children, onSignOut }: { children: React.R
               Supplier workspace
             </span>
           </div>
-          <nav className="flex w-full flex-wrap items-center gap-2 overflow-x-auto sm:w-auto">
+          <nav className="flex w-full flex-wrap items-center gap-2 overflow-x-auto sm:w-auto" aria-label="Supplier">
             {SUPPLIER_NAV.map((item) => {
               const active = pathname === item.href;
               return (
-                <Link
+                <NavItem
                   key={item.id}
-                  href={item.href}
-                  className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-sm transition-colors ${
-                    active ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
+                  asChild
+                  variant="subnav"
+                  active={active}
+                  className="shrink-0 rounded-full"
                 >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
+                  <Link href={item.href} aria-current={active ? 'page' : undefined}>
+                    <span className="inline-flex items-center gap-2">
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </span>
+                  </Link>
+                </NavItem>
               );
             })}
-            <button type="button" className="shrink-0 rounded-full border bg-background px-3 py-2 text-sm hover:bg-muted" onClick={onSignOut}>
+            <Button type="button" variant="outline" size="sm" className="shrink-0 rounded-full" onClick={onSignOut}>
               Sign out
-            </button>
+            </Button>
           </nav>
         </div>
       </header>

@@ -4,7 +4,7 @@ import { Tag, TagLabel } from '@/components/ui/admin-tag';
 
 import { useAdminToast } from '@/components/ui/admin-toast';
 import { useEffect, useMemo, useState } from 'react';
-import { Select, Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Input, Stack, Textarea } from '@shared-ui';
+import { Select, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Input, Stack, Textarea } from '@shared-ui';
 import {
   getTenantNotificationSettings,
   getNotificationPreferences,
@@ -337,10 +337,10 @@ export function NotificationsPanel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.name} onChange={(event) => loadTemplate(event.target.value, form.channel)}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.name} onChange={(event) => loadTemplate(event.target.value, form.channel)}>
               {TEMPLATE_TYPES.map((type) => <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>)}
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.channel} onChange={(event) => loadTemplate(form.name, event.target.value as NotificationTemplate['channel'])}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.channel} onChange={(event) => loadTemplate(form.name, event.target.value as NotificationTemplate['channel'])}>
               {CHANNELS.map((channel) => <option key={channel} value={channel}>{channel}</option>)}
             </Select>
             <label className="flex items-center gap-2 text-sm">
@@ -349,8 +349,8 @@ export function NotificationsPanel() {
             </label>
           </div>
           <Input value={form.subject} placeholder="Subject" onChange={(event) => setForm({ ...form, subject: event.target.value })} />
-          <Textarea className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.text} placeholder="Plain text body" onChange={(event) => setForm({ ...form, text: event.target.value })} />
-          <Textarea className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.html} placeholder="HTML body" onChange={(event) => setForm({ ...form, html: event.target.value })} />
+          <Textarea className="min-h-28 w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm" value={form.text} placeholder="Plain text body" onChange={(event) => setForm({ ...form, text: event.target.value })} />
+          <Textarea className="min-h-28 w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm" value={form.html} placeholder="HTML body" onChange={(event) => setForm({ ...form, html: event.target.value })} />
           <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
             <Input value={form.recipient} placeholder="Test recipient email, phone, or push token" onChange={(event) => setForm({ ...form, recipient: event.target.value })} />
             <Button type="button" variant="outline" onClick={() => void previewTemplate()}>Preview</Button>

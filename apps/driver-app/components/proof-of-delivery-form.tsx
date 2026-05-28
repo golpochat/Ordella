@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, FormField, Input, Textarea } from '@shared-ui';
 
 type ProofOfDeliveryFormProps = {
   onNotesChange: (notes: string) => void;
@@ -18,9 +18,7 @@ export function ProofOfDeliveryForm({ onNotesChange }: ProofOfDeliveryFormProps)
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <label htmlFor="pod-photo" className="text-sm font-medium">
-            Delivery photo
-          </label>
+          <p className="text-sm font-medium">Delivery photo</p>
           <Input
             id="pod-photo"
             type="file"
@@ -48,17 +46,14 @@ export function ProofOfDeliveryForm({ onNotesChange }: ProofOfDeliveryFormProps)
           </Button>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="pod-notes" className="text-sm font-medium">
-            Notes
-          </label>
-          <textarea
+        <FormField label="Notes" htmlFor="pod-notes">
+          <Textarea
             id="pod-notes"
-            className="min-h-24 w-full rounded-md border border-input bg-background p-3 text-sm"
+            className="min-h-24"
             placeholder="Gate code, left at door, etc."
             onChange={(e) => onNotesChange(e.target.value)}
           />
-        </div>
+        </FormField>
       </CardContent>
     </Card>
   );

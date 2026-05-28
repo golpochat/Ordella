@@ -35,7 +35,7 @@ export function CtaSection({
   return (
     <div
       className={cn(
-        'rounded-2xl px-6 py-10 shadow-brand sm:px-10 sm:py-14',
+        'rounded-2xl px-6 py-10 shadow-sm sm:px-10 sm:py-14',
         isBrand ? 'bg-primary text-primary-foreground' : 'border border-border bg-card',
         centered && 'text-center',
         className,

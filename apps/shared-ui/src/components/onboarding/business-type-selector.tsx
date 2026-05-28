@@ -33,7 +33,7 @@ export function BusinessTypeSelector({ value, onChange, className }: BusinessTyp
               'rounded-md border px-3 py-2 text-left text-sm transition-colors',
               selected
                 ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-input bg-background hover:bg-accent',
+                : 'border-border-default bg-background hover:bg-accent',
             )}
           >
             {option.label}

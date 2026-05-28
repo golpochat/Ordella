@@ -4,13 +4,22 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Button,
+  Divider,
+  FormField,
   Input,
-  Modal,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
+  Stack,
+  Text,
 } from '@shared-ui';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogFooterActions,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/pos-dialog';
 import {
   checkoutCart,
   completeSale,
@@ -417,170 +426,222 @@ export function PosCheckoutModal({ open, onOpenChange, online }: PosCheckoutModa
   };
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent className="max-h-[90dvh] max-w-2xl overflow-y-auto rounded-[var(--pos-radius)]">
-        <ModalHeader>
-          <ModalTitle>Checkout</ModalTitle>
-        </ModalHeader>
-        <div className="space-y-[var(--pos-density-gap)] py-2">
-          <div>
-            <p className="mb-2 text-sm font-medium">Order type</p>
-            <div className="grid grid-cols-3 gap-2 rounded-[var(--pos-radius)] bg-muted p-1">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle>Checkout</DialogTitle>
+          <DialogDescription>Review order type, payment, customer details, and discounts before confirming.</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <Stack gap="md">
+            <div role="status" aria-live="polite" className="sr-only">
+              {error ?? ''}
+            </div>
+            <Stack gap="sm">
+              <Text className="text-sm font-medium">Order type</Text>
+              <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-1">
               {ORDER_TYPE_OPTIONS.map((option) => (
                 <Button
                   key={option.value}
                   type="button"
                   variant={orderType === option.value ? 'default' : 'ghost'}
-                  className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]"
+                  className="h-11"
                   aria-pressed={orderType === option.value}
+                  aria-label={`Order type: ${option.label}`}
                   onClick={() => setOrderType(option.value)}
                 >
                   {option.label}
                 </Button>
               ))}
             </div>
-          </div>
+            </Stack>
 
-          <div>
-            <p className="mb-2 text-sm font-medium">Payment</p>
-            <div className="grid grid-cols-3 gap-2 rounded-[var(--pos-radius)] bg-muted p-1">
+            <Divider />
+
+            <Stack gap="sm">
+              <Text className="text-sm font-medium">Payment</Text>
+              <div className="grid grid-cols-3 gap-2 rounded-md bg-muted p-1">
               {PAYMENT_METHOD_OPTIONS.map((option) => (
                 <Button
                   key={option.value}
                   type="button"
                   variant={paymentMethod === option.value ? 'default' : 'ghost'}
-                  className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]"
+                  className="h-11"
                   aria-pressed={paymentMethod === option.value}
+                  aria-label={`Payment method: ${option.label}`}
                   onClick={() => setPaymentMethod(option.value)}
                 >
                   {option.label}
                 </Button>
               ))}
             </div>
-          </div>
+            </Stack>
 
-          <Input
-            placeholder="Customer name (optional)"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-          />
-          <Input
-            placeholder="Customer phone (optional)"
-            value={customerPhone}
-            onChange={(e) => setCustomerPhone(e.target.value)}
-          />
-          <Input
-            type="email"
-            placeholder="Customer email (optional)"
-            value={customerEmail}
-            onChange={(e) => setCustomerEmail(e.target.value)}
-          />
+            <Divider />
+
+            <Stack gap="md">
+              <FormField label="Customer name" htmlFor="checkout-customer-name">
+                <Input
+                  id="checkout-customer-name"
+                  placeholder="Optional"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  autoComplete="name"
+                />
+              </FormField>
+              <FormField label="Customer phone" htmlFor="checkout-customer-phone">
+                <Input
+                  id="checkout-customer-phone"
+                  type="tel"
+                  placeholder="Optional"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  autoComplete="tel"
+                />
+              </FormField>
+              <FormField label="Customer email" htmlFor="checkout-customer-email">
+                <Input
+                  id="checkout-customer-email"
+                  type="email"
+                  placeholder="Optional"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  autoComplete="email"
+                />
+              </FormField>
+            </Stack>
           {selectedCustomer ? (
-            <div className="rounded-[var(--pos-radius)] border p-[var(--pos-panel-padding)] text-sm">
-              <p className="font-medium">{selectedCustomer.name}</p>
-              <p className="text-muted-foreground">{selectedCustomer.pointsBalance} points available</p>
-              <p className="text-muted-foreground">Store credit: {selectedCustomer.storeCreditBalance}</p>
-              <p className="text-muted-foreground">Lifetime value: {selectedCustomer.lifetimeValue}</p>
-              <p className="text-muted-foreground">
+            <Stack gap="md" className="rounded-md border border-border p-4">
+              <Text className="font-medium">{selectedCustomer.name}</Text>
+              <Text variant="muted">{selectedCustomer.pointsBalance} points available</Text>
+              <Text variant="muted">Store credit: {selectedCustomer.storeCreditBalance}</Text>
+              <Text variant="muted">Lifetime value: {selectedCustomer.lifetimeValue}</Text>
+              <Text variant="muted">
                 Last order: {selectedCustomer.lastOrderAt ? formatDate(selectedCustomer.lastOrderAt) : 'No orders'}
-              </p>
+              </Text>
               {selectedCustomer.tags?.length ? (
-                <p className="text-muted-foreground">Tags: {selectedCustomer.tags.join(', ')}</p>
+                <Text variant="muted">Tags: {selectedCustomer.tags.join(', ')}</Text>
               ) : null}
               {selectedCustomer.staffNotes ? (
-                <p className="text-muted-foreground">Notes: {selectedCustomer.staffNotes}</p>
+                <Text variant="muted">Notes: {selectedCustomer.staffNotes}</Text>
               ) : null}
-              <Input
-                className="mt-2"
-                placeholder="Customer tags, comma separated"
-                value={customerTags}
-                onChange={(e) => setCustomerTags(e.target.value)}
-              />
-              <Input
-                className="mt-2"
-                placeholder="Customer notes"
-                value={customerNotes}
-                onChange={(e) => setCustomerNotes(e.target.value)}
-              />
-              <Button type="button" variant="outline" className="mt-2 h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" onClick={() => void saveCustomerCrm()}>
+              <FormField label="Customer tags" htmlFor="checkout-customer-tags" helper="Comma-separated">
+                <Input
+                  id="checkout-customer-tags"
+                  value={customerTags}
+                  onChange={(e) => setCustomerTags(e.target.value)}
+                />
+              </FormField>
+              <FormField label="Customer notes" htmlFor="checkout-customer-notes">
+                <Input
+                  id="checkout-customer-notes"
+                  value={customerNotes}
+                  onChange={(e) => setCustomerNotes(e.target.value)}
+                />
+              </FormField>
+              <Button type="button" variant="outline" onClick={() => void saveCustomerCrm()}>
                 Save customer CRM
               </Button>
               {customerOrders.length ? (
-                <div className="mt-3 space-y-1 border-t pt-3">
-                  <p className="font-medium">Recent orders</p>
+                <Stack gap="xs" className="border-t border-border pt-3">
+                  <Text className="font-medium">Recent orders</Text>
                   {customerOrders.map((order) => (
-                    <p key={order.id} className="text-muted-foreground">
+                    <Text key={order.id} variant="muted">
                       {order.orderNumber ?? order.id.slice(0, 8)} · {order.status} · {formatCurrency(order.total)}
-                    </p>
+                    </Text>
                   ))}
-                </div>
+                </Stack>
               ) : (
-                <p className="mt-3 text-muted-foreground">No previous orders found.</p>
+                <Text variant="muted">No previous orders found.</Text>
               )}
-              <Input
-                className="mt-2"
-                placeholder="Points to redeem (optional)"
-                value={loyaltyRedeemPoints}
-                onChange={(e) => setLoyaltyRedeemPoints(e.target.value)}
-              />
-              <Input
-                className="mt-2"
-                placeholder="Store credit amount (optional)"
-                value={storeCreditAmount}
-                onChange={(e) => setStoreCreditAmount(e.target.value)}
-              />
-            </div>
+              <FormField label="Points to redeem" htmlFor="checkout-loyalty-points">
+                <Input
+                  id="checkout-loyalty-points"
+                  placeholder="Optional"
+                  value={loyaltyRedeemPoints}
+                  onChange={(e) => setLoyaltyRedeemPoints(e.target.value)}
+                />
+              </FormField>
+              <FormField label="Store credit amount" htmlFor="checkout-store-credit">
+                <Input
+                  id="checkout-store-credit"
+                  placeholder="Optional"
+                  value={storeCreditAmount}
+                  onChange={(e) => setStoreCreditAmount(e.target.value)}
+                />
+              </FormField>
+            </Stack>
           ) : null}
-          <div className="rounded-[var(--pos-radius)] border p-[var(--pos-panel-padding)] text-sm">
-            <p className="font-medium">Gift card</p>
-            <Input
-              className="mt-2"
-              placeholder="Gift card code"
-              value={giftCardCode}
-              onChange={(e) => setGiftCardCode(e.target.value)}
-            />
+
+          <Divider />
+
+          <Stack gap="md" className="rounded-md border border-border p-4">
+            <Text className="font-medium">Gift card</Text>
+            <FormField label="Gift card code" htmlFor="checkout-gift-card-code">
+              <Input
+                id="checkout-gift-card-code"
+                value={giftCardCode}
+                onChange={(e) => setGiftCardCode(e.target.value)}
+              />
+            </FormField>
             {giftCard ? (
               <>
-                <p className="mt-2 text-muted-foreground">
+                <Text variant="muted">
                   Balance: {formatCurrency(giftCard.balance)} {giftCard.currency}
-                </p>
-                <Input
-                  className="mt-2"
-                  placeholder="Gift card amount to use"
-                  value={giftCardAmount}
-                  onChange={(e) => setGiftCardAmount(e.target.value)}
-                />
+                </Text>
+                <FormField label="Amount to apply" htmlFor="checkout-gift-card-amount">
+                  <Input
+                    id="checkout-gift-card-amount"
+                    value={giftCardAmount}
+                    onChange={(e) => setGiftCardAmount(e.target.value)}
+                  />
+                </FormField>
               </>
             ) : null}
-          </div>
-          <Input
-            placeholder="Order notes (optional)"
-            value={orderNotes}
-            onChange={(e) => setOrderNotes(e.target.value)}
-          />
-          <Input
-            placeholder="Coupon code (optional)"
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-          />
+          </Stack>
+
+          <FormField label="Order notes" htmlFor="checkout-order-notes">
+            <Input
+              id="checkout-order-notes"
+              placeholder="Optional"
+              value={orderNotes}
+              onChange={(e) => setOrderNotes(e.target.value)}
+            />
+          </FormField>
+          <FormField label="Coupon code" htmlFor="checkout-coupon-code">
+            <Input
+              id="checkout-coupon-code"
+              placeholder="Optional"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+            />
+          </FormField>
+
           <PosRecommendationsPanel customerId={selectedCustomer?.id} />
 
           {!online ? (
-            <p className="rounded-[var(--pos-radius)] bg-muted p-3 text-sm text-muted-foreground">
+            <Text variant="muted" className="rounded-md bg-muted p-3">
               You are offline. This sale will be queued until connectivity returns.
-            </p>
+            </Text>
           ) : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        </div>
-        <ModalFooter>
-          <Button type="button" variant="outline" className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button type="button" className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" disabled={loading} onClick={confirm}>
-            {loading ? 'Processing…' : 'Confirm order'}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          {error ? (
+            <Text variant="destructive" role="alert">
+              {error}
+            </Text>
+          ) : null}
+          </Stack>
+        </DialogBody>
+        <DialogFooter>
+          <DialogFooterActions>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="button" disabled={loading} isLoading={loading} loadingLabel="Processing…" onClick={confirm}>
+              Confirm order
+            </Button>
+          </DialogFooterActions>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -144,16 +144,16 @@ export function TaxCompliancePanel() {
             <Input type="number" min={0} step="0.01" placeholder="Rate %" value={ruleDraft.taxRate} onChange={(e) => setRuleDraft({ ...ruleDraft, taxRate: Number(e.target.value) || 0 })} />
             <Input placeholder="Country code" value={ruleDraft.country} onChange={(e) => setRuleDraft({ ...ruleDraft, country: e.target.value.toUpperCase() })} />
             <Input placeholder="Region (optional)" value={ruleDraft.region ?? ''} onChange={(e) => setRuleDraft({ ...ruleDraft, region: e.target.value })} />
-            <Select className="h-10 rounded-md border border-input bg-background px-3" value={ruleDraft.taxType} onChange={(e) => setRuleDraft({ ...ruleDraft, taxType: e.target.value as TaxRulePayload['taxType'] })}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3" value={ruleDraft.taxType} onChange={(e) => setRuleDraft({ ...ruleDraft, taxType: e.target.value as TaxRulePayload['taxType'] })}>
               <option value="vat">VAT</option>
               <option value="gst">GST</option>
               <option value="sales_tax">Sales tax</option>
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3" value={ruleDraft.priceMode} onChange={(e) => setRuleDraft({ ...ruleDraft, priceMode: e.target.value as TaxRulePayload['priceMode'] })}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3" value={ruleDraft.priceMode} onChange={(e) => setRuleDraft({ ...ruleDraft, priceMode: e.target.value as TaxRulePayload['priceMode'] })}>
               <option value="exclusive">Tax exclusive</option>
               <option value="inclusive">Tax inclusive</option>
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3" value={ruleDraft.locationId ?? ''} onChange={(e) => setRuleDraft({ ...ruleDraft, locationId: e.target.value || undefined })}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3" value={ruleDraft.locationId ?? ''} onChange={(e) => setRuleDraft({ ...ruleDraft, locationId: e.target.value || undefined })}>
               <option value="">All locations</option>
               {locations.map((location) => (
                 <option key={location.id} value={location.id}>{location.name}</option>
@@ -195,7 +195,7 @@ export function TaxCompliancePanel() {
           <div className="grid gap-3 md:grid-cols-3">
             <Input placeholder="Category name" value={categoryDraft.name} onChange={(e) => setCategoryDraft({ ...categoryDraft, name: e.target.value })} />
             <Input placeholder="Description" value={categoryDraft.description} onChange={(e) => setCategoryDraft({ ...categoryDraft, description: e.target.value })} />
-            <Select className="h-10 rounded-md border border-input bg-background px-3" value={categoryDraft.defaultTaxRuleId} onChange={(e) => setCategoryDraft({ ...categoryDraft, defaultTaxRuleId: e.target.value })}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3" value={categoryDraft.defaultTaxRuleId} onChange={(e) => setCategoryDraft({ ...categoryDraft, defaultTaxRuleId: e.target.value })}>
               <option value="">Use default item rule</option>
               {rules.map((rule) => (
                 <option key={rule.id} value={rule.id}>{rule.taxName}</option>

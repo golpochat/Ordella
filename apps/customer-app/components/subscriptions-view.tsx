@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, FormField, Heading, Input, Select, TextMuted } from '@shared-ui';
 import {
   cancelCustomerSubscription,
   fetchCustomerSubscriptions,
@@ -64,8 +64,8 @@ export function SubscriptionsView() {
   return (
     <div className="space-y-4 p-4 pb-24">
       <div>
-        <h1 className="text-2xl font-bold">Subscriptions & Memberships</h1>
-        <p className="text-sm text-muted-foreground">Browse membership perks and manage recurring orders.</p>
+        <Heading level={1} size="lg">Subscriptions & Memberships</Heading>
+        <TextMuted>Browse membership perks and manage recurring orders.</TextMuted>
       </div>
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
       <Card>
@@ -73,12 +73,14 @@ export function SubscriptionsView() {
           <CardTitle className="text-base">Membership Plans</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <input
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-            placeholder="Payment method token"
-            value={paymentMethod}
-            onChange={(event) => setPaymentMethod(event.target.value)}
-          />
+          <FormField label="Payment method token" htmlFor="subscription-payment-method">
+            <Input
+              id="subscription-payment-method"
+              placeholder="Payment method token"
+              value={paymentMethod}
+              onChange={(event) => setPaymentMethod(event.target.value)}
+            />
+          </FormField>
           <p className="text-xs text-muted-foreground">Use your saved card token or leave blank when payment setup is handled by checkout.</p>
           <div className="grid gap-3 md:grid-cols-2">
             {plans.map((plan) => (
@@ -113,15 +115,17 @@ export function SubscriptionsView() {
               {subscription.cancelAtPeriodEnd ? <p className="text-muted-foreground">Cancellation is scheduled for the current renewal period.</p> : null}
             </div>
             {!subscription.plan ? (
-              <select
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-                value={subscription.schedule ?? 'monthly'}
-                onChange={(event) => void changeSchedule(subscription, event.target.value)}
-              >
-                <option value="weekly">Weekly</option>
-                <option value="biweekly">Every 2 weeks</option>
-                <option value="monthly">Monthly</option>
-              </select>
+              <FormField label="Delivery schedule" htmlFor={`subscription-schedule-${subscription.id}`}>
+                <Select
+                  id={`subscription-schedule-${subscription.id}`}
+                  value={subscription.schedule ?? 'monthly'}
+                  onChange={(event) => void changeSchedule(subscription, event.target.value)}
+                >
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Every 2 weeks</option>
+                  <option value="monthly">Monthly</option>
+                </Select>
+              </FormField>
             ) : null}
             <div className="flex gap-2">
               {subscription.plan ? (

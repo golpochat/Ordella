@@ -14,7 +14,7 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
     <div
       role={ariaLabel ? 'region' : undefined}
       aria-label={ariaLabel}
-      className="relative w-full min-w-0 overflow-x-auto rounded-lg border border-border bg-card shadow-sm"
+      className="relative w-full min-w-0 overflow-x-auto rounded-lg border border-border-subtle bg-card shadow-sm"
     >
       <table
         ref={ref}
@@ -33,7 +33,7 @@ const TableHeader = React.forwardRef<
   <thead
     ref={ref}
     className={cn(
-      '[&_tr]:border-b [&_tr]:border-border',
+      '[&_tr]:border-b [&_tr]:border-border-default',
       sticky && 'sticky top-0 z-10 bg-card',
       className,
     )}
@@ -68,7 +68,7 @@ const TableFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tfoot
     ref={ref}
-    className={cn('border-t border-border bg-muted/50 font-medium [&>tr]:last:border-b-0', className)}
+    className={cn('border-t border-border-subtle bg-muted/50 font-medium [&>tr]:last:border-b-0', className)}
     {...props}
   />
 ));
@@ -79,7 +79,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
     <tr
       ref={ref}
       className={cn(
-        `h-10 border-b border-border data-[state=selected]:bg-primary/5 ${odsTableRow}`,
+        `h-10 border-b border-border-subtle data-[state=selected]:bg-primary/5 ${odsTableRow}`,
         className,
       )}
       {...props}
@@ -94,7 +94,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
       ref={ref}
       scope={scope ?? 'col'}
       className={cn(
-        'h-10 px-4 text-left align-middle text-sm font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+        'px-3 py-3 text-left align-middle text-sm font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
         className,
       )}
       {...props}
@@ -108,7 +108,7 @@ const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<
     <td
       ref={ref}
       className={cn(
-        'px-4 py-2.5 align-middle text-sm text-foreground [&:has([role=checkbox])]:pr-0',
+        'px-3 py-3 align-middle text-sm text-foreground [&:has([role=checkbox])]:pr-0',
         className,
       )}
       {...props}
@@ -130,7 +130,7 @@ function TableContainer({ className, children, ...props }: React.HTMLAttributes<
   return (
     <div
       className={cn(
-        'relative w-full min-w-0 overflow-x-auto rounded-lg border border-border bg-card shadow-sm',
+        'relative w-full min-w-0 overflow-x-auto rounded-lg border border-border-subtle bg-card shadow-sm',
         className,
       )}
       {...props}

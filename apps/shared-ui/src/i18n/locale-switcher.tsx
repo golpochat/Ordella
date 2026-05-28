@@ -32,7 +32,7 @@ export function LocaleSwitcher({ className }: LocaleSwitcherProps) {
       <Languages className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
       <VisuallyHidden>{t('shell.localeLabel')}</VisuallyHidden>
       <Select
-        className="h-9 min-w-[7rem] rounded-md border border-input bg-background px-2 text-sm"
+        className="h-9 min-w-[7rem] rounded-md border border-border-default bg-background px-2 text-sm"
         value={locale}
         aria-label={t('shell.localeLabel')}
         onChange={(event) => setLocale(event.target.value as OdsLocale)}

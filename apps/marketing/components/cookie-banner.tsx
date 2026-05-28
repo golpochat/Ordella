@@ -25,7 +25,7 @@ export function CookieBanner() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 p-4 shadow-brand backdrop-blur"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 p-4 shadow-sm backdrop-blur"
       role="dialog"
       aria-label="Cookie consent"
     >

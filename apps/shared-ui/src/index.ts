@@ -18,6 +18,7 @@ export {
 export { Logo, type LogoProps, type LogoVariant, type LogoSize, type LogoColor } from '@ordella/ui';
 
 export { Button, buttonVariants, type ButtonProps } from './components/button';
+export { Icon, type IconProps, type IconName } from './components/icon';
 export { Input, type InputProps } from './components/input';
 export { Select, type SelectProps } from './components/select';
 export { Textarea, type TextareaProps } from './components/textarea';
@@ -59,6 +60,7 @@ export {
   CardTitle,
   CardDescription,
   CardContent,
+  CardBody,
 } from './components/card';
 export {
   Table,
@@ -244,8 +246,10 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  DialogFooterActions,
   dialogContentVariants,
   type DialogContentProps,
+  type DialogFooterActionsProps,
 } from './components/dialog';
 export { Badge, badgeVariants, type BadgeProps, type BadgeVariant } from './components/badge';
 export {
@@ -281,11 +285,25 @@ export {
   type TooltipProps,
 } from './components/tooltip';
 export { Divider, type DividerProps } from './components/divider';
+export {
+  Heading,
+  Text,
+  TextMuted,
+  TextStrong,
+  Label,
+  type HeadingProps,
+  type LabelProps,
+  type TextProps,
+  type TextMutedProps,
+  type TextStrongProps,
+} from './components/typography';
 export { SidebarSection, type SidebarSectionProps } from './components/sidebar-section';
 export { IconButton, type IconButtonProps } from './components/icon-button';
 export { Stack, type StackProps } from './components/layout/stack';
 export { Flex, type FlexProps } from './components/layout/flex';
-export { Grid, type GridProps } from './components/layout/grid';
+export { Grid, GridItem, type GridProps, type GridItemProps } from './components/layout/grid';
+export { Inline, type InlineProps } from './components/layout/inline';
+export { ScrollContainer, type ScrollContainerProps } from './components/layout/scroll-container';
 export { PageContainer, type PageContainerProps } from './components/layout/container';
 export { ContentArea, type ContentAreaProps } from './components/layout/content-area';
 export {

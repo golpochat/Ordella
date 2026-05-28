@@ -16,7 +16,7 @@ export default function ContactPage() {
         title="Contact sales"
         description="Enterprise plans, multi-location rollouts, and custom SLAs. Tell us about your operation and we will get back within one business day."
       />
-      <div className="mt-10 rounded-2xl border border-border bg-card p-6 shadow-brand sm:mt-12 sm:p-8">
+      <div className="mt-10 rounded-2xl border border-border bg-card p-6 shadow-sm sm:mt-12 sm:p-8">
         <p className="text-body">Email our sales team:</p>
         <a
           href="mailto:sales@ordella.com"

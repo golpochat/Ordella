@@ -35,7 +35,7 @@ export function HowItWorks({ steps, className }: HowItWorksProps) {
                 {s.step}
               </span>
               <span
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/80 bg-card text-primary shadow-brand"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/80 bg-card text-primary shadow-sm"
                 aria-hidden
               >
                 <Icon className="h-5 w-5" />

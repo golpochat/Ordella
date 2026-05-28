@@ -164,7 +164,7 @@ export function PosThemePanel() {
             <div className="space-y-1">
               <label className="text-sm font-medium">Mode</label>
               <Select
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                 value={posTheme.mode}
                 onChange={(event) => patchPosTheme({ mode: event.target.value as PosTheme['mode'] })}
               >
@@ -202,7 +202,7 @@ export function PosThemePanel() {
             <div className="space-y-1">
               <label className="text-sm font-medium">Layout density</label>
               <Select
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                 value={posTheme.density}
                 onChange={(event) => patchPosTheme({ density: event.target.value as PosTheme['density'] })}
               >
@@ -214,7 +214,7 @@ export function PosThemePanel() {
             <div className="space-y-1">
               <label className="text-sm font-medium">Button size</label>
               <Select
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                 value={posTheme.buttonSize}
                 onChange={(event) => patchPosTheme({ buttonSize: event.target.value as PosTheme['buttonSize'] })}
               >
@@ -226,7 +226,7 @@ export function PosThemePanel() {
             <div className="space-y-1">
               <label className="text-sm font-medium">Corner radius</label>
               <Select
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                 value={posTheme.cornerRadius}
                 onChange={(event) => patchPosTheme({ cornerRadius: event.target.value as PosTheme['cornerRadius'] })}
               >

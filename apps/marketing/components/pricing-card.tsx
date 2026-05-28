@@ -17,9 +17,9 @@ export function PricingCard({ plan, currency = DEFAULT_CURRENCY }: PricingCardPr
   return (
     <article
       className={cn(
-        'flex h-full flex-col rounded-2xl border bg-card p-6 shadow-brand transition-shadow hover:shadow-elevated sm:p-7',
+        'flex h-full flex-col rounded-2xl border bg-card p-6 shadow-sm transition-shadow duration-fast ease-default hover:shadow-md sm:p-7',
         plan.highlighted
-          ? 'border-primary shadow-elevated ring-2 ring-primary/15'
+          ? 'border-primary shadow-lg ring-2 ring-primary/15'
           : 'border-border/80',
       )}
     >

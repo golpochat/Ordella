@@ -97,7 +97,7 @@ export const PaginationButton = React.forwardRef<HTMLButtonElement, PaginationBu
         'disabled:pointer-events-none disabled:border-border disabled:bg-muted disabled:text-muted-foreground',
         isActive
           ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
-          : 'border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
+          : 'border-border-default bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
         className,
       )}
       {...props}

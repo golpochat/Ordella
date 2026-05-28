@@ -88,7 +88,7 @@ export function BrandingPanel() {
             <div className="space-y-1">
               <label className="text-sm font-medium">Theme preset</label>
               <Select
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                 value={theme.preset}
                 onChange={(e) => void saveTheme({ preset: e.target.value as ThemePreset })}
               >

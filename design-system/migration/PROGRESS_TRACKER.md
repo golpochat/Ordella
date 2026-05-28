@@ -62,6 +62,20 @@ Track screen and shell migration status. Update this file when opening or mergin
 | admin-ui | **Admin Internationalization (i18n)** | **design-complete** | PASS | `I18nProvider`, `useTranslation`, `LocaleSwitcher`, `locales/*`, RTL `dir`; nav/subnav/settings/dialogs; `extract-admin-i18n.mjs`; lazy locale bundles |
 | admin-ui | **Admin Micro‑Animations & Motion** | **design-complete** | PASS | ODS motion tokens (`design-tokens-motion.css`); `motion.ts` utilities; PageTransition/StaggerReveal; button/modal/toast/nav/sidebar/table/skeleton; `admin-motion.tsx` |
 | admin-ui | **Admin QA + Polish Pass** | **in progress** | — | JSX/layout repair (Stack/fragment closings, Tag syntax); ODS primitive imports; shell alignment; command palette i18n; ~160 TS cleanup items remain (unused imports, Button/Tag variant mapping) |
+| **cross-app** | **Global Modal Refactor** (ODS Dialog) | **design-complete** | PASS | `Dialog*` compound API in `shared-ui`; `DialogFooterActions`; admin `FormDialog`/`ConfirmDialog`; POS session/checkout/picker; KDS settings; legacy `Modal` deprecated |
+| **cross-app** | **Global Form Refactor** (ODS Form components) | **in progress** | — | Migrated customer/driver/POS/storefront/supplier forms to `FormField` + `Input/Select/Textarea/Checkbox`; admin-wide sweep still open |
+| **cross-app** | **Global Table Refactor** (ODS Table components) | **in progress** | — | Migrated remaining raw table markup in supplier + marketing to `Table*` primitives and `EmptyState`; awaiting visual QA pass |
+| **cross-app** | **Global Button Refactor** (ODS Button components) | **in progress** | — | Migrating raw `<button>`/button-like controls to `Button`/`IconButton`; admin + shared sweep in progress |
+| **cross-app** | **Global Dropdown Refactor** (ODS Select/Menu) | **in progress** | — | Migrated remaining native select usage to ODS `Select`; custom menu/popover primitives not yet available in shared-ui |
+| **cross-app** | **Global Card Refactor** (ODS Card components) | **in progress** | — | Added `CardBody` alias; migrated remaining marketing card-like containers to `Card`/`CardBody`; broader app-wide visual QA pending |
+| **cross-app** | **Global Navigation Refactor** (ODS navigation components) | **in progress** | — | Migrating custom nav links to `NavItem`/`Sidebar`/`TopNav` patterns; adding `aria-current` consistency; QA pending |
+| **cross-app** | **Global Icon Refactor** (ODS Icon components) | **in progress** | — | Added shared `Icon` primitive with tokenized names/sizes and migrated key storefront/marketing/customer/driver surfaces; full admin/shared sweep pending |
+| **cross-app** | **Global Typography Refactor** (ODS typography tokens/components) | **in progress** | — | Expanded `Heading` scale (`xs`→`xl`), added `Label` alias, and migrated key customer surfaces to `Heading`/`TextMuted`; full cross-app sweep pending |
+| **cross-app** | **Global Spacing Refactor** (ODS spacing tokens) | **in progress** | — | Standardized spacing at primitive layer (`Card`, `Modal`, `Table`, `FormItem`) to ODS rhythm (space.3/4/6); app-wide cleanup still pending |
+| **cross-app** | **Global Shadow & Elevation Refactor** (ODS elevation tokens) | **in progress** | — | Added ODS elevation token scale (`xs`..`xl`) in shared tokens/preset; migrated marketing legacy `shadow-brand`/`shadow-elevated` usage to ODS `shadow-*`; broader cross-app sweep + visual QA pending |
+| **cross-app** | **Global Border & Radius Refactor** (ODS border/radius tokens) | **in progress** | — | Added semantic border/radius tokens (`border-subtle/default/strong`, `radius-none/sm/md/lg/full`) in shared tokens/preset and migrated core primitives (`Card`, `Input`, `Select`, `Button`, `Table`, `Modal`) to tokenized borders/radius; broader cross-app cleanup + visual QA pending |
+| **cross-app** | **Global Color Refactor** (ODS color tokens) | **in progress** | — | Extended shared semantic color tokens (`success/warning/info`, interactive hover/active) and migrated shared + marketing palettes from hardcoded values to token-driven `hsl(var(--...))`; broader admin/POS/storefront color cleanup + visual QA pending |
+| **cross-app** | **Global Grid & Layout Refactor** (ODS layout primitives) | **in progress** | — | Added layout primitives (`GridItem`, `Inline`, `ScrollContainer`) and migrated key storefront/POS page structures and overflow regions to `PageContainer` + `Grid/Flex/Stack/ScrollContainer`; broader admin/POS/storefront shell + form/table/navigation layout sweep pending |
 
 ---
 
@@ -70,10 +84,10 @@ Track screen and shell migration status. Update this file when opening or mergin
 | Module | Screen / area | Migration status | Visual QA | Notes |
 |--------|---------------|------------------|-----------|-------|
 | marketing-ui | — | not started | — | |
-| pos-ui | — | not started | — | |
-| kds-ui | — | not started | — | |
+| pos-ui | POS modals (settings, checkout, item picker) | design-complete | PASS | ODS `Dialog` via `pos-dialog.tsx`; FormField labels; footer hierarchy |
+| kds-ui | FDS settings modal | design-complete | PASS | ODS `Dialog` + FormField + Checkbox |
 | driver-ui | — | not started | — | |
-| storefront-ui | — | not started | — | |
+| storefront-ui | **Storefront Catalog + Cart Page** (`/catalog`, `/cart`) | **design-complete** | PASS | ODS PageContainer, 2-col catalog/cart grid, CatalogPanel + CartPanel, EmptyState, FormField discounts, typography primitives, aria-live cart; POS Settings button contrast fix |
 | customer-ui | — | not started | — | |
 
 ---
@@ -86,4 +100,4 @@ Track screen and shell migration status. Update this file when opening or mergin
 4. Set **Visual QA** to `PASS` and **Migration status** to `design-complete`.  
 5. Commit this file in the same PR or immediately after merge.
 
-**Last updated:** Admin QA + Polish Pass — layout/JSX repair and ODS primitive fixes landed; typecheck variant/unused-import cleanup in progress.
+**Last updated:** Global grid/layout refactor in progress — ODS layout primitive rollout.

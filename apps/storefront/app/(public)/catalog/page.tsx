@@ -15,11 +15,11 @@ function CatalogPageInner() {
   }, []);
 
   if (error) {
-    return <p className="p-6 text-sm text-destructive">{error}</p>;
+    return <p className="p-6 text-sm text-destructive" role="alert">{error}</p>;
   }
 
   if (!menu) {
-    return <p className="p-6 text-muted-foreground">Loading catalog…</p>;
+    return <p className="p-6 text-muted-foreground" aria-busy="true">Loading catalog…</p>;
   }
 
   return <CatalogView menu={menu} />;

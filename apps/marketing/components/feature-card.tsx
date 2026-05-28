@@ -13,7 +13,7 @@ export function FeatureCard({ title, description, icon: Icon, className, compact
   return (
     <div
       className={cn(
-        'flex h-full flex-col rounded-2xl border border-border/80 bg-card p-5 shadow-brand transition-shadow hover:shadow-elevated sm:p-6',
+        'flex h-full flex-col rounded-2xl border border-border/80 bg-card p-5 shadow-sm transition-shadow duration-fast ease-default hover:shadow-md sm:p-6',
         className,
       )}
     >

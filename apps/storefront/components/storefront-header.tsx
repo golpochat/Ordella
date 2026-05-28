@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
-import { Badge, Logo, useTheme } from '@shared-ui';
+import { Badge, Button, Icon, NavItem, Logo, useTheme } from '@shared-ui';
 import { LocationPicker } from '@/components/location-picker';
 import { getBrandName } from '@/lib/config';
 import { useBasketStore } from '@/stores/basket-store';
@@ -43,58 +42,61 @@ export function StorefrontHeader() {
           </span>
         </Link>
 
-        <nav className={`hidden items-center gap-1 md:flex ${centeredHeader ? 'mx-4' : ''}`}>
+        <nav className={`hidden items-center gap-1 md:flex ${centeredHeader ? 'mx-4' : ''}`} aria-label="Storefront">
           {nav.map((item) => {
             const active = mounted && pathname === item.href;
             return (
-              <Link
+              <NavItem
                 key={item.href}
-                href={item.href}
-                className={
-                  active
-                    ? 'rounded-[var(--storefront-radius)] bg-background px-3 py-2 text-sm font-medium text-foreground'
-                    : 'rounded-[var(--storefront-radius)] px-3 py-2 text-sm font-medium hover:bg-background/20'
-                }
+                asChild
+                variant="subnav"
+                active={active}
+                className="text-primary-foreground"
               >
-                {item.label}
-              </Link>
+                <Link href={item.href} aria-current={active ? 'page' : undefined}>
+                  {item.label}
+                </Link>
+              </NavItem>
             );
           })}
         </nav>
 
         <div className="flex items-center gap-2">
-          <LocationPicker />
-          <Link
-            href="/cart"
-            className="relative flex items-center gap-2 rounded-[var(--storefront-radius)] px-3 py-2 hover:bg-background/20"
+          <LocationPicker className="text-primary-foreground [&_select]:text-foreground [&_span]:text-primary-foreground/90" />
+          <Button
+            asChild
+            variant="ghost"
+            className="relative h-auto px-3 py-2 text-primary-foreground hover:bg-background/20 hover:text-primary-foreground"
             aria-label={`Cart, ${count} items`}
           >
-            <ShoppingCart className="h-6 w-6" />
-            <span className="hidden sm:inline">Cart</span>
-            {count > 0 ? (
-              <Badge className="absolute -right-1 -top-1 min-w-5 justify-center px-1">
-                {count}
-              </Badge>
-            ) : null}
-          </Link>
+            <Link href="/cart">
+              <Icon name="shopping-cart" size="lg" decorative />
+              <span className="hidden sm:inline">Cart</span>
+              {count > 0 ? (
+                <Badge className="absolute -right-1 -top-1 min-w-5 justify-center px-1">
+                  {count}
+                </Badge>
+              ) : null}
+            </Link>
+          </Button>
         </div>
       </div>
 
-      <nav className="flex border-t border-primary-foreground/20 bg-primary md:hidden">
+      <nav className="flex border-t border-primary-foreground/20 bg-primary md:hidden" aria-label="Storefront mobile">
         {nav.map((item) => {
           const active = mounted && pathname === item.href;
           return (
-            <Link
+            <NavItem
               key={item.href}
-              href={item.href}
-              className={
-                active
-                  ? 'flex-1 py-2.5 text-center text-sm font-medium text-primary-foreground'
-                  : 'flex-1 py-2.5 text-center text-sm text-primary-foreground/70'
-              }
+              asChild
+              variant="subnav"
+              active={active}
+              className="flex-1 justify-center rounded-none py-2.5 text-primary-foreground"
             >
-              {item.label}
-            </Link>
+              <Link href={item.href} aria-current={active ? 'page' : undefined}>
+                {item.label}
+              </Link>
+            </NavItem>
           );
         })}
       </nav>

@@ -80,7 +80,7 @@ export function ModifiersPanel({ modifiers }: { modifiers: AdminModifier[] }) {
         <CardContent>
           <form className="flex flex-wrap gap-2" onSubmit={onAddOption}>
             <Select
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              className="h-10 rounded-md border border-border-default bg-background px-3 text-sm"
               value={optionModifierId}
               onChange={(e) => setOptionModifierId(e.target.value)}
               required

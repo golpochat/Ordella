@@ -29,11 +29,11 @@ type ScreenshotFrameProps = {
 
 function BrowserChrome({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-brand">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
       <div className="flex shrink-0 items-center gap-2 border-b border-border/80 bg-gray-light px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-400/90" aria-hidden />
-        <span className="h-2.5 w-2.5 rounded-full bg-amber-400/90" aria-hidden />
-        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/90" aria-hidden />
+        <span className="h-2.5 w-2.5 rounded-full bg-destructive/80" aria-hidden />
+        <span className="h-2.5 w-2.5 rounded-full bg-warning/80" aria-hidden />
+        <span className="h-2.5 w-2.5 rounded-full bg-success/80" aria-hidden />
         <span className="ml-2 truncate text-xs font-medium text-slate">{label}</span>
       </div>
       <div className="relative min-h-0 flex-1 overflow-hidden bg-gray-light">{children}</div>
@@ -43,8 +43,8 @@ function BrowserChrome({ label, children }: { label: string; children: React.Rea
 
 function DeviceChrome({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto flex h-full w-full max-w-[280px] flex-col overflow-hidden rounded-[1.75rem] border-[3px] border-navy/10 bg-card shadow-elevated sm:max-w-[320px]">
-      <div className="h-5 shrink-0 bg-navy/5" aria-hidden />
+    <div className="mx-auto flex h-full w-full max-w-[280px] flex-col overflow-hidden rounded-lg border border-border-default bg-card shadow-lg sm:max-w-[320px]">
+      <div className="h-5 shrink-0 bg-foreground/5" aria-hidden />
       <div className="relative min-h-0 flex-1 overflow-hidden">{children}</div>
     </div>
   );

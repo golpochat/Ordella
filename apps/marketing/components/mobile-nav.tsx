@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button } from '@shared-ui';
+import { Button, Card, CardBody, Icon } from '@shared-ui';
 import { cn } from '@/lib/cn';
 import { CtaButton } from './cta-button';
 import { adminLoginUrl } from '@/lib/site';
@@ -40,7 +39,7 @@ export function MobileNav({ pathname }: MobileNavProps) {
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div className="marketing-header-mobile">
       <Button
         type="button"
         variant="ghost"
@@ -50,21 +49,24 @@ export function MobileNav({ pathname }: MobileNavProps) {
         aria-label={open ? 'Close menu' : 'Open menu'}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {open ? <Icon name="close" size="md" decorative /> : <Icon name="menu" size="md" decorative />}
       </Button>
       {open ? (
         <>
-          <button
+          <Button
             type="button"
-            className="fixed inset-0 z-40 bg-navy/20 backdrop-blur-sm"
+            variant="ghost"
+            className="fixed inset-0 z-40 h-auto w-auto rounded-none bg-navy/20 p-0 backdrop-blur-sm hover:bg-navy/20"
             aria-label="Close menu overlay"
             onClick={() => setOpen(false)}
           />
-          <nav
+          <Card
             id="mobile-menu"
-            className="fixed inset-x-0 top-16 z-50 border-b border-border bg-background px-4 py-6 shadow-elevated"
+            className="fixed inset-x-0 top-16 z-50 rounded-none border-x-0 border-t-0 px-4 py-6 shadow-lg"
             aria-label="Mobile"
+            data-ods-elevation="sm"
           >
+            <CardBody className="p-0">
             <ul className="space-y-1">
               {nav.map((item) => {
                 const active =
@@ -94,7 +96,8 @@ export function MobileNav({ pathname }: MobileNavProps) {
                 Start free trial
               </CtaButton>
             </div>
-          </nav>
+            </CardBody>
+          </Card>
         </>
       ) : null}
     </div>

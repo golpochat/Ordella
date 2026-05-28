@@ -5,10 +5,10 @@ export const siteConfig = {
     'POS, online ordering, inventory, fulfillment, delivery, and multi-location management for restaurants, cafés, takeaways, grocery, butchers, and retail businesses.',
   url: process.env.NEXT_PUBLIC_MARKETING_URL ?? 'http://localhost:3006',
   ogImage: '/og-default.svg',
-  themeColor: '#3A6DFF',
-  themeColorDark: '#0F1A2A',
-  backgroundColor: '#F4F6F8',
-  backgroundColorDark: '#0F1A2A',
+  themeColor: 'hsl(224 100% 61%)',
+  themeColorDark: 'hsl(213 47% 11%)',
+  backgroundColor: 'hsl(210 20% 96%)',
+  backgroundColorDark: 'hsl(213 47% 11%)',
   manifestPath: '/manifest.json',
 };
 

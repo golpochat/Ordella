@@ -4,7 +4,9 @@
   "private": true,
   "description": "Ordella Supplier Portal",
   "scripts": {
+    "predev": "node ../../scripts/ensure-shared-ui-css.mjs",
     "dev": "next dev -p 3008",
+    "prebuild": "node ../../scripts/ensure-shared-ui-css.mjs",
     "build": "next build",
     "start": "next start -p 3008",
     "lint": "next lint",

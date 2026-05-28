@@ -178,7 +178,7 @@ export function StorefrontThemePanel() {
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Base theme</label>
                   <Select
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                     value={theme.baseTheme ?? 'default'}
                     onChange={(e) => void save({ baseTheme: e.target.value as BaseTheme })}
                   >
@@ -192,7 +192,7 @@ export function StorefrontThemePanel() {
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Mode</label>
                   <Select
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                     value={theme.preset}
                     onChange={(e) => void save({ preset: e.target.value as TenantTheme['preset'] })}
                   >
@@ -261,7 +261,7 @@ export function StorefrontThemePanel() {
                 <div key={key as string} className="space-y-1">
                   <label className="text-sm font-medium">{label as string}</label>
                   <Select
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm"
                     value={(theme.layout?.[key as keyof NonNullable<TenantTheme['layout']>] as string | undefined) ?? ''}
                     onChange={(e) => void save({ layout: { ...(theme.layout ?? {}), [key as string]: e.target.value } })}
                   >
@@ -289,7 +289,7 @@ export function StorefrontThemePanel() {
                 />
               </div>
               <Textarea
-                className="min-h-24 w-full rounded-md border border-input bg-background p-3 text-sm"
+                className="min-h-24 w-full rounded-md border border-border-default bg-background p-3 text-sm"
                 placeholder="Hero subtitle"
                 value={hero?.subtitle ?? ''}
                 onChange={(e) => updateSection('hero', { subtitle: e.target.value })}
@@ -347,7 +347,7 @@ export function StorefrontThemePanel() {
                 />
               </div>
               <Textarea
-                className="min-h-20 w-full rounded-md border border-input bg-background p-3 text-sm"
+                className="min-h-20 w-full rounded-md border border-border-default bg-background p-3 text-sm"
                 placeholder="Meta description"
                 value={theme.seo?.metaDescription ?? ''}
                 onChange={(e) => setTheme({ ...theme, seo: { ...(theme.seo ?? {}), metaDescription: e.target.value } })}

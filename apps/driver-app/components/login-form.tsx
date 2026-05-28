@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, FormErrorMessage, FormField, Input, Stack } from '@shared-ui';
 import { createBrowserTokenStorage } from '@shared-utils';
 import { getApiBaseUrl, getDefaultDriverId, getTenantId } from '@/lib/config';
 import { setSession, type DriverSession } from '@/lib/session';
@@ -69,67 +69,56 @@ export function LoginForm() {
         <CardTitle>Driver sign in</CardTitle>
       </CardHeader>
       <CardContent>
-        <form className="space-y-3" onSubmit={(e) => void onSubmit(e)}>
-          <div className="space-y-1">
-            <label htmlFor="tenantId" className="text-sm font-medium">
-              Tenant ID
-            </label>
-            <Input
-              id="tenantId"
-              value={tenantId}
-              onChange={(e) => setTenantId(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="driverId" className="text-sm font-medium">
-              Driver profile ID
-            </label>
-            <Input
-              id="driverId"
-              value={driverId}
-              onChange={(e) => setDriverId(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="driverName" className="text-sm font-medium">
-              Display name
-            </label>
-            <Input
-              id="driverName"
-              value={driverName}
-              onChange={(e) => setDriverName(e.target.value)}
-            />
-          </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        <form onSubmit={(e) => void onSubmit(e)}>
+          <Stack gap="md">
+            <FormField label="Tenant ID" htmlFor="tenantId" required>
+              <Input
+                id="tenantId"
+                value={tenantId}
+                onChange={(e) => setTenantId(e.target.value)}
+                required
+              />
+            </FormField>
+            <FormField label="Email" htmlFor="email" required>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </FormField>
+            <FormField label="Password" htmlFor="password" required>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </FormField>
+            <FormField label="Driver profile ID" htmlFor="driverId" required>
+              <Input
+                id="driverId"
+                value={driverId}
+                onChange={(e) => setDriverId(e.target.value)}
+                required
+              />
+            </FormField>
+            <FormField label="Display name" htmlFor="driverName">
+              <Input
+                id="driverName"
+                value={driverName}
+                onChange={(e) => setDriverName(e.target.value)}
+              />
+            </FormField>
+            <div aria-live="polite">
+              <FormErrorMessage>{error}</FormErrorMessage>
+            </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Signing in…' : 'Sign in'}
           </Button>
+          </Stack>
         </form>
       </CardContent>
     </Card>

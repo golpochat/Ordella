@@ -9,7 +9,7 @@ import {
 import { LocationSwitcher } from '@shared-ui';
 import { fetchPublicLocations } from '@/lib/locations-api';
 
-export function LocationPicker() {
+export function LocationPicker({ className }: { className?: string }) {
   const [locations, setLocations] = useState<LocationOption[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -44,6 +44,7 @@ export function LocationPicker() {
         window.location.reload();
       }}
       label="Shop at"
+      className={className}
     />
   );
 }

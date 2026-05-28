@@ -1,6 +1,6 @@
 'use client';
 
-import { Logo } from '@shared-ui';
+import { Button, Logo } from '@shared-ui';
 import { getLocationName } from '@/lib/config';
 import type { FdsLocalSettings } from '@/lib/fds-settings';
 import { FdsLocationSwitcher } from '@/components/fds-location-switcher';
@@ -54,13 +54,15 @@ export function FdsHeader({
             Updated {lastSync.toLocaleTimeString()}
           </span>
         ) : null}
-        <button
+        <Button
           type="button"
-          className="text-xs text-primary hover:underline"
+          variant="link"
+          size="sm"
+          className="h-auto p-0 text-xs"
           onClick={onRefresh}
         >
           Refresh
-        </button>
+        </Button>
         <FdsSettingsModal settings={settings} onChange={onSettingsChange} />
       </div>
     </header>

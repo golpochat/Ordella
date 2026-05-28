@@ -112,12 +112,12 @@ export function SubscriptionsPanel({
           <div className="grid gap-3 md:grid-cols-4">
             <Input placeholder="Plan name" value={planForm.name} onChange={(event) => setPlanForm((current) => ({ ...current, name: event.target.value }))} />
             <Input type="number" min="0" step="0.01" placeholder="Price" value={planForm.price} onChange={(event) => setPlanForm((current) => ({ ...current, price: event.target.value }))} />
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={planForm.billingCycle} onChange={(event) => setPlanForm((current) => ({ ...current, billingCycle: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={planForm.billingCycle} onChange={(event) => setPlanForm((current) => ({ ...current, billingCycle: event.target.value }))}>
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
             </Select>
             <Input type="number" min="0" placeholder="Trial days" value={planForm.trialPeriod} onChange={(event) => setPlanForm((current) => ({ ...current, trialPeriod: event.target.value }))} />
-            <label className="flex items-center gap-2 rounded-md border border-input px-3 text-sm">
+            <label className="flex items-center gap-2 rounded-md border border-border-default px-3 text-sm">
               <input type="checkbox" checked={planForm.freeDelivery} onChange={(event) => setPlanForm((current) => ({ ...current, freeDelivery: event.target.checked }))} />
               Free delivery
             </label>

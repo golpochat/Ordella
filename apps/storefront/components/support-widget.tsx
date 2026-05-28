@@ -42,7 +42,7 @@ export function SupportWidget() {
             <Input placeholder="Name" value={name} onChange={(event) => setName(event.target.value)} required />
             <Input type="email" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)} required />
             <Input placeholder="Subject" value={subject} onChange={(event) => setSubject(event.target.value)} required />
-            <textarea className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="How can we help?" value={message} onChange={(event) => setMessage(event.target.value)} required />
+            <textarea className="min-h-24 w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm" placeholder="How can we help?" value={message} onChange={(event) => setMessage(event.target.value)} required />
             <Button type="submit" className="w-full">Start support ticket</Button>
           </form>
         </div>

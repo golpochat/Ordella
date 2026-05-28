@@ -2,6 +2,7 @@
 
 import type { LocationOption } from '@ordella/shared-utils';
 import { setStoredLocationId } from '@ordella/shared-utils';
+import { Select } from './select';
 
 type LocationSwitcherProps = {
   locations: LocationOption[];
@@ -32,8 +33,8 @@ export function LocationSwitcher({
   return (
     <label className={className ?? 'flex items-center gap-2 text-sm'}>
       <span className="text-muted-foreground">{label}</span>
-      <select
-        className="h-9 min-w-[10rem] rounded-md border border-input bg-background px-2"
+      <Select
+        className="h-9 min-w-[10rem] px-2"
         value={value ?? ''}
         onChange={(e) => {
           const next = e.target.value;
@@ -46,7 +47,7 @@ export function LocationSwitcher({
             {loc.name}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 }

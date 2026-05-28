@@ -1,12 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { AlertCircle, AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { odsToastEnter } from '../lib/motion';
 import { Flex } from './layout/flex';
 import { Stack } from './layout/stack';
 import { IconButton } from './icon-button';
+import { Icon, type IconName } from './icon';
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
@@ -17,11 +17,11 @@ const VARIANT_STYLES: Record<ToastVariant, string> = {
   info: 'border-l-info bg-info-muted text-info-muted-foreground',
 };
 
-const VARIANT_ICONS: Record<ToastVariant, React.ComponentType<{ className?: string }>> = {
-  success: CheckCircle2,
-  error: AlertCircle,
-  warning: AlertTriangle,
-  info: Info,
+const VARIANT_ICONS: Record<ToastVariant, IconName> = {
+  success: 'success',
+  error: 'error',
+  warning: 'warning',
+  info: 'info',
 };
 
 export const TOAST_DURATIONS: Record<ToastVariant, number | null> = {
@@ -37,9 +37,9 @@ export interface ToastIconProps {
 }
 
 export function ToastIcon({ variant, className }: ToastIconProps) {
-  const Icon = VARIANT_ICONS[variant];
   return (
     <Icon
+      name={VARIANT_ICONS[variant]}
       className={cn(
         'h-4 w-4 shrink-0',
         variant === 'success' && 'text-success',
@@ -48,7 +48,7 @@ export function ToastIcon({ variant, className }: ToastIconProps) {
         variant === 'info' && 'text-info',
         className,
       )}
-      aria-hidden
+      decorative
     />
   );
 }
@@ -85,7 +85,7 @@ export function ToastCloseButton({
       onClick={onClick}
       className={cn('shrink-0', className)}
     >
-      <X className="h-4 w-4" aria-hidden />
+      <Icon name="close" size="sm" decorative />
     </IconButton>
   );
 }

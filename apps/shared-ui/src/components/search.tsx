@@ -108,7 +108,6 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           type="search"
           data-ods-search=""
           value={isControlled ? value : internal}
-          defaultValue={isControlled ? undefined : defaultValue}
           onChange={(event) => {
             if (!isControlled) setInternal(event.target.value);
             onChange?.(event);

@@ -181,7 +181,7 @@ export function BrandCatalogPanel({
             <Input placeholder="Base price" value={itemDraft.basePrice} onChange={(e) => setItemDraft({ ...itemDraft, basePrice: e.target.value })} />
             <Input placeholder="SKU" value={itemDraft.sku} onChange={(e) => setItemDraft({ ...itemDraft, sku: e.target.value })} />
             <Input placeholder="Barcode" value={itemDraft.barcode} onChange={(e) => setItemDraft({ ...itemDraft, barcode: e.target.value })} />
-            <Select className="h-10 rounded-md border border-input bg-background px-3" value={itemDraft.globalCategoryId} onChange={(e) => setItemDraft({ ...itemDraft, globalCategoryId: e.target.value })}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3" value={itemDraft.globalCategoryId} onChange={(e) => setItemDraft({ ...itemDraft, globalCategoryId: e.target.value })}>
               <option value="">No global category</option>
               {globalCategories.map((category) => (
                 <option key={category.id} value={category.id}>{category.name}</option>

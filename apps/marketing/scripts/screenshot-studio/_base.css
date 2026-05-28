@@ -6,8 +6,8 @@
 
 body {
   font-family: Inter, system-ui, -apple-system, sans-serif;
-  background: #f4f6f8;
-  color: #0f1a2a;
+  background: hsl(var(--muted, 210 20% 96%));
+  color: hsl(var(--foreground, 213 47% 11%));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -15,28 +15,28 @@ body {
   width: 1200px;
   height: 750px;
   overflow: hidden;
-  background: #fff;
+  background: hsl(var(--background, 0 0% 100%));
 }
 
 .screen--device {
   width: 390px;
   height: 780px;
   border-radius: 32px;
-  border: 3px solid #0f1a2a14;
-  box-shadow: 0 24px 48px #0f1a2a1f;
-  background: #fff;
+  border: 3px solid hsl(var(--border, 214 20% 90%));
+  box-shadow: var(--shadow-lg, 0 12px 32px hsl(213 47% 11% / 0.12));
+  background: hsl(var(--background, 0 0% 100%));
 }
 
 .brand-primary {
-  color: #3a6dff;
+  color: hsl(var(--primary, 224 100% 61%));
 }
 
 .bg-brand {
-  background: #3a6dff;
+  background: hsl(var(--primary, 224 100% 61%));
 }
 
 .text-muted {
-  color: #6b7280;
+  color: hsl(var(--muted-foreground, 220 9% 46%));
 }
 
 .badge {
@@ -48,16 +48,16 @@ body {
 }
 
 .badge--success {
-  background: #2ecc7120;
-  color: #1a7a42;
+  background: hsl(var(--success, 152 69% 40%) / 0.12);
+  color: hsl(var(--success, 152 69% 40%));
 }
 
 .badge--warning {
-  background: #ffb02025;
-  color: #9a6400;
+  background: hsl(var(--warning, 38 92% 50%) / 0.15);
+  color: hsl(var(--warning, 38 92% 50%));
 }
 
 .badge--primary {
-  background: #3a6dff18;
-  color: #1f3fcc;
+  background: hsl(var(--primary, 224 100% 61%) / 0.1);
+  color: hsl(var(--primary, 224 100% 61%));
 }

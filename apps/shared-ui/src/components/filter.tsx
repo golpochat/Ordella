@@ -19,7 +19,7 @@ export interface FilterBarProps extends Omit<React.FormHTMLAttributes<HTMLFormEl
 /** Top-of-page filter shell — stacks on mobile, wraps on tablet+. */
 export function FilterBar({ children, className, as = 'form', ...props }: FilterBarProps) {
   const shellClass = cn(
-    'w-full max-w-full overflow-x-hidden rounded-lg border border-border bg-card p-4 shadow-sm',
+    'w-full max-w-full overflow-x-hidden rounded-lg border border-border-subtle bg-card p-4 shadow-sm',
     className,
   );
   const body = (
@@ -172,7 +172,7 @@ export function FilterCheckboxItem({
     <label
       htmlFor={id}
       className={cn(
-        'flex h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm text-foreground',
+        'flex h-10 min-w-0 cursor-pointer items-center gap-2 rounded-md border border-border-default bg-background px-3 text-sm text-foreground',
         checked && 'border-primary/40 bg-primary/5',
         className,
       )}
@@ -196,7 +196,7 @@ export function FilterSwitchItem({ id, label, checked, onChange, className }: Fi
     <label
       htmlFor={id}
       className={cn(
-        'flex h-10 cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm',
+        'flex h-10 cursor-pointer items-center gap-2 rounded-md border border-border-default bg-background px-3 text-sm',
         checked && 'border-primary/40 bg-primary/5',
         className,
       )}

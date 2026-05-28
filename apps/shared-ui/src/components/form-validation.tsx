@@ -127,7 +127,7 @@ export interface FormItemProps {
 /** Vertical field stack — label, control, helper, error. */
 export function FormItem({ children, className }: FormItemProps) {
   return (
-    <Stack gap="sm" className={cn('min-w-0', className)}>
+    <Stack gap="md" className={cn('min-w-0', className)}>
       {children}
     </Stack>
   );

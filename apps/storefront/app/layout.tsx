@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ClientOnly } from '@/components/client-only';
 import { ThemeRoot } from '@/components/theme-root';
 import { StorefrontFooter } from '@/components/storefront-footer';
 import { StorefrontHeader } from '@/components/storefront-header';
@@ -16,7 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="flex min-h-dvh flex-col bg-background text-foreground">
             <StorefrontHeader />
             <main className="flex-1">{children}</main>
-            <SupportWidget />
+            <ClientOnly>
+              <SupportWidget />
+            </ClientOnly>
             <StorefrontFooter />
           </div>
         </ThemeRoot>

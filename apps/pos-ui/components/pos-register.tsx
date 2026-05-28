@@ -22,12 +22,24 @@ import {
   Button,
   Card,
   CardContent,
+  Checkbox,
+  Flex,
+  Grid,
+  GridItem,
   Input,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalTitle,
+  ScrollContainer,
+  Stack,
 } from '@shared-ui';
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogFooterActions,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/pos-dialog';
 import { PosCartSidebar } from '@/components/pos-cart-sidebar';
 import { PosCheckoutModal } from '@/components/pos-checkout-modal';
 import { PosTopBar } from '@/components/pos-top-bar';
@@ -344,7 +356,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
   };
 
   return (
-    <div className="flex h-dvh flex-col bg-background text-foreground">
+    <Stack gap="none" className="h-dvh bg-background text-foreground">
       <PosTopBar online={online} syncing={syncingOffline} pendingOrders={pendingOrders} />
       {!online ? (
         <p className="bg-destructive px-4 py-2 text-center text-sm font-medium text-destructive-foreground">
@@ -354,7 +366,7 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
       {syncMessage ? (
         <p className="bg-muted px-4 py-1 text-center text-sm text-muted-foreground">{syncMessage}</p>
       ) : null}
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <Flex direction="col" className="min-h-0 flex-1 min-[1025px]:flex-row">
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="flex flex-wrap items-center gap-[var(--pos-density-gap)] border-b bg-card p-[var(--pos-panel-padding)]">
             <Input
@@ -383,14 +395,13 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
               value={priceMax}
               onChange={(e) => setPriceMax(e.target.value)}
             />
-            <label className="flex h-[var(--pos-button-height)] items-center gap-2 rounded-[var(--pos-radius)] border px-3 text-sm">
-              <input
-                type="checkbox"
+            <div className="rounded-[var(--pos-radius)] border px-3 py-2">
+              <Checkbox
+                label="In stock"
                 checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
               />
-              In stock
-            </label>
+            </div>
             <Button type="button" variant="outline" className="h-[var(--pos-button-height)] rounded-[var(--pos-radius)]" disabled={!online || !search.trim()} onClick={() => void runSemanticSearch()}>
               AI search
             </Button>
@@ -418,8 +429,9 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
             </div>
           ) : null}
 
-          <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-            <nav className="flex shrink-0 gap-2 overflow-x-auto border-b p-2 lg:w-44 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r">
+          <Flex direction="col" className="min-h-0 flex-1 min-[1025px]:flex-row">
+            <ScrollContainer axis="x" className="border-b p-2 min-[1025px]:w-44 min-[1025px]:overflow-y-auto min-[1025px]:overflow-x-hidden min-[1025px]:border-b-0 min-[1025px]:border-r">
+              <Flex gap="sm" className="shrink-0 min-[1025px]:flex-col">
               <Button
                 type="button"
                 className="h-[var(--pos-button-height)] shrink-0 justify-start rounded-[var(--pos-radius)] text-base lg:w-full"
@@ -439,13 +451,15 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                   {category.name}
                 </Button>
               ))}
-            </nav>
+              </Flex>
+            </ScrollContainer>
 
-            <div className="min-w-0 flex-1 overflow-y-auto p-[var(--pos-panel-padding)]">
+            <ScrollContainer axis="y" className="min-w-0 flex-1 p-[var(--pos-panel-padding)]">
               <h2 className="mb-3 text-lg font-semibold">Catalog</h2>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(var(--pos-grid-min),1fr))] gap-[var(--pos-density-gap)]">
+              <Grid cols={1} gap="md" className="grid-cols-[repeat(auto-fit,minmax(var(--pos-grid-min),1fr))] gap-[var(--pos-density-gap)]">
                 {visibleItems.map((item) => (
-                  <Card key={item.id} className="min-h-36 rounded-[var(--pos-radius)] transition-shadow hover:shadow-md">
+                  <GridItem key={item.id} colSpan={1}>
+                  <Card className="min-h-36 rounded-[var(--pos-radius)] transition-shadow hover:shadow-md">
                     <CardContent className="flex h-full flex-col justify-between p-[var(--pos-panel-padding)]">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -479,72 +493,91 @@ export function PosRegister({ initialCategories, initialItems }: PosRegisterProp
                       </Button>
                     </CardContent>
                   </Card>
+                  </GridItem>
                 ))}
-              </div>
+              </Grid>
               {visibleItems.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No items match your filters.</p>
               ) : null}
-            </div>
-          </div>
+            </ScrollContainer>
+          </Flex>
         </section>
 
         <div className="min-h-0 w-full shrink-0 border-t lg:max-w-md lg:border-l lg:border-t-0 xl:max-w-lg">
           <PosCartSidebar onCheckout={() => setCheckoutOpen(true)} />
         </div>
-      </div>
+      </Flex>
 
       <PosCheckoutModal open={checkoutOpen} onOpenChange={setCheckoutOpen} online={online} />
 
-      <Modal open={!!pickerItem} onOpenChange={(open) => !open && setPickerItem(null)}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>{pickerItem?.name}</ModalTitle>
-          </ModalHeader>
-          {pickerItem?.variants.length ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Variant</p>
-              <div className="flex flex-wrap gap-2">
-                {pickerItem.variants.map((variant) => (
-                  <Button
-                    key={variant.id}
-                    type="button"
-                    variant={selectedVariantId === variant.id ? 'default' : 'outline'}
-                    onClick={() => setSelectedVariantId(variant.id)}
-                  >
-                    {variant.name} (+{formatCurrency(variant.priceDelta)})
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {pickerItem?.modifiers.map((modifier) => (
-            <div key={modifier.id} className="space-y-2 rounded-[var(--pos-radius)] border p-[var(--pos-panel-padding)]">
-              <p className="font-medium">
-                {modifier.name}
-                {modifier.required ? <span className="text-destructive"> *</span> : null}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {modifier.options.map((option) => (
-                  <Button
-                    key={option.id}
-                    type="button"
-                    variant={selectedOptions.includes(option.id) ? 'default' : 'outline'}
-                    onClick={() =>
-                      toggleOption(option.id, modifier.id, modifier.type !== 'single')
-                    }
-                  >
-                    {option.name}
-                    {option.priceDelta !== '0' ? ` (+${formatCurrency(option.priceDelta)})` : ''}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ))}
-          <Button type="button" className="h-[var(--pos-button-height)] w-full rounded-[var(--pos-radius)]" disabled={!canAdd || cartSyncing} onClick={confirmAdd}>
-            Add to cart
-          </Button>
-        </ModalContent>
-      </Modal>
-    </div>
+      <Dialog open={!!pickerItem} onOpenChange={(isOpen) => !isOpen && setPickerItem(null)}>
+        <DialogContent size="md">
+          <DialogHeader>
+            <DialogTitle>{pickerItem?.name}</DialogTitle>
+            <DialogDescription>Choose variant and modifier options, then add to cart.</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <Stack gap="md">
+              {pickerItem?.variants.length ? (
+                <Stack gap="sm">
+                  <p className="text-sm font-medium">Variant</p>
+                  <Flex gap="sm" wrap>
+                    {pickerItem.variants.map((variant) => (
+                      <Button
+                        key={variant.id}
+                        type="button"
+                        size="sm"
+                        variant={selectedVariantId === variant.id ? 'default' : 'outline'}
+                        aria-pressed={selectedVariantId === variant.id}
+                        aria-label={`Variant ${variant.name}`}
+                        onClick={() => setSelectedVariantId(variant.id)}
+                      >
+                        {variant.name} (+{formatCurrency(variant.priceDelta)})
+                      </Button>
+                    ))}
+                  </Flex>
+                </Stack>
+              ) : null}
+              {pickerItem?.modifiers.map((modifier) => (
+                <Stack key={modifier.id} gap="sm" className="rounded-md border border-border p-4">
+                  <p className="font-medium">
+                    {modifier.name}
+                    {modifier.required ? <span className="text-destructive"> *</span> : null}
+                  </p>
+                  <Flex gap="sm" wrap>
+                    {modifier.options.map((option) => (
+                      <Button
+                        key={option.id}
+                        type="button"
+                        size="sm"
+                        variant={selectedOptions.includes(option.id) ? 'default' : 'outline'}
+                        aria-pressed={selectedOptions.includes(option.id)}
+                        aria-label={`${modifier.name}: ${option.name}`}
+                        onClick={() =>
+                          toggleOption(option.id, modifier.id, modifier.type !== 'single')
+                        }
+                      >
+                        {option.name}
+                        {option.priceDelta !== '0' ? ` (+${formatCurrency(option.priceDelta)})` : ''}
+                      </Button>
+                    ))}
+                  </Flex>
+                </Stack>
+              ))}
+            </Stack>
+          </DialogBody>
+          <DialogFooter>
+            <DialogFooterActions>
+              <Button type="button" variant="outline" onClick={() => setPickerItem(null)}>
+                Cancel
+              </Button>
+              <Button type="button" disabled={!canAdd || cartSyncing} onClick={confirmAdd}>
+                Add to cart
+              </Button>
+            </DialogFooterActions>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Stack>
   );
 }

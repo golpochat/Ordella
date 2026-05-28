@@ -18,7 +18,7 @@ export function CurrencySwitcher({ active, className }: CurrencySwitcherProps) {
 
   return (
     <div
-      className={cn('inline-flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-1 shadow-brand', className)}
+      className={cn('inline-flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-1 shadow-sm', className)}
       role="group"
       aria-label="Display currency"
     >

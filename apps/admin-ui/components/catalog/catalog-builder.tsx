@@ -78,7 +78,7 @@ export function CatalogBuilder() {
           <h2 className="text-lg font-semibold">Categories</h2>
           <div className="flex flex-wrap gap-2">
             <input
-              className="flex h-10 rounded-md border border-input bg-background px-3 text-sm"
+              className="flex h-10 rounded-md border border-border-default bg-background px-3 text-sm"
               placeholder="New category name"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}

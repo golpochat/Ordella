@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@shared-ui';
 import { createApiClient, DEFAULT_THEME, type TenantTheme } from '@shared-utils';
 import { cacheTheme, fetchThemeByTenantId, getThemeFromCache } from '@shared-utils';
-import { tokenStorage } from '@/lib/session';
+import { getCustomerAccessToken, tokenStorage } from '@/lib/session';
 import { getApiBaseUrl, getTenantId } from '@/lib/config';
 
 type ThemeRootProps = {
@@ -20,6 +20,9 @@ export function ThemeRoot({ children }: ThemeRootProps) {
 
     const cached = getThemeFromCache(tenantId);
     if (cached) setTheme(cached);
+
+    // Unauthenticated (e.g. login): use cache/default only — avoids failed theme API calls in dev.
+    if (!getCustomerAccessToken()) return;
 
     const api = createApiClient({
       baseUrl: getApiBaseUrl(),

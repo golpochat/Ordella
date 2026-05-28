@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  Flex,
+  DialogFooterActions,
   Stack,
   type DialogContentProps,
 } from '@shared-ui';
@@ -96,18 +96,7 @@ export function AdminDialog({
   );
 }
 
-export type DialogFooterActionsProps = {
-  children: React.ReactNode;
-};
-
-/** Footer action row — secondary left of primary, end-aligned. */
-export function DialogFooterActions({ children }: DialogFooterActionsProps) {
-  return (
-    <Flex gap="sm" wrap align="center" justify="end" className="w-full">
-      {children}
-    </Flex>
-  );
-}
+export { DialogFooterActions } from '@shared-ui';
 
 export type ConfirmDialogProps = {
   open: boolean;
@@ -246,7 +235,7 @@ export function DisableConfirmDialog({
       {...props}
       title={resolvedTitle}
       description={description ?? t('dialog.disableDescription')}
-      confirmLabel={confirmLabel ?? t('common.disable')}
+      confirmLabel={t('common.disable')}
       destructive
     />
   );

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, FormErrorMessage, FormField, Grid, Heading, Input, Stack, TextMuted, Textarea } from '@shared-ui';
 import {
   deleteCustomerData,
   exportCustomerData,
@@ -167,8 +167,8 @@ export function ProfileView() {
   return (
     <div className="space-y-4 p-4 pb-24">
       <div>
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="text-sm text-muted-foreground">Account and notification settings</p>
+        <Heading level={1} size="lg">Profile</Heading>
+        <TextMuted>Account and notification settings</TextMuted>
       </div>
 
       <Card>
@@ -176,17 +176,12 @@ export function ProfileView() {
           <CardTitle className="text-base">Your details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-3" onSubmit={(e) => void onSave(e)}>
-            <div className="space-y-1">
-              <label htmlFor="name" className="text-sm font-medium">
-                Name
-              </label>
+          <form onSubmit={(e) => void onSave(e)}>
+            <Stack gap="md">
+            <FormField label="Name" htmlFor="name" required>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
+            </FormField>
+            <FormField label="Email" htmlFor="email" required>
               <Input
                 id="email"
                 type="email"
@@ -194,98 +189,49 @@ export function ProfileView() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="phone" className="text-sm font-medium">
-                Phone
-              </label>
+            </FormField>
+            <FormField label="Phone" htmlFor="phone" required>
               <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label htmlFor="dateOfBirth" className="text-sm font-medium">
-                  Date of birth
-                </label>
+            </FormField>
+            <Grid cols={2} gap="md" responsive>
+              <FormField label="Date of birth" htmlFor="dateOfBirth">
                 <Input
                   id="dateOfBirth"
                   type="date"
                   value={dateOfBirth}
                   onChange={(e) => setDateOfBirth(e.target.value)}
                 />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="gender" className="text-sm font-medium">
-                  Gender
-                </label>
+              </FormField>
+              <FormField label="Gender" htmlFor="gender">
                 <Input id="gender" value={gender} onChange={(e) => setGender(e.target.value)} />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="preferences" className="text-sm font-medium">
-                Preferences
-              </label>
-              <textarea
+              </FormField>
+            </Grid>
+            <FormField
+              label="Preferences"
+              htmlFor="preferences"
+              helper="JSON for dietary, delivery, product, or service preferences."
+            >
+              <Textarea
                 id="preferences"
-                className="min-h-24 w-full rounded-md border border-input bg-background p-3 text-sm"
+                className="min-h-24"
                 value={preferencesText}
                 onChange={(e) => setPreferencesText(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">JSON for dietary, delivery, product, or service preferences.</p>
-            </div>
+            </FormField>
 
             <p className="pt-2 text-sm font-medium">Notifications</p>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={notifyEmail}
-                onChange={(e) => setNotifyEmail(e.target.checked)}
-              />
-              Email updates
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={notifySms}
-                onChange={(e) => setNotifySms(e.target.checked)}
-              />
-              SMS updates
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={notifyPush}
-                onChange={(e) => setNotifyPush(e.target.checked)}
-              />
-              Push notifications
-            </label>
+            <Checkbox label="Email updates" checked={notifyEmail} onChange={(e) => setNotifyEmail(e.target.checked)} />
+            <Checkbox label="SMS updates" checked={notifySms} onChange={(e) => setNotifySms(e.target.checked)} />
+            <Checkbox label="Push notifications" checked={notifyPush} onChange={(e) => setNotifyPush(e.target.checked)} />
 
             <p className="pt-2 text-sm font-medium">Marketing preferences</p>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={marketingEmail}
-                onChange={(e) => setMarketingEmail(e.target.checked)}
-              />
-              Promotional emails
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={marketingSms}
-                onChange={(e) => setMarketingSms(e.target.checked)}
-              />
-              Promotional SMS
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={marketingPush}
-                onChange={(e) => setMarketingPush(e.target.checked)}
-              />
-              Promotional push notifications
-            </label>
+            <Checkbox label="Promotional emails" checked={marketingEmail} onChange={(e) => setMarketingEmail(e.target.checked)} />
+            <Checkbox label="Promotional SMS" checked={marketingSms} onChange={(e) => setMarketingSms(e.target.checked)} />
+            <Checkbox label="Promotional push notifications" checked={marketingPush} onChange={(e) => setMarketingPush(e.target.checked)} />
 
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            <div aria-live="polite">
+              <FormErrorMessage>{error}</FormErrorMessage>
+            </div>
             {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
             {profile ? (
               <p className="text-xs text-muted-foreground">Profile ID: {profile.id}</p>
@@ -293,6 +239,7 @@ export function ProfileView() {
             <Button type="submit" disabled={saving}>
               {saving ? 'Saving…' : 'Save changes'}
             </Button>
+            </Stack>
           </form>
         </CardContent>
       </Card>

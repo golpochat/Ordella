@@ -76,20 +76,20 @@ export function MarketingJourneysPanel({
         <CardContent className="space-y-4">
           <form className="grid gap-3 md:grid-cols-3" onSubmit={save}>
             <Input placeholder="Journey name" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required />
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.trigger} onChange={(event) => setForm((current) => ({ ...current, trigger: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.trigger} onChange={(event) => setForm((current) => ({ ...current, trigger: event.target.value }))}>
               {TRIGGERS.map((trigger) => <option key={trigger} value={trigger}>{trigger.replace(/_/g, ' ')}</option>)}
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.targetSegmentId} onChange={(event) => setForm((current) => ({ ...current, targetSegmentId: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.targetSegmentId} onChange={(event) => setForm((current) => ({ ...current, targetSegmentId: event.target.value }))}>
               <option value="">All eligible customers</option>
               {segments.map((segment) => <option key={segment.id} value={segment.id}>{segment.name}</option>)}
             </Select>
             <Input placeholder="Wait value" type="number" value={form.delayValue} onChange={(event) => setForm((current) => ({ ...current, delayValue: event.target.value }))} />
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.delayUnit} onChange={(event) => setForm((current) => ({ ...current, delayUnit: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.delayUnit} onChange={(event) => setForm((current) => ({ ...current, delayUnit: event.target.value }))}>
               <option value="hours">Hours</option>
               <option value="days">Days</option>
             </Select>
             <Input placeholder="Condition" value={form.condition} onChange={(event) => setForm((current) => ({ ...current, condition: event.target.value }))} />
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.action} onChange={(event) => setForm((current) => ({ ...current, action: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.action} onChange={(event) => setForm((current) => ({ ...current, action: event.target.value }))}>
               {ACTIONS.map((action) => <option key={action} value={action}>{action.replace(/_/g, ' ')}</option>)}
             </Select>
             <Input placeholder="Promotion ID for apply promotion" value={form.promotionId} onChange={(event) => setForm((current) => ({ ...current, promotionId: event.target.value }))} />

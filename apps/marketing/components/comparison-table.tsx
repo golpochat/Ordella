@@ -1,4 +1,4 @@
-import { Check, Minus } from 'lucide-react';
+import { Card, CardBody, Icon, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { cn } from '@/lib/cn';
 import type { PlanId } from '@/lib/plans';
 
@@ -17,14 +17,14 @@ function CellContent({ value }: { value: string | boolean }) {
   if (value === true) {
     return (
       <span className="inline-flex items-center justify-center text-primary" aria-label="Included">
-        <Check className="h-4 w-4" aria-hidden />
+        <Icon name="check" size="sm" decorative />
       </span>
     );
   }
   if (value === false) {
     return (
       <span className="inline-flex items-center justify-center text-slate/60" aria-label="Not included">
-        <Minus className="h-4 w-4" aria-hidden />
+        <Icon name="minus" size="sm" decorative />
       </span>
     );
   }
@@ -48,10 +48,12 @@ function MobileComparison({
   return (
     <div className="space-y-4 md:hidden">
       {rows.map((row) => (
-        <article
+        <Card
           key={row.label}
-          className="rounded-xl border border-border/80 bg-card p-4 shadow-brand"
+          className="border-border/80 shadow-sm"
+          data-ods-elevation="sm"
         >
+          <CardBody className="p-4">
           <h3 className="text-sm font-semibold text-navy">{row.label}</h3>
           <dl className="mt-3 grid grid-cols-2 gap-3">
             {planIds.map((id) => (
@@ -65,7 +67,8 @@ function MobileComparison({
               </div>
             ))}
           </dl>
-        </article>
+          </CardBody>
+        </Card>
       ))}
     </div>
   );
@@ -76,51 +79,39 @@ export function ComparisonTable({ planIds, rows, className }: ComparisonTablePro
     <div className={className}>
       <MobileComparison planIds={planIds} rows={rows} />
 
-      <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-brand md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
-            <caption className="sr-only">Plan comparison</caption>
-            <thead>
-              <tr className="border-b border-border bg-gray-light">
-                <th
-                  scope="col"
-                  className="py-4 pl-5 pr-4 text-left text-sm font-semibold text-navy sm:pl-6"
-                >
-                  Feature
-                </th>
-                {planIds.map((id) => (
-                  <th
-                    key={id}
-                    scope="col"
-                    className="px-4 py-4 text-center text-sm font-semibold text-navy"
-                  >
-                    {planLabels[id]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row, i) => (
-                <tr
-                  key={row.label}
-                  className={cn('border-b border-border/60', i % 2 === 1 && 'bg-gray-light/60')}
-                >
-                  <th
-                    scope="row"
-                    className="py-3.5 pl-5 pr-4 text-left font-normal text-slate sm:pl-6"
-                  >
-                    {row.label}
-                  </th>
-                  {planIds.map((id) => (
-                    <td key={id} className="px-4 py-3.5 text-center">
-                      <CellContent value={row.values[id]} />
-                    </td>
-                  ))}
-                </tr>
+      <div className="hidden md:block">
+        <Table aria-label="Plan comparison">
+          <TableCaption className="sr-only">Plan comparison</TableCaption>
+          <TableHeader className="bg-gray-light">
+            <TableRow>
+              <TableHead className="py-4 pl-5 pr-4 text-left text-sm font-semibold text-navy sm:pl-6">
+                Feature
+              </TableHead>
+              {planIds.map((id) => (
+                <TableHead key={id} className="px-4 py-4 text-center text-sm font-semibold text-navy">
+                  {planLabels[id]}
+                </TableHead>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row, i) => (
+              <TableRow key={row.label} className={cn(i % 2 === 1 && 'bg-gray-light/60')}>
+                <TableHead
+                  scope="row"
+                  className="py-3.5 pl-5 pr-4 text-left font-normal text-slate sm:pl-6"
+                >
+                  {row.label}
+                </TableHead>
+                {planIds.map((id) => (
+                  <TableCell key={id} className="px-4 py-3.5 text-center">
+                    <CellContent value={row.values[id]} />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

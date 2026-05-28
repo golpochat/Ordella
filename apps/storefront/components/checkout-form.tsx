@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, FormField, Input, Select, Tabs, TabsContent, TabsList, TabsTrigger } from '@shared-ui';
 import {
   createOnlineOrder,
   fetchGiftCard,
@@ -67,6 +67,12 @@ export function CheckoutForm() {
   useEffect(() => {
     hydrate();
   }, [hydrate]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = window.sessionStorage.getItem('ordella.storefront.promoCode');
+    if (stored) setCouponCode(stored);
+  }, []);
 
   useEffect(() => {
     void fetchLoyaltySettings().then(setLoyaltySettings).catch(() => setLoyaltySettings(null));
@@ -461,13 +467,10 @@ export function CheckoutForm() {
               </TabsList>
               <TabsContent value="delivery" className="mt-4 space-y-3">
                 {savedAddresses.length ? (
-                  <div className="space-y-1">
-                    <label htmlFor="saved-address" className="text-sm font-medium">
-                      Saved address
-                    </label>
-                    <select
+                  <FormField label="Saved address" htmlFor="saved-address">
+                    <Select
                       id="saved-address"
-                      className="h-11 w-full rounded-[var(--storefront-radius)] border border-input bg-background px-3 text-sm"
+                      className="h-11 rounded-[var(--storefront-radius)]"
                       value={selectedAddressId}
                       onChange={(event) => {
                         const address = savedAddresses.find((item) => item.id === event.target.value);
@@ -480,8 +483,8 @@ export function CheckoutForm() {
                           {address.label} · {address.addressLine1}
                         </option>
                       ))}
-                    </select>
-                  </div>
+                    </Select>
+                  </FormField>
                 ) : null}
                 <Input
                   placeholder="Address line 1 *"

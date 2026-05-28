@@ -166,14 +166,14 @@ export function SupportInboxPanel({
                   <p>SLA due: {selected.slaDueAt ? formatDate(selected.slaDueAt) : 'Not set'}</p>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
-                  <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={selected.status} onChange={(event) => void patchTicket(selected.id, { status: event.target.value })}>
+                  <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={selected.status} onChange={(event) => void patchTicket(selected.id, { status: event.target.value })}>
                     <option value="open">Open</option>
                     <option value="in_progress">In progress</option>
                     <option value="waiting_customer">Waiting customer</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
                   </Select>
-                  <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={selected.priority} onChange={(event) => void patchTicket(selected.id, { priority: event.target.value })}>
+                  <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={selected.priority} onChange={(event) => void patchTicket(selected.id, { priority: event.target.value })}>
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
@@ -194,11 +194,11 @@ export function SupportInboxPanel({
                     </div>
                   ))}
                 </div>
-                <Select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" onChange={(event) => setReply(event.target.value)} defaultValue="">
+                <Select className="h-10 w-full rounded-md border border-border-default bg-background px-3 text-sm" onChange={(event) => setReply(event.target.value)} defaultValue="">
                   <option value="">Use canned response</option>
                   {cannedResponses.map((response) => <option key={response.id} value={response.body}>{response.title}</option>)}
                 </Select>
-                <Textarea className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reply or internal note" />
+                <Textarea className="min-h-24 w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reply or internal note" />
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={internalOnly} onChange={(event) => setInternalOnly(event.target.checked)} />
                   Internal note

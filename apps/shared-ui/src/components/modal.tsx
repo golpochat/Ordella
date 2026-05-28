@@ -10,6 +10,7 @@ import {
   odsModalOverlay,
 } from '../lib/motion';
 import { IconButton } from './icon-button';
+import { Flex } from './layout/flex';
 
 const Modal = DialogPrimitive.Root;
 const ModalTrigger = DialogPrimitive.Trigger;
@@ -33,7 +34,7 @@ ModalOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const modalContentVariants = cva(
   [
-    'fixed z-50 flex w-[calc(100%-2rem)] max-h-[min(90vh,calc(100dvh-2rem))] flex-col overflow-hidden border border-border bg-background p-0 shadow-lg',
+    'fixed z-50 flex w-[calc(100%-2rem)] max-h-[min(90vh,calc(100dvh-2rem))] flex-col overflow-hidden rounded-lg border border-border-default bg-card p-0 shadow-lg data-[ods-elevation=lg]:shadow-lg',
     odsModalContent,
     'max-[480px]:inset-x-0 max-[480px]:bottom-0 max-[480px]:top-auto max-[480px]:max-h-[92dvh] max-[480px]:w-full max-[480px]:translate-x-0 max-[480px]:translate-y-0 max-[480px]:rounded-t-lg',
     'min-[481px]:left-1/2 min-[481px]:top-1/2 min-[481px]:-translate-x-1/2 min-[481px]:-translate-y-1/2 min-[481px]:rounded-lg',
@@ -68,6 +69,7 @@ const ModalContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Co
       <DialogPrimitive.Content
         ref={ref}
         aria-modal="true"
+        data-ods-elevation="lg"
         className={cn(modalContentVariants({ size }), className)}
         onPointerDownOutside={(event) => {
           if (!closeOnOverlayClick) {
@@ -85,7 +87,7 @@ const ModalContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.Co
         {showClose ? (
           <ModalClose asChild>
             <IconButton
-              aria-label="Close dialog"
+              aria-label="Close"
               size="sm"
               className="absolute right-4 top-4 z-10"
             >
@@ -101,21 +103,21 @@ ModalContent.displayName = DialogPrimitive.Content.displayName;
 
 const ModalHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('flex shrink-0 flex-col gap-1 border-b border-border px-6 py-4 pr-14 text-left', className)}
+    className={cn('flex shrink-0 flex-col gap-2 border-b border-border-subtle p-6 pr-14 text-left', className)}
     {...props}
   />
 );
 ModalHeader.displayName = 'ModalHeader';
 
 const ModalBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('min-h-0 flex-1 overflow-y-auto px-6 py-4', className)} {...props} />
+  <div className={cn('min-h-0 flex-1 overflow-y-auto p-6', className)} {...props} />
 );
 ModalBody.displayName = 'ModalBody';
 
 const ModalFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      'flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-border bg-background px-6 py-4',
+      'flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-border-subtle bg-background p-6',
       className,
     )}
     {...props}
@@ -146,6 +148,20 @@ const ModalDescription = React.forwardRef<
   />
 ));
 ModalDescription.displayName = DialogPrimitive.Description.displayName;
+
+export type DialogFooterActionsProps = {
+  children: React.ReactNode;
+  className?: string;
+};
+
+/** End-aligned footer actions — secondary before primary. */
+export function DialogFooterActions({ children, className }: DialogFooterActionsProps) {
+  return (
+    <Flex gap="sm" wrap align="center" justify="end" className={cn('w-full', className)}>
+      {children}
+    </Flex>
+  );
+}
 
 export {
   Modal,

@@ -4,21 +4,11 @@
 
 @layer base {
   :root {
-    /* Brand palette */
-    --color-primary: #3a6dff;
-    --color-primary-dark: #1f3fcc;
-    --color-navy: #0f1a2a;
-    --color-gray-light: #f4f6f8;
-    --color-slate: #6b7280;
-    --color-success: #2ecc71;
-    --color-warning: #ffb020;
-    --color-danger: #ff6b6b;
-
-    --brand-primary: var(--color-primary);
-    --brand-secondary: var(--color-primary-dark);
-    --brand-bg: var(--color-gray-light);
-    --brand-text: var(--color-navy);
-    --brand-accent: var(--color-primary);
+    --brand-primary: hsl(var(--primary));
+    --brand-secondary: hsl(var(--primary));
+    --brand-bg: hsl(var(--muted));
+    --brand-text: hsl(var(--foreground));
+    --brand-accent: hsl(var(--primary));
 
     /* Semantic UI (HSL for Tailwind alpha) */
     --background: 0 0% 100%;
@@ -44,11 +34,6 @@
     --space-stack: 1rem;
     --space-stack-lg: 1.5rem;
 
-    /* Shadows */
-    --shadow-brand: 0 4px 20px rgb(58 109 255 / 0.18);
-    --shadow-soft: 0 1px 2px rgb(15 26 42 / 0.04), 0 8px 24px rgb(15 26 42 / 0.06);
-    --shadow-card: 0 1px 3px rgb(15 26 42 / 0.06), 0 12px 32px rgb(15 26 42 / 0.08);
-    --shadow-elevated: 0 8px 24px rgb(15 26 42 / 0.1), 0 24px 48px rgb(58 109 255 / 0.12);
   }
 
   html {
@@ -105,6 +90,27 @@
     @apply mx-auto w-full max-w-marketing px-4 sm:px-6 lg:px-8;
   }
 
+  /* Raw breakpoints — avoid Tailwind `md:` when ODS preset is loaded (fontSize.md collision). */
+  .marketing-header-nav {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .marketing-header-nav {
+      display: flex;
+    }
+  }
+
+  .marketing-header-mobile {
+    display: block;
+  }
+
+  @media (min-width: 768px) {
+    .marketing-header-mobile {
+      display: none;
+    }
+  }
+
   .section-header-block {
     margin-bottom: var(--space-header-after);
   }
@@ -148,6 +154,6 @@
       prose-code:rounded-md prose-code:bg-gray-light prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm prose-code:font-medium prose-code:text-navy prose-code:before:content-none prose-code:after:content-none
       prose-pre:rounded-xl prose-pre:border prose-pre:border-border prose-pre:bg-navy prose-pre:text-gray-light
       prose-blockquote:border-l-primary prose-blockquote:text-slate
-      prose-img:rounded-xl prose-img:shadow-brand;
+      prose-img:rounded-xl prose-img:shadow-sm;
   }
 }

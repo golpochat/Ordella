@@ -4,7 +4,9 @@
   "private": true,
   "description": "Ordella Online Ordering Storefront — Next.js 14",
   "scripts": {
+    "predev": "node ../../scripts/ensure-shared-ui-css.mjs",
     "dev": "next dev -p 3003",
+    "prebuild": "node ../../scripts/ensure-shared-ui-css.mjs",
     "build": "next build",
     "start": "next start -p 3003",
     "lint": "next lint",

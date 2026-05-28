@@ -22,8 +22,6 @@ import {
 import { formatDate, getErrorMessage } from '@/lib/utils';
 import { Metric, MetricCard, MetricGrid } from '@/components/ui/admin-card';
 
-import { PanelEmpty } from '@/components/ui/admin-empty-state';
-
 type OfflineSyncPanelProps = {
   dashboard: OfflineSyncDashboard | null;
   settings: OfflineLocationSetting[];
@@ -138,7 +136,7 @@ export function OfflineSyncPanel({
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-[1fr_auto]">
             <Select
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              className="h-10 rounded-md border border-border-default bg-background px-3 text-sm"
               value={locationId}
               onChange={(event) => {
 

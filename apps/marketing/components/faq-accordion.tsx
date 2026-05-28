@@ -1,7 +1,7 @@
 'use client';
 
-import { ChevronDown } from 'lucide-react';
 import { useId, useState } from 'react';
+import { Button, Card, Icon } from '@shared-ui';
 import { cn } from '@/lib/cn';
 
 export type FaqItem = { q: string; a: string };
@@ -16,11 +16,12 @@ export function FaqAccordion({ items, className }: FaqAccordionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div
+    <Card
       className={cn(
-        'mx-auto w-full max-w-2xl divide-y divide-border rounded-2xl border border-border bg-card shadow-brand',
+        'mx-auto w-full max-w-2xl divide-y divide-border shadow-sm',
         className,
       )}
+      data-ods-elevation="sm"
     >
       {items.map((faq, index) => {
         const isOpen = openIndex === index;
@@ -30,20 +31,23 @@ export function FaqAccordion({ items, className }: FaqAccordionProps) {
         return (
           <div key={faq.q}>
             <h3>
-              <button
+              <Button
                 id={buttonId}
                 type="button"
-                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left text-base font-semibold text-navy transition-colors hover:bg-gray-light focus-visible:bg-gray-light sm:px-6 sm:py-5"
+                variant="ghost"
+                className="flex h-auto w-full items-center justify-between gap-4 rounded-none px-5 py-4 text-left text-base font-semibold text-navy transition-colors hover:bg-gray-light focus-visible:bg-gray-light sm:px-6 sm:py-5"
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => setOpenIndex(isOpen ? null : index)}
               >
                 {faq.q}
-                <ChevronDown
-                  className={cn('h-5 w-5 shrink-0 text-slate transition-transform', isOpen && 'rotate-180')}
-                  aria-hidden
+                <Icon
+                  name="chevron-down"
+                  size="md"
+                  className={cn('shrink-0 text-slate transition-transform', isOpen && 'rotate-180')}
+                  decorative
                 />
-              </button>
+              </Button>
             </h3>
             <div
               id={panelId}
@@ -57,6 +61,6 @@ export function FaqAccordion({ items, className }: FaqAccordionProps) {
           </div>
         );
       })}
-    </div>
+    </Card>
   );
 }

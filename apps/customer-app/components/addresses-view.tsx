@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, FormErrorMessage, FormField, Heading, Input, Stack, TextMuted, Textarea } from '@shared-ui';
 import {
   createAddress,
   deleteAddress,
@@ -105,8 +105,8 @@ export function AddressesView() {
   return (
     <div className="space-y-4 p-4 pb-24">
       <div>
-        <h1 className="text-2xl font-bold">Addresses</h1>
-        <p className="text-sm text-muted-foreground">Saved delivery locations</p>
+        <Heading level={1} size="lg">Addresses</Heading>
+        <TextMuted>Saved delivery locations</TextMuted>
       </div>
 
       {loading ? <p className="text-sm text-muted-foreground">Loading addresses…</p> : null}
@@ -153,80 +153,62 @@ export function AddressesView() {
           <CardTitle className="text-base">{editingId ? 'Edit address' : 'Add address'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-3" onSubmit={(e) => void onSubmit(e)}>
-            <div className="space-y-1">
-              <label htmlFor="label" className="text-sm font-medium">
-                Label
-              </label>
+          <form onSubmit={(e) => void onSubmit(e)}>
+            <Stack gap="md">
+            <FormField label="Label" htmlFor="label" required>
               <Input
                 id="label"
                 value={form.label}
                 onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
                 required
               />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="addressLine1" className="text-sm font-medium">
-                Address line 1
-              </label>
+            </FormField>
+            <FormField label="Address line 1" htmlFor="addressLine1" required>
               <Input
                 id="addressLine1"
                 value={form.addressLine1}
                 onChange={(e) => setForm((f) => ({ ...f, addressLine1: e.target.value }))}
                 required
               />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="addressLine2" className="text-sm font-medium">
-                Address line 2
-              </label>
+            </FormField>
+            <FormField label="Address line 2" htmlFor="addressLine2">
               <Input
                 id="addressLine2"
                 value={form.addressLine2 ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, addressLine2: e.target.value }))}
               />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="city" className="text-sm font-medium">
-                City
-              </label>
+            </FormField>
+            <FormField label="City" htmlFor="city" required>
               <Input
                 id="city"
                 value={form.city}
                 onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
                 required
               />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="postalCode" className="text-sm font-medium">
-                Postal code
-              </label>
+            </FormField>
+            <FormField label="Postal code" htmlFor="postalCode">
               <Input
                 id="postalCode"
                 value={form.postalCode ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, postalCode: e.target.value }))}
               />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="instructions" className="text-sm font-medium">
-                Instructions
-              </label>
-              <textarea
+            </FormField>
+            <FormField label="Instructions" htmlFor="instructions">
+              <Textarea
                 id="instructions"
-                className="min-h-20 w-full rounded-md border border-input bg-background p-3 text-sm"
+                className="min-h-20"
                 value={form.instructions ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, instructions: e.target.value }))}
               />
+            </FormField>
+            <Checkbox
+              label="Default address"
+              checked={form.isDefault ?? false}
+              onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
+            />
+            <div aria-live="polite">
+              <FormErrorMessage>{error}</FormErrorMessage>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.isDefault ?? false}
-                onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
-              />
-              Default address
-            </label>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <div className="flex gap-2">
               <Button type="submit" disabled={saving}>
                 {saving ? 'Saving…' : editingId ? 'Update' : 'Add address'}
@@ -244,6 +226,7 @@ export function AddressesView() {
                 </Button>
               ) : null}
             </div>
+            </Stack>
           </form>
         </CardContent>
       </Card>

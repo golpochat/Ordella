@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input } from '@shared-ui';
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, FormField, Grid, Heading, Input, Select, Stack, Text, TextMuted, Textarea } from '@shared-ui';
 import {
   createSupportTicket,
   fetchSupportTickets,
@@ -71,20 +71,24 @@ export function SupportView() {
   return (
     <div className="space-y-4 p-4 pb-24">
       <div>
-        <h1 className="text-2xl font-bold">Support</h1>
-        <p className="text-sm text-muted-foreground">Create tickets, follow replies, and keep order issues in one thread.</p>
+        <Heading level={1} size="lg">Support</Heading>
+        <TextMuted>Create tickets, follow replies, and keep order issues in one thread.</TextMuted>
       </div>
-      {status ? <p className="text-sm text-muted-foreground">{status}</p> : null}
+      {status ? <Text variant="muted" size="sm" aria-live="polite">{status}</Text> : null}
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Create a ticket</CardTitle>
         </CardHeader>
         <CardContent>
-          <form className="space-y-3" onSubmit={(event) => void createTicket(event)}>
-            <Input placeholder="Subject" value={subject} onChange={(event) => setSubject(event.target.value)} required />
-            <div className="grid gap-3 md:grid-cols-2">
-              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={category} onChange={(event) => setCategory(event.target.value)}>
+          <form onSubmit={(event) => void createTicket(event)}>
+            <Stack gap="md">
+              <FormField label="Subject" htmlFor="support-subject" required>
+                <Input id="support-subject" value={subject} onChange={(event) => setSubject(event.target.value)} required />
+              </FormField>
+            <Grid cols={2} gap="md" responsive>
+              <FormField label="Category" htmlFor="support-category">
+                <Select id="support-category" value={category} onChange={(event) => setCategory(event.target.value)}>
                 <option value="order_issue">Order issue</option>
                 <option value="delivery_issue">Delivery issue</option>
                 <option value="refund">Refund</option>
@@ -92,18 +96,28 @@ export function SupportView() {
                 <option value="subscription">Subscription</option>
                 <option value="loyalty">Loyalty</option>
                 <option value="general">General</option>
-              </select>
-              <select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={priority} onChange={(event) => setPriority(event.target.value)}>
+                </Select>
+              </FormField>
+              <FormField label="Priority" htmlFor="support-priority">
+                <Select id="support-priority" value={priority} onChange={(event) => setPriority(event.target.value)}>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
                 <option value="urgent">Urgent</option>
-              </select>
-            </div>
-            <Input placeholder="Order ID (optional)" value={orderId} onChange={(event) => setOrderId(event.target.value)} />
-            <Input placeholder="Attachment name or reference (optional)" value={attachmentName} onChange={(event) => setAttachmentName(event.target.value)} />
-            <textarea className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tell us what happened" required />
+                </Select>
+              </FormField>
+            </Grid>
+            <FormField label="Order ID" htmlFor="support-order-id" helper="Optional">
+              <Input id="support-order-id" value={orderId} onChange={(event) => setOrderId(event.target.value)} />
+            </FormField>
+            <FormField label="Attachment name or reference" htmlFor="support-attachment" helper="Optional">
+              <Input id="support-attachment" value={attachmentName} onChange={(event) => setAttachmentName(event.target.value)} />
+            </FormField>
+            <FormField label="Message" htmlFor="support-message" required>
+              <Textarea id="support-message" className="min-h-28" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tell us what happened" required />
+            </FormField>
             <Button type="submit">Create ticket</Button>
+            </Stack>
           </form>
         </CardContent>
       </Card>
@@ -115,10 +129,11 @@ export function SupportView() {
           </CardHeader>
           <CardContent className="space-y-2">
             {tickets.map((ticket) => (
-              <button
+              <Button
                 key={ticket.id}
                 type="button"
-                className="w-full rounded-lg border p-3 text-left"
+                variant="outline"
+                className="h-auto w-full justify-start rounded-lg p-3 text-left"
                 onClick={() => setSelectedId(ticket.id)}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -126,7 +141,7 @@ export function SupportView() {
                   <Badge variant={ticket.status === 'open' ? 'default' : 'secondary'}>{ticket.status}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">{ticket.category} · {formatDateTime(ticket.createdAt)}</p>
-              </button>
+              </Button>
             ))}
             {!tickets.length ? <p className="text-sm text-muted-foreground">No tickets yet.</p> : null}
           </CardContent>
@@ -146,7 +161,9 @@ export function SupportView() {
                     <p className="mt-1">{item.body}</p>
                   </div>
                 ))}
-                <textarea className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reply to support" />
+                <FormField label="Reply" htmlFor="support-reply">
+                  <Textarea id="support-reply" className="min-h-20" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Reply to support" />
+                </FormField>
                 <Button type="button" onClick={() => void sendReply()} disabled={!reply.trim()}>
                   Reply
                 </Button>

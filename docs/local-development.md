@@ -38,11 +38,21 @@ cd path/to/ordella
 npm install
 ```
 
-`npm install` runs `@ordella/shared-ui` `prepare`, which builds `dist/styles.css` (required by admin-ui and other apps). If you see **Can't resolve '@ordella/shared-ui/styles.css'**, run:
+`npm install` runs `postinstall`, which ensures `apps/shared-ui/dist/styles.css` exists (required by admin-ui, marketing, POS, and other apps that import `@ordella/shared-ui/styles.css`). Each of those apps also runs `predev` before `next dev`.
+
+If you see **Can't resolve '@ordella/shared-ui/styles.css'**, run:
+
+```bash
+npm run ensure:shared-ui-css
+```
+
+Or build CSS only:
 
 ```bash
 npm run build:css --workspace=@ordella/shared-ui
 ```
+
+Then restart the dev server (Ctrl+C, then `npm run dev --workspace=…` again).
 
 Copy environment files:
 

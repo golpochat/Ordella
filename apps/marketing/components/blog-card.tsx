@@ -16,7 +16,7 @@ export function BlogCard({ post, className, featured }: BlogCardProps) {
   return (
     <article
       className={cn(
-        'flex h-full flex-col rounded-2xl border border-border/80 bg-card p-6 shadow-brand transition-shadow hover:shadow-elevated sm:p-7',
+        'flex h-full flex-col rounded-2xl border border-border/80 bg-card p-6 shadow-sm transition-shadow duration-fast ease-default hover:shadow-md sm:p-7',
         showFeatured && 'border-primary/30 ring-1 ring-primary/10',
         className,
       )}

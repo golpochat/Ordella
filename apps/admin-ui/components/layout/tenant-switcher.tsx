@@ -59,7 +59,7 @@ export function TenantSwitcher() {
       <label className="flex items-center gap-2 text-sm">
         <span className="text-muted-foreground">Tenant</span>
         <Select
-          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+          className="h-9 rounded-md border border-border-default bg-background px-2 text-sm"
           value={current}
           disabled={loading}
           onChange={(e) => void onChange(e.target.value)}

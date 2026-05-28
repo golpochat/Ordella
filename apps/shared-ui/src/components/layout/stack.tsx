@@ -15,11 +15,23 @@ const gapClass: Record<NonNullable<StackProps['gap']>, string> = {
   xl: 'gap-8',
 };
 
-export function Stack({ gap = 'md', align = 'stretch', className, ...props }: StackProps) {
+export const Stack = React.forwardRef<HTMLDivElement, StackProps>(function Stack(
+  { gap = 'md', align = 'stretch', className, ...props },
+  ref,
+) {
   return (
     <div
-      className={cn('flex flex-col', gapClass[gap], align === 'start' && 'items-start', align === 'center' && 'items-center', align === 'end' && 'items-end', align === 'stretch' && 'items-stretch', className)}
+      ref={ref}
+      className={cn(
+        'flex flex-col',
+        gapClass[gap],
+        align === 'start' && 'items-start',
+        align === 'center' && 'items-center',
+        align === 'end' && 'items-end',
+        align === 'stretch' && 'items-stretch',
+        className,
+      )}
       {...props}
     />
   );
-}
+});

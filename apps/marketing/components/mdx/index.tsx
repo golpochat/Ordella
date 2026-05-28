@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { MDXComponents } from 'mdx/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { cn } from '@/lib/cn';
 import { Callout } from './callout';
 
@@ -105,26 +106,26 @@ export const mdxComponents: MDXComponents = {
   ),
   hr: () => <hr className="my-10 border-border" />,
   table: ({ children, ...props }) => (
-    <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-      <table className="w-full min-w-[480px] border-collapse text-sm" {...props}>
-        {children}
-      </table>
-    </div>
+    <Table className="mt-4 min-w-[480px] text-sm" {...props}>
+      {children}
+    </Table>
   ),
   thead: ({ children, ...props }) => (
-    <thead className="bg-gray-light text-left text-navy" {...props}>
+    <TableHeader className="bg-gray-light text-left text-navy" {...props}>
       {children}
-    </thead>
+    </TableHeader>
   ),
+  tbody: ({ children, ...props }) => <TableBody {...props}>{children}</TableBody>,
+  tr: ({ children, ...props }) => <TableRow {...props}>{children}</TableRow>,
   th: ({ children, ...props }) => (
-    <th className="border-b border-border px-4 py-3 font-semibold" {...props}>
+    <TableHead className="px-4 py-3 font-semibold" {...props}>
       {children}
-    </th>
+    </TableHead>
   ),
   td: ({ children, ...props }) => (
-    <td className="border-b border-border/60 px-4 py-3 text-slate" {...props}>
+    <TableCell className="px-4 py-3 text-slate" {...props}>
       {children}
-    </td>
+    </TableCell>
   ),
   Callout,
 };

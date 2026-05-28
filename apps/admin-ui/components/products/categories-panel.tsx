@@ -54,7 +54,7 @@ export function CategoriesPanel({ categories }: { categories: Category[] }) {
               required
             />
             <Select
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+              className="h-10 rounded-md border border-border-default bg-background px-3 text-sm"
               value={taxCategoryId}
               onChange={(e) => setTaxCategoryId(e.target.value)}
             >

@@ -113,7 +113,7 @@ export function OrderRoutingPanel() {
             <label className="space-y-2 text-sm font-medium">
               Rule type
               <Select
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-border-default bg-background px-3 py-2 text-sm"
                 value={ruleType}
                 onChange={(event) => setRuleType(event.target.value as RoutingRule['ruleType'])}
               >
@@ -127,7 +127,7 @@ export function OrderRoutingPanel() {
             <label className="space-y-2 text-sm font-medium">
               Rule JSON
               <Textarea
-                className="min-h-28 w-full rounded-md border border-input bg-background p-3 font-mono text-sm"
+                className="min-h-28 w-full rounded-md border border-border-default bg-background p-3 font-mono text-sm"
                 value={ruleJson}
                 onChange={(event) => setRuleJson(event.target.value)}
               />
@@ -145,7 +145,7 @@ export function OrderRoutingPanel() {
             <Input type="number" min={0} value={priority} onChange={(event) => setPriority(event.target.value)} placeholder="Routing priority" />
             <Input type="number" min={1} value={capacity} onChange={(event) => setCapacity(event.target.value)} placeholder="Fulfillment capacity per hour" />
             <Textarea
-              className="min-h-24 w-full rounded-md border border-input bg-background p-3 font-mono text-sm"
+              className="min-h-24 w-full rounded-md border border-border-default bg-background p-3 font-mono text-sm"
               value={zonesJson}
               onChange={(event) => setZonesJson(event.target.value)}
               placeholder='["NW1","Downtown"]'

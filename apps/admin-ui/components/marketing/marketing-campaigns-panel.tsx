@@ -161,25 +161,25 @@ export function MarketingCampaignsPanel({
         <CardContent className="space-y-4">
           <form className="grid gap-3 md:grid-cols-2" onSubmit={save}>
             <Input placeholder="Campaign name" value={form.name} onChange={(event) => setForm((f) => ({ ...f, name: event.target.value }))} required />
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" onChange={(event) => applyTemplate(event.target.value)} defaultValue="">
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" onChange={(event) => applyTemplate(event.target.value)} defaultValue="">
               <option value="">Choose a template</option>
               {TEMPLATES.map((template, index) => <option key={template.label} value={index}>{template.label}</option>)}
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.campaignType} onChange={(event) => setForm((f) => ({ ...f, campaignType: event.target.value as typeof form.campaignType }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.campaignType} onChange={(event) => setForm((f) => ({ ...f, campaignType: event.target.value as typeof form.campaignType }))}>
               <option value="broadcast">Broadcast</option>
               <option value="trigger-based">Trigger-based</option>
               <option value="journey">Journey</option>
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.type} onChange={(event) => setForm((f) => ({ ...f, type: event.target.value as 'email' | 'sms' | 'push', channels: [event.target.value as 'email' | 'sms' | 'push'] }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.type} onChange={(event) => setForm((f) => ({ ...f, type: event.target.value as 'email' | 'sms' | 'push', channels: [event.target.value as 'email' | 'sms' | 'push'] }))}>
               <option value="email">Email</option>
               <option value="sms">SMS</option>
               <option value="push">Push</option>
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.segmentId} onChange={(event) => setForm((f) => ({ ...f, segmentId: event.target.value }))} required>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.segmentId} onChange={(event) => setForm((f) => ({ ...f, segmentId: event.target.value }))} required>
               <option value="">Select segment</option>
               {segments.map((segment) => <option key={segment.id} value={segment.id}>{segment.name}</option>)}
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.campaignCategory} onChange={(event) => setForm((f) => ({ ...f, campaignCategory: event.target.value }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.campaignCategory} onChange={(event) => setForm((f) => ({ ...f, campaignCategory: event.target.value }))}>
               <option value="welcome_series">Welcome series</option>
               <option value="abandoned_cart">Abandoned cart</option>
               <option value="win_back">Win-back</option>
@@ -188,7 +188,7 @@ export function MarketingCampaignsPanel({
               <option value="product_recommendations">Product recommendations</option>
               <option value="low_stock_alert">Low-stock customer alert</option>
             </Select>
-            <Select className="h-10 rounded-md border border-input bg-background px-3 text-sm" value={form.scheduleType} onChange={(event) => setForm((f) => ({ ...f, scheduleType: event.target.value as typeof form.scheduleType }))}>
+            <Select className="h-10 rounded-md border border-border-default bg-background px-3 text-sm" value={form.scheduleType} onChange={(event) => setForm((f) => ({ ...f, scheduleType: event.target.value as typeof form.scheduleType }))}>
               <option value="one-time">One-time</option>
               <option value="recurring">Recurring</option>
             </Select>
@@ -197,7 +197,7 @@ export function MarketingCampaignsPanel({
             <Input placeholder="Recurrence, e.g. every 7 days" value={form.recurrenceRule} onChange={(event) => setForm((f) => ({ ...f, recurrenceRule: event.target.value }))} />
             <Input placeholder="Frequency cap per customer" type="number" value={form.frequencyCap} onChange={(event) => setForm((f) => ({ ...f, frequencyCap: event.target.value }))} />
             <Input placeholder="Frequency cap window days" type="number" value={form.frequencyCapDays} onChange={(event) => setForm((f) => ({ ...f, frequencyCapDays: event.target.value }))} />
-            <Textarea className="min-h-28 rounded-md border border-input bg-background p-3 text-sm md:col-span-2" placeholder="Message. Supports {{name}} and {{points}}." value={form.message} onChange={(event) => setForm((f) => ({ ...f, message: event.target.value }))} required />
+            <Textarea className="min-h-28 rounded-md border border-border-default bg-background p-3 text-sm md:col-span-2" placeholder="Message. Supports {{name}} and {{points}}." value={form.message} onChange={(event) => setForm((f) => ({ ...f, message: event.target.value }))} required />
             <Button type="submit">{editingId ? 'Update campaign' : 'Save campaign'}</Button>
             {editingId ? <Button type="button" variant="outline" onClick={() => setEditingId(null)}>Cancel edit</Button> : null}
           </form>

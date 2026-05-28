@@ -4,7 +4,9 @@
   "private": true,
   "description": "Ordella Admin Dashboard — Next.js 14",
   "scripts": {
+    "predev": "node ../../scripts/ensure-shared-ui-css.mjs",
     "dev": "next dev -p 3001",
+    "prebuild": "node ../../scripts/ensure-shared-ui-css.mjs",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint",

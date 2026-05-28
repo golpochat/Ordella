@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, CardContent, Input } from '@shared-ui';
+import { Badge, Button, Card, CardContent, EmptyState, FormField, Input, Select, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared-ui';
 import { createBrowserApiClient, browserTokenStorage } from '@/lib/api/browser';
 import {
   confirmPurchaseOrder,
@@ -350,8 +350,8 @@ function PurchaseOrdersView({ orders, onChanged }: { orders: SupplierPurchaseOrd
                     value={documentDrafts[order.id]?.url ?? ''}
                     onChange={(event) => setDocumentDraft(order.id, { url: event.target.value })}
                   />
-                  <input
-                    className="rounded-md border bg-background px-3 py-2 text-sm md:col-span-2"
+                  <Input
+                    className="md:col-span-2"
                     type="file"
                     accept="application/pdf,image/*"
                     onChange={(event) => readDocumentFile(order.id, event.target.files?.[0])}
@@ -402,49 +402,55 @@ function CatalogView({ catalog, onChanged }: { catalog: SupplierCatalogItem[]; o
     <div className="space-y-6">
       <SectionHeader title="Catalog" description="Keep supplier costs, lead times, SKUs, and minimum order quantities current." />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left">
-            <tr>
-              <th className="p-3 font-medium">Item</th>
-              <th className="p-3 font-medium">Cost</th>
-              <th className="p-3 font-medium">Lead days</th>
-              <th className="p-3 font-medium">Min order</th>
-              <th className="p-3 font-medium">Case size</th>
-              <th className="p-3 font-medium">SKU</th>
-              <th className="p-3 font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
+      {catalog.length ? (
+        <Table aria-label="Supplier catalog editor">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Item</TableHead>
+              <TableHead>Cost</TableHead>
+              <TableHead>Lead days</TableHead>
+              <TableHead>Min order</TableHead>
+              <TableHead>Case size</TableHead>
+              <TableHead>SKU</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {catalog.map((item) => {
               const draft = drafts[item.id] ?? item;
               return (
-                <tr key={item.id} className="border-t">
-                  <td className="p-3 font-medium">{item.item?.name ?? item.itemId}</td>
-                  <td className="p-3">
+                <TableRow key={item.id}>
+                  <TableCell className="font-medium">{item.item?.name ?? item.itemId}</TableCell>
+                  <TableCell>
                     <Input value={draft.costPrice} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, costPrice: event.target.value } }))} />
-                  </td>
-                  <td className="p-3">
+                  </TableCell>
+                  <TableCell>
                     <Input type="number" value={draft.leadTimeDays} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, leadTimeDays: Number(event.target.value) } }))} />
-                  </td>
-                  <td className="p-3">
+                  </TableCell>
+                  <TableCell>
                     <Input type="number" value={draft.minOrderQty} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, minOrderQty: Number(event.target.value) } }))} />
-                  </td>
-                  <td className="p-3">
+                  </TableCell>
+                  <TableCell>
                     <Input type="number" value={draft.caseSize} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, caseSize: Number(event.target.value) } }))} />
-                  </td>
-                  <td className="p-3">
+                  </TableCell>
+                  <TableCell>
                     <Input value={draft.sku ?? ''} onChange={(event) => setDrafts((current) => ({ ...current, [item.id]: { ...draft, sku: event.target.value } }))} />
-                  </td>
-                  <td className="p-3">
+                  </TableCell>
+                  <TableCell>
                     <Button type="button" size="sm" onClick={() => void save(item)}>Save</Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      ) : (
+        <EmptyState
+          title="No catalog items"
+          description="Supplier catalog entries appear here after syncing from the merchant."
+          size="compact"
+        />
+      )}
     </div>
   );
 }
@@ -481,12 +487,14 @@ function MessagesView({
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Card>
         <CardContent className="space-y-3 p-4">
-          <select className="h-10 rounded-md border bg-background px-3 text-sm" value={purchaseOrderId} onChange={(event) => setPurchaseOrderId(event.target.value)}>
-            <option value="">General message</option>
-            {orders.map((order) => (
-              <option key={order.id} value={order.id}>PO {order.id.slice(0, 8)}</option>
-            ))}
-          </select>
+          <FormField label="Purchase order" htmlFor="supplier-message-po">
+            <Select id="supplier-message-po" value={purchaseOrderId} onChange={(event) => setPurchaseOrderId(event.target.value)}>
+              <option value="">General message</option>
+              {orders.map((order) => (
+                <option key={order.id} value={order.id}>PO {order.id.slice(0, 8)}</option>
+              ))}
+            </Select>
+          </FormField>
           <Input placeholder="Write a message" value={message} onChange={(event) => setMessage(event.target.value)} />
           <Button type="button" onClick={submit} disabled={!message.trim()}>Send message</Button>
         </CardContent>
@@ -571,74 +579,74 @@ function ProfileView({ profile, onChanged }: { profile: SupplierProfile | null; 
 
 function PurchaseOrderTable({ orders, compact = false }: { orders: SupplierPurchaseOrder[]; compact?: boolean }) {
   const { settings } = useTenantSettings();
+  if (!orders.length) {
+    return (
+      <EmptyState
+        title={compact ? 'No recent purchase orders' : 'No purchase orders assigned yet'}
+        size="compact"
+      />
+    );
+  }
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50 text-left">
-          <tr>
-            <th className="p-3 font-medium">PO</th>
-            <th className="p-3 font-medium">Location</th>
-            <th className="p-3 font-medium">Supplier status</th>
-            <th className="p-3 font-medium">Due</th>
-            <th className="p-3 font-medium">Net</th>
-            <th className="p-3 font-medium">Tax</th>
-            <th className="p-3 font-medium">Gross</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((order) => (
-            <tr key={order.id} className="border-t">
-              <td className="p-3 font-medium">{order.id.slice(0, 8)}</td>
-              <td className="p-3">{order.location?.name ?? 'Location'}</td>
-              <td className="p-3"><Badge>{order.supplierStatus}</Badge></td>
-              <td className="p-3">{formatDate(order.expectedDeliveryDate, settings)}</td>
-              <td className="p-3">{formatMoney(order.subtotalCost ?? order.totalCost, settings)}</td>
-              <td className="p-3">{formatMoney(order.taxTotal ?? '0.00', settings)}</td>
-              <td className="p-3">{formatMoney(order.totalCost, settings)}</td>
-            </tr>
-          ))}
-          {!orders.length ? (
-            <tr>
-              <td className="p-3 text-muted-foreground" colSpan={7}>
-                {compact ? 'No recent purchase orders.' : 'No purchase orders assigned yet.'}
-              </td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-    </div>
+    <Table aria-label="Supplier purchase orders">
+      <TableHeader>
+        <TableRow>
+          <TableHead>PO</TableHead>
+          <TableHead>Location</TableHead>
+          <TableHead>Supplier status</TableHead>
+          <TableHead>Due</TableHead>
+          <TableHead>Net</TableHead>
+          <TableHead>Tax</TableHead>
+          <TableHead>Gross</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {orders.map((order) => (
+          <TableRow key={order.id}>
+            <TableCell className="font-medium">{order.id.slice(0, 8)}</TableCell>
+            <TableCell>{order.location?.name ?? 'Location'}</TableCell>
+            <TableCell><Badge>{order.supplierStatus}</Badge></TableCell>
+            <TableCell>{formatDate(order.expectedDeliveryDate, settings)}</TableCell>
+            <TableCell>{formatMoney(order.subtotalCost ?? order.totalCost, settings)}</TableCell>
+            <TableCell>{formatMoney(order.taxTotal ?? '0.00', settings)}</TableCell>
+            <TableCell>{formatMoney(order.totalCost, settings)}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
 function PurchaseOrderLines({ order }: { order: SupplierPurchaseOrder }) {
   const { settings } = useTenantSettings();
+  if (!order.items.length) {
+    return <EmptyState title="No purchase order lines" size="compact" />;
+  }
   return (
-    <div className="overflow-x-auto rounded-lg border">
-      <table className="w-full text-xs">
-        <thead className="bg-muted/50 text-left">
-          <tr>
-            <th className="p-2 font-medium">Item</th>
-            <th className="p-2 font-medium">Ordered</th>
-            <th className="p-2 font-medium">Received</th>
-            <th className="p-2 font-medium">Cost</th>
-            <th className="p-2 font-medium">Tax</th>
-            <th className="p-2 font-medium">Line total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {order.items.map((item) => (
-            <tr key={item.id} className="border-t">
-              <td className="p-2">{item.item?.name ?? item.itemId}</td>
-              <td className="p-2">{item.quantityOrdered}</td>
-              <td className="p-2">{item.quantityReceived}</td>
-              <td className="p-2">{formatMoney(item.costPrice, settings)}</td>
-              <td className="p-2">{formatMoney(item.taxAmount ?? '0.00', settings)} ({Number(item.taxRate ?? 0).toFixed(2)}%)</td>
-              <td className="p-2">{formatMoney(Number(item.costPrice) * item.quantityOrdered, settings)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table aria-label={`Purchase order ${order.id.slice(0, 8)} lines`} className="min-w-[30rem] text-xs">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Item</TableHead>
+          <TableHead>Ordered</TableHead>
+          <TableHead>Received</TableHead>
+          <TableHead>Cost</TableHead>
+          <TableHead>Tax</TableHead>
+          <TableHead>Line total</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {order.items.map((item) => (
+          <TableRow key={item.id}>
+            <TableCell>{item.item?.name ?? item.itemId}</TableCell>
+            <TableCell>{item.quantityOrdered}</TableCell>
+            <TableCell>{item.quantityReceived}</TableCell>
+            <TableCell>{formatMoney(item.costPrice, settings)}</TableCell>
+            <TableCell>{formatMoney(item.taxAmount ?? '0.00', settings)} ({Number(item.taxRate ?? 0).toFixed(2)}%)</TableCell>
+            <TableCell>{formatMoney(Number(item.costPrice) * item.quantityOrdered, settings)}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 

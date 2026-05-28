@@ -18,7 +18,7 @@ export function PostNavigation({ newer, older }: PostNavigationProps) {
       {older ? (
         <Link
           href={`/blog/${older.slug}`}
-          className="group flex flex-col rounded-xl border border-border bg-card p-4 shadow-brand transition-shadow hover:shadow-elevated sm:p-5"
+          className="group flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow duration-fast ease-default hover:shadow-md sm:p-5"
         >
           <span className="flex items-center gap-1 text-caption">
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
@@ -32,7 +32,7 @@ export function PostNavigation({ newer, older }: PostNavigationProps) {
       {newer ? (
         <Link
           href={`/blog/${newer.slug}`}
-          className="group flex flex-col rounded-xl border border-border bg-card p-4 text-right shadow-brand transition-shadow hover:shadow-elevated sm:col-start-2 sm:p-5"
+          className="group flex flex-col rounded-xl border border-border bg-card p-4 text-right shadow-sm transition-shadow duration-fast ease-default hover:shadow-md sm:col-start-2 sm:p-5"
         >
           <span className="flex items-center justify-end gap-1 text-caption">
             Newer post
